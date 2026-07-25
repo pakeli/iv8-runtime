@@ -139,6 +139,15 @@ public:
     // "Reflect.ownKeys"}) and clear the log (read-and-clear).
     pybind11::list read_reflect_ownkeys_hits();
 
+    // M10-2: enable/disable Object.keys monitoring (mirrors watch_reflect_ownkeys).
+    // Object.keys(target) has no propertyKey, so a hit records only the resource
+    // name. Config persists across load; disposed page raises. Validation in the
+    // Python facade.
+    void watch_object_keys(bool enabled, bool break_on_hit);
+    // M10-2: return the Object.keys hit records ({"resource_name", "type":
+    // "Object.keys"}) and clear the log (read-and-clear).
+    pybind11::list read_object_keys_hits();
+
 private:
     // Build a fresh ContextState for `base_url` (location source) and install the
     // page's host objects + global roots + timers into it. Used by the ctor and
@@ -161,6 +170,9 @@ private:
     // M10-1: same, for globalThis.Reflect.ownKeys.
     void install_reflect_ownkeys_hook(v8::Isolate* isolate,
                                       v8::Local<v8::Context> context);
+    // M10-2: same, for globalThis.Object.keys.
+    void install_object_keys_hook(v8::Isolate* isolate,
+                                  v8::Local<v8::Context> context);
 
     // M9-3: request the current Inspector session to pause (the watch-registry
     // pause callback). A no-op when no session is attached, so break_on_hit
@@ -213,6 +225,7 @@ private:
     bool reflect_hook_installed_ = false;
     bool reflect_has_hook_installed_ = false;
     bool reflect_ownkeys_hook_installed_ = false;
+    bool object_keys_hook_installed_ = false;  // M10-2
 };
 
 }  // namespace iv8

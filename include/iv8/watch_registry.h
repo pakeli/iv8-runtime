@@ -182,6 +182,37 @@ public:
         return out;
     }
 
+    // M10-2: Object.keys monitoring — another separate channel (mirrors M10-1).
+    // Object.keys(target) has no propertyKey, so a hit carries only the resource
+    // name (WatchHit.path left empty).
+    void set_object_keys(bool enabled, bool break_on_hit) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        object_keys_break_on_hit_ = break_on_hit;
+        object_keys_enabled_.store(enabled, std::memory_order_release);
+    }
+    bool object_keys_enabled() const {
+        return object_keys_enabled_.load(std::memory_order_acquire);
+    }
+    void record_object_keys() {
+        std::function<void()> pause;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            object_keys_hits_.push_back(WatchHit{std::string(), current_resource_});
+            if (object_keys_break_on_hit_) {
+                pause = pause_requester_;
+            }
+        }
+        if (pause) {
+            pause();
+        }
+    }
+    std::vector<WatchHit> take_object_keys_hits() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        std::vector<WatchHit> out;
+        out.swap(object_keys_hits_);
+        return out;
+    }
+
 private:
     mutable std::mutex mutex_;
     std::atomic<bool> enabled_{false};
@@ -202,6 +233,10 @@ private:
     std::atomic<bool> reflect_ownkeys_enabled_{false};
     bool reflect_ownkeys_break_on_hit_ = false;
     std::vector<WatchHit> reflect_ownkeys_hits_;
+    // M10-2 Object.keys channel.
+    std::atomic<bool> object_keys_enabled_{false};
+    bool object_keys_break_on_hit_ = false;
+    std::vector<WatchHit> object_keys_hits_;
 };
 
 }  // namespace iv8

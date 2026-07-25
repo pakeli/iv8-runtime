@@ -464,6 +464,42 @@ class Page:
         """
         return self._native.read_reflect_ownkeys_hits()
 
+    def watch_object_keys(self, enabled: bool = True,
+                          break_on_hit: bool = False) -> None:
+        """Enable/disable monitoring of ``Object.keys(target)`` calls.
+
+        Mirrors :meth:`watch_reflect_ownkeys` for ``Object.keys``: when ``enabled``,
+        this page's ``Object.keys`` is wrapped with a recording hook (per generation)
+        that records each call and delegates to the real ``Object.keys`` (behavior
+        unchanged). ``Object.keys(target)`` has no property key, so a hit records only
+        the script resource name. ``break_on_hit`` behaves as elsewhere (pause when a
+        DevTools session is attached, else record-only). Disabling stops recording; a
+        later call overrides the switch; the configuration **persists across
+        ``load()``**.
+
+        This phase monitors only ``Object.keys`` — **not**
+        ``Object.getOwnPropertyNames`` / ``Object.getOwnPropertySymbols`` /
+        ``Object.defineProperty`` / ``Reflect.ownKeys`` (M10-1) — and adds no
+        JS-visible monitoring global. A non-``bool`` argument raises ``TypeError``;
+        after ``dispose()`` it raises ``JSContextDisposedError``.
+        """
+        if not isinstance(enabled, bool):
+            raise TypeError("enabled must be a bool")
+        if not isinstance(break_on_hit, bool):
+            raise TypeError("break_on_hit must be a bool")
+        self._native.watch_object_keys(enabled, break_on_hit)
+
+    def read_object_keys_hits(self) -> list:
+        """Return the recorded ``Object.keys`` hits and clear the log.
+
+        Each hit is a ``dict`` with ``resource_name`` (the executing script's
+        resource name, or ``""``) and ``type`` (always ``"Object.keys"``) — there is
+        no ``property`` field, since ``Object.keys`` takes no key. Returns ``[]`` if
+        nothing was hit (read-and-clear). Raises ``JSContextDisposedError`` after
+        ``dispose()``.
+        """
+        return self._native.read_object_keys_hits()
+
     def dispose(self) -> None:
         """Release the page's context-owned native resources. Idempotent."""
         # M9-1: stop the DevTools server first (best-effort) so its port is freed;

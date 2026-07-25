@@ -69,7 +69,7 @@ def test_frozen_page_api_absent():
         "set_debugger", "disable_debugger",
         "watch_iframe", "watch_worker", "attach_worker",
         "add_cdp_domain", "cdp_domain",
-        "watch_object_keys", "watch_function_to_string",
+        "watch_function_to_string",
         "trusted_input", "geometry", "profile", "fingerprint",
     ):
         assert not hasattr(iv8.Page, attr)

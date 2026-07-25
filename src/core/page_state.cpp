@@ -3401,6 +3401,41 @@ void reflect_ownkeys_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
     // else: the original threw; the pending exception propagates unchanged.
 }
 
+// M10-2: record an Object.keys hit if Object.keys watching is enabled. Object.keys
+// (target) has no propertyKey, so the hit carries only the resource name.
+void object_keys_record(v8::Isolate* isolate) {
+    ContextState* state = state_from_isolate(isolate);
+    if (state == nullptr) {
+        return;
+    }
+    WatchRegistry* registry = state->watch_registry();
+    if (registry == nullptr || !registry->object_keys_enabled()) {
+        return;
+    }
+    registry->record_object_keys();
+}
+
+// M10-2: the Object.keys hook — records the call, then delegates to the original
+// Object.keys (carried as this function's Data).
+void object_keys_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    object_keys_record(isolate);
+    v8::Local<v8::Function> original = info.Data().As<v8::Function>();
+    std::vector<v8::Local<v8::Value>> args;
+    args.reserve(static_cast<std::size_t>(info.Length()));
+    for (int i = 0; i < info.Length(); i++) {
+        args.push_back(info[i]);
+    }
+    v8::Local<v8::Value> result;
+    if (original
+            ->Call(context, v8::Undefined(isolate), info.Length(), args.data())
+            .ToLocal(&result)) {
+        info.GetReturnValue().Set(result);
+    }
+    // else: the original threw; the pending exception propagates unchanged.
+}
+
 }  // namespace
 
 // M9-1: the current generation's V8 Inspector objects (opaque in the header). The
@@ -3684,6 +3719,57 @@ py::list PageState::read_reflect_ownkeys_hits() {
     return out;
 }
 
+void PageState::install_object_keys_hook(v8::Isolate* isolate,
+                                         v8::Local<v8::Context> context) {
+    v8::Local<v8::Value> object_value;
+    if (!context->Global()
+             ->Get(context, v8_string(isolate, "Object"))
+             .ToLocal(&object_value) ||
+        !object_value->IsObject()) {
+        return;
+    }
+    v8::Local<v8::Object> object_ctor = object_value.As<v8::Object>();
+    v8::Local<v8::Value> keys_value;
+    if (!object_ctor->Get(context, v8_string(isolate, "keys"))
+             .ToLocal(&keys_value) ||
+        !keys_value->IsFunction()) {
+        return;
+    }
+    v8::Local<v8::Function> wrapper;
+    if (v8::Function::New(context, &object_keys_wrapper, keys_value)
+            .ToLocal(&wrapper)) {
+        (void)object_ctor->Set(context, v8_string(isolate, "keys"), wrapper);
+        object_keys_hook_installed_ = true;
+    }
+}
+
+void PageState::watch_object_keys(bool enabled, bool break_on_hit) {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    watch_registry_.set_object_keys(enabled, break_on_hit);
+    if (enabled && !object_keys_hook_installed_) {
+        state_->with_scope(
+            [this](v8::Isolate* isolate, v8::Local<v8::Context> context) {
+                install_object_keys_hook(isolate, context);
+            });
+    }
+}
+
+py::list PageState::read_object_keys_hits() {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    py::list out;
+    for (const WatchHit& hit : watch_registry_.take_object_keys_hits()) {
+        py::dict record;  // Object.keys has no propertyKey -> resource_name only
+        record["resource_name"] = hit.resource_name;
+        record["type"] = "Object.keys";
+        out.append(record);
+    }
+    return out;
+}
+
 void PageState::install_page(const std::string& base_url,
                              const std::string& html) {
     bootstrap_ = PageBootstrap{html, base_url};
@@ -3694,6 +3780,7 @@ void PageState::install_page(const std::string& base_url,
     reflect_hook_installed_ = false;
     reflect_has_hook_installed_ = false;
     reflect_ownkeys_hook_installed_ = false;
+    object_keys_hook_installed_ = false;  // M10-2
     // M9-2: point the new generation at the Page-level watch registry so its
     // host-method dispatch points can record hits and eval() can stamp the current
     // script's resource name. The registry itself outlives generations.
@@ -3886,6 +3973,10 @@ void PageState::install_page(const std::string& base_url,
             // M10-1: same for Reflect.ownKeys.
             if (watch_registry_.reflect_ownkeys_enabled()) {
                 install_reflect_ownkeys_hook(isolate, context);
+            }
+            // M10-2: same for Object.keys.
+            if (watch_registry_.object_keys_enabled()) {
+                install_object_keys_hook(isolate, context);
             }
         });
 }

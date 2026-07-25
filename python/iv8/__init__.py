@@ -728,13 +728,15 @@ attach base ``Page.devtools_url()``; host-method call monitoring ``Page.watch_ap
 / ``Page.read_reflect_get_hits`` (``Reflect.get``), ``Page.watch_reflect_has`` /
 ``Page.read_reflect_has_hits`` (``Reflect.has``), and M10-1
 ``Page.watch_reflect_ownkeys(enabled=True, break_on_hit=False)`` /
-``Page.read_reflect_ownkeys_hits()`` (``Reflect.ownKeys``). Each ``watch_reflect_*`` is
-an independent record channel (read-and-clear) that wraps the corresponding ``Reflect``
+``Page.read_reflect_ownkeys_hits()`` (``Reflect.ownKeys``); and M10-2
+``Page.watch_object_keys(enabled=True, break_on_hit=False)`` /
+``Page.read_object_keys_hits()`` (``Object.keys``). Each ``watch_*`` is an independent
+record channel (read-and-clear) that wraps the corresponding ``Reflect``/``Object``
 method with a recording hook and delegates to the real one (behavior unchanged);
 ``break_on_hit=True`` also pauses an **attached** V8 Inspector session on a hit (else it
-records only). ``Reflect.ownKeys(target)`` has no property key, so its hits carry only
-``resource_name`` + ``type``. See ``docs/m9_summary.md`` / ``docs/m10_1_*`` for the
-authoritative boundary.
+records only). ``Reflect.ownKeys(target)`` / ``Object.keys(target)`` have no property
+key, so their hits carry only ``resource_name`` + ``type``. See ``docs/m9_summary.md`` /
+``docs/m10_1_*`` / ``docs/m10_2_*`` for the authoritative boundary.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are

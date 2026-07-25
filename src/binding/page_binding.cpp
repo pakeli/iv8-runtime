@@ -48,5 +48,9 @@ void register_page(py::module_& module) {
         .def("watch_reflect_ownkeys", &iv8::PageState::watch_reflect_ownkeys,
              py::arg("enabled"), py::arg("break_on_hit"))
         .def("read_reflect_ownkeys_hits",
-             &iv8::PageState::read_reflect_ownkeys_hits);
+             &iv8::PageState::read_reflect_ownkeys_hits)
+        // M10-2 Object.keys monitoring.
+        .def("watch_object_keys", &iv8::PageState::watch_object_keys,
+             py::arg("enabled"), py::arg("break_on_hit"))
+        .def("read_object_keys_hits", &iv8::PageState::read_object_keys_hits);
 }

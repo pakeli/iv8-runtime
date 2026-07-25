@@ -42,7 +42,8 @@ def test_surface_shape():
         assert hasattr(iv8.Page, attr)
     # no new top-level object / exception; __all__ unchanged
     assert set(iv8.__all__) == _STD_ALL
-    for name in ("watch_object_keys", "watch_reflect_get_own_property_descriptor",
+    # (watch_object_keys arrived in M10-2)
+    for name in ("watch_reflect_get_own_property_descriptor",
                  "watch_function_to_string"):
         assert not hasattr(iv8.Page, name)
 
