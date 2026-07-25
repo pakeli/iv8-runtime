@@ -122,6 +122,35 @@ public:
         return out;
     }
 
+    // M9-5: Reflect.has monitoring — a separate channel again (mirrors M9-4).
+    void set_reflect_has(bool enabled, bool break_on_hit) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        reflect_has_break_on_hit_ = break_on_hit;
+        reflect_has_enabled_.store(enabled, std::memory_order_release);
+    }
+    bool reflect_has_enabled() const {
+        return reflect_has_enabled_.load(std::memory_order_acquire);
+    }
+    void record_reflect_has(const std::string& property) {
+        std::function<void()> pause;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            reflect_has_hits_.push_back(WatchHit{property, current_resource_});
+            if (reflect_has_break_on_hit_) {
+                pause = pause_requester_;
+            }
+        }
+        if (pause) {
+            pause();
+        }
+    }
+    std::vector<WatchHit> take_reflect_has_hits() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        std::vector<WatchHit> out;
+        out.swap(reflect_has_hits_);
+        return out;
+    }
+
 private:
     mutable std::mutex mutex_;
     std::atomic<bool> enabled_{false};
@@ -134,6 +163,10 @@ private:
     std::atomic<bool> reflect_enabled_{false};
     bool reflect_break_on_hit_ = false;
     std::vector<WatchHit> reflect_hits_;
+    // M9-5 Reflect.has channel.
+    std::atomic<bool> reflect_has_enabled_{false};
+    bool reflect_has_break_on_hit_ = false;
+    std::vector<WatchHit> reflect_has_hits_;
 };
 
 }  // namespace iv8

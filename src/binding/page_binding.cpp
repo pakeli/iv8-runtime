@@ -39,5 +39,9 @@ void register_page(py::module_& module) {
         // Page.read_reflect_get_hits — bool validation done in the Python facade).
         .def("watch_reflect_get", &iv8::PageState::watch_reflect_get,
              py::arg("enabled"), py::arg("break_on_hit"))
-        .def("read_reflect_get_hits", &iv8::PageState::read_reflect_get_hits);
+        .def("read_reflect_get_hits", &iv8::PageState::read_reflect_get_hits)
+        // M9-5 Reflect.has monitoring.
+        .def("watch_reflect_has", &iv8::PageState::watch_reflect_has,
+             py::arg("enabled"), py::arg("break_on_hit"))
+        .def("read_reflect_has_hits", &iv8::PageState::read_reflect_has_hits);
 }

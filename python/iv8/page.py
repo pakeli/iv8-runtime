@@ -394,6 +394,39 @@ class Page:
         """
         return self._native.read_reflect_get_hits()
 
+    def watch_reflect_has(self, enabled: bool = True,
+                          break_on_hit: bool = False) -> None:
+        """Enable/disable monitoring of ``Reflect.has(target, propertyKey)`` calls.
+
+        Mirrors :meth:`watch_reflect_get` for ``Reflect.has``: when ``enabled``,
+        this page's ``Reflect.has`` is wrapped with a recording hook (per generation)
+        that logs each call's property key and delegates to the real ``Reflect.has``
+        (behavior unchanged). ``break_on_hit`` behaves as in :meth:`watch_apis`
+        (pause when a DevTools session is attached, else record-only). Disabling
+        stops recording; a later call overrides the switch; the configuration
+        **persists across ``load()``**.
+
+        This phase monitors only ``Reflect.has`` — **not** ``Reflect.ownKeys`` /
+        ``Object.*`` — not plain ``"x" in obj``, and it adds no JS-visible monitoring
+        global. A non-``bool`` argument raises ``TypeError``; after ``dispose()`` it
+        raises ``JSContextDisposedError``.
+        """
+        if not isinstance(enabled, bool):
+            raise TypeError("enabled must be a bool")
+        if not isinstance(break_on_hit, bool):
+            raise TypeError("break_on_hit must be a bool")
+        self._native.watch_reflect_has(enabled, break_on_hit)
+
+    def read_reflect_has_hits(self) -> list:
+        """Return the recorded ``Reflect.has`` hits and clear the log (read-and-clear).
+
+        Each hit is a ``dict`` with ``property`` (the stringified property key),
+        ``resource_name`` (the executing script's resource name, or ``""``), and
+        ``type`` (always ``"Reflect.has"``). Returns ``[]`` if nothing was hit.
+        Raises ``JSContextDisposedError`` after ``dispose()``.
+        """
+        return self._native.read_reflect_has_hits()
+
     def dispose(self) -> None:
         """Release the page's context-owned native resources. Idempotent."""
         # M9-1: stop the DevTools server first (best-effort) so its port is freed;

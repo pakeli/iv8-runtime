@@ -120,6 +120,16 @@ public:
     // Raises JSContextDisposedError after dispose().
     pybind11::list read_reflect_get_hits();
 
+    // M9-5: enable/disable Reflect.has monitoring (mirrors watch_reflect_get). When
+    // enabled, globalThis's Reflect.has is wrapped (per generation) with a
+    // delegating hook that records each call and, with break_on_hit + an attached
+    // session, pauses. Config persists across load; disposed page raises. Validation
+    // in the Python facade.
+    void watch_reflect_has(bool enabled, bool break_on_hit);
+    // M9-5: return the Reflect.has hit records ({"property", "resource_name",
+    // "type": "Reflect.has"}) and clear the log (read-and-clear).
+    pybind11::list read_reflect_has_hits();
+
 private:
     // Build a fresh ContextState for `base_url` (location source) and install the
     // page's host objects + global roots + timers into it. Used by the ctor and
@@ -135,6 +145,9 @@ private:
     // generation (once). Called from install_page (when reflect-get watching is on)
     // and from watch_reflect_get(); both already hold the isolate scope.
     void install_reflect_get_hook(v8::Isolate* isolate,
+                                  v8::Local<v8::Context> context);
+    // M9-5: same, for globalThis.Reflect.has.
+    void install_reflect_has_hook(v8::Isolate* isolate,
                                   v8::Local<v8::Context> context);
 
     // M9-3: request the current Inspector session to pause (the watch-registry
@@ -183,9 +196,10 @@ private:
     // watch_apis() registration persists. Each install_page points the current
     // ContextState at it.
     WatchRegistry watch_registry_;
-    // M9-4: whether the current generation's Reflect.get is already wrapped (reset
-    // per install_page; prevents double-wrapping on repeated watch_reflect_get).
+    // M9-4/M9-5: whether the current generation's Reflect.get / Reflect.has are
+    // already wrapped (reset per install_page; prevents double-wrapping).
     bool reflect_hook_installed_ = false;
+    bool reflect_has_hook_installed_ = false;
 };
 
 }  // namespace iv8
