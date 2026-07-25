@@ -151,6 +151,37 @@ public:
         return out;
     }
 
+    // M10-1: Reflect.ownKeys monitoring — a separate channel again (mirrors M9-4/5).
+    // Reflect.ownKeys(target) has no propertyKey, so a hit carries only the current
+    // resource name (WatchHit.path is left empty).
+    void set_reflect_ownkeys(bool enabled, bool break_on_hit) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        reflect_ownkeys_break_on_hit_ = break_on_hit;
+        reflect_ownkeys_enabled_.store(enabled, std::memory_order_release);
+    }
+    bool reflect_ownkeys_enabled() const {
+        return reflect_ownkeys_enabled_.load(std::memory_order_acquire);
+    }
+    void record_reflect_ownkeys() {
+        std::function<void()> pause;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            reflect_ownkeys_hits_.push_back(WatchHit{std::string(), current_resource_});
+            if (reflect_ownkeys_break_on_hit_) {
+                pause = pause_requester_;
+            }
+        }
+        if (pause) {
+            pause();
+        }
+    }
+    std::vector<WatchHit> take_reflect_ownkeys_hits() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        std::vector<WatchHit> out;
+        out.swap(reflect_ownkeys_hits_);
+        return out;
+    }
+
 private:
     mutable std::mutex mutex_;
     std::atomic<bool> enabled_{false};
@@ -167,6 +198,10 @@ private:
     std::atomic<bool> reflect_has_enabled_{false};
     bool reflect_has_break_on_hit_ = false;
     std::vector<WatchHit> reflect_has_hits_;
+    // M10-1 Reflect.ownKeys channel.
+    std::atomic<bool> reflect_ownkeys_enabled_{false};
+    bool reflect_ownkeys_break_on_hit_ = false;
+    std::vector<WatchHit> reflect_ownkeys_hits_;
 };
 
 }  // namespace iv8

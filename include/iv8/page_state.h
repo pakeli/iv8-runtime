@@ -130,6 +130,15 @@ public:
     // "type": "Reflect.has"}) and clear the log (read-and-clear).
     pybind11::list read_reflect_has_hits();
 
+    // M10-1: enable/disable Reflect.ownKeys monitoring (mirrors watch_reflect_get/
+    // has). Reflect.ownKeys(target) has no propertyKey, so a hit records only the
+    // resource name. Config persists across load; disposed page raises. Validation
+    // in the Python facade.
+    void watch_reflect_ownkeys(bool enabled, bool break_on_hit);
+    // M10-1: return the Reflect.ownKeys hit records ({"resource_name", "type":
+    // "Reflect.ownKeys"}) and clear the log (read-and-clear).
+    pybind11::list read_reflect_ownkeys_hits();
+
 private:
     // Build a fresh ContextState for `base_url` (location source) and install the
     // page's host objects + global roots + timers into it. Used by the ctor and
@@ -149,6 +158,9 @@ private:
     // M9-5: same, for globalThis.Reflect.has.
     void install_reflect_has_hook(v8::Isolate* isolate,
                                   v8::Local<v8::Context> context);
+    // M10-1: same, for globalThis.Reflect.ownKeys.
+    void install_reflect_ownkeys_hook(v8::Isolate* isolate,
+                                      v8::Local<v8::Context> context);
 
     // M9-3: request the current Inspector session to pause (the watch-registry
     // pause callback). A no-op when no session is attached, so break_on_hit
@@ -196,10 +208,11 @@ private:
     // watch_apis() registration persists. Each install_page points the current
     // ContextState at it.
     WatchRegistry watch_registry_;
-    // M9-4/M9-5: whether the current generation's Reflect.get / Reflect.has are
-    // already wrapped (reset per install_page; prevents double-wrapping).
+    // M9-4/M9-5/M10-1: whether the current generation's Reflect.get / .has /
+    // .ownKeys are already wrapped (reset per install_page; prevents double-wrap).
     bool reflect_hook_installed_ = false;
     bool reflect_has_hook_installed_ = false;
+    bool reflect_ownkeys_hook_installed_ = false;
 };
 
 }  // namespace iv8

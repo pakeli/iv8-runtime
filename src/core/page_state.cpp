@@ -3365,6 +3365,42 @@ void reflect_has_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
     // else: the original threw; the pending exception propagates unchanged.
 }
 
+// M10-1: record a Reflect.ownKeys hit if reflect-ownKeys watching is enabled.
+// Reflect.ownKeys(target) has no propertyKey, so the hit carries only the resource
+// name (recorded inside the registry).
+void reflect_ownkeys_record(v8::Isolate* isolate) {
+    ContextState* state = state_from_isolate(isolate);
+    if (state == nullptr) {
+        return;
+    }
+    WatchRegistry* registry = state->watch_registry();
+    if (registry == nullptr || !registry->reflect_ownkeys_enabled()) {
+        return;
+    }
+    registry->record_reflect_ownkeys();
+}
+
+// M10-1: the Reflect.ownKeys hook — records the call, then delegates to the original
+// Reflect.ownKeys (carried as this function's Data).
+void reflect_ownkeys_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    reflect_ownkeys_record(isolate);
+    v8::Local<v8::Function> original = info.Data().As<v8::Function>();
+    std::vector<v8::Local<v8::Value>> args;
+    args.reserve(static_cast<std::size_t>(info.Length()));
+    for (int i = 0; i < info.Length(); i++) {
+        args.push_back(info[i]);
+    }
+    v8::Local<v8::Value> result;
+    if (original
+            ->Call(context, v8::Undefined(isolate), info.Length(), args.data())
+            .ToLocal(&result)) {
+        info.GetReturnValue().Set(result);
+    }
+    // else: the original threw; the pending exception propagates unchanged.
+}
+
 }  // namespace
 
 // M9-1: the current generation's V8 Inspector objects (opaque in the header). The
@@ -3597,14 +3633,67 @@ py::list PageState::read_reflect_has_hits() {
     return out;
 }
 
+void PageState::install_reflect_ownkeys_hook(v8::Isolate* isolate,
+                                             v8::Local<v8::Context> context) {
+    v8::Local<v8::Value> reflect_value;
+    if (!context->Global()
+             ->Get(context, v8_string(isolate, "Reflect"))
+             .ToLocal(&reflect_value) ||
+        !reflect_value->IsObject()) {
+        return;
+    }
+    v8::Local<v8::Object> reflect = reflect_value.As<v8::Object>();
+    v8::Local<v8::Value> ownkeys_value;
+    if (!reflect->Get(context, v8_string(isolate, "ownKeys"))
+             .ToLocal(&ownkeys_value) ||
+        !ownkeys_value->IsFunction()) {
+        return;
+    }
+    v8::Local<v8::Function> wrapper;
+    if (v8::Function::New(context, &reflect_ownkeys_wrapper, ownkeys_value)
+            .ToLocal(&wrapper)) {
+        (void)reflect->Set(context, v8_string(isolate, "ownKeys"), wrapper);
+        reflect_ownkeys_hook_installed_ = true;
+    }
+}
+
+void PageState::watch_reflect_ownkeys(bool enabled, bool break_on_hit) {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    watch_registry_.set_reflect_ownkeys(enabled, break_on_hit);
+    if (enabled && !reflect_ownkeys_hook_installed_) {
+        state_->with_scope(
+            [this](v8::Isolate* isolate, v8::Local<v8::Context> context) {
+                install_reflect_ownkeys_hook(isolate, context);
+            });
+    }
+}
+
+py::list PageState::read_reflect_ownkeys_hits() {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    py::list out;
+    for (const WatchHit& hit : watch_registry_.take_reflect_ownkeys_hits()) {
+        py::dict record;  // Reflect.ownKeys has no propertyKey -> resource_name only
+        record["resource_name"] = hit.resource_name;
+        record["type"] = "Reflect.ownKeys";
+        out.append(record);
+    }
+    return out;
+}
+
 void PageState::install_page(const std::string& base_url,
                              const std::string& html) {
     bootstrap_ = PageBootstrap{html, base_url};
 
     state_ = std::make_shared<ContextState>();
-    // M9-4/M9-5: a fresh generation has pristine (unwrapped) Reflect.get / .has.
+    // M9-4/M9-5/M10-1: a fresh generation has pristine (unwrapped) Reflect.get /
+    // .has / .ownKeys.
     reflect_hook_installed_ = false;
     reflect_has_hook_installed_ = false;
+    reflect_ownkeys_hook_installed_ = false;
     // M9-2: point the new generation at the Page-level watch registry so its
     // host-method dispatch points can record hits and eval() can stamp the current
     // script's resource name. The registry itself outlives generations.
@@ -3793,6 +3882,10 @@ void PageState::install_page(const std::string& base_url,
             // M9-5: same for Reflect.has.
             if (watch_registry_.reflect_has_enabled()) {
                 install_reflect_has_hook(isolate, context);
+            }
+            // M10-1: same for Reflect.ownKeys.
+            if (watch_registry_.reflect_ownkeys_enabled()) {
+                install_reflect_ownkeys_hook(isolate, context);
             }
         });
 }

@@ -43,5 +43,10 @@ void register_page(py::module_& module) {
         // M9-5 Reflect.has monitoring.
         .def("watch_reflect_has", &iv8::PageState::watch_reflect_has,
              py::arg("enabled"), py::arg("break_on_hit"))
-        .def("read_reflect_has_hits", &iv8::PageState::read_reflect_has_hits);
+        .def("read_reflect_has_hits", &iv8::PageState::read_reflect_has_hits)
+        // M10-1 Reflect.ownKeys monitoring.
+        .def("watch_reflect_ownkeys", &iv8::PageState::watch_reflect_ownkeys,
+             py::arg("enabled"), py::arg("break_on_hit"))
+        .def("read_reflect_ownkeys_hits",
+             &iv8::PageState::read_reflect_ownkeys_hits);
 }

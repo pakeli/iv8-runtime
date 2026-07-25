@@ -38,7 +38,8 @@ def test_surface_shape():
                  "read_reflect_get_hits"):
         assert hasattr(iv8.Page, attr)
     assert set(iv8.__all__) == _STD_ALL
-    for attr in ("watch_reflect_own_keys", "watch_object_keys"):
+    # (Reflect.ownKeys monitoring arrived in M10-1 as watch_reflect_ownkeys)
+    for attr in ("watch_object_keys", "watch_function_to_string"):
         assert not hasattr(iv8.Page, attr)
 
 

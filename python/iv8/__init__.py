@@ -721,6 +721,21 @@ UTF-8 text handling. Still **no** ``base64url`` / URL-safe alphabet / ``Buffer``
 ``unescape``. No new Python API / top-level object / exception (error paths are JS
 ``TypeError``).
 
+M9 / M10 add opt-in, second-layer **DevTools / monitoring** methods on ``Page``
+(Python-side only — no new JS global, top-level object, or exception): the Inspector
+attach base ``Page.devtools_url()``; host-method call monitoring ``Page.watch_apis`` /
+``Page.read_watch_api_hits``; and reflection-entry monitoring — ``Page.watch_reflect_get``
+/ ``Page.read_reflect_get_hits`` (``Reflect.get``), ``Page.watch_reflect_has`` /
+``Page.read_reflect_has_hits`` (``Reflect.has``), and M10-1
+``Page.watch_reflect_ownkeys(enabled=True, break_on_hit=False)`` /
+``Page.read_reflect_ownkeys_hits()`` (``Reflect.ownKeys``). Each ``watch_reflect_*`` is
+an independent record channel (read-and-clear) that wraps the corresponding ``Reflect``
+method with a recording hook and delegates to the real one (behavior unchanged);
+``break_on_hit=True`` also pauses an **attached** V8 Inspector session on a hit (else it
+records only). ``Reflect.ownKeys(target)`` has no property key, so its hits carry only
+``resource_name`` + ``type``. See ``docs/m9_summary.md`` / ``docs/m10_1_*`` for the
+authoritative boundary.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free
