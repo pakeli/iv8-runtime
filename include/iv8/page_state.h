@@ -108,6 +108,18 @@ public:
     // dispose().
     pybind11::list read_watch_api_hits();
 
+    // M9-4: enable/disable Reflect.get monitoring. When enabled, globalThis's
+    // Reflect.get is wrapped (per generation) with a delegating hook that records
+    // each call and, when break_on_hit is set and an Inspector session is attached,
+    // pauses (reusing M9-3). Disabling stops recording (gate). Config persists
+    // across load; disposed page raises JSContextDisposedError. Validation done in
+    // the Python facade.
+    void watch_reflect_get(bool enabled, bool break_on_hit);
+    // M9-4: return the Reflect.get hit records ({"property", "resource_name",
+    // "type": "Reflect.get"}) and clear the log (read-and-clear). Empty if none.
+    // Raises JSContextDisposedError after dispose().
+    pybind11::list read_reflect_get_hits();
+
 private:
     // Build a fresh ContextState for `base_url` (location source) and install the
     // page's host objects + global roots + timers into it. Used by the ctor and
@@ -118,6 +130,12 @@ private:
     // register `context`. Called from install_page (when devtools is enabled) and
     // from devtools_enable(); both already hold the isolate scope.
     void install_inspector(v8::Isolate* isolate, v8::Local<v8::Context> context);
+
+    // M9-4: wrap globalThis.Reflect.get with the recording hook for this
+    // generation (once). Called from install_page (when reflect-get watching is on)
+    // and from watch_reflect_get(); both already hold the isolate scope.
+    void install_reflect_get_hook(v8::Isolate* isolate,
+                                  v8::Local<v8::Context> context);
 
     // M9-3: request the current Inspector session to pause (the watch-registry
     // pause callback). A no-op when no session is attached, so break_on_hit
@@ -165,6 +183,9 @@ private:
     // watch_apis() registration persists. Each install_page points the current
     // ContextState at it.
     WatchRegistry watch_registry_;
+    // M9-4: whether the current generation's Reflect.get is already wrapped (reset
+    // per install_page; prevents double-wrapping on repeated watch_reflect_get).
+    bool reflect_hook_installed_ = false;
 };
 
 }  // namespace iv8

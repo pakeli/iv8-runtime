@@ -88,6 +88,40 @@ public:
         return out;
     }
 
+    // M9-4: Reflect.get monitoring — a separate channel from the host-method watch
+    // above (its own enable flag, break mode, and hit log). Configure / query:
+    void set_reflect_get(bool enabled, bool break_on_hit) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        reflect_break_on_hit_ = break_on_hit;
+        reflect_enabled_.store(enabled, std::memory_order_release);
+    }
+    bool reflect_get_enabled() const {
+        return reflect_enabled_.load(std::memory_order_acquire);
+    }
+
+    // Record a Reflect.get hit (`property` is the stringified propertyKey). On a hit
+    // in break mode the pause requester is invoked after the lock is released.
+    void record_reflect_get(const std::string& property) {
+        std::function<void()> pause;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            reflect_hits_.push_back(WatchHit{property, current_resource_});
+            if (reflect_break_on_hit_) {
+                pause = pause_requester_;
+            }
+        }
+        if (pause) {
+            pause();
+        }
+    }
+
+    std::vector<WatchHit> take_reflect_get_hits() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        std::vector<WatchHit> out;
+        out.swap(reflect_hits_);
+        return out;
+    }
+
 private:
     mutable std::mutex mutex_;
     std::atomic<bool> enabled_{false};
@@ -96,6 +130,10 @@ private:
     std::vector<WatchHit> hits_;
     std::string current_resource_;
     std::function<void()> pause_requester_;
+    // M9-4 Reflect.get channel (separate enable/break/log).
+    std::atomic<bool> reflect_enabled_{false};
+    bool reflect_break_on_hit_ = false;
+    std::vector<WatchHit> reflect_hits_;
 };
 
 }  // namespace iv8

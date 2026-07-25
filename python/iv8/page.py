@@ -356,6 +356,44 @@ class Page:
         """
         return self._native.read_watch_api_hits()
 
+    def watch_reflect_get(self, enabled: bool = True,
+                          break_on_hit: bool = False) -> None:
+        """Enable/disable monitoring of ``Reflect.get(target, key[, receiver])`` calls.
+
+        When ``enabled`` is true, this page's ``Reflect.get`` is wrapped with a
+        recording hook (installed per generation) that logs each call's property
+        key; the call itself is delegated to the real ``Reflect.get`` so behavior is
+        unchanged. ``break_on_hit`` behaves exactly as for ``watch_apis``: with
+        ``False`` it only records; with ``True`` a hit additionally pauses the V8
+        Inspector **when a DevTools session is attached** (else it records only — no
+        pause, no error). Disabling (``enabled=False``) stops recording. Calling it
+        again overrides the current switch; the configuration **persists across
+        ``load()``**.
+
+        This phase monitors only ``Reflect.get`` — **not** ``Reflect.has`` /
+        ``Reflect.ownKeys`` / ``Object.*`` / ``Function.prototype.toString``, not
+        plain ``obj.x`` access, and it adds no JS-visible monitoring global. A
+        non-``bool`` ``enabled`` / ``break_on_hit`` raises ``TypeError``; after
+        ``dispose()`` it raises ``JSContextDisposedError``.
+        """
+        if not isinstance(enabled, bool):
+            raise TypeError("enabled must be a bool")
+        if not isinstance(break_on_hit, bool):
+            raise TypeError("break_on_hit must be a bool")
+        self._native.watch_reflect_get(enabled, break_on_hit)
+
+    def read_reflect_get_hits(self) -> list:
+        """Return the recorded ``Reflect.get`` hits and clear the log (read-and-clear).
+
+        Each hit is a ``dict`` with ``property`` (the stringified property key —
+        e.g. ``"x"`` for a string key, ``"5"`` for a numeric key), ``resource_name``
+        (the executing script's resource name, or ``""``), and ``type`` (always
+        ``"Reflect.get"``). Returns ``[]`` if nothing was hit; a subsequent call
+        returns ``[]`` until new hits accumulate. Raises ``JSContextDisposedError``
+        after ``dispose()``.
+        """
+        return self._native.read_reflect_get_hits()
+
     def dispose(self) -> None:
         """Release the page's context-owned native resources. Idempotent."""
         # M9-1: stop the DevTools server first (best-effort) so its port is freed;

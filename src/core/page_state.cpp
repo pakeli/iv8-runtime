@@ -3261,6 +3261,72 @@ private:
     std::vector<std::string> outbox_;
 };
 
+// M9-4: stringify a Reflect.get propertyKey without ever throwing. A string/number
+// key uses ToString ("x" / "5"); a Symbol key uses its description ("Symbol(desc)")
+// so a symbol-keyed Reflect.get is not turned into a TypeError.
+std::string reflect_property_string(v8::Isolate* isolate,
+                                    v8::Local<v8::Context> context,
+                                    v8::Local<v8::Value> key) {
+    if (key->IsSymbol()) {
+        v8::Local<v8::Value> desc = key.As<v8::Symbol>()->Description(isolate);
+        std::string inner;
+        if (desc->IsString()) {
+            v8::String::Utf8Value utf8(isolate, desc);
+            if (*utf8 != nullptr) {
+                inner.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+            }
+        }
+        return "Symbol(" + inner + ")";
+    }
+    v8::Local<v8::String> str;
+    if (key->ToString(context).ToLocal(&str)) {
+        v8::String::Utf8Value utf8(isolate, str);
+        if (*utf8 != nullptr) {
+            return std::string(*utf8, static_cast<std::size_t>(utf8.length()));
+        }
+    }
+    return std::string();
+}
+
+// M9-4: record a Reflect.get hit if reflect-get watching is enabled (else no-op).
+void reflect_record(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                    v8::Local<v8::Value> key) {
+    ContextState* state = state_from_isolate(isolate);
+    if (state == nullptr) {
+        return;
+    }
+    WatchRegistry* registry = state->watch_registry();
+    if (registry == nullptr || !registry->reflect_get_enabled()) {
+        return;
+    }
+    registry->record_reflect_get(reflect_property_string(isolate, context, key));
+}
+
+// M9-4: the Reflect.get hook — records the propertyKey (arg 1), then delegates to
+// the original Reflect.get (carried as this function's Data) so semantics are
+// exactly preserved. Recording is gated inside reflect_record, so a disabled hook
+// is a transparent pass-through.
+void reflect_get_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    if (info.Length() > 1) {
+        reflect_record(isolate, context, info[1]);
+    }
+    v8::Local<v8::Function> original = info.Data().As<v8::Function>();
+    std::vector<v8::Local<v8::Value>> args;
+    args.reserve(static_cast<std::size_t>(info.Length()));
+    for (int i = 0; i < info.Length(); i++) {
+        args.push_back(info[i]);
+    }
+    v8::Local<v8::Value> result;
+    if (original
+            ->Call(context, v8::Undefined(isolate), info.Length(), args.data())
+            .ToLocal(&result)) {
+        info.GetReturnValue().Set(result);
+    }
+    // else: the original threw; the pending exception propagates unchanged.
+}
+
 }  // namespace
 
 // M9-1: the current generation's V8 Inspector objects (opaque in the header). The
@@ -3387,11 +3453,68 @@ py::list PageState::read_watch_api_hits() {
     return out;
 }
 
+void PageState::install_reflect_get_hook(v8::Isolate* isolate,
+                                         v8::Local<v8::Context> context) {
+    v8::Local<v8::Value> reflect_value;
+    if (!context->Global()
+             ->Get(context, v8_string(isolate, "Reflect"))
+             .ToLocal(&reflect_value) ||
+        !reflect_value->IsObject()) {
+        return;
+    }
+    v8::Local<v8::Object> reflect = reflect_value.As<v8::Object>();
+    v8::Local<v8::Value> get_value;
+    if (!reflect->Get(context, v8_string(isolate, "get")).ToLocal(&get_value) ||
+        !get_value->IsFunction()) {
+        return;
+    }
+    // Carry the ORIGINAL Reflect.get as the wrapper's Data so it can delegate.
+    v8::Local<v8::Function> wrapper;
+    if (v8::Function::New(context, &reflect_get_wrapper, get_value)
+            .ToLocal(&wrapper)) {
+        (void)reflect->Set(context, v8_string(isolate, "get"), wrapper);
+        reflect_hook_installed_ = true;
+    }
+}
+
+void PageState::watch_reflect_get(bool enabled, bool break_on_hit) {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    watch_registry_.set_reflect_get(enabled, break_on_hit);
+    // Install the hook on the current generation now (once). When disabled, the
+    // existing wrapper stays but is a transparent pass-through (gated on the flag);
+    // a later load starts fresh (no hook installed unless still enabled).
+    if (enabled && !reflect_hook_installed_) {
+        state_->with_scope(
+            [this](v8::Isolate* isolate, v8::Local<v8::Context> context) {
+                install_reflect_get_hook(isolate, context);
+            });
+    }
+}
+
+py::list PageState::read_reflect_get_hits() {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    py::list out;
+    for (const WatchHit& hit : watch_registry_.take_reflect_get_hits()) {
+        py::dict record;
+        record["property"] = hit.path;  // WatchHit.path carries the propertyKey
+        record["resource_name"] = hit.resource_name;
+        record["type"] = "Reflect.get";
+        out.append(record);
+    }
+    return out;
+}
+
 void PageState::install_page(const std::string& base_url,
                              const std::string& html) {
     bootstrap_ = PageBootstrap{html, base_url};
 
     state_ = std::make_shared<ContextState>();
+    // M9-4: a fresh generation has a pristine (unwrapped) Reflect.get.
+    reflect_hook_installed_ = false;
     // M9-2: point the new generation at the Page-level watch registry so its
     // host-method dispatch points can record hits and eval() can stamp the current
     // script's resource name. The registry itself outlives generations.
@@ -3569,6 +3692,13 @@ void PageState::install_page(const std::string& base_url,
             // stable Python-side). When never enabled, this is skipped entirely.
             if (devtools_enabled_) {
                 install_inspector(isolate, context);
+            }
+            // M9-4: re-wrap Reflect.get for this fresh generation if reflect-get
+            // watching is enabled (config persists across load). install_page reset
+            // reflect_hook_installed_ to false above, so this wraps the pristine
+            // native Reflect.get exactly once.
+            if (watch_registry_.reflect_get_enabled()) {
+                install_reflect_get_hook(isolate, context);
             }
         });
 }

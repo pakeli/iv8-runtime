@@ -34,5 +34,10 @@ void register_page(py::module_& module) {
              py::arg("break_on_hit"))
         .def("read_watch_api_hits", &iv8::PageState::read_watch_api_hits)
         // M9-3 internal pause probe (public surface stays Page.watch_apis only).
-        .def("devtools_pause_count", &iv8::PageState::devtools_pause_count);
+        .def("devtools_pause_count", &iv8::PageState::devtools_pause_count)
+        // M9-4 Reflect.get monitoring (public surface is Page.watch_reflect_get /
+        // Page.read_reflect_get_hits — bool validation done in the Python facade).
+        .def("watch_reflect_get", &iv8::PageState::watch_reflect_get,
+             py::arg("enabled"), py::arg("break_on_hit"))
+        .def("read_reflect_get_hits", &iv8::PageState::read_reflect_get_hits);
 }
