@@ -1,5 +1,11 @@
 # iv8-runtime M1 Implementation Plan
 
+> **Scope note.** This is the **completed** M1 delivery plan, kept as a historical
+> record of how the kernel was built and phased. It is not the current roadmap — the
+> active task queue is `docs/next_tasks.md`, and the current surface is indexed in
+> `docs/runtime_surface.md`. Its "add no browser APIs / timers / Inspector" delivery
+> principle applied to M1 only; those were added deliberately in M2–M10.
+
 ## 1. Objective
 
 M1 delivers a minimal, production-oriented Python extension that embeds a pinned Google V8 release. The milestone implements only the execution kernel defined by `architecture.md` and the public behavior frozen in `api_contract.md`.

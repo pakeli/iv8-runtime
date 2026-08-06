@@ -1,5 +1,13 @@
 # iv8-runtime M1 Architecture
 
+> **Scope note.** This document describes the **M1 execution kernel** and remains the
+> source of truth for ownership and lifecycle (process-wide V8 state, one isolate per
+> `JSContext`, disposal order, the GIL boundary, the failure model). Its **§2
+> Non-Goals list is historical**: the implementation at `HEAD` has since built the
+> `Page` runtime, a minimal DOM, timers, and Inspector/monitoring features on top of
+> the extension points in §11 — read §2 as "excluded from M1", not "absent from the
+> project". For the current surface see `docs/runtime_surface.md`.
+
 ## 1. Purpose
 
 M1 establishes a small, stable Python-to-V8 execution kernel. It is intentionally narrower than iv8 and does not emulate a browser.

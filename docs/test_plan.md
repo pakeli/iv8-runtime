@@ -1,5 +1,11 @@
 # iv8-runtime M1 Test Plan
 
+> **Scope note.** This plan covers the **M1 kernel** suite. The test tree at `HEAD` is
+> much larger: each later milestone adds per-phase tests plus a `test_m*_contract.py`
+> collar suite that freezes that milestone's boundary. The principles in §2 still
+> govern all of them. For what the suite actually covers today, see
+> `docs/runtime_surface.md` §5 and the milestone summaries.
+
 ## 1. Purpose
 
 This plan verifies the public contract in `api_contract.md` and the lifecycle, ownership, GIL, and isolation requirements in `architecture.md`.

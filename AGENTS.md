@@ -6,8 +6,9 @@ This file defines project-specific guidance for the `iv8-runtime` repository.
 
 - Build a Python native extension that embeds Google V8.
 - Use C++20, pybind11, CMake, scikit-build-core, and pytest.
-- M1 covers only V8 initialization, `JSContext`, JavaScript evaluation, value conversion, exception translation, disposal, and isolated multi-context execution.
-- Do not implement browser APIs, DOM, networking, timers, DevTools, or Python callbacks during M1.
+- M1 covers only V8 initialization, `JSContext`, JavaScript evaluation, value conversion, exception translation, disposal, and isolated multi-context execution. **M1 is complete** — the two rules below are its historical boundary, kept because they still describe what belongs *outside* the kernel.
+- Do not implement browser APIs, DOM, networking, timers, DevTools, or Python callbacks *in the M1 kernel*. The hosted `Page` runtime (M2–M8) and the DevTools/monitoring layer (M9–M10) own those concerns instead, each within its own milestone boundary; see `docs/runtime_surface.md`.
+- Work at `HEAD` is milestone-scoped, not M1-scoped: implement what the current milestone approves and nothing beyond it. Networking, navigation, and JS→Python callbacks remain unimplemented across **every** milestone so far.
 
 ## Architecture Rules
 
@@ -51,7 +52,9 @@ This file defines project-specific guidance for the `iv8-runtime` repository.
 
 ## Change Control
 
-- Treat `docs/api_contract.md` as the public M1 API contract.
+- Treat `docs/api_contract.md` as the public M1 `JSContext` API contract — **not** as
+  the whole current runtime contract. The later `Page` / DOM / monitoring surface is
+  frozen by the per-milestone summaries; `docs/runtime_surface.md` indexes all of it.
 - Treat `docs/architecture.md` as the source of truth for ownership and lifecycle.
 - Treat `docs/stpyv8_reference.md` as design evidence, not as a compatibility requirement or source-copying instruction.
 - If implementation requires changing either contract, update the document first and explain the reason.

@@ -1,8 +1,21 @@
 # iv8-runtime M1 API Contract
 
+> **Scope note.** This document is the frozen contract for the **M1 `JSContext`
+> kernel only**. It is *not* the complete current runtime contract. The
+> implementation at `HEAD` has progressed through M2–M10 and additionally exposes a
+> hosted `Page` runtime (browser-like globals, a minimal DOM, scripts/lifecycle,
+> forms, web-platform globals) plus a second-layer DevTools/monitoring surface. For
+> the full picture start at **`docs/runtime_surface.md`**; for the frozen boundary of
+> a specific later feature, read that milestone's summary. Everything below remains
+> authoritative for `JSContext` and is unchanged by the later milestones.
+
 ## 1. Status
 
 This document defines the public Python contract for M1. Implementations must not change names or behavior without updating this document first.
+
+M1 is complete and its contract is stable. Later milestones **add** surface (chiefly
+`Page`) rather than altering anything specified here, so a `JSContext` behavior
+question is answered by this file alone.
 
 ## 2. Package Surface
 
