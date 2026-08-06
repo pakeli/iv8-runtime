@@ -12,6 +12,34 @@
 
 namespace iv8 {
 
+// M11-1 configurable host-environment baseline. These are the values the page's
+// read-only environment surface reports: navigator (userAgent / platform /
+// language / webdriver), screen (width / height / availWidth / availHeight), and
+// window (devicePixelRatio / innerWidth / innerHeight).
+//
+// This struct carries NO defaults. The Python facade (python/iv8/page.py) owns the
+// single default template and always passes a fully-resolved, already-validated set
+// of values, so the native layer never has to merge or guess. Every value is a fixed
+// constant chosen by the caller — nothing here is derived from the real host OS,
+// display, or locale, which keeps a page deterministic and identical across
+// platforms.
+//
+// It is Page-level state: owned by PageState, it outlives each generation, so a
+// load() reinstalls the environment surface with the SAME values.
+struct HostEnvironment {
+    std::string user_agent;
+    std::string platform;
+    std::string language;
+    bool webdriver = false;
+    int screen_width = 0;
+    int screen_height = 0;
+    int avail_width = 0;
+    int avail_height = 0;
+    double device_pixel_ratio = 0.0;
+    int inner_width = 0;
+    int inner_height = 0;
+};
+
 class ContextState;
 // M9-1 opaque holder for the V8 Inspector objects (defined in page_state.cpp so
 // v8-inspector.h stays out of this header). Destroyed via the out-of-line
@@ -30,7 +58,11 @@ struct DevToolsInspector;
 // later M2 phases). Bound to Python as _core.Page.
 class PageState {
 public:
-    PageState();
+    // M11-1: `environment` is the page's fixed host-environment baseline, already
+    // validated and fully resolved by the Python facade (every field is set). It is
+    // stored for the page's lifetime and re-applied by every install_page, so a
+    // load() generation reports identical values.
+    explicit PageState(HostEnvironment environment);
     ~PageState();
 
     PageState(const PageState&) = delete;
@@ -199,6 +231,11 @@ private:
     // down (in the body) before the host objects are destroyed (members run in
     // reverse declaration order) — no dangling internal-field pointer is ever
     // dereferenced.
+    // M11-1 Page-level host-environment baseline. Declared BEFORE host_objects_ so
+    // that in ~PageState it is destroyed AFTER them (members are destroyed in
+    // reverse declaration order) — NavigatorHost / ScreenHost hold a raw pointer to
+    // it and must never outlive it. Fixed after construction (no setter).
+    HostEnvironment environment_;
     std::shared_ptr<ContextState> state_;
     std::vector<std::unique_ptr<HostObject>> host_objects_;
     // M3-4 window event target: holds window's event listeners. window itself

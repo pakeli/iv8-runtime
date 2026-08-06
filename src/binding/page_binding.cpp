@@ -1,3 +1,7 @@
+#include <memory>
+#include <string>
+#include <utility>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // M9-2: list[str] <-> std::vector<std::string> for watch_apis
 
@@ -11,7 +15,27 @@ namespace py = pybind11;
 // JSContextBusyError) since PageState delegates to the M1 ContextState.
 void register_page(py::module_& module) {
     py::class_<iv8::PageState>(module, "Page")
-        .def(py::init<>())
+        // M11-1: the host-environment baseline arrives as a dict that the Python
+        // facade has ALREADY validated and fully resolved (every key present, every
+        // value the right type), so this only unpacks it — no defaults, no merging,
+        // and no re-validation here. A missing key would be a facade bug, so `cast`
+        // is allowed to raise rather than silently substituting a value.
+        .def(py::init([](const py::dict& environment) {
+            iv8::HostEnvironment resolved;
+            resolved.user_agent = environment["userAgent"].cast<std::string>();
+            resolved.platform = environment["platform"].cast<std::string>();
+            resolved.language = environment["language"].cast<std::string>();
+            resolved.webdriver = environment["webdriver"].cast<bool>();
+            resolved.screen_width = environment["screenWidth"].cast<int>();
+            resolved.screen_height = environment["screenHeight"].cast<int>();
+            resolved.avail_width = environment["availWidth"].cast<int>();
+            resolved.avail_height = environment["availHeight"].cast<int>();
+            resolved.device_pixel_ratio =
+                environment["devicePixelRatio"].cast<double>();
+            resolved.inner_width = environment["innerWidth"].cast<int>();
+            resolved.inner_height = environment["innerHeight"].cast<int>();
+            return std::make_unique<iv8::PageState>(std::move(resolved));
+        }), py::arg("environment"))
         .def_property_readonly("disposed", &iv8::PageState::disposed)
         .def("eval", &iv8::PageState::eval, py::arg("source"), py::arg("to_py"),
              py::arg("name"))

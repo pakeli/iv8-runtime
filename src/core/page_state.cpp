@@ -168,11 +168,17 @@ v8::Local<v8::Value> v8_string(v8::Isolate* isolate, const std::string& s) {
         .ToLocalChecked();
 }
 
-// M2-3 minimal navigator (read-only). All values are fixed constants — static,
-// deterministic, and IDENTICAL across Linux/Windows (never OS-derived). No
-// feature detection, no fingerprinting surface beyond these four.
+// M2-3 minimal navigator (read-only), configurable since M11-1. Values come from
+// the page's HostEnvironment, which the Python facade always supplies fully
+// resolved — this class holds no defaults and never derives a value from the host
+// OS, display, or locale, so a page is deterministic and identical across
+// Linux/Windows. Still no feature detection and no fingerprinting surface beyond
+// these four (no UA-CH / userAgentData).
 class NavigatorHost : public HostObject {
 public:
+    explicit NavigatorHost(const HostEnvironment* environment)
+        : environment_(environment) {}
+
     std::string global_name() const override { return "navigator"; }
 
     std::vector<std::string> property_names() const override {
@@ -184,16 +190,16 @@ public:
     v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
                                       const std::string& name) override {
         if (name == "userAgent") {
-            return v8_string(isolate, "Mozilla/5.0 (compatible; iv8)");
+            return v8_string(isolate, environment_->user_agent);
         }
         if (name == "platform") {
-            return v8_string(isolate, "iv8");
+            return v8_string(isolate, environment_->platform);
         }
         if (name == "language") {
-            return v8_string(isolate, "en-US");
+            return v8_string(isolate, environment_->language);
         }
         if (name == "webdriver") {
-            return v8::Boolean::New(isolate, false);  // frozen direction
+            return v8::Boolean::New(isolate, environment_->webdriver);
         }
         return v8::Undefined(isolate);
     }
@@ -203,6 +209,56 @@ public:
         const v8::FunctionCallbackInfo<v8::Value>&) override {
         return v8::Undefined(isolate);  // navigator exposes no methods
     }
+
+private:
+    // Owned by PageState (outlives every generation), so this raw pointer stays
+    // valid for as long as this host object is installed.
+    const HostEnvironment* environment_;
+};
+
+// M11-1 minimal screen (read-only). Four static dimensions sourced from the page's
+// HostEnvironment. Deliberately NOT a full Screen object: no colorDepth /
+// pixelDepth / availLeft / availTop / orientation, no ScreenOrientation, and no
+// media-query or layout integration. avail* are independent configured values, not
+// computed from width/height.
+class ScreenHost : public HostObject {
+public:
+    explicit ScreenHost(const HostEnvironment* environment)
+        : environment_(environment) {}
+
+    std::string global_name() const override { return "screen"; }
+
+    std::vector<std::string> property_names() const override {
+        return {"width", "height", "availWidth", "availHeight"};
+    }
+
+    std::vector<std::string> method_names() const override { return {}; }
+
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+                                      const std::string& name) override {
+        if (name == "width") {
+            return v8::Integer::New(isolate, environment_->screen_width);
+        }
+        if (name == "height") {
+            return v8::Integer::New(isolate, environment_->screen_height);
+        }
+        if (name == "availWidth") {
+            return v8::Integer::New(isolate, environment_->avail_width);
+        }
+        if (name == "availHeight") {
+            return v8::Integer::New(isolate, environment_->avail_height);
+        }
+        return v8::Undefined(isolate);
+    }
+
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
+        const v8::FunctionCallbackInfo<v8::Value>&) override {
+        return v8::Undefined(isolate);  // screen exposes no methods
+    }
+
+private:
+    const HostEnvironment* environment_;
 };
 
 // The static components of a decomposed URL (WHATWG-style names). Only the
@@ -3448,7 +3504,8 @@ struct DevToolsInspector {
     std::unique_ptr<v8_inspector::V8InspectorSession> session;
 };
 
-PageState::PageState() {
+PageState::PageState(HostEnvironment environment)
+    : environment_(std::move(environment)) {
     // M9-3: the watch registry requests an Inspector pause through this Page (set
     // once; the registry outlives no generation and is a member of this Page).
     watch_registry_.set_pause_requester([this]() { request_inspector_pause(); });
@@ -3808,7 +3865,10 @@ void PageState::install_page(const std::string& base_url,
     host_objects_.clear();
     host_objects_.push_back(std::make_unique<HostProbe>());    // M2-1 probe
     host_objects_.push_back(std::make_unique<ConsoleHost>());  // M2-2 console
-    host_objects_.push_back(std::make_unique<NavigatorHost>());  // M2-3 navigator
+    // M2-3 navigator + M11-1 screen, both sourced from the Page-level environment_
+    // (which outlives generations), so every load() reports identical values.
+    host_objects_.push_back(std::make_unique<NavigatorHost>(&environment_));
+    host_objects_.push_back(std::make_unique<ScreenHost>(&environment_));  // M11-1
     host_objects_.push_back(  // M2-3 location, sourced from this page's base URL
         std::make_unique<LocationHost>(decompose_url(base_url)));
     auto document = std::make_unique<DocumentHost>(html, base_url);  // M2-6
@@ -3844,6 +3904,33 @@ void PageState::install_page(const std::string& base_url,
                                     &set_interval_callback);
             install_global_function(isolate, context, global, "clearInterval",
                                     &clear_timer_callback);
+            // M11-1 window.devicePixelRatio / innerWidth / innerHeight. window is
+            // the intrinsic global object, so these are read-only data properties on
+            // the global rather than host-object accessors. Values come from the
+            // Page-level environment_ and are re-applied on every generation, so a
+            // load() reports the same numbers. Read-only (ReadOnly|DontDelete): a JS
+            // write is a silent no-op in sloppy mode / TypeError in strict, matching
+            // navigator and screen. No outerWidth / screenX / scroll / resize /
+            // matchMedia surface.
+            {
+                const auto define_readonly = [&](const char* name,
+                                                 v8::Local<v8::Value> value) {
+                    (void)global->DefineOwnProperty(
+                        context,
+                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
+                        value,
+                        static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                           v8::DontDelete));
+                };
+                define_readonly(
+                    "devicePixelRatio",
+                    v8::Number::New(isolate, environment_.device_pixel_ratio));
+                define_readonly("innerWidth",
+                                v8::Integer::New(isolate, environment_.inner_width));
+                define_readonly(
+                    "innerHeight",
+                    v8::Integer::New(isolate, environment_.inner_height));
+            }
             // M3-3 minimal Event constructor (global `Event`). document/element
             // expose addEventListener/removeEventListener/dispatchEvent via their
             // host-object methods; this is the event value they dispatch.

@@ -738,6 +738,33 @@ records only). ``Reflect.ownKeys(target)`` / ``Object.keys(target)`` have no pro
 key, so their hits carry only ``resource_name`` + ``type``. See ``docs/m9_summary.md`` /
 ``docs/m10_1_*`` / ``docs/m10_2_*`` for the authoritative boundary.
 
+M11-1 (configurable host environment) opens the compatibility-first M11 line with the
+first **Python-side** `Page` addition since M3-5: the optional constructor parameter
+``Page(environment=...)`` plus the static template reader
+``Page.get_default_environment()``. The environment is a mapping over exactly eleven
+keys — ``userAgent`` / ``platform`` / ``language`` (``str``), ``webdriver`` (``bool``),
+``screenWidth`` / ``screenHeight`` / ``availWidth`` / ``availHeight`` / ``innerWidth``
+/ ``innerHeight`` (``int``), and ``devicePixelRatio`` (``int`` or ``float``, stored as
+``float``) — and it configures the page's **read-only** environment surface:
+``navigator.userAgent`` / ``.platform`` / ``.language`` / ``.webdriver`` (previously
+fixed constants, now configurable), the new ``screen`` global (``width`` / ``height``
+/ ``availWidth`` / ``availHeight``), and ``window.devicePixelRatio`` /
+``innerWidth`` / ``innerHeight``. Omitted keys inherit the documented defaults, and
+the defaults reproduce the previous ``navigator`` constants, so an unconfigured page
+is behaviourally unchanged. Every value is a fixed constant — never derived from the
+real host OS, display, or locale — so pages stay deterministic and identical across
+platforms. The environment is **fixed for the page's lifetime** (no setter) and is
+re-applied to each generation, so repeated ``load()`` calls report identical values.
+Validation is strict and happens entirely in the Python facade **before** any native
+page exists: a non-mapping, an unknown key, or a wrong-typed value raises
+``TypeError`` with nothing partially installed (in a V8-free build this precedes even
+the ``RuntimeError``). The surface is read-only from JS (a write is a silent no-op in
+sloppy mode, a ``TypeError`` in strict). Still **no** setter / re-configuration API,
+no ``outerWidth`` / ``screenX`` / ``colorDepth`` / ``orientation`` / ``matchMedia`` /
+scroll / resize surface, no ``navigator.userAgentData`` (UA-CH), no network, no
+animation frames, and no ``canvas`` / ``webgl``. See
+``docs/m11_1_host_environment.md`` for the authoritative boundary.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

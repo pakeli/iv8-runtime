@@ -26,6 +26,93 @@ from .errors import JSContextDisposedError, JSError
 
 __all__ = ["Page"]
 
+# M11-1 host-environment baseline. This mapping is the SINGLE source of truth for
+# the default environment: the native layer holds no defaults of its own and always
+# receives a fully-resolved set of values from here. Every value is a fixed,
+# deterministic constant — never derived from the host OS, screen, or locale — so a
+# page reports identical values on Linux and Windows. The four navigator values match
+# the constants the M2-3 navigator shipped with, so the default page is unchanged.
+_DEFAULT_ENVIRONMENT = {
+    "userAgent": "Mozilla/5.0 (compatible; iv8)",
+    "platform": "iv8",
+    "language": "en-US",
+    "webdriver": False,
+    "screenWidth": 1920,
+    "screenHeight": 1080,
+    "availWidth": 1920,
+    "availHeight": 1040,
+    "devicePixelRatio": 1.0,
+    "innerWidth": 1280,
+    "innerHeight": 720,
+}
+
+# Per-key type rules for _normalize_environment. The integer keys reject `bool`
+# explicitly (in Python `bool` is a subclass of `int`, so `isinstance(True, int)` is
+# True and a stray boolean would otherwise pass as a dimension).
+_STR_KEYS = ("userAgent", "platform", "language")
+_BOOL_KEYS = ("webdriver",)
+_INT_KEYS = (
+    "screenWidth",
+    "screenHeight",
+    "availWidth",
+    "availHeight",
+    "innerWidth",
+    "innerHeight",
+)
+_FLOAT_KEYS = ("devicePixelRatio",)
+
+
+def _normalize_environment(environment):
+    """Validate the M11-1 ``environment`` input and return a complete environment.
+
+    ``environment`` must be ``None`` (or omitted) or a mapping whose keys are a
+    subset of ``_DEFAULT_ENVIRONMENT``. The result is always a full dict with all
+    eleven keys: supplied values override the defaults and the rest are inherited.
+
+    Validation is strict and happens entirely here, before any native page state
+    exists — so a bad environment can never leave a partially-installed page:
+
+    - a non-mapping ``environment`` raises ``TypeError``;
+    - an unknown key raises ``TypeError`` (the key set is closed);
+    - a value of the wrong type for its key raises ``TypeError``.
+
+    ``devicePixelRatio`` accepts an ``int`` or a ``float`` and is stored as
+    ``float``; every other key requires its exact type.
+    """
+    resolved = dict(_DEFAULT_ENVIRONMENT)
+    if environment is None:
+        return resolved
+    if not isinstance(environment, Mapping):
+        raise TypeError("environment must be a mapping")
+    for key in environment:
+        if key not in _DEFAULT_ENVIRONMENT:
+            raise TypeError(f"unknown environment key: {key!r}")
+    for key in _STR_KEYS:
+        if key in environment:
+            value = environment[key]
+            if not isinstance(value, str):
+                raise TypeError(f"environment[{key!r}] must be a str")
+            resolved[key] = value
+    for key in _BOOL_KEYS:
+        if key in environment:
+            value = environment[key]
+            if not isinstance(value, bool):
+                raise TypeError(f"environment[{key!r}] must be a bool")
+            resolved[key] = value
+    for key in _INT_KEYS:
+        if key in environment:
+            value = environment[key]
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise TypeError(f"environment[{key!r}] must be an int")
+            resolved[key] = value
+    for key in _FLOAT_KEYS:
+        if key in environment:
+            value = environment[key]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise TypeError(f"environment[{key!r}] must be a real number")
+            resolved[key] = float(value)
+    return resolved
+
 
 def _normalize_scripts(scripts):
     """Validate the M3-1 ``scripts`` input and return a list of (name, code).
@@ -80,16 +167,58 @@ class Page:
     Lifecycle delegates to the owned context, so overlapping/after-dispose
     operations raise the same ``JSContextBusyError`` / ``JSContextDisposedError``
     as ``JSContext``.
+
+    M11-1 adds the optional ``environment`` constructor parameter — a mapping that
+    configures the page's read-only host-environment baseline (see
+    :meth:`get_default_environment` for the accepted keys). It is fixed for the
+    page's lifetime: there is no setter, and every ``load()`` generation reports the
+    same values. Omitting it yields the documented defaults.
     """
 
-    def __init__(self) -> None:
+    @staticmethod
+    def get_default_environment() -> dict:
+        """Return the M11-1 default host-environment template as a plain ``dict``.
+
+        The result is a **fresh copy**, so mutating it never affects this class, any
+        existing page, or a later ``Page()``. Its keys are exactly the keys
+        ``Page(environment=...)`` accepts:
+
+        ``userAgent`` / ``platform`` / ``language`` (``str``), ``webdriver``
+        (``bool``), ``screenWidth`` / ``screenHeight`` / ``availWidth`` /
+        ``availHeight`` / ``innerWidth`` / ``innerHeight`` (``int``), and
+        ``devicePixelRatio`` (``float``).
+
+        The intended use is to read the template, override the keys you care about,
+        and pass it back:
+
+        ```python
+        env = iv8.Page.get_default_environment()
+        env["userAgent"] = "custom-agent"
+        page = iv8.Page(environment=env)
+        ```
+
+        Every default is a fixed constant — never derived from the host OS, display,
+        or locale — so pages are deterministic and identical across platforms. It is
+        callable on the class (no page needed) and in a V8-free skeleton build, since
+        it touches no native state.
+        """
+        return dict(_DEFAULT_ENVIRONMENT)
+
+    def __init__(self, environment=None) -> None:
+        # M11-1: validate and resolve the environment BEFORE the V8-link check and
+        # before any native object exists, so a bad environment raises TypeError
+        # without creating a page or partially installing anything.
+        resolved_environment = _normalize_environment(environment)
         if not _core._v8_linked:
             raise RuntimeError(
                 "this build does not link V8; Page is unavailable "
                 "(rebuild with IV8_LINK_V8=ON)"
             )
+        # M11-1: the resolved environment is Page-level state — the native layer
+        # re-reads it on every generation, so load() keeps the same values.
+        self._environment = resolved_environment
         # Native page holder: creates the context and installs host objects.
-        self._native = _core.Page()
+        self._native = _core.Page(resolved_environment)
         # M3-2 page lifecycle: a fresh page has its (blank) default generation
         # installed, so it starts "complete". load() drives loading -> complete.
         self._ready_state = "complete"
