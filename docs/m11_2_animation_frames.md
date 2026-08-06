@@ -70,8 +70,9 @@ M11-2 deliberately does **not** add:
   pump;
 - a combined `run_event_loop()` / `run_until_idle()` / `tick()` driver, or a
   "run N frames" helper — one call is one frame;
-- `requestIdleCallback` / `cancelIdleCallback`, `queueMicrotask`, or
-  `requestPostAnimationFrame`;
+- `queueMicrotask` or `requestPostAnimationFrame`. (`requestIdleCallback` /
+  `cancelIdleCallback` were also out of scope for M11-2; they landed separately in
+  **M11-3** — see `docs/m11_3_idle_callbacks.md`.)
 - rendering, layout, paint, compositing, or `<canvas>` / WebGL — a frame callback runs
   JavaScript and nothing else is observable;
 - any relationship to `Page.ready_state` or the M3-4/M3-6 load lifecycle; a `load()`

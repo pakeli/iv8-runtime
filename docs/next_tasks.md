@@ -119,7 +119,30 @@ Boundary and non-goals: `docs/m11_2_animation_frames.md`. Tests:
 Like `M11-1`, this slice was chosen by direction rather than from a ranked
 source-backed survey. Priority 4 below is still outstanding and now covers `M11-3`.
 
-## Priority 4: Build the ranked compatibility backlog and pick M11-3
+## Priority 3c: Third M11 compatibility slice — DONE (`2026-08-06`)
+
+### What landed
+
+`M11-3`: **`requestIdleCallback` / `cancelIdleCallback` with a manual idle pump**. The
+two JS globals plus the Python-side `Page.run_idle_callbacks()`, the only trigger. Same
+manual model as M11-2: no clock, thread, or automatic loop; one call runs one round (the
+callbacks queued when it began, in registration order), and a re-request lands in the
+next round. Each callback receives a minimal `IdleDeadline`-style object — read-only
+`didTimeout` (always false) and `timeRemaining()` (a fixed 50ms) — deterministic by
+design. `options.timeout` is type-validated (malformed values throw `TypeError` before
+anything is queued) but has **no firing semantics**, which is the slice's headline
+non-goal. The idle queue is independent of the timers, animation frames, and microtasks,
+with its own handle space.
+
+Boundary and non-goals: `docs/m11_3_idle_callbacks.md`. Report:
+`docs/m11_3_report.md`. Tests: `test/test_idle_callbacks.py`.
+
+### Deliberately not done
+
+Like M11-1 and M11-2, this slice was chosen by direction rather than from a ranked
+source-backed survey. Priority 4 below is still outstanding and now covers `M11-4`.
+
+## Priority 4: Build the ranked compatibility backlog and pick M11-4
 
 ### Goal
 
@@ -127,8 +150,8 @@ Replace per-slice intuition with a documented, ranked compatibility backlog.
 
 ### Why this matters
 
-- `M11-1` and `M11-2` both landed without a source-backed gap matrix, so slice choice
-  is still direction-driven;
+- `M11-1`, `M11-2` and `M11-3` all landed without a source-backed gap matrix, so slice
+  choice is still direction-driven;
 - `docs/m11_compatibility_plan.md` §13 leaves open whether a long-term compatibility
   matrix should be maintained at all.
 
@@ -136,12 +159,12 @@ Replace per-slice intuition with a documented, ranked compatibility backlog.
 
 - a source-backed compatibility survey or matrix against the target community surface;
 - a ranked shortlist of remaining slices;
-- one chosen `M11-3` slice with acceptance criteria.
+- one chosen `M11-4` slice with acceptance criteria.
 
 ### Acceptance
 
 - the backlog is written down and ranked;
-- `M11-3` is selected from it with explicit scope, non-goals, and tests.
+- `M11-4` is selected from it with explicit scope, non-goals, and tests.
 
 ## Priority 5: Refresh stale build/CI comments
 

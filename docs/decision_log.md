@@ -110,7 +110,7 @@ The planning artifact for this decision is `docs/m11_compatibility_plan.md`.
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-3`?
+### A. Which concrete compatibility slice becomes `M11-4`?
 
 Settled and landed so far:
 
@@ -120,11 +120,19 @@ Settled and landed so far:
   `docs/m11_1_host_environment.md`.
 - `M11-2` — **`requestAnimationFrame` / `cancelAnimationFrame`** with the manual
   `Page.run_animation_frame()` pump. See `docs/m11_2_animation_frames.md`.
+- `M11-3` — **`requestIdleCallback` / `cancelIdleCallback`** with the manual
+  `Page.run_idle_callbacks()` pump. `options.timeout` is validated but deliberately
+  not implemented. See `docs/m11_3_idle_callbacks.md`.
 
-Still open: `M11-3`. Both landed slices were chosen by direction rather than from a
-ranked source-backed survey, so the compatibility matrix that was supposed to drive
+Still open: `M11-4`. All three landed slices were chosen by direction rather than from
+a ranked source-backed survey, so the compatibility matrix that was supposed to drive
 slice selection still does not exist. Building it is `next_tasks.md` Priority 4, and it
-should precede the `M11-3` choice.
+should precede the `M11-4` choice.
+
+A related question this slice raises: the runtime now has **four** independent manual
+pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`).
+Whether they should eventually gain a single composed driver is a real design decision,
+deliberately deferred — see `docs/m11_3_report.md` "Open questions".
 
 ### B. Should `Page` gain a unified public contract document?
 

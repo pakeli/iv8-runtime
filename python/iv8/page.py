@@ -307,6 +307,45 @@ class Page:
         """
         self._native.run_animation_frame()
 
+    def run_idle_callbacks(self) -> None:
+        """Manually pump **one** idle round: run the ``requestIdleCallback``
+        callbacks queued for the current round, in registration order.
+
+        This is the only way idle callbacks ever run — there is no real clock, no
+        background thread, and no automatic event loop. Nothing happens until this is
+        called, and one call advances exactly one round.
+
+        Round boundary: the callbacks queued when the call begins are the round. A
+        callback that calls ``requestIdleCallback()`` again schedules into the
+        **next** round and will not run during this call, so a self-rescheduling
+        callback advances one round per call instead of spinning. Pumping with an
+        empty queue is a harmless no-op.
+
+        Each callback receives one argument: a minimal ``IdleDeadline``-style object
+        with the read-only ``didTimeout`` (always ``False`` this phase) and
+        ``timeRemaining()`` (returns a fixed 50ms budget). Both are deliberately
+        **deterministic** — with no clock, a "real" remaining time would be
+        fabricated. ``timeRemaining()`` does not decrease as a callback runs.
+
+        ``requestIdleCallback(callback, options)`` accepts an optional ``options``
+        object whose ``timeout`` must be a non-negative finite number; a malformed
+        ``options`` or ``timeout`` raises a JS ``TypeError``. A valid ``timeout`` is
+        **recorded only** — this phase implements **no** real timeout firing, so a
+        callback never runs early or late because of it.
+
+        ``cancelIdleCallback(handle)`` prevents a queued callback from running,
+        including one cancelled by an earlier callback in the same round. Callbacks
+        never repeat — one runs at most once per registration.
+
+        Idle callbacks are a queue independent of the M2-4 timers, the M11-2
+        animation frames, and the microtask queue: this pump runs none of those (use
+        ``run_timers()`` / ``run_animation_frame()`` / ``run_jobs()``), and
+        ``cancelIdleCallback`` cancels neither a timer nor a frame callback. An
+        exception raised by a callback is swallowed; the page/context stays usable.
+        Raises ``JSContextDisposedError`` after ``dispose()``.
+        """
+        self._native.run_idle_callbacks()
+
     def load(self, html: str, base_url: str, scripts=None, resources=None) -> None:
         """Refresh the page state from static HTML and a base URL.
 

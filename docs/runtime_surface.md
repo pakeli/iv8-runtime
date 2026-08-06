@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-08-06` · Latest landed milestone: **M11-2** (`Page.run_animation_frame()`)
+Last reviewed: `2026-08-06` · Latest landed milestone: **M11-3** (`Page.run_idle_callbacks()`)
 
 ## 0. What this document is
 
@@ -68,6 +68,7 @@ milestone.
 | `run_timers()` | M2-4 | manual pump; timers never run in the background |
 | `run_jobs()` | M2-4 | drains the microtask queue |
 | `run_animation_frame()` | M11-2 | manual pump; runs one frame of `requestAnimationFrame` callbacks |
+| `run_idle_callbacks()` | M11-3 | manual pump; runs one round of `requestIdleCallback` callbacks |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
 | `Page(environment=None)` | M11-1 | optional read-only host-environment baseline; fixed for the page's lifetime |
@@ -141,6 +142,12 @@ Installed per generation by `install_page`:
   manual-pump only via `Page.run_animation_frame()`). A separate FIFO queue from the
   timers, with its own handle space; the callback receives no timestamp argument, and
   a re-request lands in the next frame. No clock and no `performance.now()`;
+- **idle callbacks** — `requestIdleCallback` / `cancelIdleCallback` (M11-3,
+  manual-pump only via `Page.run_idle_callbacks()`). Another separate FIFO queue with
+  its own handle space; a re-request lands in the next round. The callback receives a
+  minimal `IdleDeadline`-style object (`didTimeout` always `false`, `timeRemaining()`
+  a fixed 50ms) — deterministic, since there is no clock. `options.timeout` is
+  type-validated but has **no** firing semantics;
 - **events** — the `Event` constructor plus `addEventListener` /
   `removeEventListener` / `dispatchEvent` on `window`, `document`, and elements;
 - **`document`** — `URL` / `title` / `readyState` / `documentElement` / `head` /
@@ -189,9 +196,13 @@ configured, and there is no UA-CH / canvas / webgl surface to spoof.
 
 Also still excluded: a real clock, background threads, and any automatic event loop.
 Every asynchronous queue is drained by an explicit Python pump — `run_timers()`,
-`run_jobs()`, and (since M11-2) `run_animation_frame()`. Nothing in this runtime
-advances on its own, and there is no `performance.now()` / frame-rate / vsync notion;
-M11-2's frames are a counted queue, not a timed one.
+`run_jobs()`, `run_animation_frame()` (M11-2), and `run_idle_callbacks()` (M11-3).
+Nothing in this runtime advances on its own, and there is no `performance.now()` /
+frame-rate / vsync notion; frames and idle rounds are counted queues, not timed ones.
+There is also **no unified scheduler**: each pump drains exactly one queue, and no
+`tick()` / `drain()` / `run_until_idle()` / `scheduler.postTask` surface exists.
+Consequently `IdleDeadline.timeRemaining()` is a constant and `options.timeout` never
+fires — a real deadline would need the clock this runtime deliberately lacks.
 
 ## 5. Milestone map
 
@@ -212,6 +223,7 @@ M11-2's frames are a counted queue, not a timed one.
 | M11 | compatibility-first line — planning | `docs/m11_compatibility_plan.md` |
 | M11-1 | configurable host-environment baseline (`navigator` / `screen` / `window` dimensions) | `docs/m11_1_host_environment.md` |
 | M11-2 | `requestAnimationFrame` / `cancelAnimationFrame` + `Page.run_animation_frame()` | `docs/m11_2_animation_frames.md` |
+| M11-3 | `requestIdleCallback` / `cancelIdleCallback` + `Page.run_idle_callbacks()` | `docs/m11_3_idle_callbacks.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

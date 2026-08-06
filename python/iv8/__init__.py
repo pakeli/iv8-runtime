@@ -787,6 +787,33 @@ callbacks, and ``cancelAnimationFrame`` / ``clearTimeout`` never cross-cancel. S
 layout / paint / canvas. See ``docs/m11_2_animation_frames.md`` for the authoritative
 boundary.
 
+M11-3 (idle callbacks) mirrors M11-2 one level up: the JS globals
+``requestIdleCallback(callback[, options])`` (queues a callback, returns a numeric
+handle) and ``cancelIdleCallback(handle)`` (drops a not-yet-run callback; unknown /
+already-run / already-cancelled handles are silent no-ops), plus the Python pump
+``Page.run_idle_callbacks()`` — the **only** trigger. Same manual model: no real clock,
+no background thread, no automatic event loop; one call runs exactly **one round** (the
+callbacks queued when it began, in registration order), and a callback that re-requests
+lands in the **next** round, so a self-rescheduling callback advances one round per call
+instead of spinning. Each callback receives **one** argument: a minimal
+``IdleDeadline``-style object with read-only ``didTimeout`` (always ``false``) and
+``timeRemaining()`` (a fixed ``50`` ms). Both are **deterministic** — with no clock a
+"real" remaining time would be fabricated, so ``timeRemaining()`` does not decrease as a
+callback runs and each callback gets its own deadline object. ``options`` may be absent /
+``undefined`` / ``null`` / an object; its optional ``timeout`` must be a non-negative
+finite Number, and a non-object ``options`` or a malformed ``timeout`` throws a JS
+``TypeError`` **before** anything is queued. A valid ``timeout`` is **recorded only** —
+this phase implements **no** real timeout firing, so ``{timeout: 0}`` does not run a
+callback earlier and a large timeout does not delay it; registration order alone decides.
+Mid-round cancellation works, a callback runs at most once per registration, and a
+throwing callback is swallowed. The idle queue is **independent** of the M2-4 timers, the
+M11-2 animation frames, and the microtask queue, with its own handle space — the runtime
+now has four manual pumps, each draining exactly one queue, and no cross-cancellation
+between them. Still **no** ``IdleDeadline`` global / ``performance.now()`` / unified
+``tick()`` / ``drain()`` / ``run_until_idle()`` scheduler / ``scheduler.postTask`` / task
+priorities / ``queueMicrotask``, and no network / navigation / storage / canvas / webgl.
+See ``docs/m11_3_idle_callbacks.md`` for the authoritative boundary.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

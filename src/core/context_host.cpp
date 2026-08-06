@@ -76,6 +76,11 @@ void ContextState::teardown() noexcept {
         entry.callback.Reset();
     }
     animation_frames_.clear();
+    // 1b''. M11-3: same for any pending idle callbacks (isolate still alive).
+    for (auto& entry : idle_callbacks_) {
+        entry.callback.Reset();
+    }
+    idle_callbacks_.clear();
     // 1c. M3-3: release host-object V8 handles (event listeners) while the isolate
     // is still alive — same ordering requirement as the timer handles above.
     if (on_teardown_) {
@@ -240,6 +245,107 @@ void ContextState::run_animation_frame() {
             py::gil_scoped_release release_gil;
             v8::Local<v8::Value> recv = context->Global();
             (void)callback->Call(context, recv, 0, nullptr);
+        }
+        if (try_catch.HasCaught()) {
+            try_catch.Reset();  // swallow: page/context stays usable
+        }
+    }
+}
+
+namespace {
+
+// M11-3: the fixed idle budget, in milliseconds, that IdleDeadline.timeRemaining()
+// reports. A constant on purpose — this runtime has no clock, so a "real" remaining
+// time would be a fabrication. 50ms matches the browser's typical idle deadline cap,
+// which keeps feature-detecting scripts on a familiar code path.
+constexpr double kIdleBudgetMs = 50.0;
+
+// IdleDeadline.timeRemaining() -> Number. Deterministic: always the full budget, and
+// it does not decrease while a callback runs (nothing measures elapsed time here).
+void idle_deadline_time_remaining(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    info.GetReturnValue().Set(
+        v8::Number::New(info.GetIsolate(), kIdleBudgetMs));
+}
+
+}  // namespace
+
+std::int64_t ContextState::register_idle_callback(v8::Local<v8::Function> callback,
+                                                  std::int32_t timeout) {
+    const std::int64_t handle = next_idle_callback_handle_++;
+    IdleCallbackEntry entry;
+    entry.handle = handle;
+    entry.timeout = timeout;  // recorded only; no real timeout semantics
+    entry.callback.Reset(isolate_host_->isolate(), callback);
+    idle_callbacks_.push_back(std::move(entry));  // FIFO: append = run last
+    return handle;
+}
+
+void ContextState::cancel_idle_callback(std::int64_t handle) {
+    for (auto it = idle_callbacks_.begin(); it != idle_callbacks_.end(); ++it) {
+        if (it->handle == handle) {
+            it->callback.Reset();
+            idle_callbacks_.erase(it);
+            return;
+        }
+    }
+    // Unknown / already-run / already-cancelled handle: no-op (no error).
+}
+
+void ContextState::run_idle_callbacks() {
+    OperationScope guard(*this);
+    v8::Isolate* isolate = isolate_host_->isolate();
+    v8::Locker locker(isolate);
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = context_.Get(isolate);
+    v8::Context::Scope context_scope(context);
+
+    // Snapshot THIS round's handles, in registration order. Entries stay in
+    // idle_callbacks_ so cancel_idle_callback() (which scans the live queue) keeps
+    // working mid-round; each handle is removed just before it runs. Only handles in
+    // this snapshot run, so a callback that calls requestIdleCallback() again lands
+    // in the NEXT round — the same bounded-pump guarantee as run_animation_frame().
+    std::vector<std::int64_t> round;
+    round.reserve(idle_callbacks_.size());
+    for (const IdleCallbackEntry& entry : idle_callbacks_) {
+        round.push_back(entry.handle);
+    }
+
+    for (std::int64_t handle : round) {
+        const auto it = std::find_if(
+            idle_callbacks_.begin(), idle_callbacks_.end(),
+            [handle](const IdleCallbackEntry& e) { return e.handle == handle; });
+        if (it == idle_callbacks_.end()) {
+            continue;  // cancelled by an earlier callback in this round
+        }
+        v8::Local<v8::Function> callback = it->callback.Get(isolate);
+        it->callback.Reset();
+        idle_callbacks_.erase(it);  // one-shot: dequeued before it runs
+
+        // Minimal IdleDeadline-style argument, rebuilt per callback. Deterministic
+        // by design: didTimeout is always false and timeRemaining() returns a fixed
+        // budget, because this runtime has no clock. Both are read-only
+        // (ReadOnly|DontDelete), so a JS write is a no-op in sloppy mode / a
+        // TypeError in strict mode.
+        v8::Local<v8::Object> deadline = v8::Object::New(isolate);
+        (void)deadline->DefineOwnProperty(
+            context, v8::String::NewFromUtf8Literal(isolate, "didTimeout"),
+            v8::False(isolate),
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+        v8::Local<v8::Function> time_remaining =
+            v8::Function::New(context, &idle_deadline_time_remaining)
+                .ToLocalChecked();
+        (void)deadline->DefineOwnProperty(
+            context, v8::String::NewFromUtf8Literal(isolate, "timeRemaining"),
+            time_remaining,
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+
+        v8::TryCatch try_catch(isolate);
+        {
+            py::gil_scoped_release release_gil;
+            v8::Local<v8::Value> recv = context->Global();
+            v8::Local<v8::Value> argv[1] = {deadline};
+            (void)callback->Call(context, recv, 1, argv);
         }
         if (try_catch.HasCaught()) {
             try_catch.Reset();  // swallow: page/context stays usable

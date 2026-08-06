@@ -114,6 +114,29 @@ public:
     // clock and no background thread — only this call executes RAF work.
     void run_animation_frame();
 
+    // --- M11-3 idle callbacks -------------------------------------------------
+    // Register an idle callback and return its handle. Mirrors
+    // register_animation_frame (guard-free, strict FIFO, own handle space).
+    // `timeout` is the validated options.timeout in ms, or -1 when absent: it is
+    // STORED ONLY and never acts as a deadline — this phase implements no real
+    // timeout semantics (see docs/m11_3_idle_callbacks.md non-goals).
+    std::int64_t register_idle_callback(v8::Local<v8::Function> callback,
+                                       std::int32_t timeout);
+    // Cancel a pending idle callback by handle (cancelIdleCallback). Guard-free.
+    // An unknown / already-run / already-cancelled handle is a no-op. Cancelling a
+    // callback belonging to the round being pumped still prevents it from running
+    // (the pump re-checks each handle right before invoking it).
+    void cancel_idle_callback(std::int64_t handle);
+    // Manual pump: run exactly ONE idle round — the callbacks queued when this call
+    // began, in registration order. A callback that calls requestIdleCallback()
+    // again schedules into the NEXT round and can never run in this pump (bounded,
+    // loop-safe, same guarantee as run_animation_frame). Each callback receives a
+    // minimal IdleDeadline-style object: read-only `didTimeout` (always false this
+    // phase) and `timeRemaining()` (a fixed budget — there is no clock). Runs under
+    // the operation guard with the GIL released around each callback; a throwing
+    // callback is swallowed so the context stays usable.
+    void run_idle_callbacks();
+
     // M3-3: install an optional hook that teardown() runs while the isolate is
     // still alive, right after the timer handles are reset and before the context
     // /isolate are torn down. PageState uses it to release host-object V8 handles
@@ -194,6 +217,19 @@ private:
     };
     std::vector<AnimationFrameEntry> animation_frames_;
     std::int64_t next_animation_frame_handle_ = 1;
+
+    // Idle-callback queue (M11-3). Same shape and concurrency story as
+    // animation_frames_ above (vector = FIFO, guard-only mutation, reset in
+    // teardown before isolate disposal), with its own independent handle space.
+    // `timeout` holds the validated options.timeout in ms (-1 = absent) and is
+    // recorded ONLY — this phase implements no real timeout firing semantics.
+    struct IdleCallbackEntry {
+        std::int64_t handle = 0;
+        std::int32_t timeout = -1;
+        v8::Global<v8::Function> callback;
+    };
+    std::vector<IdleCallbackEntry> idle_callbacks_;
+    std::int64_t next_idle_callback_handle_ = 1;
 
     // M3-3 teardown hook (see set_on_teardown). Empty unless PageState installs
     // it; a bare JSContext leaves it unset.

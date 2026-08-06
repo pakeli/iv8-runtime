@@ -86,6 +86,14 @@ public:
     // JSContextBusyError). No clock, no background thread, no automatic loop.
     void run_animation_frame();
 
+    // M11-3 manual idle pump: run the callbacks queued for the current idle round,
+    // in registration order, each receiving a minimal IdleDeadline-style object. A
+    // callback that re-requests lands in the NEXT round (one call = one round).
+    // Delegates to the owned context, reusing the M1 operation guard (disposed ->
+    // JSContextDisposedError, busy -> JSContextBusyError). No clock, no background
+    // thread, no automatic loop, and no real options.timeout semantics.
+    void run_idle_callbacks();
+
     // M2-5 page load: refresh the page state from static input. Tears down the
     // current context (invalidating any old page-bound JSValues per the M1 rules)
     // and installs a fresh one whose `location` derives from `base_url`; `html`

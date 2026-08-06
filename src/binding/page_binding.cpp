@@ -45,6 +45,8 @@ void register_page(py::module_& module) {
         // M11-2 manual animation-frame pump (public surface is
         // Page.run_animation_frame()).
         .def("run_animation_frame", &iv8::PageState::run_animation_frame)
+        // M11-3 manual idle pump (public surface is Page.run_idle_callbacks()).
+        .def("run_idle_callbacks", &iv8::PageState::run_idle_callbacks)
         .def("load", &iv8::PageState::load, py::arg("html"), py::arg("base_url"))
         .def("dispatch_lifecycle_events",
              &iv8::PageState::dispatch_lifecycle_events)

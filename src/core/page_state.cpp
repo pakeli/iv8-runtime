@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cctype>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -2497,6 +2498,87 @@ void cancel_animation_frame_callback(
     state->cancel_animation_frame(handle);
 }
 
+// --- M11-3 idle callbacks: JS-visible requestIdleCallback / cancelIdleCallback.
+// Bare global functions like the M2-4 timers and the M11-2 frame globals, reaching
+// the owning ContextState through the isolate embedder-data slot. They run during
+// eval (or during an idle pump), i.e. under the context operation guard.
+//
+// requestIdleCallback(callback[, options]) -> handle (a Number). The queue is FIFO
+// and independent of both the timer registry and the animation-frame queue. Nothing
+// fires until Page.run_idle_callbacks() is called.
+//
+// options handling: `options` may be absent / undefined / null (no options), or an
+// object whose OPTIONAL `timeout` must be a Number. A non-object options, or a
+// present-but-non-Number / non-finite / negative `timeout`, throws a TypeError —
+// this phase rejects a malformed value loudly rather than silently reinterpreting
+// it. A valid `timeout` is RECORDED ONLY: no real timeout firing semantics exist
+// this phase (there is no clock). Unknown option keys are ignored.
+void request_idle_callback_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "requestIdleCallback");  // M9-2
+    v8::Isolate* isolate = info.GetIsolate();
+    ContextState* state = state_from_isolate(isolate);
+    if (state == nullptr || info.Length() < 1 || !info[0]->IsFunction()) {
+        return;  // invalid call: nothing queued, returns undefined
+    }
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    std::int32_t timeout = -1;  // absent
+    if (info.Length() > 1 && !info[1]->IsUndefined() && !info[1]->IsNull()) {
+        if (!info[1]->IsObject()) {
+            isolate->ThrowException(v8::Exception::TypeError(
+                v8::String::NewFromUtf8Literal(
+                    isolate, "requestIdleCallback: options must be an object")));
+            return;
+        }
+        v8::Local<v8::Object> options = info[1].As<v8::Object>();
+        v8::Local<v8::Value> value;
+        if (!options->Get(context, v8_string(isolate, "timeout")).ToLocal(&value)) {
+            return;  // the getter threw
+        }
+        if (!value->IsUndefined()) {
+            if (!value->IsNumber()) {
+                isolate->ThrowException(v8::Exception::TypeError(
+                    v8::String::NewFromUtf8Literal(
+                        isolate,
+                        "requestIdleCallback: options.timeout must be a number")));
+                return;
+            }
+            const double ms = value.As<v8::Number>()->Value();
+            if (std::isnan(ms) || std::isinf(ms) || ms < 0.0) {
+                isolate->ThrowException(v8::Exception::TypeError(
+                    v8::String::NewFromUtf8Literal(
+                        isolate,
+                        "requestIdleCallback: options.timeout must be a "
+                        "non-negative finite number")));
+                return;
+            }
+            // Clamp to int32 range; the value is recorded only, never a deadline.
+            timeout = static_cast<std::int32_t>(
+                ms > 2147483647.0 ? 2147483647.0 : ms);
+        }
+    }
+    const std::int64_t handle =
+        state->register_idle_callback(info[0].As<v8::Function>(), timeout);
+    info.GetReturnValue().Set(static_cast<double>(handle));
+}
+
+// cancelIdleCallback(handle): drop a not-yet-run callback. Its handle space is
+// separate from the timer ids and the animation-frame handles, so it cancels
+// neither a setTimeout/setInterval nor a requestAnimationFrame.
+void cancel_idle_callback_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "cancelIdleCallback");  // M9-2
+    v8::Isolate* isolate = info.GetIsolate();
+    ContextState* state = state_from_isolate(isolate);
+    if (state == nullptr || info.Length() < 1) {
+        return;
+    }
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    const std::int64_t handle =
+        static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
+    state->cancel_idle_callback(handle);
+}
+
 // Shared by clearTimeout and clearInterval (single id space, like browsers).
 void clear_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
@@ -3951,6 +4033,15 @@ void PageState::install_page(const std::string& base_url,
             install_global_function(isolate, context, global,
                                     "cancelAnimationFrame",
                                     &cancel_animation_frame_callback);
+            // M11-3 JS-visible idle callbacks (manual-pump; see
+            // PageState::run_idle_callbacks). Independent of the timer and
+            // animation-frame queues; nothing fires until the pump is called.
+            install_global_function(isolate, context, global,
+                                    "requestIdleCallback",
+                                    &request_idle_callback_callback);
+            install_global_function(isolate, context, global,
+                                    "cancelIdleCallback",
+                                    &cancel_idle_callback_callback);
             // M11-1 window.devicePixelRatio / innerWidth / innerHeight. window is
             // the intrinsic global object, so these are read-only data properties on
             // the global rather than host-object accessors. Values come from the
@@ -4263,6 +4354,10 @@ void PageState::run_timers() { state_->run_timers(); }
 // M11-2: pump exactly one animation frame (delegates to the owned context, like
 // run_timers / run_jobs — so the disposed/busy rules are the M1 ones).
 void PageState::run_animation_frame() { state_->run_animation_frame(); }
+
+// M11-3: pump one idle round (delegates to the owned context, like
+// run_animation_frame — so the disposed/busy rules are the M1 ones).
+void PageState::run_idle_callbacks() { state_->run_idle_callbacks(); }
 
 void PageState::run_jobs() { state_->run_jobs(); }
 
