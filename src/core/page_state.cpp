@@ -2459,6 +2459,44 @@ void set_interval_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     register_timer_callback(info, /*repeating=*/true);
 }
 
+// --- M11-2 animation frames: JS-visible requestAnimationFrame /
+// cancelAnimationFrame. Bare global functions like the M2-4 timers, reaching the
+// owning ContextState through the isolate embedder-data slot. They run during eval
+// (or during a frame pump), i.e. under the context operation guard.
+//
+// requestAnimationFrame(callback) -> handle (a Number). The callback queue is FIFO
+// and independent of the timer registry. Deliberately minimal: the callback
+// receives NO timestamp argument (there is no clock in this runtime), and nothing
+// fires until Page.run_animation_frame() is called.
+void request_animation_frame_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "requestAnimationFrame");  // M9-2
+    v8::Isolate* isolate = info.GetIsolate();
+    ContextState* state = state_from_isolate(isolate);
+    if (state == nullptr || info.Length() < 1 || !info[0]->IsFunction()) {
+        return;  // invalid call: nothing queued, returns undefined
+    }
+    const std::int64_t handle =
+        state->register_animation_frame(info[0].As<v8::Function>());
+    info.GetReturnValue().Set(static_cast<double>(handle));
+}
+
+// cancelAnimationFrame(handle): drop a not-yet-run callback. Its handle space is
+// separate from the timer ids, so it does NOT cancel a setTimeout/setInterval.
+void cancel_animation_frame_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "cancelAnimationFrame");  // M9-2
+    v8::Isolate* isolate = info.GetIsolate();
+    ContextState* state = state_from_isolate(isolate);
+    if (state == nullptr || info.Length() < 1) {
+        return;
+    }
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    const std::int64_t handle =
+        static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
+    state->cancel_animation_frame(handle);
+}
+
 // Shared by clearTimeout and clearInterval (single id space, like browsers).
 void clear_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
@@ -3904,6 +3942,15 @@ void PageState::install_page(const std::string& base_url,
                                     &set_interval_callback);
             install_global_function(isolate, context, global, "clearInterval",
                                     &clear_timer_callback);
+            // M11-2 JS-visible animation frames (manual-pump; see
+            // PageState::run_animation_frame). No clock, no background thread — a
+            // queued callback runs only when Page.run_animation_frame() is called.
+            install_global_function(isolate, context, global,
+                                    "requestAnimationFrame",
+                                    &request_animation_frame_callback);
+            install_global_function(isolate, context, global,
+                                    "cancelAnimationFrame",
+                                    &cancel_animation_frame_callback);
             // M11-1 window.devicePixelRatio / innerWidth / innerHeight. window is
             // the intrinsic global object, so these are read-only data properties on
             // the global rather than host-object accessors. Values come from the
@@ -4212,6 +4259,10 @@ py::object PageState::eval(const std::string& source, bool to_py,
 void PageState::dispose() { state_->dispose(); }
 
 void PageState::run_timers() { state_->run_timers(); }
+
+// M11-2: pump exactly one animation frame (delegates to the owned context, like
+// run_timers / run_jobs — so the disposed/busy rules are the M1 ones).
+void PageState::run_animation_frame() { state_->run_animation_frame(); }
 
 void PageState::run_jobs() { state_->run_jobs(); }
 

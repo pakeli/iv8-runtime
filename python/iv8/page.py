@@ -279,6 +279,34 @@ class Page:
         """
         self._native.run_jobs()
 
+    def run_animation_frame(self) -> None:
+        """Manually pump **one** animation frame: run the ``requestAnimationFrame``
+        callbacks queued for the current frame, in registration order.
+
+        This is the only way animation-frame callbacks ever run — there is no real
+        clock, no background thread, and no automatic event loop. Nothing happens
+        until this is called, and one call advances exactly one frame.
+
+        Frame boundary: the callbacks queued when the call begins are the frame. A
+        callback that calls ``requestAnimationFrame()`` again schedules into the
+        **next** frame and will not run during this call, so a self-rescheduling
+        callback advances one frame per call instead of spinning. Pumping with an
+        empty queue is a harmless no-op.
+
+        ``cancelAnimationFrame(handle)`` prevents a queued callback from running,
+        including one cancelled by an earlier callback in the same frame. Callbacks
+        receive **no timestamp argument** (this runtime has no clock) and never
+        repeat — a callback runs at most once per registration.
+
+        Animation frames are a queue independent of the M2-4 timers: this pump does
+        not fire ``setTimeout`` / ``setInterval`` callbacks (use ``run_timers()``) or
+        drain microtasks (use ``run_jobs()``), and ``cancelAnimationFrame`` does not
+        cancel a timer. An exception raised by a callback is swallowed; the
+        page/context stays usable. Raises ``JSContextDisposedError`` after
+        ``dispose()``.
+        """
+        self._native.run_animation_frame()
+
     def load(self, html: str, base_url: str, scripts=None, resources=None) -> None:
         """Refresh the page state from static HTML and a base URL.
 

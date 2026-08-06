@@ -86,13 +86,45 @@ contract**: it maps the surface and links to the authoritative per-milestone
 boundaries, and must not be treated as freezing behavior. This deliberately leaves
 Pending Decision B (a unified `Page` contract) open.
 
+### 10. Post-M10 work is compatibility-first, not ad hoc feature growth
+
+Decided `2026-08-06`.
+
+After `M10-2`, the repository's main forward-looking goal is no longer framed as
+"continue adding whichever hosted-runtime feature seems most convenient next".
+Instead, it is framed as:
+
+> gradually reproduce the community-edition capability surface of
+> `HanZzzzz000/iv8`, then extend beyond it deliberately.
+
+Consequences of this decision:
+
+- the next milestone line is `M11`, not an unbounded continuation of `M10`;
+- `M11` starts with compatibility planning and gap ranking before new runtime code;
+- future implementation slices should be justified as compatibility moves or as
+  clearly-labeled enhancements beyond that compatibility baseline.
+
+The planning artifact for this decision is `docs/m11_compatibility_plan.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. What is the next planned milestone after M10-2?
+### A. Which concrete compatibility slice becomes `M11-3`?
 
-Not yet recorded in the repository.
+Settled and landed so far:
+
+- `M11-1` — the **configurable host-environment baseline**
+  (`Page(environment=...)` / `Page.get_default_environment()`, covering the `navigator`
+  identity values, `screen`, and the `window` dimensions). See
+  `docs/m11_1_host_environment.md`.
+- `M11-2` — **`requestAnimationFrame` / `cancelAnimationFrame`** with the manual
+  `Page.run_animation_frame()` pump. See `docs/m11_2_animation_frames.md`.
+
+Still open: `M11-3`. Both landed slices were chosen by direction rather than from a
+ranked source-backed survey, so the compatibility matrix that was supposed to drive
+slice selection still does not exist. Building it is `next_tasks.md` Priority 4, and it
+should precede the `M11-3` choice.
 
 ### B. Should `Page` gain a unified public contract document?
 

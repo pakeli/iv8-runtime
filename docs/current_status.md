@@ -7,14 +7,21 @@ Last reviewed: `2026-08-06`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of the current repository state, the latest landed milestone is **M10-2**:
+As of the current repository state, the latest landed milestone is **M11-2**:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
+- `M11-1`: `Page(environment=...)` / `Page.get_default_environment()`
+- `M11-2`: `requestAnimationFrame` / `cancelAnimationFrame` /
+  `Page.run_animation_frame()`
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
 DevTools/monitoring surface.
+
+Post-M10 work is organized as **M11, a compatibility-first line**: it reproduces the
+community-edition capability surface of `HanZzzzz000/iv8`, then extends beyond it
+deliberately. `M11-1` is the first implementation slice under that line.
 
 ## 2. What Is Actually Implemented
 
@@ -63,6 +70,24 @@ Implemented and present at `HEAD`:
 - `Page.watch_object_keys()` / `read_object_keys_hits()`;
 - optional `break_on_hit=True` pause behavior when a DevTools client is attached.
 
+### M11 compatibility line
+
+Implemented and present at `HEAD`:
+
+- `M11-1` configurable host-environment baseline — the optional `Page(environment=...)`
+  constructor parameter plus the static `Page.get_default_environment()`. Eleven keys
+  configure the read-only `navigator` identity values, the new `screen` global, and
+  the `window.devicePixelRatio` / `innerWidth` / `innerHeight` dimensions. Defaults
+  reproduce the previous fixed `navigator` constants, so an unconfigured page is
+  unchanged; values persist across `load()`; validation is strict and Python-side.
+  See `docs/m11_1_host_environment.md`.
+- `M11-2` animation frames — the JS globals `requestAnimationFrame` /
+  `cancelAnimationFrame` plus the Python pump `Page.run_animation_frame()`. A manual
+  frame model like the M2-4 timers: no clock, no background thread, no automatic loop;
+  one call runs one frame (callbacks queued when it began, in registration order), and
+  a re-request lands in the next frame. The queue is independent of the timers and
+  microtasks, with its own handle space. See `docs/m11_2_animation_frames.md`.
+
 ## 3. Latest Known Milestone Sequence
 
 Recent implementation sequence from Git history:
@@ -71,6 +96,8 @@ Recent implementation sequence from Git history:
 - `M8-1` through `M8-4`: text encoding, URL, URLSearchParams, Base64 globals
 - `M9-1` through `M9-6`: Inspector attach base and watch API family
 - `M10-1` and `M10-2`: reflection/key enumeration watch extensions
+- `M11-1`: configurable host-environment baseline (first M11 compatibility slice)
+- `M11-2`: `requestAnimationFrame` / `cancelAnimationFrame` manual frame pump
 
 ## 4. Release / Distribution Status
 
@@ -107,31 +134,48 @@ contract. Cross-check with:
   `docs/m10_1_watch_reflect_ownkeys.md`, `docs/m10_2_watch_object_keys.md`
 - recent `git log`
 
-## 6. Current Open Questions
+## 6. Next planned phase
+
+The repository is executing its post-M10 direction:
+
+- `M11` is the current milestone line and is compatibility-first, not ad hoc runtime
+  growth;
+- the planning artifact is `docs/m11_compatibility_plan.md`;
+- `M11-1` (configurable host-environment baseline) has **landed** — see
+  `docs/m11_1_host_environment.md`;
+- `M11-2` (`requestAnimationFrame` / `cancelAnimationFrame` manual frame pump) has
+  **landed** — see `docs/m11_2_animation_frames.md`;
+- the next execution handoff is to choose `M11-3` from the compatibility backlog
+  rather than by intuition.
+
+## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Is the next phase intended to continue M10 monitoring breadth, or begin M11?
-  (`docs/decision_log.md` §A — still open.)
+- Which concrete compatibility slice should become `M11-3`? (`docs/decision_log.md`
+  §A — still open. `M11-1` and `M11-2` are settled and landed; the ranked compatibility
+  matrix that should drive this choice still does not exist — `docs/next_tasks.md`
+  Priority 4.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
 - Should Windows release support remain secondary, or be promoted again?
   (`docs/decision_log.md` §C — still open.)
 - Should the stale build/CI comments that still mention early/M1-era limitations be
-  refreshed? (`docs/next_tasks.md` Priority 3 — not yet done.)
+  refreshed? (`docs/next_tasks.md` Priority 5 — not yet done.)
 
-## 7. Practical Status Verdict
+## 8. Practical Status Verdict
 
 If you need a one-line answer:
 
-> The project has completed the original V8 embedding kernel and is currently at
-> the post-M9 / M10 monitoring-extension stage, with `M10-2` as the latest landed
-> milestone.
+> The project has completed the original V8 embedding kernel, finished the M2–M8
+> hosted runtime and the M9–M10 monitoring extensions, and has now entered the
+> compatibility-first `M11` line — with `M11-2` (the `requestAnimationFrame` manual
+> frame pump) as the latest landed milestone and `M11-3` not yet chosen.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 
-## 8. Local Environment Note
+## 9. Local Environment Note
 
 `data/review-venv` currently holds a **stale Phase-1 skeleton** install of `iv8` (its
 `__init__.py` predates `Page`, and its `_core` extension has no `Page` binding), so

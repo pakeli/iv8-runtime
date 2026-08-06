@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <pybind11/pybind11.h>
 
@@ -88,6 +89,31 @@ public:
     // Manual pump: drain the pending microtask (job) queue.
     void run_jobs();
 
+    // --- M11-2 animation frames -----------------------------------------------
+    // Register an animation-frame callback and return its handle. Called from the
+    // requestAnimationFrame host function WHILE the operation guard is already
+    // held (it runs during eval / during a frame pump), so it takes no guard.
+    // The RAF queue is deliberately SEPARATE from the timer registry above: it is
+    // strict FIFO (registration order only — there is no delay parameter) and has
+    // its own handle space, matching the browser split between the timer task
+    // queue and the animation-frame callback list.
+    std::int64_t register_animation_frame(v8::Local<v8::Function> callback);
+    // Cancel a pending animation-frame callback by handle (cancelAnimationFrame).
+    // Guard-free like clear_timer. Cancelling an already-run, unknown, or
+    // already-cancelled handle is a no-op. Cancelling a callback that belongs to
+    // the frame currently being pumped still prevents it from running (the pump
+    // re-checks each handle right before invoking it).
+    void cancel_animation_frame(std::int64_t handle);
+    // Manual pump: run exactly ONE frame — the callbacks queued when this call
+    // began, in registration order. The queue is detached up front, so a callback
+    // that calls requestAnimationFrame() again schedules into the NEXT frame and
+    // can never be run by this pump (bounded, loop-safe: an unconditionally
+    // self-rescheduling callback advances one frame per call instead of spinning).
+    // Runs under the operation guard with the GIL released around each callback; a
+    // throwing callback is swallowed so the context stays usable. There is no real
+    // clock and no background thread — only this call executes RAF work.
+    void run_animation_frame();
+
     // M3-3: install an optional hook that teardown() runs while the isolate is
     // still alive, right after the timer handles are reset and before the context
     // /isolate are torn down. PageState uses it to release host-object V8 handles
@@ -155,6 +181,19 @@ private:
     std::unordered_map<std::int64_t, TimerEntry> timers_;
     std::int64_t next_timer_id_ = 1;
     std::uint64_t next_timer_seq_ = 0;
+
+    // Animation-frame queue (M11-2). A vector, not a map: RAF is strict FIFO with
+    // no delay key, so registration order IS the run order and a vector preserves
+    // it without a sort. Same concurrency story as timers_: only mutated under the
+    // operation guard (during eval for request/cancel, and inside
+    // run_animation_frame), and reset in teardown() before isolate disposal — so it
+    // needs no separate mutex. The handle space is independent of the timer ids.
+    struct AnimationFrameEntry {
+        std::int64_t handle = 0;
+        v8::Global<v8::Function> callback;
+    };
+    std::vector<AnimationFrameEntry> animation_frames_;
+    std::int64_t next_animation_frame_handle_ = 1;
 
     // M3-3 teardown hook (see set_on_teardown). Empty unless PageState installs
     // it; a bare JSContext leaves it unset.

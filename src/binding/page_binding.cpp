@@ -42,6 +42,9 @@ void register_page(py::module_& module) {
         .def("dispose", &iv8::PageState::dispose)
         .def("run_timers", &iv8::PageState::run_timers)
         .def("run_jobs", &iv8::PageState::run_jobs)
+        // M11-2 manual animation-frame pump (public surface is
+        // Page.run_animation_frame()).
+        .def("run_animation_frame", &iv8::PageState::run_animation_frame)
         .def("load", &iv8::PageState::load, py::arg("html"), py::arg("base_url"))
         .def("dispatch_lifecycle_events",
              &iv8::PageState::dispatch_lifecycle_events)

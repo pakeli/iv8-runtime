@@ -765,6 +765,28 @@ scroll / resize surface, no ``navigator.userAgentData`` (UA-CH), no network, no
 animation frames, and no ``canvas`` / ``webgl``. See
 ``docs/m11_1_host_environment.md`` for the authoritative boundary.
 
+M11-2 (animation frames) adds the JS globals ``requestAnimationFrame(callback)`` (queues
+a callback, returns a numeric handle) and ``cancelAnimationFrame(handle)`` (drops a
+not-yet-run callback; an unknown / already-run / already-cancelled handle is a silent
+no-op), plus the Python pump ``Page.run_animation_frame()`` — the **only** trigger.
+Following the M2-4 timer model there is **no real clock, no background thread, and no
+automatic event loop**: nothing runs until the pump is called, and one call runs exactly
+**one frame** — the callbacks queued when the call began, in registration order. A
+callback that calls ``requestAnimationFrame()`` again schedules into the **next** frame
+and cannot run in the same pump, so a self-rescheduling callback advances one frame per
+call instead of spinning. A callback runs at most once per registration (no repeating
+form), receives **no timestamp argument** (there is no clock), and a throwing callback
+is swallowed so the rest of the frame still runs. A non-function / missing argument
+queues nothing and returns ``undefined``. Mid-frame cancellation works: a callback may
+cancel a later one in the same frame. The frame queue is **independent** of the M2-4
+timers and the microtask queue, with its own handle space — ``run_animation_frame()``
+fires no timers and drains no microtasks, ``run_timers()`` / ``run_jobs()`` run no frame
+callbacks, and ``cancelAnimationFrame`` / ``clearTimeout`` never cross-cancel. Still
+**no** ``performance.now()`` / frame-rate / vsync notion, no ``requestIdleCallback`` /
+``queueMicrotask``, no combined event-loop or "run N frames" driver, and no rendering /
+layout / paint / canvas. See ``docs/m11_2_animation_frames.md`` for the authoritative
+boundary.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

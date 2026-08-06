@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-08-06` · Latest landed milestone: **M10-2** (`Page.watch_object_keys`)
+Last reviewed: `2026-08-06` · Latest landed milestone: **M11-2** (`Page.run_animation_frame()`)
 
 ## 0. What this document is
 
@@ -67,11 +67,25 @@ milestone.
 | `dispose()` / `disposed` / `__enter__` / `__exit__` | M2-1 | delegates to the owned context |
 | `run_timers()` | M2-4 | manual pump; timers never run in the background |
 | `run_jobs()` | M2-4 | drains the microtask queue |
+| `run_animation_frame()` | M11-2 | manual pump; runs one frame of `requestAnimationFrame` callbacks |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
+| `Page(environment=None)` | M11-1 | optional read-only host-environment baseline; fixed for the page's lifetime |
+| `get_default_environment()` | M11-1 | static; returns a fresh `dict` copy of the default template |
 
-`resources` (M3-5) is the **only** new Python parameter M3–M8 added. `Page` has no
-`document` / DOM / event API on the Python side — the DOM is JS-side only.
+`resources` (M3-5) was the only new Python parameter M3–M8 added; `environment`
+(M11-1) is the next one. `Page` has no `document` / DOM / event API on the Python
+side — the DOM is JS-side only.
+
+The M11-1 environment accepts exactly eleven keys — `userAgent` / `platform` /
+`language` (`str`), `webdriver` (`bool`), `screenWidth` / `screenHeight` /
+`availWidth` / `availHeight` / `innerWidth` / `innerHeight` (`int`), and
+`devicePixelRatio` (`int` or `float`, stored `float`). Omitted keys inherit the
+defaults, and the defaults reproduce the previous fixed `navigator` constants, so an
+unconfigured page is unchanged. Validation is strict and runs in the Python facade
+before any native page exists (unknown key or wrong type → `TypeError`, nothing
+partially installed). Values are re-applied to every `load()` generation. See
+`docs/m11_1_host_environment.md`.
 
 ### 2.3 `Page` — second-layer monitoring
 
@@ -114,9 +128,19 @@ Installed per generation by `install_page`:
   `iv8.console`);
 - `navigator` (`userAgent` / `platform` / `language` / `webdriver`) and `location`
   (`href` / `origin` / `protocol` / `host` / `hostname` / `pathname` / `search` /
-  `hash` / `toString()`) — both static and read-only;
+  `hash` / `toString()`) — both read-only; `navigator`'s four values are configurable
+  per page since M11-1, `location` still derives from the base URL;
+- `screen` (`width` / `height` / `availWidth` / `availHeight`) and the `window`
+  dimensions `devicePixelRatio` / `innerWidth` / `innerHeight` — read-only, M11-1,
+  configured via `Page(environment=...)`. No `colorDepth` / `orientation` /
+  `outerWidth` / `screenX` / scroll / `matchMedia`, and these dimensions feed no
+  layout engine;
 - **timers** — `setTimeout` / `clearTimeout` / `setInterval` / `clearInterval`
   (manual-pump only);
+- **animation frames** — `requestAnimationFrame` / `cancelAnimationFrame` (M11-2,
+  manual-pump only via `Page.run_animation_frame()`). A separate FIFO queue from the
+  timers, with its own handle space; the callback receives no timestamp argument, and
+  a re-request lands in the next frame. No clock and no `performance.now()`;
 - **events** — the `Event` constructor plus `addEventListener` /
   `removeEventListener` / `dispatchEvent` on `window`, `document`, and elements;
 - **`document`** — `URL` / `title` / `readyState` / `documentElement` / `head` /
@@ -152,9 +176,22 @@ milestone summary before assuming any wider behavior.
 
 Never implemented at any milestone so far: networking (`fetch` / XHR / WebSocket /
 resource loading), navigation and history, JavaScript→Python callbacks, a Python-side
-DOM or event API (`Page.document`), text/comment nodes, live collections, layout or
-geometry, and fingerprint/profile simulation. `iv8` also exports no browser symbol at
-module level — `test/test_scope_exclusions.py` guards this.
+DOM or event API (`Page.document`), text/comment nodes, live collections, and layout
+or geometry. `iv8` also exports no browser symbol at module level —
+`test/test_scope_exclusions.py` guards this.
+
+Nuance since M11-1: the page reports configurable `screen` / `window` **dimension
+values**, but there is still no layout engine, no `matchMedia`, and nothing consumes
+those numbers — they are reported values only. M11-1 also makes the `navigator`
+identity values configurable, which is a *deterministic baseline* facility, not
+fingerprint simulation or randomization: a page reports exactly what the caller
+configured, and there is no UA-CH / canvas / webgl surface to spoof.
+
+Also still excluded: a real clock, background threads, and any automatic event loop.
+Every asynchronous queue is drained by an explicit Python pump — `run_timers()`,
+`run_jobs()`, and (since M11-2) `run_animation_frame()`. Nothing in this runtime
+advances on its own, and there is no `performance.now()` / frame-rate / vsync notion;
+M11-2's frames are a counted queue, not a timed one.
 
 ## 5. Milestone map
 
@@ -172,7 +209,9 @@ module level — `test/test_scope_exclusions.py` guards this.
 | M9 | Inspector attach base, host-method + `Reflect.get`/`.has` monitoring | `docs/m9_summary.md` |
 | M10-1 | `Reflect.ownKeys` monitoring | `docs/m10_1_watch_reflect_ownkeys.md` |
 | M10-2 | `Object.keys` monitoring | `docs/m10_2_watch_object_keys.md` |
-| M11 | **not started** — direction undecided | `docs/decision_log.md` §A |
+| M11 | compatibility-first line — planning | `docs/m11_compatibility_plan.md` |
+| M11-1 | configurable host-environment baseline (`navigator` / `screen` / `window` dimensions) | `docs/m11_1_host_environment.md` |
+| M11-2 | `requestAnimationFrame` / `cancelAnimationFrame` + `Page.run_animation_frame()` | `docs/m11_2_animation_frames.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

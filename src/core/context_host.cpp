@@ -70,6 +70,12 @@ void ContextState::teardown() noexcept {
         entry.second.callback.Reset();
     }
     timers_.clear();
+    // 1b'. M11-2: same for any pending animation-frame callbacks (isolate still
+    // alive — a Global cannot be reset after isolate disposal).
+    for (auto& entry : animation_frames_) {
+        entry.callback.Reset();
+    }
+    animation_frames_.clear();
     // 1c. M3-3: release host-object V8 handles (event listeners) while the isolate
     // is still alive — same ordering requirement as the timer handles above.
     if (on_teardown_) {
@@ -158,6 +164,77 @@ void ContextState::run_timers() {
             it->second.callback.Reset();
             timers_.erase(it);  // one-shot: gone before it runs
         }
+        v8::TryCatch try_catch(isolate);
+        {
+            py::gil_scoped_release release_gil;
+            v8::Local<v8::Value> recv = context->Global();
+            (void)callback->Call(context, recv, 0, nullptr);
+        }
+        if (try_catch.HasCaught()) {
+            try_catch.Reset();  // swallow: page/context stays usable
+        }
+    }
+}
+
+std::int64_t ContextState::register_animation_frame(
+    v8::Local<v8::Function> callback) {
+    const std::int64_t handle = next_animation_frame_handle_++;
+    AnimationFrameEntry entry;
+    entry.handle = handle;
+    entry.callback.Reset(isolate_host_->isolate(), callback);
+    animation_frames_.push_back(std::move(entry));  // FIFO: append = run last
+    return handle;
+}
+
+void ContextState::cancel_animation_frame(std::int64_t handle) {
+    for (auto it = animation_frames_.begin(); it != animation_frames_.end(); ++it) {
+        if (it->handle == handle) {
+            it->callback.Reset();
+            animation_frames_.erase(it);
+            return;
+        }
+    }
+    // Unknown / already-run / already-cancelled handle: no-op (no error).
+}
+
+void ContextState::run_animation_frame() {
+    OperationScope guard(*this);
+    v8::Isolate* isolate = isolate_host_->isolate();
+    v8::Locker locker(isolate);
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = context_.Get(isolate);
+    v8::Context::Scope context_scope(context);
+
+    // Snapshot the HANDLES queued for this frame, in registration order. The
+    // entries stay in animation_frames_ so cancel_animation_frame() (which scans
+    // the live queue) keeps working mid-frame; each handle is removed from the
+    // queue just before it runs.
+    //
+    // Only handles in this snapshot run: a callback that calls
+    // requestAnimationFrame() again appends to animation_frames_ but is NOT in the
+    // snapshot, so it belongs to the NEXT frame. That is what bounds the pump — an
+    // unconditionally self-rescheduling callback advances exactly one frame per
+    // run_animation_frame() call instead of spinning forever.
+    std::vector<std::int64_t> frame;
+    frame.reserve(animation_frames_.size());
+    for (const AnimationFrameEntry& entry : animation_frames_) {
+        frame.push_back(entry.handle);
+    }
+
+    for (std::int64_t handle : frame) {
+        // Re-look-up by handle every iteration: a callback earlier in this frame may
+        // have cancelled this one (then it is gone and must not run), and appending a
+        // next-frame callback may have reallocated the vector.
+        const auto it = std::find_if(
+            animation_frames_.begin(), animation_frames_.end(),
+            [handle](const AnimationFrameEntry& e) { return e.handle == handle; });
+        if (it == animation_frames_.end()) {
+            continue;  // cancelled by an earlier callback in this frame
+        }
+        v8::Local<v8::Function> callback = it->callback.Get(isolate);
+        it->callback.Reset();
+        animation_frames_.erase(it);  // one-shot: dequeued before it runs
         v8::TryCatch try_catch(isolate);
         {
             py::gil_scoped_release release_gil;

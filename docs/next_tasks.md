@@ -39,28 +39,111 @@ present in `HEAD`.
 ### Deliberately not done
 
 `runtime_surface.md` is an **index, not a contract** — it does not freeze `Page`
-behavior. Whether `Page` should gain a frozen contract document remains Priority 4 /
+behavior. Whether `Page` should gain a frozen contract document remains Priority 6 /
 `decision_log.md` §B.
 
-## Priority 2: Decide the next implementation branch after M10-2
+## Priority 2: Choose the post-M10 direction -- DONE (`2026-08-06`)
 
 ### Goal
 
 Pick the next milestone direction instead of continuing ad hoc.
 
-### Candidate directions
+### What was decided
 
-- continue monitoring breadth in the M10 family;
-- formalize a new M11 plan;
-- invest in contract/document cleanup before more runtime growth;
-- strengthen release/CI/platform consistency.
+- The repository now adopts a **compatibility-first** post-M10 direction.
+- `M11` is defined as the first milestone line focused on reproducing the
+  community-edition capability surface of `HanZzzzz000/iv8`, then extending beyond
+  it deliberately.
+- The immediate deliverable is `docs/m11_compatibility_plan.md`, which frames the
+  goal, gap categories, API-shape question, rollout model, and risks.
+- This resolves the old "continue M10 breadth vs begin M11" ambiguity.
 
-### Acceptance
+### Acceptance -- met
 
 - one approved direction is written down in `docs/decision_log.md`;
 - `docs/current_status.md` and this file reflect the choice.
 
-## Priority 3: Refresh stale build/CI comments
+### Deliberately not done
+
+This planning step does **not** yet choose the exact `M11-1` implementation slice.
+That remains the next planning-to-execution handoff.
+
+## Priority 3: First M11 compatibility slice — DONE (`2026-08-06`)
+
+### Goal
+
+Turn the compatibility-first direction into one bounded implementation target.
+
+### What landed
+
+`M11-1`: **configurable host-environment baseline**. `Page(environment=None)` plus the
+static `Page.get_default_environment()`; eleven keys drive the read-only `navigator`
+identity values, the new `screen` global, and `window.devicePixelRatio` /
+`innerWidth` / `innerHeight`. Defaults reproduce the previous fixed `navigator`
+constants (an unconfigured page is unchanged), values persist across `load()`
+generations, the surface is read-only from JS, and validation is strict and
+Python-side so a bad environment never partially installs a page.
+
+Boundary and non-goals: `docs/m11_1_host_environment.md`. Tests:
+`test/test_host_environment.py`.
+
+### Acceptance — met
+
+- one `M11-1` slice was selected and implemented;
+- it has explicit scope, non-goals, files/modules, and focused tests.
+
+### Deliberately not done
+
+No compatibility **matrix** document was produced. `M11-1` was chosen by direction
+rather than from a ranked source-backed survey, so the ranked-backlog part of this
+priority is carried into Priority 4 below.
+
+## Priority 3b: Second M11 compatibility slice — DONE (`2026-08-06`)
+
+### What landed
+
+`M11-2`: **`requestAnimationFrame` / `cancelAnimationFrame` with a manual frame pump**.
+The two JS globals plus the Python-side `Page.run_animation_frame()`, which is the only
+trigger. No real clock, background thread, or automatic event loop; one call runs one
+frame (the callbacks queued when it began, in registration order), and a callback that
+re-requests a frame lands in the next frame — so a self-rescheduling callback advances
+one frame per call instead of spinning. `cancelAnimationFrame` prevents a queued
+callback, including one cancelled by an earlier callback in the same frame. The queue is
+independent of the M2-4 timers and the microtask queue and has its own handle space.
+
+Boundary and non-goals: `docs/m11_2_animation_frames.md`. Tests:
+`test/test_animation_frames.py`.
+
+### Deliberately not done
+
+Like `M11-1`, this slice was chosen by direction rather than from a ranked
+source-backed survey. Priority 4 below is still outstanding and now covers `M11-3`.
+
+## Priority 4: Build the ranked compatibility backlog and pick M11-3
+
+### Goal
+
+Replace per-slice intuition with a documented, ranked compatibility backlog.
+
+### Why this matters
+
+- `M11-1` and `M11-2` both landed without a source-backed gap matrix, so slice choice
+  is still direction-driven;
+- `docs/m11_compatibility_plan.md` §13 leaves open whether a long-term compatibility
+  matrix should be maintained at all.
+
+### Suggested output
+
+- a source-backed compatibility survey or matrix against the target community surface;
+- a ranked shortlist of remaining slices;
+- one chosen `M11-3` slice with acceptance criteria.
+
+### Acceptance
+
+- the backlog is written down and ranked;
+- `M11-3` is selected from it with explicit scope, non-goals, and tests.
+
+## Priority 5: Refresh stale build/CI comments
 
 ### Goal
 
@@ -84,7 +167,7 @@ Update comments or docs that still describe a much earlier repository state.
 - comments describe the real current surface or clearly note that they are
   historical.
 
-## Priority 4: Decide whether to publish a `Page`-level contract
+## Priority 6: Decide whether to publish a `Page`-level contract
 
 ### Goal
 
@@ -101,7 +184,7 @@ public contract document similar to M1.
 - either a new contract doc is created, or a recorded decision explains why the
   milestone-doc approach remains preferred.
 
-## Priority 5: Keep context files updated after every meaningful milestone
+## Priority 7: Keep context files updated after every meaningful milestone
 
 ### Goal
 

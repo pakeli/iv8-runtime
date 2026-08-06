@@ -79,6 +79,13 @@ public:
     void run_timers();
     void run_jobs();
 
+    // M11-2 manual animation-frame pump: run the callbacks queued for the current
+    // frame, in registration order. A callback that re-requests a frame lands in the
+    // NEXT frame (so one call = one frame). Delegates to the owned context, reusing
+    // the M1 operation guard (disposed -> JSContextDisposedError, busy ->
+    // JSContextBusyError). No clock, no background thread, no automatic loop.
+    void run_animation_frame();
+
     // M2-5 page load: refresh the page state from static input. Tears down the
     // current context (invalidating any old page-bound JSValues per the M1 rules)
     // and installs a fresh one whose `location` derives from `base_url`; `html`
