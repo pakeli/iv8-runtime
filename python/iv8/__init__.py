@@ -782,8 +782,9 @@ cancel a later one in the same frame. The frame queue is **independent** of the 
 timers and the microtask queue, with its own handle space — ``run_animation_frame()``
 fires no timers and drains no microtasks, ``run_timers()`` / ``run_jobs()`` run no frame
 callbacks, and ``cancelAnimationFrame`` / ``clearTimeout`` never cross-cancel. Still
-**no** ``performance.now()`` / frame-rate / vsync notion, no ``requestIdleCallback`` /
-``queueMicrotask``, no combined event-loop or "run N frames" driver, and no rendering /
+**no** ``performance.now()`` / frame-rate / vsync notion, no ``requestIdleCallback``
+(landed in M11-3) / ``queueMicrotask`` (landed in M11-4), no combined event-loop or
+"run N frames" driver, and no rendering /
 layout / paint / canvas. See ``docs/m11_2_animation_frames.md`` for the authoritative
 boundary.
 
@@ -811,8 +812,24 @@ M11-2 animation frames, and the microtask queue, with its own handle space — t
 now has four manual pumps, each draining exactly one queue, and no cross-cancellation
 between them. Still **no** ``IdleDeadline`` global / ``performance.now()`` / unified
 ``tick()`` / ``drain()`` / ``run_until_idle()`` scheduler / ``scheduler.postTask`` / task
-priorities / ``queueMicrotask``, and no network / navigation / storage / canvas / webgl.
-See ``docs/m11_3_idle_callbacks.md`` for the authoritative boundary.
+priorities, and no network / navigation / storage / canvas / webgl. (``queueMicrotask``
+landed separately in M11-4.) See ``docs/m11_3_idle_callbacks.md`` for the authoritative
+boundary.
+
+M11-4 (queueMicrotask) adds the standard JS global ``queueMicrotask(callback)``. It
+enqueues the callback on the current generation's **existing** V8 microtask queue and
+returns ``undefined``; there is no new Python API and no fifth pump — ``Page.run_jobs()``
+is the only trigger. A non-callable first argument throws a JS ``TypeError`` before
+anything is queued (the standard's strict 口径, unlike the permissive rAF/idle host
+calls). Microtasks run FIFO, interleave with ``Promise`` reactions in enqueue order, and
+a callback queued from inside a microtask is appended to the same checkpoint. A throwing
+callback is swallowed by V8's explicit checkpoint, so the page and remaining microtasks
+stay usable. ``load()`` discards the old generation's pending microtasks; ``run_jobs()``
+after ``dispose()`` raises ``JSContextDisposedError``. The microtask queue remains
+independent of the M2-4 timers, M11-2 animation frames, and M11-3 idle queue, so the
+runtime still has exactly four manual pumps. Still **no** automatic event loop, clock /
+``performance.now()``, ``MutationObserver``, scheduler API, or microtask cancellation.
+See ``docs/m11_4_queue_microtask.md`` for the authoritative boundary.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are

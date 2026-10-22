@@ -26,8 +26,9 @@ git log --oneline --decorate -n 20
 
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
-- As of `2026-08-06`, the latest completed implementation milestone in `master`
-  is **M10-2**.
+- As of `2026-10-22`, the latest implemented milestone in the working tree is
+  **M11-4** (`queueMicrotask`), pending real-V8 CI verification; the M11 line is
+  compatibility-first.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -68,12 +69,15 @@ When starting a fresh task:
 Answer roughly as follows:
 
 - M1 contract still exists and matters for `JSContext`.
-- Real implementation has progressed through M2–M10.
+- Real implementation has progressed through M2–M11.
 - Current `HEAD` includes:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - latest landed feature: `Page.watch_object_keys()` from M10-2.
+  - M11 compatibility slices through `M11-4`: host environment, rAF,
+    idle callbacks, and `queueMicrotask` (implementation complete, CI verification
+    pending);
+  - latest implemented feature: `queueMicrotask()` from M11-4.
 
 ## Handoff Discipline
 

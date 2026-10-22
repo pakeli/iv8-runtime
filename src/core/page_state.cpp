@@ -2460,6 +2460,27 @@ void set_interval_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     register_timer_callback(info, /*repeating=*/true);
 }
 
+// --- M11-4 microtasks: JS-visible queueMicrotask.
+//
+// queueMicrotask(callback) appends a callback to the current context's V8
+// microtask queue. It deliberately has no cancel form (the standard API has
+// none) and no new Python pump: ContextState already installs
+// MicrotasksPolicy::kExplicit, so pending microtasks run only when
+// Page.run_jobs() performs the checkpoint. The callback must be a function;
+// unlike the permissive rAF/idle host functions, a non-callable argument throws
+// a JS TypeError before anything is queued.
+void queue_microtask_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "queueMicrotask");  // M9-2
+    v8::Isolate* isolate = info.GetIsolate();
+    if (info.Length() < 1 || !info[0]->IsFunction()) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(
+                isolate, "queueMicrotask: callback must be a function")));
+        return;
+    }
+    isolate->EnqueueMicrotask(info[0].As<v8::Function>());
+}
+
 // --- M11-2 animation frames: JS-visible requestAnimationFrame /
 // cancelAnimationFrame. Bare global functions like the M2-4 timers, reaching the
 // owning ContextState through the isolate embedder-data slot. They run during eval
@@ -4024,6 +4045,10 @@ void PageState::install_page(const std::string& base_url,
                                     &set_interval_callback);
             install_global_function(isolate, context, global, "clearInterval",
                                     &clear_timer_callback);
+            // M11-4 JS-visible microtasks. This feeds the existing V8 microtask
+            // queue; Page.run_jobs() is the only trigger (no new pump).
+            install_global_function(isolate, context, global, "queueMicrotask",
+                                    &queue_microtask_callback);
             // M11-2 JS-visible animation frames (manual-pump; see
             // PageState::run_animation_frame). No clock, no background thread — a
             // queued callback runs only when Page.run_animation_frame() is called.

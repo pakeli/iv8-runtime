@@ -273,9 +273,13 @@ class Page:
         self._native.run_timers()
 
     def run_jobs(self) -> None:
-        """Manually pump jobs: drain the pending microtask queue (e.g. resolved
-        Promise reactions). Microtasks never run automatically. Raises
-        ``JSContextDisposedError`` after ``dispose()``.
+        """Manually pump jobs: drain the pending microtask queue.
+
+        This executes queued ``Promise`` reactions and ``queueMicrotask``
+        callbacks (M11-4), in FIFO order. Microtasks never run automatically.
+        It does not fire timers, animation-frame callbacks, or idle callbacks —
+        those have their own pumps. Raises ``JSContextDisposedError`` after
+        ``dispose()``.
         """
         self._native.run_jobs()
 

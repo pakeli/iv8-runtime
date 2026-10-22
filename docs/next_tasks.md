@@ -1,6 +1,6 @@
 # Next Tasks
 
-Last reviewed: `2026-08-06`
+Last reviewed: `2026-10-22`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
@@ -117,7 +117,7 @@ Boundary and non-goals: `docs/m11_2_animation_frames.md`. Tests:
 ### Deliberately not done
 
 Like `M11-1`, this slice was chosen by direction rather than from a ranked
-source-backed survey. Priority 4 below is still outstanding and now covers `M11-3`.
+source-backed survey. Priority 4 below is still outstanding and now covers `M11-5`.
 
 ## Priority 3c: Third M11 compatibility slice — DONE (`2026-08-06`)
 
@@ -140,9 +140,36 @@ Boundary and non-goals: `docs/m11_3_idle_callbacks.md`. Report:
 ### Deliberately not done
 
 Like M11-1 and M11-2, this slice was chosen by direction rather than from a ranked
-source-backed survey. Priority 4 below is still outstanding and now covers `M11-4`.
+source-backed survey. Priority 4 below is still outstanding and now covers `M11-5`.
 
-## Priority 4: Build the ranked compatibility backlog and pick M11-4
+## Priority 3d: Fourth M11 compatibility slice — IMPLEMENTED, CI VERIFICATION PENDING (`2026-10-22`)
+
+### What landed
+
+`M11-4`: **`queueMicrotask(callback)` on the existing manual `run_jobs()` microtask
+pump**. The global enqueues callbacks on the generation's V8 microtask queue; there is
+no new Python API and no fifth pump. A non-callable argument throws a JS `TypeError`
+before enqueueing (standard semantics, unlike the permissive rAF/idle host calls).
+Microtasks run FIFO, interleave with `Promise` reactions in enqueue order, and a
+callback queued from inside a microtask appends to the same checkpoint. A throwing
+callback is swallowed by V8's explicit checkpoint, so the page stays usable. `load()`
+discards the old generation's pending microtasks; `run_jobs()` after `dispose()` raises
+`JSContextDisposedError`. The microtask queue remains independent of timers, animation
+frames, and idle callbacks.
+
+Boundary and non-goals: `docs/m11_4_queue_microtask.md`. Tests:
+`test/test_queue_microtask.py`. Local verification was static only (no C++ toolchain,
+no supported Python runtime); the real-V8 Linux/Windows release workflows must run the
+full suite before this is marked landed.
+
+### Deliberately not done
+
+No scheduler API, automatic event loop, clock, `MutationObserver`, microtask
+cancellation, or changes to the four existing pumps. Like the earlier M11 slices, this
+was chosen before the ranked compatibility matrix existed; Priority 4 below now covers
+`M11-5`.
+
+## Priority 4: Build the ranked compatibility backlog and pick M11-5
 
 ### Goal
 
@@ -150,8 +177,8 @@ Replace per-slice intuition with a documented, ranked compatibility backlog.
 
 ### Why this matters
 
-- `M11-1`, `M11-2` and `M11-3` all landed without a source-backed gap matrix, so slice
-  choice is still direction-driven;
+- `M11-1`, `M11-2`, `M11-3` and `M11-4` were all chosen without a source-backed gap
+  matrix, so slice choice is still direction-driven;
 - `docs/m11_compatibility_plan.md` §13 leaves open whether a long-term compatibility
   matrix should be maintained at all.
 
@@ -159,12 +186,12 @@ Replace per-slice intuition with a documented, ranked compatibility backlog.
 
 - a source-backed compatibility survey or matrix against the target community surface;
 - a ranked shortlist of remaining slices;
-- one chosen `M11-4` slice with acceptance criteria.
+- one chosen `M11-5` slice with acceptance criteria.
 
 ### Acceptance
 
 - the backlog is written down and ranked;
-- `M11-4` is selected from it with explicit scope, non-goals, and tests.
+- `M11-5` is selected from it with explicit scope, non-goals, and tests.
 
 ## Priority 5: Refresh stale build/CI comments
 

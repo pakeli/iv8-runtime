@@ -69,7 +69,8 @@ useful for exercising the property-getter path that `console`/`window` do not.
 
 `navigator`, `location`, timers / jobs / `queueMicrotask`, `page.load`,
 `document`, DOM / Node / Element, network / `fetch` / XHR, DevTools, trusted
-input, background event loop — and M2-3.
+input, background event loop — and M2-3. (`queueMicrotask` landed later as
+**M11-4**; the other items remain out of scope for this milestone.)
 
 ## Tests
 

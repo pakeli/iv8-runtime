@@ -61,7 +61,8 @@ not Python API. No new exception types. Page remains a minimal container (no
 
 Automatic/background event loop, thread scheduling, browser-grade loop fidelity,
 `queueMicrotask` as a public API, `page.load`, document, DOM, network, DevTools,
-trusted input — and M2-5.
+trusted input — and M2-5. (`queueMicrotask` landed later as **M11-4**; the other
+items remain out of scope for this milestone.)
 
 ## Tests
 

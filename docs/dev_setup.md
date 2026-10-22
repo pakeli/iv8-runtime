@@ -111,5 +111,5 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; it currently reflects implementation up
-> through M10-2.
+> `HEAD` is not an M1-only repository; the working tree includes implementation
+> through M11-4 (`queueMicrotask`), with real-V8 CI verification pending.

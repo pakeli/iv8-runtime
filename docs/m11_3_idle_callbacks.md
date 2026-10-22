@@ -112,7 +112,8 @@ M11-3 deliberately does **not** add:
   that pumps several queues at once, or a "run N rounds" helper — one call is one
   round of one queue;
 - `scheduler.postTask` / `scheduler.yield`, task priorities, or
-  `requestPostAnimationFrame` / `queueMicrotask`;
+  `requestPostAnimationFrame`; `queueMicrotask` landed separately in **M11-4** — see
+  `docs/m11_4_queue_microtask.md`;
 - networking, navigation, storage, or `canvas` / WebGL;
 - any relationship to `Page.ready_state` or the M3-4/M3-6 load lifecycle; a `load()`
   never pumps idle callbacks.

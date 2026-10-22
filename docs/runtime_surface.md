@@ -1,6 +1,7 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-08-06` · Latest landed milestone: **M11-3** (`Page.run_idle_callbacks()`)
+Last reviewed: `2026-10-22` · Latest implemented milestone: **M11-4**
+(`queueMicrotask`, working tree; real-V8 CI verification pending)
 
 ## 0. What this document is
 
@@ -66,7 +67,7 @@ milestone.
 | `eval(source, *, to_py=False, name="<eval>")` | M2-1 | same semantics as `JSContext.eval` |
 | `dispose()` / `disposed` / `__enter__` / `__exit__` | M2-1 | delegates to the owned context |
 | `run_timers()` | M2-4 | manual pump; timers never run in the background |
-| `run_jobs()` | M2-4 | drains the microtask queue |
+| `run_jobs()` | M2-4 | drains the microtask queue (`Promise` reactions + M11-4 `queueMicrotask`) |
 | `run_animation_frame()` | M11-2 | manual pump; runs one frame of `requestAnimationFrame` callbacks |
 | `run_idle_callbacks()` | M11-3 | manual pump; runs one round of `requestIdleCallback` callbacks |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
@@ -138,6 +139,10 @@ Installed per generation by `install_page`:
   layout engine;
 - **timers** — `setTimeout` / `clearTimeout` / `setInterval` / `clearInterval`
   (manual-pump only);
+- **microtasks** — `queueMicrotask(callback)` (M11-4), drained only by
+  `Page.run_jobs()` (the same queue `Promise` reactions use). A non-callable
+  argument throws a JS `TypeError`; callbacks run FIFO, may enqueue further
+  microtasks in the same checkpoint, and a throwing callback is swallowed;
 - **animation frames** — `requestAnimationFrame` / `cancelAnimationFrame` (M11-2,
   manual-pump only via `Page.run_animation_frame()`). A separate FIFO queue from the
   timers, with its own handle space; the callback receives no timestamp argument, and
@@ -196,7 +201,8 @@ configured, and there is no UA-CH / canvas / webgl surface to spoof.
 
 Also still excluded: a real clock, background threads, and any automatic event loop.
 Every asynchronous queue is drained by an explicit Python pump — `run_timers()`,
-`run_jobs()`, `run_animation_frame()` (M11-2), and `run_idle_callbacks()` (M11-3).
+`run_jobs()` (microtasks, including `queueMicrotask` since M11-4),
+`run_animation_frame()` (M11-2), and `run_idle_callbacks()` (M11-3).
 Nothing in this runtime advances on its own, and there is no `performance.now()` /
 frame-rate / vsync notion; frames and idle rounds are counted queues, not timed ones.
 There is also **no unified scheduler**: each pump drains exactly one queue, and no
@@ -224,6 +230,7 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-1 | configurable host-environment baseline (`navigator` / `screen` / `window` dimensions) | `docs/m11_1_host_environment.md` |
 | M11-2 | `requestAnimationFrame` / `cancelAnimationFrame` + `Page.run_animation_frame()` | `docs/m11_2_animation_frames.md` |
 | M11-3 | `requestIdleCallback` / `cancelIdleCallback` + `Page.run_idle_callbacks()` | `docs/m11_3_idle_callbacks.md` |
+| M11-4 | `queueMicrotask` (drained by the existing `Page.run_jobs()`) | `docs/m11_4_queue_microtask.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

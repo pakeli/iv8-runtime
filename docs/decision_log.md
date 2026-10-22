@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-08-06`
+Last reviewed: `2026-10-22`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -62,10 +62,12 @@ Action taken:
 
 ### 8. Current implementation stage is recorded as M10-2
 
-As of `2026-08-06`, the latest landed milestone at `HEAD` is treated as `M10-2`.
+As of `2026-08-06`, the latest landed milestone at `HEAD` was treated as `M10-2`.
 
 This decision exists so future sessions do not restart from outdated M1-only
-assumptions.
+assumptions. **Superseded:** the M11 compatibility line has since advanced through
+`M11-4`; use `docs/current_status.md` for the current stage rather than this
+historical entry.
 
 ### 9. Layering is reconciled by an index, not by rewriting the M1 documents
 
@@ -110,9 +112,9 @@ The planning artifact for this decision is `docs/m11_compatibility_plan.md`.
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-4`?
+### A. Which concrete compatibility slice becomes `M11-5`?
 
-Settled and landed so far:
+Settled and implemented so far:
 
 - `M11-1` — the **configurable host-environment baseline**
   (`Page(environment=...)` / `Page.get_default_environment()`, covering the `navigator`
@@ -123,15 +125,21 @@ Settled and landed so far:
 - `M11-3` — **`requestIdleCallback` / `cancelIdleCallback`** with the manual
   `Page.run_idle_callbacks()` pump. `options.timeout` is validated but deliberately
   not implemented. See `docs/m11_3_idle_callbacks.md`.
+- `M11-4` — **`queueMicrotask(callback)`** on the existing manual `Page.run_jobs()`
+  microtask pump. No new Python API and no fifth pump; a non-callable argument throws a
+  JS `TypeError`; callbacks are FIFO and interleave with `Promise` reactions. Implemented
+  but **awaiting real-V8 Linux/Windows CI verification**. See
+  `docs/m11_4_queue_microtask.md`.
 
-Still open: `M11-4`. All three landed slices were chosen by direction rather than from
-a ranked source-backed survey, so the compatibility matrix that was supposed to drive
+Still open: `M11-5`. All four slices were chosen by direction rather than from a
+ranked source-backed survey, so the compatibility matrix that was supposed to drive
 slice selection still does not exist. Building it is `next_tasks.md` Priority 4, and it
-should precede the `M11-4` choice.
+should precede the `M11-5` choice.
 
-A related question this slice raises: the runtime now has **four** independent manual
-pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`).
-Whether they should eventually gain a single composed driver is a real design decision,
+A related question this slice raises: the runtime still has **four** independent manual
+pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);
+`queueMicrotask` deliberately feeds `run_jobs` instead of adding a fifth. Whether the
+four should eventually gain a single composed driver is a real design decision,
 deliberately deferred — see `docs/m11_3_report.md` "Open questions".
 
 ### B. Should `Page` gain a unified public contract document?

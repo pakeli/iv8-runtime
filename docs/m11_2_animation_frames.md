@@ -72,17 +72,18 @@ M11-2 deliberately does **not** add:
   "run N frames" helper — one call is one frame;
 - `queueMicrotask` or `requestPostAnimationFrame`. (`requestIdleCallback` /
   `cancelIdleCallback` were also out of scope for M11-2; they landed separately in
-  **M11-3** — see `docs/m11_3_idle_callbacks.md`.)
+  **M11-3** — see `docs/m11_3_idle_callbacks.md`. `queueMicrotask` landed in
+  **M11-4** — see `docs/m11_4_queue_microtask.md`.)
 - rendering, layout, paint, compositing, or `<canvas>` / WebGL — a frame callback runs
   JavaScript and nothing else is observable;
 - any relationship to `Page.ready_state` or the M3-4/M3-6 load lifecycle; a `load()`
   never pumps frames.
-
+``
 `JSContext` is untouched (the queue lives on `ContextState` but is reachable only
 through the `Page` globals and pump). The first-layer DOM / script / lifecycle / form
 / M8 web-platform semantics and the M9–M10 monitoring channels are unchanged.
 
-## Monitoring interaction
+## Monitoring interaction``
 
 The two globals record through the existing M9-2 `watch_record` path as
 `window.requestAnimationFrame` / `window.cancelAnimationFrame`, exactly like
