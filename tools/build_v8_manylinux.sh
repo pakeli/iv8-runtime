@@ -61,6 +61,12 @@ if [ ! -d depot_tools ]; then
   git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 fi
 echo "    depot_tools commit: $(git -C depot_tools rev-parse HEAD)"
+# A fresh depot_tools checkout ships no bundled Python, but fetch/gclient exec
+# python-bin/python3. DEPOT_TOOLS_UPDATE=0 (set above) suppresses the wrapper's
+# auto-update/bootstrap, so bootstrap this checkout explicitly before first use.
+if [ ! -x depot_tools/python-bin/python3 ]; then
+  "$WORK/depot_tools/ensure_bootstrap"
+fi
 
 echo "==> [2/6] fetch V8"
 if [ ! -d v8 ]; then
