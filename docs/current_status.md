@@ -7,10 +7,10 @@ Last reviewed: `2026-10-28`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-28`, the latest implemented and verified milestone is **M11-5**.
-Real-V8 CI is green on both platforms — Linux run `40632597636`, Windows run
-`40632601387`, both on commit `4fa6469`, each wheel lane reporting
-`1265 passed, 2 skipped`:
+As of `2026-10-28`, the latest implemented and verified milestone is **M11-10**.
+Real-V8 CI is green on both platforms — Linux run `40661574145`, Windows run
+`40661580891`, both on commit `35c85fe`, each wheel lane reporting
+`1352 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -21,18 +21,19 @@ Real-V8 CI is green on both platforms — Linux run `40632597636`, Windows run
 - `M11-4`: `queueMicrotask(callback)` (drained by the existing `Page.run_jobs()`)
 - `M11-5`: `MutationObserver` (childList/attributes/subtree records delivered by
   the existing `Page.run_jobs()` microtask checkpoint)
+- `M11-6`: `CustomEvent` / `MouseEvent` / `KeyboardEvent` / `FocusEvent`
+- `M11-7`: `localStorage` / `sessionStorage` (per-Page in-memory stores)
+- `M11-8`: `Blob` / `File` / `FileReader` (`run_jobs()` read delivery)
+- `M11-9`: event cancellation (`cancelable` / `defaultPrevented` /
+  `preventDefault` / `stopImmediatePropagation`)
+- `M11-10`: `classList` / `toggleAttribute`
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
-merge point `6f4f6dc`). Upstream `investforever/iv8-runtime` remains at M11-3;
-upstream sync is out of scope and the fork is the working master. See
-`docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`.
-
-**In progress (one five-slice verification batch):** `M11-6` (Event subclass
-cluster), `M11-7` (Web Storage), `M11-8` (`Blob` / `File` / `FileReader`),
-`M11-9` (Event cancellation), and `M11-10` (`classList` / `toggleAttribute`)
-are implemented on the `m11-6-event-subclasses` branch. M11-6 has its own cold
-real-V8 run; the batch rerun on the branch head reuses the V8 cache saved by
-that run. See the five boundary documents.
+merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
+batch on branch `m11-6-event-subclasses` (final commit `35c85fe`) and merged to
+the fork's `master`. Upstream `investforever/iv8-runtime` remains at M11-3;
+upstream sync is out of scope and the fork is the working master. See the
+five report documents (`docs/m11_6_report.md` … `docs/m11_10_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -129,6 +130,32 @@ Implemented and present at `HEAD`:
   There is no new Python API, no fifth pump, and no `MutationRecord` global;
   observer state is per generation. Verified on real V8 (Linux + Windows) on
   `2026-10-28`; see `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`.
+- `M11-6` event subclasses — `CustomEvent` (`detail`), `MouseEvent`
+  (`clientX` / `clientY` / `button` / `buttons`), `KeyboardEvent`
+  (`key` / `code` / `repeat`), and `FocusEvent` (`relatedTarget`) on the
+  existing Event / EventTarget / bubbling model. Subclass fields are own
+  read-only values; constructors require `new`. Verified `2026-10-28`; see
+  `docs/m11_6_event_subclasses.md`.
+- `M11-7` Web Storage — `localStorage` / `sessionStorage` as independent,
+  insertion-ordered, per-Page in-memory stores. Entries survive `Page.load()`
+  generations of one Page; no disk, origin keying, `storage` events, or
+  cross-Page sharing. Verified `2026-10-28`; see
+  `docs/m11_7_web_storage.md`.
+- `M11-8` Blob / File / FileReader — immutable byte value objects with
+  `size` / `type` / `name` / `lastModified`, `slice`, and Promise-returning
+  `text` / `arrayBuffer`, plus a minimal `FileReader` completed by
+  `Page.run_jobs()` and listener events. Verified `2026-10-28`; see
+  `docs/m11_8_blob_file_reader.md`.
+- `M11-9` event cancellation — `cancelable` / `defaultPrevented` /
+  `preventDefault()` / `stopImmediatePropagation()`, with `dispatchEvent`
+  returning `false` for a canceled cancelable event. Capture phase and default
+  actions remain out of scope. Verified `2026-10-28`; see
+  `docs/m11_9_event_cancellation.md`.
+- `M11-10` classList / toggleAttribute — `element.classList`
+  (`contains` / `add` / `remove` / `toggle` / `replace` / `item` / `length` /
+  `value`) and `element.toggleAttribute(name, force?)`, both wired into the
+  MutationObserver attribute hooks. Verified `2026-10-28`; see
+  `docs/m11_10_class_list.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -145,6 +172,9 @@ Recent implementation sequence from Git history:
   (verified `2026-10-27`)
 - `M11-5`: `MutationObserver` with `run_jobs()` delivery batches
   (verified `2026-10-28`)
+- `M11-6` through `M11-10`: event subclasses, Web Storage,
+  Blob/File/FileReader, event cancellation, and classList/toggleAttribute —
+  verified as one five-slice batch (`2026-10-28`)
 
 ## 4. Release / Distribution Status
 
@@ -207,20 +237,20 @@ The repository is executing its post-M10 direction:
   `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`;
 - `M11-6` (Event subclasses), `M11-7` (Web Storage), `M11-8`
   (`Blob` / `File` / `FileReader`), `M11-9` (Event cancellation), and `M11-10`
-  (`classList` / `toggleAttribute`) are **implemented and awaiting the batched
-  real-V8 run** on `m11-6-event-subclasses`; see their boundary docs;
-- after that batch lands, the next execution handoff is to choose `M11-11` from
-  the ranked compatibility backlog (`docs/m11_compatibility_backlog.md`).
+  (`classList` / `toggleAttribute`) are **landed and verified on real V8
+  (Linux + Windows)** on `2026-10-28` in one five-slice batch; see their
+  boundary and report docs;
+- the next execution handoff is to choose `M11-11` from the ranked
+  compatibility backlog (`docs/m11_compatibility_backlog.md`).
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
 - Which concrete compatibility slice should become `M11-11`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-5` are settled, landed, and verified; `M11-6` through
-  `M11-10` are implemented and awaiting the batched real-V8 run; the ranked
+  §A — `M11-1` through `M11-10` are settled, landed, and verified; the ranked
   compatibility matrix at `docs/m11_compatibility_backlog.md` should drive the
-  next choice after that.)
+  next choice.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -235,11 +265,9 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with `M11-5` (`MutationObserver` on the existing
-> `run_jobs()` microtask checkpoint) landed and verified on real V8 (Linux +
-> Windows) on `2026-10-28`; `M11-6` through `M11-10` (event subclasses, Web
-> Storage, Blob/File/FileReader, event cancellation, classList) are implemented
-> and awaiting one batched real-V8 verification.
+> compatibility-first `M11` line — with `M11-10` (`classList` /
+> `toggleAttribute`) landed and verified on real V8 (Linux + Windows) on
+> `2026-10-28` as part of the M11-6..M11-10 five-slice batch.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

@@ -110,5 +110,11 @@ DOM/event surfaces are unchanged.
 
 ## Verification
 
-Status: **implementation pending; real-V8 CI verification to follow (batched
-with M11-6 and M11-7).**
+Status: **verified on real V8 (Linux + Windows), `2026-10-28`.**
+
+- Focused tests: `test/test_blob_file_reader.py` (22 items).
+- Final verified commit `35c85fe`; Linux run `40661574145` (cp311–cp314) and
+  Windows run `40661580891` (Python 3.11–3.14), every wheel lane
+  `1352 passed, 2 skipped` (the five-slice batch total).
+- `test_filereader_read_while_loading_throws` used a top-level `return` and was
+  fixed to an IIFE in `35c85fe`. See `docs/m11_8_report.md`.

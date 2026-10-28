@@ -27,9 +27,9 @@ The ranking is planning guidance, not a promise of full parity.
 | Rank | Candidate | Target evidence | Current gap | Value | Fit/cost | Verdict |
 |---|---|---|---|---|---|---|
 | 1 | **`MutationObserver`** | Listed in the DOM/HTML compatibility table and in the micro-task examples (`README_EN.md`); used by framework and anti-bot code | Our DOM has mutation paths (`appendChild` / `removeChild` / `insertBefore` / `setAttribute` / `removeAttribute` / `textContent`) and M11-4 microtasks, but no observation model | 5 | 5 / 3 | **M11-5 delivered & verified (`2026-10-28`)** |
-| 2 | **Event subclass cluster** (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`) | Target claims 80+ event types; demos use clicks and lifecycle events | We install only a minimal `Event` constructor; no subclasses or their read-only fields | 4 | 5 / 5 | **M11-6 selected (`2026-10-28`)** |
-| 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | **M11-7 selected (`2026-10-28`)** |
-| 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | **M11-8 selected (`2026-10-28`)** |
+| 2 | **Event subclass cluster** (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`) | Target claims 80+ event types; demos use clicks and lifecycle events | We install only a minimal `Event` constructor; no subclasses or their read-only fields | 4 | 5 / 5 | **M11-6 delivered & verified (`2026-10-28`)** |
+| 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | **M11-7 delivered & verified (`2026-10-28`)** |
+| 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | **M11-8 delivered & verified (`2026-10-28`)** |
 | 5 | **Nested environment + `get_defaults()`** | `JSContext(environment={...})` with nested navigator/screen/location/webgl paths; `get_defaults()` enumerates them | M11-1 has a flat 11-key `Page(environment=...)` baseline and `get_default_environment()` | 3 | 4 / 4 | API-shape decision; subset only |
 | 6 | **Event-loop facade** (`advance` / `sleep` / `tick` / `drain`) | Central to the target's `window.__iv8__.eventLoop` model | We deliberately expose four independent manual pumps and no scheduler | 5 | 2 / 2 | Deferred design decision |
 | 7 | **Offline resources + runtime XHR/fetch** | Community edition matches XHR/fetch/external resources against an injected offline bundle (`add_resource`, `page.load.resources`) | `Page.load(resources)` only pre-resolves `<script src>`; no runtime XHR/fetch | 5 | 2 / 2 | High-risk; standing networking exclusion needs approval |
@@ -97,9 +97,17 @@ amortize the cold V8 build. Boundaries:
 
 The batch was extended to five slices on `2026-10-28`: `M11-9` **Event
 cancellation** and `M11-10` **classList / toggleAttribute** come from the gap
-inventory (`docs/dom_bom_gaps.md`) rather than the ranked shortlist, and are
+inventory (`docs/dom_bom_gaps.md`) rather than the ranked shortlist, and were
 verified together with M11-6 through M11-8. Boundaries:
 `docs/m11_9_event_cancellation.md`, `docs/m11_10_class_list.md`.
+
+All five slices are delivered and verified. Final batch runs: Linux
+`40661574145`, Windows `40661580891`, commit `35c85fe`, each wheel lane
+`1352 passed, 2 skipped`. Reports: `docs/m11_6_report.md` …
+`docs/m11_10_report.md`.
+
+The next slice, `M11-11`, should be chosen from the remaining ranked candidates
+below (or a new gap-inventory slice with an explicit boundary).
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

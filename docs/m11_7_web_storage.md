@@ -81,5 +81,11 @@ unchanged.
 
 ## Verification
 
-Status: **implementation pending; real-V8 CI verification to follow (batched
-with M11-6 and M11-8).**
+Status: **verified on real V8 (Linux + Windows), `2026-10-28`.**
+
+- Focused tests: `test/test_web_storage.py` (13 items).
+- Final verified commit `35c85fe`; Linux run `40661574145` (cp311–cp314) and
+  Windows run `40661580891` (Python 3.11–3.14), every wheel lane
+  `1352 passed, 2 skipped` (the five-slice batch total).
+- Pre-CI local `zig c++ -fsyntax-only` found the `Local<Name>` compile issue;
+  fixed in `62ea507`. See `docs/m11_7_report.md`.

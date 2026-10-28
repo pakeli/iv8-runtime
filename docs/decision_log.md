@@ -126,11 +126,24 @@ Two post-implementation fixes were required — `ab1d507` restored the V8 15.0
 `4fa6469` corrected the tests to set ids through `setAttribute`. See
 `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`.
 
+### 12. M11-6..M11-10 verified as one five-slice batch
+
+Decided/verified `2026-10-28`.
+
+To amortize the cold V8 build, M11-6 (event subclasses), M11-7 (Web Storage),
+M11-8 (Blob/File/FileReader), M11-9 (event cancellation), and M11-10
+(classList/toggleAttribute) were developed and committed on one branch
+(`m11-6-event-subclasses`). The first run cold-built V8 and saved the branch
+cache; the final commit `35c85fe` was then verified with cached runs: Linux
+`40661574145`, Windows `40661580891`, each wheel lane `1352 passed, 2 skipped`.
+All five new test files ran. Contract guards that had frozen the old surface
+were refreshed as part of the batch.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-6`?
+### A. Which concrete compatibility slice becomes `M11-11`?
 
 Settled and implemented so far:
 
@@ -157,25 +170,29 @@ Settled and implemented so far:
   commit `4fa6469`, each `1265 passed, 2 skipped`. See `docs/m11_5_report.md`.
 - `M11-6` — **Event subclass cluster** (`CustomEvent` / `MouseEvent` /
   `KeyboardEvent` / `FocusEvent`) — selected on `2026-10-28` from rank 2 of the
-  backlog; boundary document `docs/m11_6_event_subclasses.md`. Implementation
-  and real-V8 verification are in progress on the `m11-6-event-subclasses`
-  branch.
+  backlog; boundary document `docs/m11_6_event_subclasses.md`. Verified in the
+  five-slice batch: Linux run `40661574145`, Windows run `40661580891`, commit
+  `35c85fe`, each `1352 passed, 2 skipped`. See `docs/m11_6_report.md`.
 - `M11-7` — **Web Storage** (`localStorage` / `sessionStorage`, per-Page
   in-memory) — selected on `2026-10-28` from rank 3; boundary document
-  `docs/m11_7_web_storage.md`.
+  `docs/m11_7_web_storage.md`. Verified in the same batch; see
+  `docs/m11_7_report.md`.
 - `M11-8` — **`Blob` / `File` / `FileReader`** — selected on `2026-10-28` from
-  rank 4; boundary document `docs/m11_8_blob_file_reader.md`.
+  rank 4; boundary document `docs/m11_8_blob_file_reader.md`. Verified in the
+  same batch; see `docs/m11_8_report.md`.
 - `M11-9` — **Event cancellation** (`cancelable` / `defaultPrevented` /
   `preventDefault` / `stopImmediatePropagation`) — selected on `2026-10-28`
   from the gap inventory; boundary document
-  `docs/m11_9_event_cancellation.md`.
+  `docs/m11_9_event_cancellation.md`. Verified in the same batch; see
+  `docs/m11_9_report.md`.
 - `M11-10` — **`classList` / `toggleAttribute`** — selected on `2026-10-28`
   from the gap inventory; boundary document `docs/m11_10_class_list.md`.
+  Verified in the same batch; see `docs/m11_10_report.md`.
 
-`M11-6` through `M11-10` are being implemented as one five-slice batch on the
-same `m11-6-event-subclasses` branch so a single real-V8 build covers the whole
-batch. After it lands, the next slice (`M11-11`) should again be chosen from
-this backlog rather than direction alone.
+`M11-6` through `M11-10` were delivered as one five-slice batch on the
+`m11-6-event-subclasses` branch, with one cold V8 build reused by the cached
+verification run. The next slice (`M11-11`) should again be chosen from this
+backlog rather than direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

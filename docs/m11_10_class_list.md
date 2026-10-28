@@ -87,5 +87,11 @@ M11-10 deliberately does **not** add:
 
 ## Verification
 
-Status: **implementation pending; real-V8 CI verification to follow in the
-M11-6..M11-10 batch.**
+Status: **verified on real V8 (Linux + Windows), `2026-10-28`.**
+
+- Focused tests: `test/test_class_list.py` (13 items).
+- Final verified commit `35c85fe`; Linux run `40661574145` (cp311–cp314) and
+  Windows run `40661580891` (Python 3.11–3.14), every wheel lane
+  `1352 passed, 2 skipped` (the five-slice batch total).
+- Contract guards and the `classList.add` length expectation were refreshed in
+  `35c85fe`. See `docs/m11_10_report.md`.

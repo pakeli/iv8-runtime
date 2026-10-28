@@ -205,7 +205,7 @@ the first runs: `ab1d507` (V8 15.0 `ExternalPointerTypeTag` on
 
 ### Next
 
-`M11-6` is selected: Event subclass cluster — see Priority 3f.
+`M11-6` is delivered in the five-slice batch — see Priority 3g.
 
 ### Deliberately not done
 
@@ -213,9 +213,9 @@ the first runs: `ab1d507` (V8 15.0 `ExternalPointerTypeTag` on
 setters, document-node childList records without `subtree`, JS-finalizer observer
 cleanup, `watch_apis` integration, and any scheduler/new pump.
 
-## Priority 3f: Sixth M11 compatibility slice — SELECTED, IMPLEMENTATION IN PROGRESS (`2026-10-28`)
+## Priority 3f: Sixth M11 compatibility slice — DONE (`2026-10-28`)
 
-### What is being built
+### What landed
 
 `M11-6`: **Event subclass cluster** — `CustomEvent` (`detail`), `MouseEvent`
 (`clientX` / `clientY` / `button` / `buttons`), `KeyboardEvent` (`key` / `code`
@@ -225,16 +225,17 @@ each subclass `instanceof Event`; subclass fields are own read-only values; no
 capture, cancellation, listener options, native event generation, or new pump.
 
 Boundary: `docs/m11_6_event_subclasses.md`. Tests:
-`test/test_event_subclasses.py` (pending).
+`test/test_event_subclasses.py` (30 items).
 
-### Verification pending
+### Verification — passed
 
-Real-V8 CI on branch `m11-6-event-subclasses` must run `release-linux` and
-`release-windows` on the same commit. Expected total: the M11-5 baseline
-(`1265 passed, 2 skipped`) plus the new items. Local checks are static only (no
-C++ toolchain / Windows V8 monolith).
+Verified in the five-slice batch on commit `35c85fe`: Linux run `40661574145`
+and Windows run `40661580891`, each wheel lane `1352 passed, 2 skipped`.
+`test/test_event_subclasses.py` ran in every lane. The cold-run failures were
+outdated contract guards and a wrapper-identity test assumption; fixed in
+`7448749` / `35c85fe`. See `docs/m11_6_report.md`.
 
-## Priority 3g: Five-slice batch — M11-6 through M11-10 — IMPLEMENTED, CI PENDING (`2026-10-28`)
+## Priority 3g: Five-slice batch — M11-6 through M11-10 — DONE (`2026-10-28`)
 
 ### What landed
 
@@ -265,12 +266,24 @@ Boundaries: `docs/m11_6_event_subclasses.md`, `docs/m11_7_web_storage.md`,
 `test/test_web_storage.py`, `test/test_blob_file_reader.py`,
 `test/test_event_cancellation.py`, `test/test_class_list.py`.
 
-### Verification pending
+### Verification — passed
 
-One batched run on the `m11-6-event-subclasses` branch head, after the M11-6
-cold build warms the branch's V8 cache. Expected total: the M11-5 baseline
-(`1265`) plus the five new test files' items (`30 + 13 + 22 + 9 + 13 = 87`) =
-**1352 passed, 2 skipped** per wheel lane.
+Final commit `35c85fe` (branch `m11-6-event-subclasses`):
+
+- Linux `release-linux` run `40661574145` — cp311–cp314, each
+  `1352 passed, 2 skipped`;
+- Windows `release-windows` run `40661580891` — Python 3.11–3.14, each
+  `1352 passed, 2 skipped`.
+
+All five new test files ran in every lane. 1352 is the M11-5 baseline (1265)
+plus 87 new items (`30 + 13 + 22 + 9 + 13`). Fixes during verification:
+`62ea507` (storage `Local<Name>`), `7448749` (wrapper-identity test),
+`35c85fe` (contract guards and two test bugs). Reports:
+`docs/m11_6_report.md` … `docs/m11_10_report.md`.
+
+### Next
+
+Choose `M11-11` from `docs/m11_compatibility_backlog.md`.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

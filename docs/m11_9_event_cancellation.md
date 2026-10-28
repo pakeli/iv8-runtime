@@ -74,5 +74,11 @@ M11-9 deliberately does **not** add:
 
 ## Verification
 
-Status: **implementation pending; real-V8 CI verification to follow in the
-M11-6..M11-10 batch.**
+Status: **verified on real V8 (Linux + Windows), `2026-10-28`.**
+
+- Focused tests: `test/test_event_cancellation.py` (9 items).
+- Final verified commit `35c85fe`; Linux run `40661574145` (cp311–cp314) and
+  Windows run `40661580891` (Python 3.11–3.14), every wheel lane
+  `1352 passed, 2 skipped` (the five-slice batch total).
+- The older cancellation-absence guards were refreshed in `35c85fe`. See
+  `docs/m11_9_report.md`.

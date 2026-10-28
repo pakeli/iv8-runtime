@@ -123,11 +123,13 @@ M11-6 deliberately does **not** add:
 
 ## Verification
 
-Status: **implementation pending; real-V8 CI verification to follow.**
+Status: **verified on real V8 (Linux + Windows), `2026-10-28`.**
 
-- Focused tests: `test/test_event_subclasses.py`.
-- Real-V8 CI uses `.github/workflows/release-linux.yml` and
-  `.github/workflows/release-windows.yml`; `ci.yml` is the skeleton shape-guard
-  lane.
-- Expected total after the slice: the M11-5 baseline (`1265 passed, 2 skipped`)
-  plus the new test file's item count, identical on both platforms.
+- Focused tests: `test/test_event_subclasses.py` (30 items).
+- Final verified commit `35c85fe`; Linux run `40661574145` (cp311–cp314) and
+  Windows run `40661580891` (Python 3.11–3.14), every wheel lane
+  `1352 passed, 2 skipped` (the five-slice batch total).
+- `ci.yml` remains the skeleton shape-guard lane.
+- The first cold run failed only on two outdated `CustomEvent`-absence guards
+  and a wrapper-identity test assumption; fixed in `7448749` / `35c85fe`. See
+  `docs/m11_6_report.md`.

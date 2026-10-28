@@ -1,7 +1,8 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-28` · Latest verified milestone: **M11-5**
-(`MutationObserver`), verified on real V8 (Linux + Windows) on `2026-10-28`.
+Last reviewed: `2026-10-28` · Latest verified milestone: **M11-10**
+(`classList` / `toggleAttribute`), verified with the M11-6..M11-10 batch on
+real V8 (Linux + Windows) on `2026-10-28`.
 
 ## 0. What this document is
 
@@ -67,7 +68,7 @@ milestone.
 | `eval(source, *, to_py=False, name="<eval>")` | M2-1 | same semantics as `JSContext.eval` |
 | `dispose()` / `disposed` / `__enter__` / `__exit__` | M2-1 | delegates to the owned context |
 | `run_timers()` | M2-4 | manual pump; timers never run in the background |
-| `run_jobs()` | M2-4, M11-4, M11-5 | drains the microtask queue (`Promise` reactions + `queueMicrotask` + MutationObserver deliveries) |
+| `run_jobs()` | M2-4, M11-4, M11-5, M11-8 | drains the microtask queue (`Promise` reactions + `queueMicrotask` + MutationObserver + FileReader deliveries) |
 | `run_animation_frame()` | M11-2 | manual pump; runs one frame of `requestAnimationFrame` callbacks |
 | `run_idle_callbacks()` | M11-3 | manual pump; runs one round of `requestIdleCallback` callbacks |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
@@ -150,6 +151,30 @@ Installed per generation by `install_page`:
   `Page.run_jobs()`; element and document targets are accepted. `characterData`
   is accepted but inert (element-only DOM); records are plain objects (no
   `MutationRecord` global); observer state is per generation;
+- **event subclasses** (M11-6) — `CustomEvent` (`detail`), `MouseEvent`
+  (`clientX` / `clientY` / `button` / `buttons`), `KeyboardEvent` (`key` /
+  `code` / `repeat`), and `FocusEvent` (`relatedTarget`), each inheriting
+  `Event.prototype` and using the existing dispatch/bubbling model;
+- **event cancellation** (M11-9) — `cancelable` / `defaultPrevented`,
+  `preventDefault()`, and `stopImmediatePropagation()`; `dispatchEvent` returns
+  `false` for a canceled cancelable event. Capture phase and default actions
+  are still absent;
+- **Web Storage** (M11-7) — `localStorage` / `sessionStorage` as independent,
+  insertion-ordered, per-Page in-memory stores (`getItem` / `setItem` /
+  `removeItem` / `clear` / `key` / read-only `length`); entries survive
+  `Page.load()` of one Page but there is no disk persistence, origin keying,
+  `storage` events, or cross-Page sharing;
+- **Blob / File / FileReader** (M11-8) — immutable `Blob` / `File` byte value
+  objects (`size` / `type` / `name` / `lastModified`, `slice`, Promise-returning
+  `text` / `arrayBuffer`) and a minimal `FileReader` whose
+  `readAsText` / `readAsArrayBuffer` complete on `Page.run_jobs()` with
+  `loadstart` / `load` / `loadend` / `abort` listener events; no network,
+  filesystem, object-URL, progress, or data-URL surface;
+- **classList / toggleAttribute** (M11-10) — `element.classList`
+  (`contains` / `add` / `remove` / `toggle` / `replace` / `item` / `length` /
+  `value`, a fresh plain object per access) and
+  `element.toggleAttribute(name, force?)`, both feeding the MutationObserver
+  attribute hooks;
 - **animation frames** — `requestAnimationFrame` / `cancelAnimationFrame` (M11-2,
   manual-pump only via `Page.run_animation_frame()`). A separate FIFO queue from the
   timers, with its own handle space; the callback receives no timestamp argument, and
@@ -208,9 +233,9 @@ configured, and there is no UA-CH / canvas / webgl surface to spoof.
 
 Also still excluded: a real clock, background threads, and any automatic event loop.
 Every asynchronous queue is drained by an explicit Python pump — `run_timers()`,
-`run_jobs()` (microtasks, including `queueMicrotask` since M11-4 and
-`MutationObserver` delivery since M11-5), `run_animation_frame()` (M11-2), and
-`run_idle_callbacks()` (M11-3).
+`run_jobs()` (microtasks, including `queueMicrotask` since M11-4,
+`MutationObserver` delivery since M11-5, and `FileReader` completion since
+M11-8), `run_animation_frame()` (M11-2), and `run_idle_callbacks()` (M11-3).
 Nothing in this runtime advances on its own, and there is no `performance.now()` /
 frame-rate / vsync notion; frames and idle rounds are counted queues, not timed ones.
 There is also **no unified scheduler**: each pump drains exactly one queue, and no
@@ -240,6 +265,11 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-3 | `requestIdleCallback` / `cancelIdleCallback` + `Page.run_idle_callbacks()` | `docs/m11_3_idle_callbacks.md` |
 | M11-4 | `queueMicrotask` (drained by `Page.run_jobs()`) — verified 2026-10-27 | `docs/m11_4_queue_microtask.md`, `docs/m11_4_report.md` |
 | M11-5 | `MutationObserver` (childList/attributes/subtree; `run_jobs()` delivery) — verified 2026-10-28 | `docs/m11_5_mutation_observer.md`, `docs/m11_5_report.md` |
+| M11-6 | event subclasses (`CustomEvent` / `MouseEvent` / `KeyboardEvent` / `FocusEvent`) — verified 2026-10-28 | `docs/m11_6_event_subclasses.md`, `docs/m11_6_report.md` |
+| M11-7 | Web Storage (`localStorage` / `sessionStorage`, per-Page in-memory) — verified 2026-10-28 | `docs/m11_7_web_storage.md`, `docs/m11_7_report.md` |
+| M11-8 | `Blob` / `File` / `FileReader` (`run_jobs()` delivery) — verified 2026-10-28 | `docs/m11_8_blob_file_reader.md`, `docs/m11_8_report.md` |
+| M11-9 | event cancellation (`preventDefault` / `stopImmediatePropagation`) — verified 2026-10-28 | `docs/m11_9_event_cancellation.md`, `docs/m11_9_report.md` |
+| M11-10 | `classList` / `toggleAttribute` — verified 2026-10-28 | `docs/m11_10_class_list.md`, `docs/m11_10_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

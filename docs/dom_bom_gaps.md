@@ -34,10 +34,10 @@ Last reviewed: `2026-10-28` · Baseline: **M11-5** (`MutationObserver`, verified
 
 | Missing | Status |
 |---|---|
-| `localStorage` / `sessionStorage` and `storage` events | **selected for M11-7** (stores only; no `storage` events) |
+| `storage` events and cross-page/cross-tab notification | **absent** — M11-7 provides per-Page in-memory stores only |
 | `document.cookie` | **excluded** |
 | IndexedDB, Cache API, `navigator.storage` / `StorageManager` | **absent** |
-| Any persistence across `Page.load()` generations or processes | **excluded** |
+| Persistence across `Page` instances or processes | **excluded** — entries survive `load()` within one Page only |
 
 ### 1.3 Time, scheduling, event loop
 
@@ -125,9 +125,7 @@ to Python `logging`).
 | Missing | Status |
 |---|---|
 | `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **absent** |
-| `classList` | **selected for M11-10** (minimal token list) |
 | `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
-| `toggleAttribute` | **selected for M11-10** |
 | `hasAttributes`, `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
 | Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **absent** — use `getAttribute` |
 | `id` / `className` property setters | **excluded** — the getters are read-only |
@@ -144,8 +142,7 @@ to Python `logging`).
 | Missing | Status |
 |---|---|
 | Capture phase, `eventPhase`, `composed`, `timeStamp`, `isTrusted` | **absent** |
-| `preventDefault` / `cancelable` / `defaultPrevented` / `stopImmediatePropagation` | **selected for M11-9** |
-| Event subclass cluster (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`, `UIEvent`, `InputEvent`) | **selected for M11-6** (backlog rank 2) |
+| More event classes (`UIEvent`, `InputEvent`, `WheelEvent`, …) | **absent** — M11-6 delivered `CustomEvent` / `MouseEvent` / `KeyboardEvent` / `FocusEvent` |
 | Listener options (`once` / `capture` / `passive` / `signal`) | **absent** |
 | `on*` handler properties | **absent** |
 | Native event generation and default actions (`click()`, `submit` / `reset` / `input` / `change`, media events) | **excluded** |
@@ -228,15 +225,12 @@ These are not ordinary missing APIs; changing them is a project-level decision:
 
 ## 4. Near-term candidates
 
-Mapping to `docs/m11_compatibility_backlog.md`:
+The M11-6..M11-10 batch delivered event subclasses, Web Storage,
+Blob/File/FileReader, event cancellation, and classList/toggleAttribute.
+Remaining candidates (mapping to `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|
-| Event subclasses | 2 | Smallest follow-on; likely M11-6 |
-| Web Storage | 3 | **Selected for M11-7** — per-Page in-memory stores |
-| `Blob` / `File` / `FileReader` | 4 | **Selected for M11-8** — FileReader uses `run_jobs()` delivery |
-| Event cancellation | gap inventory | **Selected for M11-9** |
-| `classList` / `toggleAttribute` | gap inventory | **Selected for M11-10** |
 | Nested environment + `get_defaults()` | 5 | API-shape decision, not a pure feature |
 | Event-loop facade | 6 | Deferred design decision |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |
