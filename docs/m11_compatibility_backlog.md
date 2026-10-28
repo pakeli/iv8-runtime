@@ -28,8 +28,8 @@ The ranking is planning guidance, not a promise of full parity.
 |---|---|---|---|---|---|---|
 | 1 | **`MutationObserver`** | Listed in the DOM/HTML compatibility table and in the micro-task examples (`README_EN.md`); used by framework and anti-bot code | Our DOM has mutation paths (`appendChild` / `removeChild` / `insertBefore` / `setAttribute` / `removeAttribute` / `textContent`) and M11-4 microtasks, but no observation model | 5 | 5 / 3 | **M11-5 delivered & verified (`2026-10-28`)** |
 | 2 | **Event subclass cluster** (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`) | Target claims 80+ event types; demos use clicks and lifecycle events | We install only a minimal `Event` constructor; no subclasses or their read-only fields | 4 | 5 / 5 | **M11-6 selected (`2026-10-28`)** |
-| 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | Independent, medium slice |
-| 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | Medium slice; async event delivery needed |
+| 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | **M11-7 selected (`2026-10-28`)** |
+| 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | **M11-8 selected (`2026-10-28`)** |
 | 5 | **Nested environment + `get_defaults()`** | `JSContext(environment={...})` with nested navigator/screen/location/webgl paths; `get_defaults()` enumerates them | M11-1 has a flat 11-key `Page(environment=...)` baseline and `get_default_environment()` | 3 | 4 / 4 | API-shape decision; subset only |
 | 6 | **Event-loop facade** (`advance` / `sleep` / `tick` / `drain`) | Central to the target's `window.__iv8__.eventLoop` model | We deliberately expose four independent manual pumps and no scheduler | 5 | 2 / 2 | Deferred design decision |
 | 7 | **Offline resources + runtime XHR/fetch** | Community edition matches XHR/fetch/external resources against an injected offline bundle (`add_resource`, `page.load.resources`) | `Page.load(resources)` only pre-resolves `<script src>`; no runtime XHR/fetch | 5 | 2 / 2 | High-risk; standing networking exclusion needs approval |
@@ -88,8 +88,12 @@ M11-5 is delivered and verified (`2026-10-28`).
 `M11-6` — **Event subclass cluster** — was selected on `2026-10-28` (rank 2:
 `CustomEvent` / `MouseEvent` / `KeyboardEvent` / `FocusEvent`). Its boundary
 document is `docs/m11_6_event_subclasses.md`; implementation and real-V8
-verification are in progress on the `m11-6-event-subclasses` branch. Web
-Storage (rank 3) remains the next independent medium slice after it.
+verification are in progress on the `m11-6-event-subclasses` branch.
+
+`M11-7` (**Web Storage**) and `M11-8` (**`Blob` / `File` / `FileReader`**) were
+selected on `2026-10-28` as one batch on the same verification branch, to
+amortize the cold V8 build. Boundaries:
+`docs/m11_7_web_storage.md`, `docs/m11_8_blob_file_reader.md`.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

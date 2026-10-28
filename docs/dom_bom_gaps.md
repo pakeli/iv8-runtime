@@ -34,7 +34,7 @@ Last reviewed: `2026-10-28` · Baseline: **M11-5** (`MutationObserver`, verified
 
 | Missing | Status |
 |---|---|
-| `localStorage` / `sessionStorage` and `storage` events | **candidate** (backlog rank 3) |
+| `localStorage` / `sessionStorage` and `storage` events | **selected for M11-7** (stores only; no `storage` events) |
 | `document.cookie` | **excluded** |
 | IndexedDB, Cache API, `navigator.storage` / `StorageManager` | **absent** |
 | Any persistence across `Page.load()` generations or processes | **excluded** |
@@ -231,8 +231,8 @@ Mapping to `docs/m11_compatibility_backlog.md`:
 | Gap area | Backlog rank | Notes |
 |---|---|---|
 | Event subclasses | 2 | Smallest follow-on; likely M11-6 |
-| Web Storage | 3 | Independent; origin/persistence/event semantics need a boundary |
-| `Blob` / `File` / `FileReader` | 4 | Needs async event delivery |
+| Web Storage | 3 | **Selected for M11-7** — per-Page in-memory stores |
+| `Blob` / `File` / `FileReader` | 4 | **Selected for M11-8** — FileReader uses `run_jobs()` delivery |
 | Nested environment + `get_defaults()` | 5 | API-shape decision, not a pure feature |
 | Event-loop facade | 6 | Deferred design decision |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |

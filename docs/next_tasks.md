@@ -234,6 +234,31 @@ Real-V8 CI on branch `m11-6-event-subclasses` must run `release-linux` and
 (`1265 passed, 2 skipped`) plus the new items. Local checks are static only (no
 C++ toolchain / Windows V8 monolith).
 
+## Priority 3g: Seventh/eighth M11 slices — M11-7 + M11-8 batch — IMPLEMENTED, CI PENDING (`2026-10-28`)
+
+### What landed
+
+- `M11-7`: **Web Storage** — `localStorage` / `sessionStorage` as two
+  independent, insertion-ordered, per-Page in-memory stores with
+  `getItem` / `setItem` / `removeItem` / `clear` / `key` and a read-only
+  `length`. Entries survive `Page.load()` generations of the same Page; no
+  disk, origin keying, `storage` events, or cross-Page sharing.
+- `M11-8`: **`Blob` / `File` / `FileReader`** — immutable byte value objects
+  with `size` / `type` / `name` / `lastModified`, `slice`, and Promise-returning
+  `text` / `arrayBuffer`, plus a minimal `FileReader` whose
+  `readAsText` / `readAsArrayBuffer` complete on `Page.run_jobs()` and dispatch
+  `loadstart` / `load` / `loadend` / `abort` listener events. No network,
+  filesystem, object-URL, progress, or data-URL surface.
+
+Boundaries: `docs/m11_7_web_storage.md`, `docs/m11_8_blob_file_reader.md`.
+Tests: `test/test_web_storage.py`, `test/test_blob_file_reader.py`.
+
+### Verification pending
+
+Batched with M11-6 on the `m11-6-event-subclasses` branch: after the M11-6 cold
+build warms the branch's V8 cache, the M11-7/M11-8 commit gets one fast rerun.
+Expected total: the M11-6 result plus the two new test files' items.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal

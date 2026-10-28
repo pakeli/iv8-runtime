@@ -160,9 +160,16 @@ Settled and implemented so far:
   backlog; boundary document `docs/m11_6_event_subclasses.md`. Implementation
   and real-V8 verification are in progress on the `m11-6-event-subclasses`
   branch.
+- `M11-7` — **Web Storage** (`localStorage` / `sessionStorage`, per-Page
+  in-memory) — selected on `2026-10-28` from rank 3; boundary document
+  `docs/m11_7_web_storage.md`.
+- `M11-8` — **`Blob` / `File` / `FileReader`** — selected on `2026-10-28` from
+  rank 4; boundary document `docs/m11_8_blob_file_reader.md`.
 
-`M11-6` is selected and in progress; after it lands, `M11-7` should again be
-chosen from this backlog rather than direction alone.
+`M11-7` and `M11-8` are being implemented as one batch on the same
+`m11-6-event-subclasses` branch so a single real-V8 build covers the batch.
+After it lands, the next slice (`M11-9`) should again be chosen from this
+backlog rather than direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);
