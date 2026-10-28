@@ -9,8 +9,8 @@ relative input with no usable base (or calling without new) is a TypeError. Inst
 expose read-only href/origin/protocol/host/hostname/pathname/search/hash + toString()
 + toJSON() (both return href). Pure value decomposition — no navigation / network.
 
-No URLSearchParams / searchParams / username / password / port / setters. No Python
-surface.
+No username / password / port / setters. (M11-15 later adds a non-live
+URL.searchParams snapshot.) No Python surface.
 """
 
 import pytest
@@ -223,11 +223,11 @@ def test_requires_new():
 # --- frozen-out surface ----------------------------------------------------------
 
 @on_only
-def test_no_searchparams_or_setters_surface():
+def test_searchparams_snapshot_but_no_setters_or_extra_parts():
     with iv8.Page() as page:
         page.load(html="<html><body></body></html>", base_url=BASE)
-        # URL itself gains no searchParams / port / username / password (the standalone
-        # URLSearchParams global arrived in M8-3 but is NOT linked to URL here).
+        # M11-15 links URL.searchParams to the standalone URLSearchParams global as
+        # a SNAPSHOT; URL still exposes no port / username / password or setters.
         assert page.eval(
             """
             (() => {
@@ -236,7 +236,9 @@ def test_no_searchparams_or_setters_surface():
                 .map(k => typeof u[k]).join(',');
             })();
             """
-        ) == "undefined,undefined,undefined,undefined"
+        ) == "object,undefined,undefined,undefined"
+        assert page.eval(
+            "new URL('https://a.com/x?y=1').searchParams.get('y')") == "1"
 
 
 # --- repeated load keeps URL available -------------------------------------------

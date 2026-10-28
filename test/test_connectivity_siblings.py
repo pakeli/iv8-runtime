@@ -6,9 +6,9 @@ document root via parent; false for detached / removed subtrees),
 previousElementSibling / nextElementSibling (adjacent element in the parent's
 children order, or null). All based on the live tree, so M4-A-3 edits are
 reflected at once; an inserted <script> is connected but inert. JS-side only; no
-new Python surface, no raw previous|nextSibling / contains /
-compareDocumentPosition / getRootNode. (parentElement / firstElementChild /
-lastElementChild / childElementCount arrived later in M4-B-1.)
+new Python surface, no contains / compareDocumentPosition / getRootNode.
+(parentElement / firstElementChild / lastElementChild / childElementCount arrived
+later in M4-B-1; raw previous|nextSibling in M11-13.)
 """
 
 import pytest
@@ -242,9 +242,10 @@ def test_no_out_of_scope_navigation_surface():
         page.load(html=html, base_url=BASE)
         el = "document.getElementById('d')"
         # NOTE: parentElement / firstElementChild / lastElementChild /
-        # childElementCount were added in M4-B-1 (test_structure_navigation.py) and
-        # contains in M4-B-2 (test_contains.py); they are intentionally no longer
-        # part of this frozen-out list.
-        for member in ("previousSibling", "nextSibling",
-                       "compareDocumentPosition", "getRootNode"):
+        # childElementCount were added in M4-B-1 (test_structure_navigation.py);
+        # contains in M4-B-2 (test_contains.py); raw previousSibling / nextSibling
+        # in M11-13. They are intentionally no longer part of this frozen-out list.
+        for member in ("compareDocumentPosition", "getRootNode"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        assert page.eval(f"{el}.previousSibling === null") is True
+        assert page.eval(f"{el}.nextSibling === null") is True

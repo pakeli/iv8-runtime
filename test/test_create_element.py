@@ -180,10 +180,13 @@ def test_no_out_of_scope_creation_or_tree_surface():
         # (M4-A-3 adds appendChild/removeChild/insertBefore; M4-A-4 adds
         # removeAttribute; M4-A-5 adds element querySelector[All]/
         # getElementsByTagName; M4-A-6 adds ownerDocument/isConnected/
-        # previous|nextElementSibling; still out of scope here: raw previous/next
-        # Sibling, replaceChild, innerHTML. (matches arrived in M4-B-3, closest in
-        # M4-B-4.)
+        # previous|nextElementSibling; M11-13 adds raw previous/nextSibling and
+        # replaceChild. Still out of scope here: innerHTML / outerHTML. (matches
+        # arrived in M4-B-3, closest in M4-B-4.)
         el = "document.createElement('div')"
-        for member in ("previousSibling", "nextSibling",
-                       "replaceChild", "innerHTML", "outerHTML"):
+        for member in ("innerHTML", "outerHTML"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        for member in ("replaceChild",):
+            assert page.eval(f"typeof {el}.{member}") == "function"
+        for member in ("previousSibling", "nextSibling"):
+            assert page.eval(f"{el}.{member} === null") is True

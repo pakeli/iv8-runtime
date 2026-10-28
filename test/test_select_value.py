@@ -6,8 +6,8 @@ seeded once from the `selected` attribute, then decoupled. select.value is deriv
 read = first selected option's value (else ""); write selects the first descendant
 option whose value === String(v) and clears the others (no match -> no change). At
 parse, multiple pre-selected -> only the doc-order-first kept. Live over the tree;
-works detached. JS-side only; no new Python surface, no selectedIndex/options/
-multiple/HTMLSelectElement.
+works detached. JS-side only; no new Python surface. (M11-16 later adds
+selectedIndex/options/multiple/size; there is still no HTMLSelectElement class.)
 
 Assertions use .id / .tagName / .value / .selected only (never wrapper identity).
 """

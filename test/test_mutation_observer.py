@@ -349,7 +349,7 @@ def test_remove_missing_attribute_has_no_record():
 
 
 @on_only
-def test_id_and_class_via_set_attribute_but_not_property_writes():
+def test_id_and_class_via_set_attribute_and_property_writes():
     with iv8.Page() as page:
         _setup(page)
         page.eval("""
@@ -361,13 +361,19 @@ def test_id_and_class_via_set_attribute_but_not_property_writes():
         """)
         page.run_jobs()
         records = _records(page)
-        assert len(records) == 2
+        # M11-12: id / className setters are real attribute writes, so both the
+        # setAttribute calls and the property writes queue records.
+        assert len(records) == 4
         assert records[0][ATTR] == "id"
         assert records[0][OLD] == "root"
         assert records[1][ATTR] == "class"
         assert records[1][OLD] == "null"
-        assert page.eval("root.id") == "new-id"
-        assert page.eval("root.className") == "x y"
+        assert records[2][ATTR] == "id"
+        assert records[2][OLD] == "new-id"
+        assert records[3][ATTR] == "class"
+        assert records[3][OLD] == "x y"
+        assert page.eval("root.id") == "ignored"
+        assert page.eval("root.className") == "ignored"
 
 
 @on_only

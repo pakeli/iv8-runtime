@@ -111,11 +111,13 @@ def test_frozen_items_absent():
         assert page.eval("typeof document.getElementById('ap').code") == "undefined"
         # ... but getAttribute still reads them.
         assert page.eval("document.getElementById('a').getAttribute('href')") == "x"
-        # No firstChild/lastChild/hasChildNodes/raw siblings, no closest-adjacent
-        # Node relations.
+        # M11-13 adds firstChild/lastChild/hasChildNodes and raw siblings (the
+        # element-only aliases); no closest-adjacent Node relations yet.
         for member in ("firstChild", "lastChild", "hasChildNodes",
-                       "previousSibling", "nextSibling", "compareDocumentPosition",
-                       "getRootNode"):
+                       "previousSibling", "nextSibling"):
+            assert page.eval(
+                f"typeof document.getElementById('f').{member}") != "undefined"
+        for member in ("compareDocumentPosition", "getRootNode"):
             assert page.eval(
                 f"typeof document.getElementById('f').{member}") == "undefined"
 

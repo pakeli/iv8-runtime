@@ -3,10 +3,11 @@
 A "collar" suite: it does NOT repeat the per-phase detail tests. It checks the
 consolidated M8 boundary — no out-of-scope surface leaked (Python + JS), the four
 web-platform global lines (TextEncoder/TextDecoder, URL, URLSearchParams, atob/btoa)
-exist and cooperate over a live page, the key frozen items (URL.searchParams / Blob /
-File / fetch / Buffer / base64url / URL setters / streaming) stay absent, no
-second-layer surface (DevTools/CDP/watch/trusted-input/iframe/Worker/profile) leaked,
-and the inherited repeated/failed/stale + <script>-inert boundaries did not regress.
+exist and cooperate over a live page, the key frozen items (fetch / Buffer /
+base64url / URL setters / streaming) stay absent, no second-layer surface
+(DevTools/CDP/watch/trusted-input/iframe/Worker/profile) leaked, and the inherited
+repeated/failed/stale + <script>-inert boundaries did not regress. Blob / File /
+FileReader arrived in M11-8; URL.searchParams in M11-15.
 See docs/m8_summary.md for the authoritative boundary.
 """
 
@@ -83,7 +84,8 @@ def test_frozen_items_absent():
         # M11-8 brings these in scope.
         for g in ("Blob", "File", "FileReader"):
             assert page.eval(f"typeof globalThis.{g}") == "function"
-        # URL is NOT linked to URLSearchParams and exposes no setters / extra parts
+        # M11-15 adds a URL.searchParams SNAPSHOT; URL still exposes no setters /
+        # extra parts and the snapshot is not live.
         assert page.eval(
             """
             (() => {
@@ -92,7 +94,9 @@ def test_frozen_items_absent():
                 .map(k => typeof u[k]).join(',');
             })();
             """
-        ) == "undefined,undefined,undefined,undefined"
+        ) == "object,undefined,undefined,undefined"
+        assert page.eval(
+            "new URL('https://a.com/p?x=1').searchParams.get('x')") == "1"
         # URLSearchParams has no iterator / entries / sort / size
         assert page.eval(
             """

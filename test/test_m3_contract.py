@@ -75,15 +75,18 @@ def test_js_element_surface_not_exceeded():
     with iv8.Page() as page:
         page.load(html="<html><body><div id='d' data-x='1'></div></body></html>",
                   base_url=BASE)
-        # (M4-A-4 added element.removeAttribute; it stays out of scope here.)
+        # (M4-A-4 added element.removeAttribute; M11-12 adds hasAttributes /
+        # getAttributeNames. The rest stay out of scope here.)
         el = "document.getElementById('d')"
         for member in ("attributes", "dataset",
-                       "hasAttributes", "src", "type",
+                       "src", "type",
                        "async", "defer", "innerHTML", "outerHTML", "style"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
-        # M11-10 brings these into scope.
+        # M11-10 brings these into scope; M11-12 adds the attribute-name surface.
         assert page.eval(f"typeof {el}.toggleAttribute") == "function"
         assert page.eval(f"typeof {el}.classList") == "object"
+        assert page.eval(f"typeof {el}.hasAttributes") == "function"
+        assert page.eval(f"typeof {el}.getAttributeNames") == "function"
 
 
 # --- (3) main-line cooperation --------------------------------------------------

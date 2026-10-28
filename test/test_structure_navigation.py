@@ -5,8 +5,9 @@ element parent, or null; matches parentNode in this model), firstElementChild /
 lastElementChild (first / last of children, or null), childElementCount
 (children.length). All based on the live tree, so M4-A-3 edits are reflected at
 once; a detached element reads parentElement null / count 0; an inserted <script>
-can be first/last child yet stays inert. JS-side only; no new Python surface, no
-firstChild / lastChild / hasChildNodes / raw previous|nextSibling.
+can be first/last child yet stays inert. JS-side only; no new Python surface.
+M11-13 later added firstChild / lastChild / hasChildNodes and raw
+previous|nextSibling as element-only aliases.
 """
 
 import pytest
@@ -257,14 +258,22 @@ def test_stale_after_dispose():
         el.to_py()
 
 
-# --- shape guard: no out-of-scope node navigation -------------------------------
+# --- M11-13 raw node navigation aliases -----------------------------------------
 
 @on_only
-def test_no_out_of_scope_node_navigation():
-    html = "<html><body><div id='d'><span></span></div></body></html>"
+def test_node_navigation_aliases_present():
+    html = ("<html><body><div id='d'><span id='a'></span>"
+            "<span id='b'></span></div></body></html>")
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         el = "document.getElementById('d')"
-        for member in ("firstChild", "lastChild", "hasChildNodes",
-                       "previousSibling", "nextSibling"):
-            assert page.eval(f"typeof {el}.{member}") == "undefined"
+        assert page.eval(f"{el}.firstChild.id") == "a"
+        assert page.eval(f"{el}.lastChild.id") == "b"
+        assert page.eval(f"{el}.hasChildNodes()") is True
+        assert page.eval(
+            "document.getElementById('a').previousSibling === null") is True
+        assert page.eval(
+            "document.getElementById('a').nextSibling.id") == "b"
+        assert page.eval("document.createElement('div').firstChild === null") is True
+        assert page.eval(
+            "document.createElement('div').hasChildNodes()") is False

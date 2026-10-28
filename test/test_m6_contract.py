@@ -83,9 +83,10 @@ def test_frozen_items_absent():
         # button / option do NOT get defaultValue; option has no defaultValue
         assert page.eval("typeof document.getElementById('bt').defaultValue") == "undefined"
         assert page.eval("typeof document.getElementById('op').defaultValue") == "undefined"
-        # select: still no options / selectedIndex / multiple
-        for m in ("options", "selectedIndex", "multiple"):
-            assert page.eval(f"typeof document.getElementById('se').{m}") == "undefined"
+        # select: M11-16 adds options / selectedIndex / multiple.
+        assert page.eval("document.getElementById('se').options.length") == 1
+        assert page.eval("document.getElementById('se').selectedIndex") == -1
+        assert page.eval("document.getElementById('se').multiple") is False
         # input: no validity / indeterminate
         for m in ("validity", "indeterminate", "checkValidity"):
             assert page.eval(f"typeof document.getElementById('in').{m}") == "undefined"

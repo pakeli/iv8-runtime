@@ -263,10 +263,12 @@ def test_no_out_of_scope_attribute_surface():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         el = "document.getElementById('d')"
-        # M11-10 brings toggleAttribute / classList into scope.
-        for member in ("hasAttributes", "attributes",
-                       "dataset", "src", "type", "title", "hidden",
+        # M11-10 brings toggleAttribute / classList into scope; M11-12 adds the
+        # attribute-presence/name surface.
+        for member in ("attributes", "dataset", "src", "type", "title", "hidden",
                        "setAttributeNS", "removeAttributeNS"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
         assert page.eval(f"typeof {el}.toggleAttribute") == "function"
         assert page.eval(f"typeof {el}.classList") == "object"
+        assert page.eval(f"typeof {el}.hasAttributes") == "function"
+        assert page.eval(f"typeof {el}.getAttributeNames") == "function"

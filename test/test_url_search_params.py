@@ -6,8 +6,9 @@ TypeError (as is calling without new). Methods (names/values via String()): get 
 value or null), getAll (plain Array), has (bool), append, set (replace first in place,
 drop rest), delete (drop all), toString (encoded query, no leading '?'). percent 口径:
 decode '+'->space, %XX->byte (bad % literal); encode passes [A-Za-z0-9*-._], space->'+',
-else uppercase %XX. NOT linked to URL (url.searchParams absent). No iterator / entries /
-keys / values / forEach / sort / size / record init / FormData / fetch. No Python API.
+else uppercase %XX. M11-15 later links URL.searchParams to this global as a
+non-live snapshot. No iterator / entries / keys / values / forEach / sort / size /
+record init / FormData / fetch. No Python API.
 """
 
 import pytest
@@ -266,9 +267,9 @@ def test_frozen_surface():
             })();
             """
         ) == "undefined,undefined,undefined,undefined,undefined,undefined,undefined"
-        # URL is NOT linked to URLSearchParams
+        # M11-15 links URL.searchParams to URLSearchParams as a SNAPSHOT.
         assert page.eval(
-            "typeof new URL('https://a.com/?x=1').searchParams") == "undefined"
+            "new URL('https://a.com/?x=1').searchParams.get('x')") == "1"
 
 
 # --- repeated load keeps the global available -----------------------------------

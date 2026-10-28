@@ -99,9 +99,11 @@ def test_frozen_items_absent():
         # element.getElementsByClassName still frozen (M4-B-13 kept it out)
         assert page.eval(
             "typeof document.getElementById('f').getElementsByClassName") == "undefined"
-        # select: no options / selectedIndex / multiple / size
-        for m in ("options", "selectedIndex", "multiple", "size"):
-            assert page.eval(f"typeof document.getElementById('se').{m}") == "undefined"
+        # select: M11-16 adds options / selectedIndex / multiple / size.
+        assert page.eval("document.getElementById('se').options.length") == 1
+        assert page.eval("document.getElementById('se').selectedIndex") == -1
+        assert page.eval("document.getElementById('se').multiple") is False
+        assert page.eval("document.getElementById('se').size") == 0
         # input: no type / disabled. (defaultChecked arrived in M6-2, defaultValue in
         # M6-4 — see their test files.)
         for m in ("type", "disabled"):

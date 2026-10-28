@@ -6,7 +6,8 @@ move/attach/detach element nodes so document-level queries reflect the change at
 once. A <script> inserted into the tree appears in document.scripts but is still
 NOT executed. Invalid operations throw a JS TypeError. textContent stays the M2-7
 stored aggregate (not recomputed on tree edit). JS-side only; no new Python
-surface; no document.appendChild / replaceChild / sibling / ownerDocument face.
+surface; no document.appendChild face. (replaceChild / remove / raw sibling
+aliases arrived later in M11-13, cloneNode in M11-14.)
 """
 
 import pytest
@@ -332,8 +333,12 @@ def test_no_out_of_scope_tree_surface():
         page.load(html=html, base_url=BASE)
         assert page.eval("typeof document.appendChild") == "undefined"
         # (M4-A-6 added ownerDocument/isConnected/previous|nextElementSibling;
-        # raw previousSibling/nextSibling stay out of scope.)
+        # M11-13 adds replaceChild/remove/raw siblings; M11-14 adds cloneNode. The
+        # append/prepend/before/after family still needs text-node semantics.)
         el = "document.getElementById('d')"
-        for member in ("replaceChild", "append", "prepend", "before", "after",
-                       "remove", "previousSibling", "nextSibling", "cloneNode"):
+        for member in ("append", "prepend", "before", "after"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        for member in ("replaceChild", "remove", "cloneNode"):
+            assert page.eval(f"typeof {el}.{member}") == "function"
+        for member in ("previousSibling", "nextSibling"):
+            assert page.eval(f"typeof {el}.{member}") != "undefined"
