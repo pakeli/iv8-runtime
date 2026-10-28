@@ -327,9 +327,10 @@ def test_stop_propagation_is_inherited():
 def test_no_capture_phase_surface():
     with iv8.Page() as page:
         _setup(page)
-        for member in ("eventPhase", "composed", "timeStamp"):
+        for member in ("composed", "timeStamp"):
             assert page.eval(
                 f"typeof new CustomEvent('x').{member}") == "undefined"
+        assert page.eval("new CustomEvent('x').eventPhase") == 0
         assert page.eval("typeof new CustomEvent('x').detail") != "undefined"
         # M11-9 adds cancellation; the inherited methods exist here too.
         assert page.eval(

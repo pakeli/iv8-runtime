@@ -39,9 +39,10 @@ def test_defaults():
         assert page.eval(
             "new Event('e').preventDefault()") is iv8.JSUndefined
         assert page.eval("new Event('e').defaultPrevented") is False
-        for member in ("eventPhase", "composed", "timeStamp"):
+        for member in ("composed", "timeStamp"):
             assert page.eval(
                 f"typeof new Event('e').{member}") == "undefined"
+        assert page.eval("new Event('e').eventPhase") == 0
 
 
 @on_only

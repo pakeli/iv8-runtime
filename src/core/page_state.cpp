@@ -1159,6 +1159,25 @@ v8::Local<v8::Private> event_immediate_stopped_key(v8::Isolate* isolate) {
         isolate,
         v8::String::NewFromUtf8Literal(isolate, "iv8::event-immediate-stopped"));
 }
+v8::Local<v8::Private> event_passive_key(v8::Isolate* isolate) {
+    return v8::Private::ForApi(
+        isolate, v8::String::NewFromUtf8Literal(isolate, "iv8::event-passive"));
+}
+bool event_in_passive_listener(v8::Isolate* isolate,
+                               v8::Local<v8::Context> context,
+                               v8::Local<v8::Object> event) {
+    v8::Local<v8::Value> value;
+    if (event->GetPrivate(context, event_passive_key(isolate)).ToLocal(&value)) {
+        return value->BooleanValue(isolate);
+    }
+    return false;
+}
+void set_event_in_passive_listener(v8::Isolate* isolate,
+                                   v8::Local<v8::Context> context,
+                                   v8::Local<v8::Object> event, bool passive) {
+    (void)event->SetPrivate(context, event_passive_key(isolate),
+                            v8::Boolean::New(isolate, passive));
+}
 void reset_event_stopped(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          v8::Local<v8::Object> event) {
     (void)event->SetPrivate(context, event_stopped_key(isolate),
@@ -1212,6 +1231,9 @@ void prevent_default_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    if (event_in_passive_listener(isolate, context, info.This())) {
+        return;  // passive listeners cannot cancel
+    }
     v8::Local<v8::Value> cancelable;
     if (!info.This()
              ->Get(context, v8_string(isolate, "cancelable"))
@@ -1256,8 +1278,8 @@ public:
     // while the isolate is still alive, mirroring the timer-handle reset.
     void release_v8_handles() noexcept override {
         for (auto& entry : listeners_) {
-            for (v8::Global<v8::Function>& fn : entry.second) {
-                fn.Reset();
+            for (Listener& listener : entry.second) {
+                listener.callback.Reset();
             }
         }
         listeners_.clear();
@@ -1275,13 +1297,16 @@ public:
                              v8::Local<v8::Value>& out) {
         if (name == "addEventListener") {
             add_listener(isolate, type_arg(isolate, context, args, 0),
-                         listener_arg(args, 1));
+                         listener_arg(args, 1),
+                         listener_options(isolate, context, args, 2));
             out = v8::Undefined(isolate);
             return true;
         }
         if (name == "removeEventListener") {
-            remove_listener(isolate, type_arg(isolate, context, args, 0),
-                            listener_arg(args, 1));
+            remove_listener(
+                isolate, type_arg(isolate, context, args, 0),
+                listener_arg(args, 1),
+                listener_options(isolate, context, args, 2).capture);
             out = v8::Undefined(isolate);
             return true;
         }
@@ -1300,77 +1325,56 @@ public:
         return false;
     }
 
-    // M4-A-7: dispatch `event` starting at this target (`receiver` is the JS
+    // M11-11: dispatch `event` starting at this target (`receiver` is the JS
     // object dispatchEvent was called on). The base does a single-target dispatch
-    // (window uses this); ElementHost / DocumentHost override to bubble along the
-    // current tree. Sets event.target once, resets the stop flag, then fires this
-    // target. Always synchronous; dispatchEvent's JS return stays true.
+    // (window / FileReader use this); ElementHost / DocumentHost override to walk
+    // the current tree. Capture and bubble listeners both run at target, in
+    // registration order, with eventPhase === 2.
     virtual void dispatch_event(v8::Isolate* isolate,
                                 v8::Local<v8::Context> context,
                                 v8::Local<v8::Object> event,
                                 v8::Local<v8::Object> receiver) {
         (void)event->Set(context, v8_string(isolate, "target"), receiver);
         reset_event_stopped(isolate, context, event);
-        fire_at(isolate, context, event, receiver);
+        fire_target_at(isolate, context, event, receiver);
+        finish_dispatch(isolate, context, event);
     }
 
-    // Fire this target's listeners for the event's type: set event.currentTarget
-    // to `receiver`, snapshot this target's listeners, call each (this = receiver,
-    // arg = event); a throwing listener is swallowed. Does NOT set event.target
-    // (the dispatch entry sets it once, so it stays the original target while
-    // currentTarget changes per hop). Public so bubbling fires across targets.
-    void fire_at(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                 v8::Local<v8::Object> event, v8::Local<v8::Value> receiver) {
-        (void)event->Set(context, v8_string(isolate, "currentTarget"), receiver);
-
-        std::string type;
-        v8::Local<v8::Value> type_value;
-        if (event->Get(context, v8_string(isolate, "type")).ToLocal(&type_value)) {
-            v8::Local<v8::String> str;
-            if (type_value->ToString(context).ToLocal(&str)) {
-                v8::String::Utf8Value utf8(isolate, str);
-                if (*utf8 != nullptr) {
-                    type.assign(*utf8, static_cast<std::size_t>(utf8.length()));
-                }
-            }
-        }
-
-        auto it = listeners_.find(type);
-        if (it == listeners_.end()) {
-            return;
-        }
-        std::vector<v8::Local<v8::Function>> snapshot;
-        snapshot.reserve(it->second.size());
-        for (v8::Global<v8::Function>& fn : it->second) {
-            snapshot.push_back(fn.Get(isolate));
-        }
-        v8::Local<v8::Value> event_arg = event;
-        for (v8::Local<v8::Function>& fn : snapshot) {
-            v8::TryCatch try_catch(isolate);
-            (void)fn->Call(context, receiver, 1, &event_arg);
-            if (try_catch.HasCaught()) {
-                try_catch.Reset();  // one listener's error never stops the rest
-            }
-            if (event_is_immediately_stopped(isolate, context, event)) {
-                break;  // stopImmediatePropagation: skip later same-target listeners
-            }
-        }
+    // Phase-specific firing. Capture phase filters capture listeners, bubble phase
+    // filters bubble listeners, and AT_TARGET runs both in registration order.
+    void fire_capture_at(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                         v8::Local<v8::Object> event,
+                         v8::Local<v8::Value> receiver) {
+        fire_phase(isolate, context, event, receiver, 1, true, false);
+    }
+    void fire_bubble_at(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                        v8::Local<v8::Object> event,
+                        v8::Local<v8::Value> receiver) {
+        fire_phase(isolate, context, event, receiver, 3, false, true);
+    }
+    void fire_target_at(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                        v8::Local<v8::Object> event,
+                        v8::Local<v8::Value> receiver) {
+        fire_phase(isolate, context, event, receiver, 2, true, true);
     }
 
-    // M3-4: dispatch a lifecycle event of `type` to this target's listeners from
-    // C++ (no JS caller), with `receiver` as event.target/currentTarget. Builds a
-    // minimal event object ({type, target, currentTarget} — same shape as
-    // `new Event(type)`) so auto-dispatch does not depend on the JS `Event` /
-    // `dispatchEvent` globals staying intact (a page script cannot break it).
+    // Dispatch is over: eventPhase returns to NONE.
+    void finish_dispatch(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                         v8::Local<v8::Object> event) {
+        (void)event->Set(context, v8_string(isolate, "eventPhase"),
+                         v8::Integer::New(isolate, 0));
+    }
+
+    // M3-4 / M11-11: dispatch a synthetic lifecycle / FileReader event of `type`
+    // from C++ (no JS caller). Single target, at-target phase, no bubbling.
     void dispatch_native(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          const std::string& type, v8::Local<v8::Object> receiver) {
         v8::Local<v8::Object> event = v8::Object::New(isolate);
         (void)event->Set(context, v8_string(isolate, "type"),
                          v8_string(isolate, type));
-        // Single-target C++ dispatch (lifecycle): set target once, fire this
-        // target only. Does not bubble (the synthetic event has no `bubbles`).
         (void)event->Set(context, v8_string(isolate, "target"), receiver);
-        fire_at(isolate, context, event, receiver);
+        fire_target_at(isolate, context, event, receiver);
+        finish_dispatch(isolate, context, event);
     }
 
 protected:
@@ -1383,6 +1387,24 @@ protected:
     }
 
 private:
+    struct ListenerOptions {
+        bool capture = false;
+        bool once = false;
+        bool passive = false;
+    };
+    struct Listener {
+        v8::Global<v8::Function> callback;
+        bool capture = false;
+        bool once = false;
+        bool passive = false;
+    };
+    struct ListenerSnapshot {
+        v8::Local<v8::Function> callback;
+        bool capture = false;
+        bool once = false;
+        bool passive = false;
+    };
+
     // args[index] coerced to a UTF-8 string (the event `type`), or "".
     static std::string type_arg(v8::Isolate* isolate,
                                 v8::Local<v8::Context> context,
@@ -1411,22 +1433,64 @@ private:
         return v8::Local<v8::Function>();
     }
 
+    static bool listener_option_bool(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     v8::Local<v8::Object> options,
+                                     const char* name) {
+        v8::Local<v8::Value> value;
+        if (!options->Get(context, v8_string(isolate, name)).ToLocal(&value)) {
+            return false;
+        }
+        return value->BooleanValue(isolate);
+    }
+
+    // options may be a boolean (capture) or an object with capture / once /
+    // passive. Missing / null / other values use the defaults.
+    static ListenerOptions listener_options(
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const v8::FunctionCallbackInfo<v8::Value>& args, int index) {
+        ListenerOptions out;
+        if (index >= args.Length()) {
+            return out;
+        }
+        v8::Local<v8::Value> value = args[index];
+        if (value->IsObject()) {
+            v8::Local<v8::Object> options = value.As<v8::Object>();
+            out.capture =
+                listener_option_bool(isolate, context, options, "capture");
+            out.once = listener_option_bool(isolate, context, options, "once");
+            out.passive =
+                listener_option_bool(isolate, context, options, "passive");
+        } else if (!value->IsUndefined() && !value->IsNull()) {
+            out.capture = value->BooleanValue(isolate);
+        }
+        return out;
+    }
+
     void add_listener(v8::Isolate* isolate, const std::string& type,
-                      v8::Local<v8::Function> callback) {
+                      v8::Local<v8::Function> callback,
+                      ListenerOptions options) {
         if (callback.IsEmpty()) {
             return;  // non-callable listener: ignored
         }
-        std::vector<v8::Global<v8::Function>>& bucket = listeners_[type];
-        for (v8::Global<v8::Function>& existing : bucket) {
-            if (existing.Get(isolate)->StrictEquals(callback)) {
-                return;  // dedupe: an identical (type, callback) registers once
+        std::vector<Listener>& bucket = listeners_[type];
+        for (Listener& existing : bucket) {
+            if (existing.capture == options.capture &&
+                existing.callback.Get(isolate)->StrictEquals(callback)) {
+                return;  // dedupe by (type, callback, capture)
             }
         }
-        bucket.emplace_back(isolate, callback);
+        bucket.emplace_back();
+        Listener& listener = bucket.back();
+        listener.callback.Reset(isolate, callback);
+        listener.capture = options.capture;
+        listener.once = options.once;
+        listener.passive = options.passive;
     }
 
-    void remove_listener(v8::Isolate* isolate, const std::string& type,
-                         v8::Local<v8::Function> callback) {
+    void remove_listener_handle(v8::Isolate* isolate, const std::string& type,
+                                v8::Local<v8::Function> callback,
+                                bool capture) {
         if (callback.IsEmpty()) {
             return;
         }
@@ -1434,20 +1498,91 @@ private:
         if (it == listeners_.end()) {
             return;
         }
-        std::vector<v8::Global<v8::Function>>& bucket = it->second;
+        std::vector<Listener>& bucket = it->second;
         for (auto entry = bucket.begin(); entry != bucket.end(); ++entry) {
-            if (entry->Get(isolate)->StrictEquals(callback)) {
-                entry->Reset();
+            if (entry->capture == capture &&
+                entry->callback.Get(isolate)->StrictEquals(callback)) {
+                entry->callback.Reset();
                 bucket.erase(entry);
-                return;  // remove only the first exact match
+                return;  // remove only the first exact identity
+            }
+        }
+    }
+
+    void remove_listener(v8::Isolate* isolate, const std::string& type,
+                         v8::Local<v8::Function> callback, bool capture) {
+        remove_listener_handle(isolate, type, callback, capture);
+    }
+
+    // Fire the matching listeners for one target/phase. Capture listeners are
+    // included when include_capture is true, bubble listeners when
+    // include_bubble is true (AT_TARGET passes both, in registration order).
+    void fire_phase(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                    v8::Local<v8::Object> event,
+                    v8::Local<v8::Value> receiver, int phase,
+                    bool include_capture, bool include_bubble) {
+        (void)event->Set(context, v8_string(isolate, "currentTarget"),
+                         receiver);
+        (void)event->Set(context, v8_string(isolate, "eventPhase"),
+                         v8::Integer::New(isolate, phase));
+
+        std::string type;
+        v8::Local<v8::Value> type_value;
+        if (event->Get(context, v8_string(isolate, "type")).ToLocal(&type_value)) {
+            v8::Local<v8::String> str;
+            if (type_value->ToString(context).ToLocal(&str)) {
+                v8::String::Utf8Value utf8(isolate, str);
+                if (*utf8 != nullptr) {
+                    type.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+                }
+            }
+        }
+
+        auto it = listeners_.find(type);
+        if (it == listeners_.end()) {
+            return;
+        }
+        std::vector<ListenerSnapshot> snapshot;
+        snapshot.reserve(it->second.size());
+        for (Listener& listener : it->second) {
+            if ((listener.capture && include_capture) ||
+                (!listener.capture && include_bubble)) {
+                snapshot.push_back(ListenerSnapshot{
+                    listener.callback.Get(isolate), listener.capture,
+                    listener.once, listener.passive});
+            }
+        }
+        v8::Local<v8::Value> event_arg = event;
+        for (ListenerSnapshot& listener : snapshot) {
+            if (listener.once) {
+                // Remove before the call so a reentrant dispatch cannot call it
+                // again.
+                remove_listener_handle(isolate, type, listener.callback,
+                                       listener.capture);
+            }
+            const bool previous_passive =
+                event_in_passive_listener(isolate, context, event);
+            // Always set (false for active listeners) so a nested dispatch from
+            // a passive listener lets its own active listeners call
+            // preventDefault; restore the outer state afterwards.
+            set_event_in_passive_listener(isolate, context, event,
+                                          listener.passive);
+            v8::TryCatch try_catch(isolate);
+            (void)listener.callback->Call(context, receiver, 1, &event_arg);
+            if (try_catch.HasCaught()) {
+                try_catch.Reset();  // one listener's error never stops the rest
+            }
+            set_event_in_passive_listener(isolate, context, event,
+                                          previous_passive);
+            if (event_is_immediately_stopped(isolate, context, event)) {
+                break;  // stopImmediatePropagation: skip later same-target listeners
             }
         }
     }
 
     // Per-type listener lists (registration order). Global handles are released in
     // release_v8_handles() before isolate disposal.
-    std::unordered_map<std::string, std::vector<v8::Global<v8::Function>>>
-        listeners_;
+    std::unordered_map<std::string, std::vector<Listener>> listeners_;
 };
 
 // M3-4 window event target. window / globalThis / self stay the intrinsic global
@@ -2087,46 +2222,96 @@ public:
                               v8::Local<v8::Object> receiver) {
         (void)event->Set(context, v8_string(isolate, "target"), receiver);
         reset_event_stopped(isolate, context, event);
-        element_host->fire_at(isolate, context, event, receiver);
-
-        if (!event_bubbles(isolate, context, event)) {
-            return;
-        }
+        const bool bubbles = event_bubbles(isolate, context, event);
+        std::vector<DomNode*> ancestors;
         for (DomNode* ancestor = node->parent; ancestor != nullptr;
              ancestor = ancestor->parent) {
-            if (event_is_stopped(isolate, context, event)) {
+            ancestors.push_back(ancestor);
+        }
+        const bool connected = is_in_tree(node);
+        const auto stopped = [&]() {
+            return event_is_stopped(isolate, context, event);
+        };
+
+        // Capture: window -> document -> topmost ancestor -> ... -> parent.
+        if (connected) {
+            if (window_target_ != nullptr) {
+                window_target_->fire_capture_at(isolate, context, event,
+                                                context->Global());
+                if (stopped()) {
+                    finish_dispatch(isolate, context, event);
+                    return;
+                }
+            }
+            fire_capture_at(isolate, context, event,
+                            document_global(isolate, context));
+            if (stopped()) {
+                finish_dispatch(isolate, context, event);
                 return;
             }
-            fire_element_hop(isolate, context, event, ancestor);
         }
-        if (event_is_stopped(isolate, context, event)) {
+        for (auto it = ancestors.rbegin(); it != ancestors.rend(); ++it) {
+            fire_element_hop(isolate, context, event, *it, true);
+            if (stopped()) {
+                finish_dispatch(isolate, context, event);
+                return;
+            }
+        }
+
+        // AT_TARGET: capture and bubble listeners in registration order.
+        element_host->fire_target_at(isolate, context, event, receiver);
+        if (!bubbles || stopped()) {
+            finish_dispatch(isolate, context, event);
             return;
         }
-        // Escape to document + window only for a connected element.
-        if (!is_in_tree(node)) {
-            return;
+
+        // Bubble: parent -> ... -> topmost ancestor (connected only), then
+        // document -> window.
+        for (DomNode* ancestor : ancestors) {
+            fire_element_hop(isolate, context, event, ancestor, false);
+            if (stopped()) {
+                finish_dispatch(isolate, context, event);
+                return;
+            }
         }
-        fire_at(isolate, context, event, document_global(isolate, context));
-        if (event_is_stopped(isolate, context, event) || window_target_ == nullptr) {
-            return;
+        if (connected) {
+            fire_bubble_at(isolate, context, event,
+                           document_global(isolate, context));
+            if (stopped() || window_target_ == nullptr) {
+                finish_dispatch(isolate, context, event);
+                return;
+            }
+            window_target_->fire_bubble_at(isolate, context, event,
+                                           context->Global());
         }
-        window_target_->fire_at(isolate, context, event, context->Global());
+        finish_dispatch(isolate, context, event);
     }
 
-    // M4-A-7: dispatchEvent called on `document` directly — fire document, then
-    // window if the event bubbles and was not stopped. No tree walk (document is
-    // always "connected"); window is always the last hop.
+    // M11-11: dispatchEvent called on `document` directly. Window capture runs
+    // first; document is the target; window bubble runs last for bubbling events.
     void dispatch_event(v8::Isolate* isolate, v8::Local<v8::Context> context,
                         v8::Local<v8::Object> event,
                         v8::Local<v8::Object> receiver) override {
         (void)event->Set(context, v8_string(isolate, "target"), receiver);
         reset_event_stopped(isolate, context, event);
-        fire_at(isolate, context, event, receiver);
+        if (window_target_ != nullptr) {
+            window_target_->fire_capture_at(isolate, context, event,
+                                            context->Global());
+            if (event_is_stopped(isolate, context, event)) {
+                finish_dispatch(isolate, context, event);
+                return;
+            }
+        }
+        fire_target_at(isolate, context, event, receiver);
         if (!event_bubbles(isolate, context, event) ||
-            event_is_stopped(isolate, context, event) || window_target_ == nullptr) {
+            event_is_stopped(isolate, context, event) ||
+            window_target_ == nullptr) {
+            finish_dispatch(isolate, context, event);
             return;
         }
-        window_target_->fire_at(isolate, context, event, context->Global());
+        window_target_->fire_bubble_at(isolate, context, event,
+                                       context->Global());
+        finish_dispatch(isolate, context, event);
     }
 
 private:
@@ -2135,11 +2320,12 @@ private:
                                     v8::Local<v8::Context> context,
                                     MutationObserverState* state);
 
-    // Fire one element node's listeners as a single bubbling hop: wrap the node
-    // (caching its host + JS object) and run its listeners with itself as
-    // currentTarget. A node with no wrapper/listeners is a no-op.
+    // Fire one element node's listeners as a single capture/bubble hop: wrap the
+    // node and run its matching listeners with itself as currentTarget. A node
+    // with no wrapper/listeners is a no-op.
     void fire_element_hop(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                          v8::Local<v8::Object> event, DomNode* node) {
+                          v8::Local<v8::Object> event, DomNode* node,
+                          bool capture) {
         v8::Local<v8::Value> js = wrap_element(isolate, context, node);
         if (!js->IsObject()) {
             return;
@@ -2148,7 +2334,13 @@ private:
         if (it == wrappers_.end()) {
             return;
         }
-        it->second->fire_at(isolate, context, event, js.As<v8::Object>());
+        if (capture) {
+            it->second->fire_capture_at(isolate, context, event,
+                                        js.As<v8::Object>());
+        } else {
+            it->second->fire_bubble_at(isolate, context, event,
+                                       js.As<v8::Object>());
+        }
     }
 
     // The global `document` object (event.currentTarget for the document hop), or
@@ -3956,6 +4148,9 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
                     v8::Boolean::New(isolate, cancelable));
     (void)self->Set(context, v8_string(isolate, "defaultPrevented"),
                     v8::False(isolate));
+    // M11-11: NONE outside dispatch; 1/2/3 during capturing/at-target/bubbling.
+    (void)self->Set(context, v8_string(isolate, "eventPhase"),
+                    v8::Integer::New(isolate, 0));
     (void)self->Set(context, v8_string(isolate, "target"), v8::Null(isolate));
     (void)self->Set(context, v8_string(isolate, "currentTarget"),
                     v8::Null(isolate));

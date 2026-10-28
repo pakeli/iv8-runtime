@@ -124,8 +124,9 @@ def test_js_event_surface_not_exceeded():
         assert page.eval("typeof new Event('e').bubbles") == "boolean"
         assert page.eval("typeof new Event('e').stopPropagation") == "function"
         assert page.eval("typeof CustomEvent") == "function"
-        for member in ("eventPhase", "composed", "timeStamp"):
+        for member in ("composed", "timeStamp"):
             assert page.eval(f"typeof new Event('e').{member}") == "undefined"
+        assert page.eval("new Event('e').eventPhase") == 0
 
 
 # --- (3) converged-DOM main-line cooperation (one mixed page) -------------------

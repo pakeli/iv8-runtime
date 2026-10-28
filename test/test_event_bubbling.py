@@ -72,9 +72,10 @@ def test_event_bubbles_flag_and_stop_propagation_shape():
 def test_event_out_of_scope_members_absent():
     with iv8.Page() as page:
         _loaded(page)
-        # M11-6 adds CustomEvent and its subclasses; M11-9 adds cancellation.
-        for member in ("eventPhase", "composed", "timeStamp"):
+        # M11-6 adds event subclasses, M11-9 cancellation, M11-11 eventPhase.
+        for member in ("composed", "timeStamp"):
             assert page.eval(f"typeof new Event('e').{member}") == "undefined"
+        assert page.eval("new Event('e').eventPhase") == 0
         assert page.eval("typeof CustomEvent") == "function"
 
 

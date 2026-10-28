@@ -879,6 +879,12 @@ M11-10 (classList / toggleAttribute) adds ``element.classList`` with
 the existing MutationObserver attribute hooks; there is no ``DOMTokenList``
 global. See ``docs/m11_10_class_list.md``.
 
+M11-11 (event capture + listener options) adds the capture phase,
+``event.eventPhase`` (0/1/2/3), and the ``capture`` / ``once`` / ``passive``
+``addEventListener`` options to the existing event model. Capture runs from
+window through the tree even for non-bubbling events; ``passive`` listeners
+cannot ``preventDefault``. See ``docs/m11_11_event_capture.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free
