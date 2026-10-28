@@ -263,7 +263,10 @@ def test_no_out_of_scope_attribute_surface():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         el = "document.getElementById('d')"
-        for member in ("toggleAttribute", "hasAttributes", "attributes",
+        # M11-10 brings toggleAttribute / classList into scope.
+        for member in ("hasAttributes", "attributes",
                        "dataset", "src", "type", "title", "hidden",
-                       "setAttributeNS", "removeAttributeNS", "classList"):
+                       "setAttributeNS", "removeAttributeNS"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        assert page.eval(f"typeof {el}.toggleAttribute") == "function"
+        assert page.eval(f"typeof {el}.classList") == "object"

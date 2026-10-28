@@ -78,10 +78,12 @@ def test_js_element_surface_not_exceeded():
         # (M4-A-4 added element.removeAttribute; it stays out of scope here.)
         el = "document.getElementById('d')"
         for member in ("attributes", "dataset",
-                       "toggleAttribute", "hasAttributes", "src", "type",
-                       "async", "defer", "innerHTML", "outerHTML", "style",
-                       "classList"):
+                       "hasAttributes", "src", "type",
+                       "async", "defer", "innerHTML", "outerHTML", "style"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        # M11-10 brings these into scope.
+        assert page.eval(f"typeof {el}.toggleAttribute") == "function"
+        assert page.eval(f"typeof {el}.classList") == "object"
 
 
 # --- (3) main-line cooperation --------------------------------------------------

@@ -77,9 +77,12 @@ def test_frozen_items_absent():
     with iv8.Page() as page:
         page.load(html="<html><body></body></html>", base_url=BASE)
         # no unrelated web-platform globals
-        for g in ("Blob", "File", "FileReader", "fetch", "Request", "Response",
-                  "Buffer", "TextEncoderStream", "TextDecoderStream"):
+        for g in ("fetch", "Request", "Response", "Buffer",
+                  "TextEncoderStream", "TextDecoderStream"):
             assert page.eval(f"typeof globalThis.{g}") == "undefined"
+        # M11-8 brings these in scope.
+        for g in ("Blob", "File", "FileReader"):
+            assert page.eval(f"typeof globalThis.{g}") == "function"
         # URL is NOT linked to URLSearchParams and exposes no setters / extra parts
         assert page.eval(
             """

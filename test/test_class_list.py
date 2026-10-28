@@ -56,7 +56,7 @@ def test_add_and_dynamic_length():
                         document.querySelectorAll('.c').length,
                         document.getElementsByClassName('d').length].join('|');
             })()
-        """) == "4|a b c d e|a b c d e|true|1|1"
+        """) == "5|a b c d e|a b c d e|true|1|1"
 
 
 @on_only

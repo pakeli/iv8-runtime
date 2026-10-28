@@ -101,13 +101,16 @@ def test_js_element_surface_not_exceeded():
         # firstElementChild / lastElementChild / childElementCount left this list
         # in M4-B-1, contains in M4-B-2, matches in M4-B-3, and closest in M4-B-4;
         # the rest stay out.)
-        for member in ("attributes", "dataset", "classList", "style",
-                       "toggleAttribute", "removeAttributeNS", "hasAttributes",
+        for member in ("attributes", "dataset", "style",
+                       "removeAttributeNS", "hasAttributes",
                        "innerHTML", "outerHTML", "src", "type", "async", "defer",
                        "title", "hidden",
                        "previousSibling", "nextSibling",
                        "compareDocumentPosition", "getRootNode"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        # M11-10 brings these into scope.
+        assert page.eval(f"typeof {el}.classList") == "object"
+        assert page.eval(f"typeof {el}.toggleAttribute") == "function"
 
 
 # --- (2c) Event surface is not exceeded -----------------------------------------

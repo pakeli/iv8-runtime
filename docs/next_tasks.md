@@ -269,8 +269,8 @@ Boundaries: `docs/m11_6_event_subclasses.md`, `docs/m11_7_web_storage.md`,
 
 One batched run on the `m11-6-event-subclasses` branch head, after the M11-6
 cold build warms the branch's V8 cache. Expected total: the M11-5 baseline
-(`1265`) plus the five new test files' items (`30 + 13 + 22 + 9 + 12 = 86`) =
-**1351 passed, 2 skipped** per wheel lane.
+(`1265`) plus the five new test files' items (`30 + 13 + 22 + 9 + 13 = 87`) =
+**1352 passed, 2 skipped** per wheel lane.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

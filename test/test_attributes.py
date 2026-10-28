@@ -207,8 +207,8 @@ def test_no_attribute_surface_leak_in_page_eval():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         # No attributes collection / dataset / attribute reflection was added.
-        # (M4-A-4 added removeAttribute; toggleAttribute stays out of scope.)
+        # M4-A-4 added removeAttribute; M11-10 added toggleAttribute.
         el = "document.getElementById('d')"
         assert page.eval(f"typeof {el}.attributes") == "undefined"
         assert page.eval(f"typeof {el}.dataset") == "undefined"
-        assert page.eval(f"typeof {el}.toggleAttribute") == "undefined"
+        assert page.eval(f"typeof {el}.toggleAttribute") == "function"

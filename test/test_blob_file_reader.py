@@ -277,10 +277,12 @@ def test_filereader_read_while_loading_throws():
     with iv8.Page() as page:
         _setup(page)
         assert page.eval("""
-            globalThis.reader = new FileReader();
-            reader.readAsText(new Blob(['a']));
-            try { reader.readAsText(new Blob(['b'])); return 'no'; }
-            catch (err) { return err.name; }
+            (function () {
+                globalThis.reader = new FileReader();
+                reader.readAsText(new Blob(['a']));
+                try { reader.readAsText(new Blob(['b'])); return 'no'; }
+                catch (err) { return err.name; }
+            })()
         """) == "TypeError"
         page.run_jobs()
         assert page.eval("reader.result") == "a"
