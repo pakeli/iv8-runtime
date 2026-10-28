@@ -139,11 +139,22 @@ cache; the final commit `35c85fe` was then verified with cached runs: Linux
 All five new test files ran. Contract guards that had frozen the old surface
 were refreshed as part of the batch.
 
+### 13. M11-11 delivered event capture and listener options
+
+Decided/verified `2026-10-28`.
+
+The event model now has a capturing phase (window → document → ancestors),
+`eventPhase` 0/1/2/3, and `capture` / `once` / `passive` listener options, with
+`(type, callback, capture)` add/remove identity. Capture runs even for
+non-bubbling events; `once` removes before invocation and `passive` suppresses
+`preventDefault` for that listener. Verified on Linux `40683001239` and Windows
+`40683010032` (commit `a269aa9`), each wheel lane `1370 passed, 2 skipped`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-11`?
+### A. Which concrete compatibility slice becomes `M11-12`?
 
 Settled and implemented so far:
 
@@ -190,13 +201,16 @@ Settled and implemented so far:
   Verified in the same batch; see `docs/m11_10_report.md`.
 - `M11-11` — **Event capture phase + listener options** (`capture` / `once` /
   `passive`, `eventPhase`) — selected on `2026-10-28` from the gap inventory;
-  boundary document `docs/m11_11_event_capture.md`. Implementation and
-  real-V8 verification are in progress on `m11-11-event-capture`.
+  boundary document `docs/m11_11_event_capture.md`. Verified on real V8
+  (Linux + Windows) on `2026-10-28`: Linux run `40683001239`, Windows run
+  `40683010032`, commit `a269aa9`, each `1370 passed, 2 skipped`. See
+  `docs/m11_11_report.md`.
 
 `M11-6` through `M11-10` were delivered as one five-slice batch on the
 `m11-6-event-subclasses` branch, with one cold V8 build reused by the cached
-verification run. After `M11-11` lands, the next slice (`M11-12`) should again
-be chosen from this backlog rather than direction alone.
+verification run. `M11-11` followed with the master cache warmed first. The
+next slice (`M11-12`) should again be chosen from this backlog rather than
+direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

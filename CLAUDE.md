@@ -26,10 +26,10 @@ git log --oneline --decorate -n 20
 
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
-- As of `2026-10-28`, the latest verified milestone is **M11-10**
-  (`classList` / `toggleAttribute`), green on real V8 Linux + Windows as part
-  of the M11-6..M11-10 five-slice batch (commit `35c85fe`, merged to `master`
-  on the fork; upstream sync out of scope). The M11 line is compatibility-first.
+- As of `2026-10-28`, the latest verified milestone is **M11-11** (event
+  capture phase + listener options), green on real V8 Linux + Windows (commit
+  `a269aa9`, merged to `master` on the fork; upstream sync out of scope). The
+  M11 line is compatibility-first.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -75,13 +75,13 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-10`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-11`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
-    Storage, Blob/File/FileReader, event cancellation, and
-    `classList`/`toggleAttribute` (verified on real V8 Linux + Windows; latest
-    verification `2026-10-28`);
-  - latest implemented and verified feature: `classList` / `toggleAttribute`
-    from M11-10.
+    Storage, Blob/File/FileReader, event cancellation,
+    `classList`/`toggleAttribute`, and event capture + listener options
+    (verified on real V8 Linux + Windows; latest verification `2026-10-28`);
+  - latest implemented and verified feature: event capture phase and
+    `capture` / `once` / `passive` listener options from M11-11.
 
 ## Handoff Discipline
 

@@ -111,8 +111,7 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; implementation is through M11-10
-> (`classList` / `toggleAttribute`), verified on real V8 (Linux + Windows) on
-> `2026-10-28` as the M11-6..M11-10 five-slice batch and merged to `master` on
-> the fork (`pakeli/iv8-runtime`); upstream sync is out of scope. See
-> `docs/m11_6_report.md` … `docs/m11_10_report.md`.
+> `HEAD` is not an M1-only repository; implementation is through M11-11 (event
+> capture phase + listener options), verified on real V8 (Linux + Windows) on
+> `2026-10-28` and merged to `master` on the fork (`pakeli/iv8-runtime`);
+> upstream sync is out of scope. See `docs/m11_11_report.md`.

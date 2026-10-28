@@ -141,10 +141,8 @@ to Python `logging`).
 
 | Missing | Status |
 |---|---|
-| Capture phase, `eventPhase` | **selected for M11-11** |
 | `composed`, `timeStamp`, `isTrusted` | **absent** |
 | More event classes (`UIEvent`, `InputEvent`, `WheelEvent`, …) | **absent** — M11-6 delivered `CustomEvent` / `MouseEvent` / `KeyboardEvent` / `FocusEvent` |
-| Listener options (`once` / `capture` / `passive`) | **selected for M11-11** |
 | `signal` listener option, `on*` handler properties | **absent** |
 | Native event generation and default actions (`click()`, `submit` / `reset` / `input` / `change`, media events) | **excluded** |
 | Additional lifecycle events (`beforeunload` / `unload` / `pageshow` / `pagehide` / `visibilitychange`) | **absent** |
@@ -227,12 +225,12 @@ These are not ordinary missing APIs; changing them is a project-level decision:
 ## 4. Near-term candidates
 
 The M11-6..M11-10 batch delivered event subclasses, Web Storage,
-Blob/File/FileReader, event cancellation, and classList/toggleAttribute.
-Remaining candidates (mapping to `docs/m11_compatibility_backlog.md`):
+Blob/File/FileReader, event cancellation, and classList/toggleAttribute;
+M11-11 delivered event capture and listener options. Remaining candidates
+(mapping to `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|
-| Event capture + listener options | gap inventory | **Selected for M11-11** |
 | Nested environment + `get_defaults()` | 5 | API-shape decision, not a pure feature |
 | Event-loop facade | 6 | Deferred design decision |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |

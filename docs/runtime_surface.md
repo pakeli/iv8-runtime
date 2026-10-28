@@ -1,8 +1,8 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-28` · Latest verified milestone: **M11-10**
-(`classList` / `toggleAttribute`), verified with the M11-6..M11-10 batch on
-real V8 (Linux + Windows) on `2026-10-28`.
+Last reviewed: `2026-10-28` · Latest verified milestone: **M11-11**
+(event capture phase + listener options), verified on real V8 (Linux + Windows)
+on `2026-10-28`.
 
 ## 0. What this document is
 
@@ -157,8 +157,13 @@ Installed per generation by `install_page`:
   `Event.prototype` and using the existing dispatch/bubbling model;
 - **event cancellation** (M11-9) — `cancelable` / `defaultPrevented`,
   `preventDefault()`, and `stopImmediatePropagation()`; `dispatchEvent` returns
-  `false` for a canceled cancelable event. Capture phase and default actions
-  are still absent;
+  `false` for a canceled cancelable event;
+- **event capture + listener options** (M11-11) — the capturing phase
+  (window → document → ancestors), `eventPhase` (0/1/2/3), and
+  `addEventListener` `capture` / `once` / `passive` options. Capture runs even
+  for non-bubbling events; `once` removes before the call and `passive`
+  suppresses `preventDefault` for that invocation. Default actions, `on*`
+  handlers, and `signal` options are still absent;
 - **Web Storage** (M11-7) — `localStorage` / `sessionStorage` as independent,
   insertion-ordered, per-Page in-memory stores (`getItem` / `setItem` /
   `removeItem` / `clear` / `key` / read-only `length`); entries survive
@@ -270,6 +275,7 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-8 | `Blob` / `File` / `FileReader` (`run_jobs()` delivery) — verified 2026-10-28 | `docs/m11_8_blob_file_reader.md`, `docs/m11_8_report.md` |
 | M11-9 | event cancellation (`preventDefault` / `stopImmediatePropagation`) — verified 2026-10-28 | `docs/m11_9_event_cancellation.md`, `docs/m11_9_report.md` |
 | M11-10 | `classList` / `toggleAttribute` — verified 2026-10-28 | `docs/m11_10_class_list.md`, `docs/m11_10_report.md` |
+| M11-11 | event capture phase, `eventPhase`, `capture` / `once` / `passive` — verified 2026-10-28 | `docs/m11_11_event_capture.md`, `docs/m11_11_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

@@ -7,10 +7,10 @@ Last reviewed: `2026-10-28`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-28`, the latest implemented and verified milestone is **M11-10**.
-Real-V8 CI is green on both platforms — Linux run `40661574145`, Windows run
-`40661580891`, both on commit `35c85fe`, each wheel lane reporting
-`1352 passed, 2 skipped`:
+As of `2026-10-28`, the latest implemented and verified milestone is **M11-11**.
+Real-V8 CI is green on both platforms — Linux run `40683001239`, Windows run
+`40683010032`, both on commit `a269aa9`, each wheel lane reporting
+`1370 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -27,18 +27,17 @@ Real-V8 CI is green on both platforms — Linux run `40661574145`, Windows run
 - `M11-9`: event cancellation (`cancelable` / `defaultPrevented` /
   `preventDefault` / `stopImmediatePropagation`)
 - `M11-10`: `classList` / `toggleAttribute`
+- `M11-11`: event capture phase, `eventPhase`, and `capture` / `once` /
+  `passive` listener options
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
 batch on branch `m11-6-event-subclasses` (final commit `35c85fe`) and merged to
-the fork's `master`. Upstream `investforever/iv8-runtime` remains at M11-3;
-upstream sync is out of scope and the fork is the working master. See the
-five report documents (`docs/m11_6_report.md` … `docs/m11_10_report.md`).
-
-**In progress:** `M11-11` (event capture phase, `eventPhase`, and the
-`capture` / `once` / `passive` listener options) is implemented on branch
-`m11-11-event-capture`; real-V8 CI verification is pending. See
-`docs/m11_11_event_capture.md`.
+the fork's `master`. M11-11 was verified on `m11-11-event-capture` (commit
+`a269aa9`) and merged to the fork's `master`. Upstream
+`investforever/iv8-runtime` remains at M11-3; upstream sync is out of scope and
+the fork is the working master. See the report documents
+(`docs/m11_6_report.md` … `docs/m11_11_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -161,6 +160,12 @@ Implemented and present at `HEAD`:
   `value`) and `element.toggleAttribute(name, force?)`, both wired into the
   MutationObserver attribute hooks. Verified `2026-10-28`; see
   `docs/m11_10_class_list.md`.
+- `M11-11` event capture + listener options — the capture phase, `eventPhase`
+  (0/1/2/3), and `capture` / `once` / `passive` registration options, with
+  `(type, callback, capture)` listener identity. Capture runs from window
+  through the tree even for non-bubbling events; `once` removes before the call
+  and `passive` suppresses `preventDefault` for that invocation. Verified
+  `2026-10-28`; see `docs/m11_11_event_capture.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -180,6 +185,8 @@ Recent implementation sequence from Git history:
 - `M11-6` through `M11-10`: event subclasses, Web Storage,
   Blob/File/FileReader, event cancellation, and classList/toggleAttribute —
   verified as one five-slice batch (`2026-10-28`)
+- `M11-11`: event capture phase and `capture` / `once` / `passive` listener
+  options (verified `2026-10-28`)
 
 ## 4. Release / Distribution Status
 
@@ -246,15 +253,18 @@ The repository is executing its post-M10 direction:
   (`classList` / `toggleAttribute`) are **landed and verified on real V8
   (Linux + Windows)** on `2026-10-28` in one five-slice batch; see their
   boundary and report docs;
-- the next execution handoff is to choose `M11-11` from the ranked
+- `M11-11` (event capture phase + listener options) is **landed and verified
+  on real V8 (Linux + Windows)** on `2026-10-28`; see
+  `docs/m11_11_event_capture.md` and `docs/m11_11_report.md`;
+- the next execution handoff is to choose `M11-12` from the ranked
   compatibility backlog (`docs/m11_compatibility_backlog.md`).
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-11`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-10` are settled, landed, and verified; the ranked
+- Which concrete compatibility slice should become `M11-12`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-11` are settled, landed, and verified; the ranked
   compatibility matrix at `docs/m11_compatibility_backlog.md` should drive the
   next choice.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
@@ -271,9 +281,9 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with `M11-10` (`classList` /
-> `toggleAttribute`) landed and verified on real V8 (Linux + Windows) on
-> `2026-10-28` as part of the M11-6..M11-10 five-slice batch.
+> compatibility-first `M11` line — with `M11-11` (event capture phase +
+> listener options) landed and verified on real V8 (Linux + Windows) on
+> `2026-10-28`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

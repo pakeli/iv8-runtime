@@ -90,4 +90,12 @@ M11-11 deliberately does **not** add:
 
 ## Verification
 
-Status: **implementation pending; real-V8 CI verification to follow.**
+Status: **verified on real V8 (Linux + Windows), `2026-10-28`.**
+
+- Focused tests: `test/test_event_capture.py` (15 items) plus the new
+  `test/test_m11_batch_integration.py` (3 items).
+- Final verified commit `a269aa9`; Linux run `40683001239` (cp311–cp314) and
+  Windows run `40683010032` (Python 3.11–3.14), every wheel lane
+  `1370 passed, 2 skipped` (full suite: 1372 collected).
+- First verification run was green; no post-implementation fixes. See
+  `docs/m11_11_report.md`.

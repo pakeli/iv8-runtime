@@ -285,7 +285,7 @@ plus 87 new items (`30 + 13 + 22 + 9 + 13`). Fixes during verification:
 
 Choose `M11-11` from `docs/m11_compatibility_backlog.md`.
 
-## Priority 3h: Eleventh M11 compatibility slice — M11-11 — IMPLEMENTED, CI PENDING (`2026-10-28`)
+## Priority 3h: Eleventh M11 compatibility slice — M11-11 — DONE (`2026-10-28`)
 
 ### What landed
 
@@ -300,11 +300,23 @@ Boundary: `docs/m11_11_event_capture.md`. Tests:
 `test/test_event_capture.py` (15 items) plus the new
 `test/test_m11_batch_integration.py` (3 items).
 
-### Verification pending
+### Verification — passed
 
-Real-V8 CI on branch `m11-11-event-capture`. Full suite collects 1372 items;
-expected each wheel lane: **`1370 passed, 2 skipped`** (previous 1352 + 18
-new items).
+Final commit `a269aa9` (branch `m11-11-event-capture`):
+
+- Linux `release-linux` run `40683001239` — cp311–cp314, each
+  `1370 passed, 2 skipped`;
+- Windows `release-windows` run `40683010032` — Python 3.11–3.14, each
+  `1370 passed, 2 skipped`.
+
+`test/test_event_capture.py` (15 items) and
+`test/test_m11_batch_integration.py` (3 items) ran in every lane. The full
+suite collects 1372 items. The first verification run was green. See
+`docs/m11_11_report.md`.
+
+### Next
+
+Choose `M11-12` from `docs/m11_compatibility_backlog.md`.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
