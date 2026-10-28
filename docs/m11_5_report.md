@@ -108,4 +108,5 @@ would have lowered the count.
 3. Marked M11-5 verified in `docs/m11_5_mutation_observer.md`,
    `docs/current_status.md`, `docs/next_tasks.md`, `docs/decision_log.md`,
    `docs/runtime_surface.md`, `CLAUDE.md`, and `docs/dev_setup.md`.
-4. Committed the report plus status updates on the branch.
+4. Committed the report plus status updates, then fast-forwarded `master` on
+   the fork to `6f4f6dc` (upstream PR pending).

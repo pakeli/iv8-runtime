@@ -22,9 +22,11 @@ Real-V8 CI is green on both platforms — Linux run `40632597636`, Windows run
 - `M11-5`: `MutationObserver` (childList/attributes/subtree records delivered by
   the existing `Page.run_jobs()` microtask checkpoint)
 
-M11-5 is verified on branch `m11-5-mutation-observer` and is not yet merged to
-`master`. See `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`; the
-next slice (`M11-6`) should be chosen from `docs/m11_compatibility_backlog.md`.
+M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
+commit `6f4f6dc`); upstream `investforever/iv8-runtime` master remains at M11-3
+pending a PR. See `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`;
+the next slice (`M11-6`) should be chosen from
+`docs/m11_compatibility_backlog.md`.
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer

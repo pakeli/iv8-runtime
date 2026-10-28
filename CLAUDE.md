@@ -27,9 +27,9 @@ git log --oneline --decorate -n 20
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
 - As of `2026-10-28`, the latest verified milestone is **M11-5**
-  (`MutationObserver`), green on real V8 Linux + Windows (branch
-  `m11-5-mutation-observer`, commit `4fa6469`; not yet merged to `master`). The
-  M11 line is compatibility-first.
+  (`MutationObserver`), green on real V8 Linux + Windows (commit `4fa6469`,
+  merged to `master` on the fork; upstream PR pending). The M11 line is
+  compatibility-first.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map

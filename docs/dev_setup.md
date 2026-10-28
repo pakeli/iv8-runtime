@@ -112,6 +112,6 @@ Then scan recent commits and only after that start code changes.
 If you only remember one thing:
 
 > `HEAD` is not an M1-only repository; implementation is through M11-5
-> (`MutationObserver`), verified on real V8 (Linux + Windows) on `2026-10-28` on
-> branch `m11-5-mutation-observer` (not yet merged to `master`); see
-> `docs/m11_5_report.md`.
+> (`MutationObserver`), verified on real V8 (Linux + Windows) on `2026-10-28`
+> and merged to `master` on the fork (`pakeli/iv8-runtime`); upstream PR pending.
+> See `docs/m11_5_report.md`.
