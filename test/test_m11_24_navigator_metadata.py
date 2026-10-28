@@ -40,7 +40,8 @@ def test_languages_is_a_fresh_read_only_array():
     with iv8.Page() as page:
         assert page.eval("Array.isArray(navigator.languages)") is True
         assert page.eval(
-            "(navigator.languages.push('x'), navigator.languages.length)") == 3
+            "(() => { const langs = navigator.languages; "
+            "langs.push('x'); return langs.length; })()") == 3
         assert page.eval("navigator.languages.length") == 2
         assert page.eval(
             "(navigator.languages = [], navigator.languages.join(','))"
