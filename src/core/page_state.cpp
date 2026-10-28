@@ -5691,7 +5691,10 @@ void PageState::install_page(const std::string& base_url,
                         v8::String::NewFromUtf8Literal(isolate, "length"),
                         &storage_length_getter, nullptr, data, v8::ReadOnly);
                     (void)global->DefineOwnProperty(
-                        context, v8_string(isolate, name), storage,
+                        context,
+                        v8::String::NewFromUtf8(isolate, name)
+                            .ToLocalChecked(),
+                        storage,
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
                                                            v8::DontDelete));
                 };
