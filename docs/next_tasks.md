@@ -285,6 +285,27 @@ plus 87 new items (`30 + 13 + 22 + 9 + 13`). Fixes during verification:
 
 Choose `M11-11` from `docs/m11_compatibility_backlog.md`.
 
+## Priority 3h: Eleventh M11 compatibility slice — M11-11 — IMPLEMENTED, CI PENDING (`2026-10-28`)
+
+### What landed
+
+`M11-11`: **event capture phase + listener options** — `addEventListener`
+now accepts `capture` / `once` / `passive` (boolean or options object), with
+`(type, callback, capture)` identity for add/remove; dispatch runs
+window → document → ancestors → target → ancestors → document → window, with
+`event.eventPhase` 1/2/3 and 0 outside dispatch. `once` removes before the
+call; `passive` suppresses `preventDefault` for that invocation.
+
+Boundary: `docs/m11_11_event_capture.md`. Tests:
+`test/test_event_capture.py` (15 items) plus the new
+`test/test_m11_batch_integration.py` (3 items).
+
+### Verification pending
+
+Real-V8 CI on branch `m11-11-event-capture`. Full suite collects 1372 items;
+expected each wheel lane: **`1370 passed, 2 skipped`** (previous 1352 + 18
+new items).
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal

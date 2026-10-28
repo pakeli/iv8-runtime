@@ -35,6 +35,11 @@ the fork's `master`. Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 five report documents (`docs/m11_6_report.md` … `docs/m11_10_report.md`).
 
+**In progress:** `M11-11` (event capture phase, `eventPhase`, and the
+`capture` / `once` / `passive` listener options) is implemented on branch
+`m11-11-event-capture`; real-V8 CI verification is pending. See
+`docs/m11_11_event_capture.md`.
+
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
 DevTools/monitoring surface.
@@ -213,7 +218,8 @@ contract. Cross-check with:
   `docs/m11_3_idle_callbacks.md`, `docs/m11_4_queue_microtask.md`,
   `docs/m11_5_mutation_observer.md`, `docs/m11_6_event_subclasses.md`,
   `docs/m11_7_web_storage.md`, `docs/m11_8_blob_file_reader.md`,
-  `docs/m11_9_event_cancellation.md`, `docs/m11_10_class_list.md`
+  `docs/m11_9_event_cancellation.md`, `docs/m11_10_class_list.md`,
+  `docs/m11_11_event_capture.md`
 - recent `git log`
 
 ## 6. Next planned phase

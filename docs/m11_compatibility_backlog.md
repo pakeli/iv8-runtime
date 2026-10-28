@@ -106,8 +106,12 @@ All five slices are delivered and verified. Final batch runs: Linux
 `1352 passed, 2 skipped`. Reports: `docs/m11_6_report.md` …
 `docs/m11_10_report.md`.
 
-The next slice, `M11-11`, should be chosen from the remaining ranked candidates
-below (or a new gap-inventory slice with an explicit boundary).
+`M11-11` — **Event capture phase + listener options** — was subsequently
+selected on `2026-10-28` from the gap inventory; boundary document
+`docs/m11_11_event_capture.md`. Implementation and real-V8 verification are in
+progress on `m11-11-event-capture`. The next slice (`M11-12`) should be chosen
+from the remaining ranked candidates below (or another gap-inventory slice with
+an explicit boundary).
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

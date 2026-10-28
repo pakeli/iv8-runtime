@@ -188,11 +188,15 @@ Settled and implemented so far:
 - `M11-10` — **`classList` / `toggleAttribute`** — selected on `2026-10-28`
   from the gap inventory; boundary document `docs/m11_10_class_list.md`.
   Verified in the same batch; see `docs/m11_10_report.md`.
+- `M11-11` — **Event capture phase + listener options** (`capture` / `once` /
+  `passive`, `eventPhase`) — selected on `2026-10-28` from the gap inventory;
+  boundary document `docs/m11_11_event_capture.md`. Implementation and
+  real-V8 verification are in progress on `m11-11-event-capture`.
 
 `M11-6` through `M11-10` were delivered as one five-slice batch on the
 `m11-6-event-subclasses` branch, with one cold V8 build reused by the cached
-verification run. The next slice (`M11-11`) should again be chosen from this
-backlog rather than direction alone.
+verification run. After `M11-11` lands, the next slice (`M11-12`) should again
+be chosen from this backlog rather than direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);
