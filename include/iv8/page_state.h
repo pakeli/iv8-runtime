@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <pybind11/pybind11.h>
@@ -252,6 +253,12 @@ private:
     // it and must never outlive it. Fixed after construction (no setter).
     HostEnvironment environment_;
     std::shared_ptr<ContextState> state_;
+    // M11-7 Web Storage backings. Insertion-ordered and page-lifetime: they
+    // survive load() generations of this Page but are never shared across Page
+    // instances, disk, or origins. Each generation installs fresh Storage
+    // objects over these vectors.
+    std::vector<std::pair<std::string, std::string>> local_storage_;
+    std::vector<std::pair<std::string, std::string>> session_storage_;
     std::vector<std::unique_ptr<HostObject>> host_objects_;
     // M3-4 window event target: holds window's event listeners. window itself
     // stays the intrinsic global object; this is only its listener store and is

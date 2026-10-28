@@ -169,6 +169,136 @@ v8::Local<v8::Value> v8_string(v8::Isolate* isolate, const std::string& s) {
         .ToLocalChecked();
 }
 
+// --- M11-7 Web Storage -------------------------------------------------------
+//
+// A Storage object is a plain JS object whose methods and `length` accessor carry
+// an External pointer to one of PageState's two page-lifetime vectors. The
+// vectors are insertion-ordered (updating a key keeps its position) and are
+// re-used by every load() generation.
+
+using StorageStore = std::vector<std::pair<std::string, std::string>>;
+
+// V8 15.0 requires a tag on External::New / External::Value. The default tag is
+// reused for every PageState-owned pointer type in this file (see also
+// kMutationObserverTag / kWindowEventsTag).
+constexpr v8::ExternalPointerTypeTag kStorageTag =
+    v8::kExternalPointerTypeTagDefault;
+
+StorageStore* storage_store_from(v8::Local<v8::Value> data) {
+    if (!data->IsExternal()) {
+        return nullptr;
+    }
+    return static_cast<StorageStore*>(
+        data.As<v8::External>()->Value(kStorageTag));
+}
+
+std::string storage_string_arg(v8::Isolate* isolate,
+                               v8::Local<v8::Context> context,
+                               v8::Local<v8::Value> value) {
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return std::string();
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    return (*utf8 != nullptr)
+               ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+               : std::string();
+}
+
+StorageStore::iterator storage_find(StorageStore* store,
+                                    const std::string& key) {
+    return std::find_if(store->begin(), store->end(),
+                        [&key](const std::pair<std::string, std::string>& entry) {
+                            return entry.first == key;
+                        });
+}
+
+void storage_get_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    StorageStore* store = storage_store_from(info.Data());
+    if (store == nullptr) {
+        return;
+    }
+    const std::string key = storage_string_arg(isolate, context, info[0]);
+    const auto it = storage_find(store, key);
+    if (it == store->end()) {
+        info.GetReturnValue().Set(v8::Null(isolate));
+        return;
+    }
+    info.GetReturnValue().Set(v8_string(isolate, it->second));
+}
+
+void storage_set_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    StorageStore* store = storage_store_from(info.Data());
+    if (store == nullptr) {
+        return;
+    }
+    const std::string key = storage_string_arg(isolate, context, info[0]);
+    const std::string value = storage_string_arg(isolate, context, info[1]);
+    const auto it = storage_find(store, key);
+    if (it == store->end()) {
+        store->emplace_back(key, value);
+    } else {
+        it->second = value;
+    }
+}
+
+void storage_remove_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    StorageStore* store = storage_store_from(info.Data());
+    if (store == nullptr) {
+        return;
+    }
+    const std::string key = storage_string_arg(isolate, context, info[0]);
+    const auto it = storage_find(store, key);
+    if (it != store->end()) {
+        store->erase(it);
+    }
+}
+
+void storage_clear(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    StorageStore* store = storage_store_from(info.Data());
+    if (store != nullptr) {
+        store->clear();
+    }
+}
+
+void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    StorageStore* store = storage_store_from(info.Data());
+    if (store == nullptr) {
+        return;
+    }
+    v8::Local<v8::Uint32> index_value;
+    if (!info[0]->ToUint32(context).ToLocal(&index_value)) {
+        return;
+    }
+    const std::uint32_t index = index_value->Value();
+    if (index >= store->size()) {
+        info.GetReturnValue().Set(v8::Null(isolate));
+        return;
+    }
+    info.GetReturnValue().Set(
+        v8_string(isolate, (*store)[index].first));
+}
+
+void storage_length_getter(v8::Local<v8::Name> property,
+                           const v8::PropertyCallbackInfo<v8::Value>& info) {
+    (void)property;
+    v8::Isolate* isolate = info.GetIsolate();
+    StorageStore* store = storage_store_from(info.Data());
+    if (store == nullptr) {
+        return;
+    }
+    info.GetReturnValue().Set(
+        v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size())));
+}
+
 // M2-3 minimal navigator (read-only), configurable since M11-1. Values come from
 // the page's HostEnvironment, which the Python facade always supplies fully
 // resolved — this class holds no defaults and never derives a value from the host
@@ -1279,6 +1409,37 @@ public:
     }
 };
 
+// M11-8 FileReader state. The listener store reuses EventTargetHost; the object
+// itself is a plain JS instance whose prototype methods dispatch back here via a
+// private slot. States are owned by DocumentHost for the generation, so pending
+// microtask deliveries and listeners can be released at teardown.
+class FileReaderEvents : public EventTargetHost {
+public:
+    std::string global_name() const override { return std::string(); }
+    std::vector<std::string> property_names() const override { return {}; }
+    std::vector<std::string> method_names() const override { return {}; }
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+                                      const std::string&) override {
+        return v8::Undefined(isolate);
+    }
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
+        const v8::FunctionCallbackInfo<v8::Value>&) override {
+        return v8::Undefined(isolate);
+    }
+};
+
+struct FileReaderState {
+    enum class Mode { None, Text, ArrayBuffer };
+    DocumentHost* owner = nullptr;
+    FileReaderEvents events;
+    v8::Global<v8::Object> self;
+    std::vector<std::uint8_t> bytes;
+    Mode mode = Mode::None;
+    bool pending = false;
+    bool alive = true;
+};
+
 // M2-6/M2-7 element host object. Read-only, minimal node/element surface:
 // tagName / nodeName / nodeType / id / className / textContent + parentNode /
 // childNodes / children + getAttribute / hasAttribute. No mutation, no full
@@ -1566,6 +1727,16 @@ public:
             observer->registrations.clear();
             observer->pending.clear();
         }
+        // M11-8: drop the generation's Blob constructor and any pending
+        // FileReader deliveries/listeners before isolate disposal.
+        blob_constructor_.Reset();
+        for (const std::unique_ptr<FileReaderState>& reader : file_readers_) {
+            reader->alive = false;
+            reader->pending = false;
+            reader->bytes.clear();
+            reader->self.Reset();
+            reader->events.release_v8_handles();
+        }
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -1796,6 +1967,25 @@ public:
         window_target_ = window_target;
     }
 
+    // M11-8: Blob constructor used by Blob.slice() (which builds a fresh Blob),
+    // and FileReader states owned for this generation.
+    void set_blob_constructor(v8::Isolate* isolate,
+                              v8::Local<v8::Function> ctor) {
+        blob_constructor_.Reset(isolate, ctor);
+    }
+    v8::Local<v8::Function> blob_constructor(v8::Isolate* isolate) {
+        return blob_constructor_.Get(isolate);
+    }
+    FileReaderState* create_file_reader(v8::Isolate* isolate,
+                                        v8::Local<v8::Object> self) {
+        auto state = std::make_unique<FileReaderState>();
+        state->owner = this;
+        state->self.Reset(isolate, self);
+        FileReaderState* raw = state.get();
+        file_readers_.push_back(std::move(state));
+        return raw;
+    }
+
     // M4-A-7: dispatch `event` from an element and bubble it along the CURRENT
     // tree. `node` is the element's backing node, `element_host` its host (whose
     // listeners fire first), `receiver` its JS object (the fixed event.target).
@@ -1946,6 +2136,10 @@ private:
     // M11-5: per-generation MutationObserver state (Globals released through the
     // isolate-alive teardown hook in release_v8_handles()).
     std::vector<std::unique_ptr<MutationObserverState>> observers_;
+    // M11-8: per-generation FileReader states and the Blob constructor backing
+    // slice(). Both are released in release_v8_handles().
+    std::vector<std::unique_ptr<FileReaderState>> file_readers_;
+    v8::Global<v8::Function> blob_constructor_;
     // M4-A-7: window's event target (final bubbling hop). Observed, not owned;
     // set at install time. Null before install / in the both-modes shell.
     EventTargetHost* window_target_ = nullptr;
@@ -4041,6 +4235,577 @@ void usp_to_string(const v8::FunctionCallbackInfo<v8::Value>& info) {
         v8_string(isolate, usp_read_state(isolate, context, info.This())));
 }
 
+// --- M11-8 Blob / File / FileReader ------------------------------------------
+//
+// Blob/File are immutable value objects whose bytes live in a private
+// ArrayBuffer slot. FileReader is a plain JS instance whose private slot points
+// at a generation-owned state; reads complete on the existing run_jobs()
+// microtask checkpoint, so no new pump is introduced.
+
+constexpr v8::ExternalPointerTypeTag kBlobTag =
+    v8::kExternalPointerTypeTagDefault;
+constexpr v8::ExternalPointerTypeTag kFileReaderTag =
+    v8::kExternalPointerTypeTagDefault;
+
+v8::Local<v8::Private> blob_bytes_key(v8::Isolate* isolate) {
+    return v8::Private::ForApi(
+        isolate, v8::String::NewFromUtf8Literal(isolate, "iv8::Blob::bytes"));
+}
+
+v8::Local<v8::Private> blob_type_key(v8::Isolate* isolate) {
+    return v8::Private::ForApi(
+        isolate, v8::String::NewFromUtf8Literal(isolate, "iv8::Blob::type"));
+}
+
+v8::Local<v8::Private> file_reader_state_key(v8::Isolate* isolate) {
+    return v8::Private::ForApi(
+        isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8::FileReader::state"));
+}
+
+void throw_blob_type_error(v8::Isolate* isolate, const char* message) {
+    isolate->ThrowException(v8::Exception::TypeError(
+        v8::String::NewFromUtf8(isolate, message).ToLocalChecked()));
+}
+
+bool blob_read_bytes(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                     v8::Local<v8::Value> value,
+                     std::vector<std::uint8_t>* out) {
+    out->clear();
+    if (!value->IsObject()) {
+        return false;
+    }
+    v8::Local<v8::Value> stored;
+    if (!value.As<v8::Object>()
+             ->GetPrivate(context, blob_bytes_key(isolate))
+             .ToLocal(&stored) ||
+        !stored->IsArrayBuffer()) {
+        return false;
+    }
+    const v8::Local<v8::ArrayBuffer> buffer = stored.As<v8::ArrayBuffer>();
+    const std::size_t length = buffer->ByteLength();
+    if (length > 0) {
+        const auto* data = static_cast<const std::uint8_t*>(buffer->Data());
+        out->assign(data, data + length);
+    }
+    return true;
+}
+
+void append_bytes(std::vector<std::uint8_t>* out, const std::uint8_t* data,
+                  std::size_t length) {
+    if (length > 0) {
+        out->insert(out->end(), data, data + length);
+    }
+}
+
+bool blob_append_part(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                      v8::Local<v8::Value> value,
+                      std::vector<std::uint8_t>* out) {
+    std::vector<std::uint8_t> bytes;
+    if (blob_read_bytes(isolate, context, value, &bytes)) {
+        append_bytes(out, bytes.data(), bytes.size());
+        return true;
+    }
+    if (value->IsArrayBuffer()) {
+        const v8::Local<v8::ArrayBuffer> buffer = value.As<v8::ArrayBuffer>();
+        append_bytes(out,
+                     static_cast<const std::uint8_t*>(buffer->Data()),
+                     buffer->ByteLength());
+        return true;
+    }
+    if (value->IsArrayBufferView()) {
+        const v8::Local<v8::ArrayBufferView> view =
+            value.As<v8::ArrayBufferView>();
+        const auto* base =
+            static_cast<const std::uint8_t*>(view->Buffer()->Data());
+        append_bytes(out, base + view->ByteOffset(), view->ByteLength());
+        return true;
+    }
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return false;
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    if (*utf8 != nullptr) {
+        append_bytes(out, reinterpret_cast<const std::uint8_t*>(*utf8),
+                     static_cast<std::size_t>(utf8.length()));
+    }
+    return true;
+}
+
+bool blob_type_from_options(v8::Isolate* isolate,
+                            v8::Local<v8::Context> context,
+                            v8::Local<v8::Value> options, std::string* out) {
+    out->clear();
+    if (!options->IsObject()) {
+        return true;
+    }
+    v8::Local<v8::Value> value;
+    if (!options.As<v8::Object>()
+             ->Get(context, v8_string(isolate, "type"))
+             .ToLocal(&value)) {
+        return false;
+    }
+    if (value->IsUndefined()) {
+        return true;
+    }
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return false;
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    if (*utf8 != nullptr) {
+        *out = ascii_lower(
+            std::string(*utf8, static_cast<std::size_t>(utf8.length())));
+    }
+    return true;
+}
+
+void set_blob_field(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                    v8::Local<v8::Object> self, const char* name,
+                    v8::Local<v8::Value> value) {
+    (void)self->DefineOwnProperty(
+        context, v8::String::NewFromUtf8(isolate, name).ToLocalChecked(), value,
+        v8::ReadOnly);
+}
+
+bool blob_initialize(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                     v8::Local<v8::Value> parts, v8::Local<v8::Value> options,
+                     v8::Local<v8::Object> self) {
+    std::vector<std::uint8_t> bytes;
+    if (!parts->IsUndefined() && !parts->IsNull()) {
+        if (!parts->IsArray()) {
+            throw_blob_type_error(isolate, "Blob: parts must be an Array");
+            return false;
+        }
+        const v8::Local<v8::Array> array = parts.As<v8::Array>();
+        const std::uint32_t length = array->Length();
+        for (std::uint32_t i = 0; i < length; i++) {
+            v8::Local<v8::Value> part;
+            if (!array->Get(context, i).ToLocal(&part)) {
+                return false;
+            }
+            if (!blob_append_part(isolate, context, part, &bytes)) {
+                return false;
+            }
+        }
+    }
+    std::string type;
+    if (!blob_type_from_options(isolate, context, options, &type)) {
+        return false;
+    }
+    v8::Local<v8::ArrayBuffer> buffer =
+        v8::ArrayBuffer::New(isolate, bytes.size());
+    if (!bytes.empty()) {
+        std::memcpy(buffer->Data(), bytes.data(), bytes.size());
+    }
+    (void)self->SetPrivate(context, blob_bytes_key(isolate), buffer);
+    (void)self->SetPrivate(context, blob_type_key(isolate),
+                           v8_string(isolate, type));
+    set_blob_field(isolate, context, self, "size",
+                   v8::Number::New(isolate, static_cast<double>(bytes.size())));
+    set_blob_field(isolate, context, self, "type", v8_string(isolate, type));
+    return true;
+}
+
+void blob_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "Blob")) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    (void)blob_initialize(isolate, context, info[0], info[1], info.This());
+}
+
+void file_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "File")) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    if (!blob_initialize(isolate, context, info[0], info[2], info.This())) {
+        return;
+    }
+    std::string name;
+    if (info.Length() > 1 && !info[1]->IsUndefined()) {
+        v8::Local<v8::String> str;
+        if (!info[1]->ToString(context).ToLocal(&str)) {
+            return;
+        }
+        v8::String::Utf8Value utf8(isolate, str);
+        if (*utf8 != nullptr) {
+            name.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+        }
+    }
+    set_blob_field(isolate, context, info.This(), "name",
+                   v8_string(isolate, name));
+    double last_modified = 0;
+    if (info.Length() > 2 && info[2]->IsObject()) {
+        v8::Local<v8::Value> value;
+        if (!info[2]
+                 .As<v8::Object>()
+                 ->Get(context, v8_string(isolate, "lastModified"))
+                 .ToLocal(&value)) {
+            return;
+        }
+        if (!value->IsUndefined()) {
+            v8::Local<v8::Number> number;
+            if (!value->ToNumber(context).ToLocal(&number)) {
+                return;
+            }
+            const double value_number = number->Value();
+            if (std::isfinite(value_number)) {
+                last_modified = std::trunc(value_number);
+            }
+        }
+    }
+    set_blob_field(isolate, context, info.This(), "lastModified",
+                   v8::Number::New(isolate, last_modified));
+}
+
+DocumentHost* document_from_blob_data(v8::Local<v8::Value> data) {
+    if (!data->IsExternal()) {
+        return nullptr;
+    }
+    return static_cast<DocumentHost*>(
+        data.As<v8::External>()->Value(kBlobTag));
+}
+
+bool blob_bytes_or_throw(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                         v8::Local<v8::Object> self,
+                         std::vector<std::uint8_t>* out) {
+    if (blob_read_bytes(isolate, context, self, out)) {
+        return true;
+    }
+    throw_blob_type_error(isolate, "Illegal invocation");
+    return false;
+}
+
+bool blob_index_arg(v8::Local<v8::Context> context, v8::Local<v8::Value> value,
+                    std::size_t size, std::size_t default_value,
+                    std::size_t* out) {
+    if (value->IsUndefined()) {
+        *out = default_value;
+        return true;
+    }
+    v8::Local<v8::Number> number;
+    if (!value->ToNumber(context).ToLocal(&number)) {
+        return false;
+    }
+    double index = number->Value();
+    if (std::isnan(index)) {
+        index = 0;
+    }
+    if (index < 0) {
+        index = static_cast<double>(size) + index;
+    }
+    if (index < 0) {
+        index = 0;
+    }
+    if (index > static_cast<double>(size)) {
+        index = static_cast<double>(size);
+    }
+    *out = static_cast<std::size_t>(index);
+    return true;
+}
+
+void blob_slice(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    std::vector<std::uint8_t> bytes;
+    if (!blob_bytes_or_throw(isolate, context, info.This(), &bytes)) {
+        return;
+    }
+    std::size_t start = 0;
+    std::size_t end = bytes.size();
+    if (!blob_index_arg(context, info[0], bytes.size(), 0, &start) ||
+        !blob_index_arg(context, info[1], bytes.size(), bytes.size(), &end)) {
+        return;
+    }
+    if (end < start) {
+        end = start;
+    }
+    std::string type;
+    if (info.Length() > 2 && !info[2]->IsUndefined()) {
+        v8::Local<v8::String> str;
+        if (!info[2]->ToString(context).ToLocal(&str)) {
+            return;
+        }
+        v8::String::Utf8Value utf8(isolate, str);
+        if (*utf8 != nullptr) {
+            type = ascii_lower(
+                std::string(*utf8, static_cast<std::size_t>(utf8.length())));
+        }
+    }
+    DocumentHost* document = document_from_blob_data(info.Data());
+    if (document == nullptr) {
+        throw_blob_type_error(isolate, "Blob.slice: invalid receiver");
+        return;
+    }
+    v8::Local<v8::Function> constructor = document->blob_constructor(isolate);
+    if (constructor.IsEmpty()) {
+        throw_blob_type_error(isolate, "Blob.slice: Blob is unavailable");
+        return;
+    }
+    v8::Local<v8::ArrayBuffer> buffer =
+        v8::ArrayBuffer::New(isolate, end - start);
+    if (end > start) {
+        std::memcpy(buffer->Data(), bytes.data() + start, end - start);
+    }
+    v8::Local<v8::Array> parts = v8::Array::New(isolate, 1);
+    (void)parts->Set(context, 0, buffer);
+    v8::Local<v8::Object> options = v8::Object::New(isolate);
+    (void)options->Set(context, v8_string(isolate, "type"),
+                       v8_string(isolate, type));
+    v8::Local<v8::Value> argv[2] = {parts, options};
+    v8::Local<v8::Object> result;
+    if (constructor->NewInstance(context, 2, argv).ToLocal(&result)) {
+        info.GetReturnValue().Set(result);
+    }
+}
+
+void blob_text(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    std::vector<std::uint8_t> bytes;
+    if (!blob_bytes_or_throw(isolate, context, info.This(), &bytes)) {
+        return;
+    }
+    v8::Local<v8::Promise::Resolver> resolver;
+    if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) {
+        return;
+    }
+    v8::Local<v8::String> text = v8::String::Empty(isolate);
+    if (!bytes.empty() &&
+        !v8::String::NewFromUtf8(isolate,
+                                 reinterpret_cast<const char*>(bytes.data()),
+                                 v8::NewStringType::kNormal,
+                                 static_cast<int>(bytes.size()))
+             .ToLocal(&text)) {
+        return;
+    }
+    (void)resolver->Resolve(context, text);
+    info.GetReturnValue().Set(resolver->GetPromise());
+}
+
+void blob_array_buffer(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    std::vector<std::uint8_t> bytes;
+    if (!blob_bytes_or_throw(isolate, context, info.This(), &bytes)) {
+        return;
+    }
+    v8::Local<v8::Promise::Resolver> resolver;
+    if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) {
+        return;
+    }
+    v8::Local<v8::ArrayBuffer> buffer =
+        v8::ArrayBuffer::New(isolate, bytes.size());
+    if (!bytes.empty()) {
+        std::memcpy(buffer->Data(), bytes.data(), bytes.size());
+    }
+    (void)resolver->Resolve(context, buffer);
+    info.GetReturnValue().Set(resolver->GetPromise());
+}
+
+FileReaderState* file_reader_state_from(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    if (!info.This()->IsObject()) {
+        return nullptr;
+    }
+    v8::Local<v8::Value> value;
+    if (!info.This()
+             ->GetPrivate(context, file_reader_state_key(isolate))
+             .ToLocal(&value) ||
+        !value->IsExternal()) {
+        return nullptr;
+    }
+    return static_cast<FileReaderState*>(
+        value.As<v8::External>()->Value(kFileReaderTag));
+}
+
+FileReaderState* file_reader_state_or_throw(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    FileReaderState* state = file_reader_state_from(info);
+    if (state == nullptr) {
+        throw_blob_type_error(info.GetIsolate(), "Illegal invocation");
+    }
+    return state;
+}
+
+void file_reader_delivery(const v8::FunctionCallbackInfo<v8::Value>& info);
+
+void file_reader_schedule(v8::Isolate* isolate,
+                          v8::Local<v8::Context> context,
+                          FileReaderState* state) {
+    v8::Local<v8::Function> delivery;
+    if (!v8::Function::New(context, &file_reader_delivery,
+                           v8::External::New(isolate, state, kFileReaderTag))
+             .ToLocal(&delivery)) {
+        return;
+    }
+    isolate->EnqueueMicrotask(delivery);
+}
+
+void file_reader_delivery(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!info.Data()->IsExternal()) {
+        return;
+    }
+    auto* state = static_cast<FileReaderState*>(
+        info.Data().As<v8::External>()->Value(kFileReaderTag));
+    if (state == nullptr || !state->alive || !state->pending ||
+        state->self.IsEmpty()) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::Object> self = state->self.Get(isolate);
+    state->pending = false;
+    (void)self->Set(context, v8_string(isolate, "readyState"),
+                    v8::Integer::New(isolate, 2));
+    if (state->mode == FileReaderState::Mode::Text) {
+        v8::Local<v8::Value> result = v8::String::Empty(isolate);
+        if (!state->bytes.empty()) {
+            v8::Local<v8::String> text;
+            if (v8::String::NewFromUtf8(
+                    isolate,
+                    reinterpret_cast<const char*>(state->bytes.data()),
+                    v8::NewStringType::kNormal,
+                    static_cast<int>(state->bytes.size()))
+                    .ToLocal(&text)) {
+                result = text;
+            }
+        }
+        (void)self->Set(context, v8_string(isolate, "result"), result);
+    } else {
+        v8::Local<v8::ArrayBuffer> buffer =
+            v8::ArrayBuffer::New(isolate, state->bytes.size());
+        if (!state->bytes.empty()) {
+            std::memcpy(buffer->Data(), state->bytes.data(),
+                        state->bytes.size());
+        }
+        (void)self->Set(context, v8_string(isolate, "result"), buffer);
+    }
+    state->mode = FileReaderState::Mode::None;
+    state->bytes.clear();
+    state->events.dispatch_native(isolate, context, "load", self);
+    state->events.dispatch_native(isolate, context, "loadend", self);
+}
+
+void file_reader_begin(const v8::FunctionCallbackInfo<v8::Value>& info,
+                       bool as_text) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    FileReaderState* state = file_reader_state_or_throw(info);
+    if (state == nullptr) {
+        return;
+    }
+    if (state->pending) {
+        throw_blob_type_error(isolate, "FileReader is already reading");
+        return;
+    }
+    std::vector<std::uint8_t> bytes;
+    if (info.Length() < 1 ||
+        !blob_read_bytes(isolate, context, info[0], &bytes)) {
+        throw_blob_type_error(isolate,
+                              "FileReader: argument must be a Blob");
+        return;
+    }
+    state->bytes = std::move(bytes);
+    state->mode = as_text ? FileReaderState::Mode::Text
+                          : FileReaderState::Mode::ArrayBuffer;
+    state->pending = true;
+    v8::Local<v8::Object> self = info.This();
+    (void)self->Set(context, v8_string(isolate, "readyState"),
+                    v8::Integer::New(isolate, 1));
+    (void)self->Set(context, v8_string(isolate, "result"), v8::Null(isolate));
+    state->events.dispatch_native(isolate, context, "loadstart", self);
+    file_reader_schedule(isolate, context, state);
+}
+
+void file_reader_read_as_text(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    file_reader_begin(info, true);
+}
+
+void file_reader_read_as_array_buffer(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    file_reader_begin(info, false);
+}
+
+void file_reader_abort(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    FileReaderState* state = file_reader_state_or_throw(info);
+    if (state == nullptr || !state->pending) {
+        return;
+    }
+    state->pending = false;
+    state->mode = FileReaderState::Mode::None;
+    state->bytes.clear();
+    v8::Local<v8::Object> self = info.This();
+    (void)self->Set(context, v8_string(isolate, "readyState"),
+                    v8::Integer::New(isolate, 2));
+    (void)self->Set(context, v8_string(isolate, "result"), v8::Null(isolate));
+    state->events.dispatch_native(isolate, context, "abort", self);
+    state->events.dispatch_native(isolate, context, "loadend", self);
+}
+
+void file_reader_event_method(const v8::FunctionCallbackInfo<v8::Value>& info,
+                              const char* name) {
+    FileReaderState* state = file_reader_state_or_throw(info);
+    if (state == nullptr) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::Value> out;
+    if (state->events.handle_event_method(isolate, context, name, info, out)) {
+        info.GetReturnValue().Set(out);
+    }
+}
+
+void file_reader_add_event_listener(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    file_reader_event_method(info, "addEventListener");
+}
+
+void file_reader_remove_event_listener(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    file_reader_event_method(info, "removeEventListener");
+}
+
+void file_reader_dispatch_event(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    file_reader_event_method(info, "dispatchEvent");
+}
+
+void file_reader_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "FileReader")) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    DocumentHost* document = document_from_blob_data(info.Data());
+    if (document == nullptr) {
+        throw_blob_type_error(isolate, "FileReader: invalid constructor");
+        return;
+    }
+    FileReaderState* state =
+        document->create_file_reader(isolate, info.This());
+    (void)info.This()->SetPrivate(
+        context, file_reader_state_key(isolate),
+        v8::External::New(isolate, state, kFileReaderTag));
+    (void)info.This()->Set(context, v8_string(isolate, "readyState"),
+                           v8::Integer::New(isolate, 0));
+    (void)info.This()->Set(context, v8_string(isolate, "result"),
+                           v8::Null(isolate));
+    (void)info.This()->Set(context, v8_string(isolate, "error"),
+                           v8::Null(isolate));
+}
+
 // M8-4 atob / btoa — minimal standard Base64. btoa operates on a "binary string"
 // (each UTF-16 code unit must be <= 0xFF; its low 8 bits is the byte); atob returns a
 // binary string (each output byte becomes a Latin-1 code unit 0..255, via
@@ -4897,6 +5662,42 @@ void PageState::install_page(const std::string& base_url,
                     "innerHeight",
                     v8::Integer::New(isolate, environment_.inner_height));
             }
+            // M11-7 Web Storage: two independent, per-Page in-memory stores.
+            // The backings live in PageState (so they survive load()); each
+            // generation installs fresh JS Storage objects over them. Methods and
+            // the read-only `length` accessor carry an External to the backing.
+            {
+                const auto install_storage = [&](const char* name,
+                                                 StorageStore* store) {
+                    v8::Local<v8::Object> storage = v8::Object::New(isolate);
+                    v8::Local<v8::Value> data =
+                        v8::External::New(isolate, store, kStorageTag);
+                    const auto add_method = [&](const char* method,
+                                                v8::FunctionCallback callback) {
+                        v8::Local<v8::Function> fn =
+                            v8::FunctionTemplate::New(isolate, callback, data)
+                                ->GetFunction(context)
+                                .ToLocalChecked();
+                        (void)storage->Set(context, v8_string(isolate, method),
+                                           fn);
+                    };
+                    add_method("getItem", &storage_get_item);
+                    add_method("setItem", &storage_set_item);
+                    add_method("removeItem", &storage_remove_item);
+                    add_method("clear", &storage_clear);
+                    add_method("key", &storage_key);
+                    (void)storage->SetNativeDataProperty(
+                        context,
+                        v8::String::NewFromUtf8Literal(isolate, "length"),
+                        &storage_length_getter, nullptr, data, v8::ReadOnly);
+                    (void)global->DefineOwnProperty(
+                        context, v8_string(isolate, name), storage,
+                        static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                           v8::DontDelete));
+                };
+                install_storage("localStorage", &local_storage_);
+                install_storage("sessionStorage", &session_storage_);
+            }
             // M3-3 minimal Event constructor (global `Event`). document/element
             // expose addEventListener/removeEventListener/dispatchEvent via their
             // host-object methods; this is the event value they dispatch.
@@ -5030,6 +5831,68 @@ void PageState::install_page(const std::string& base_url,
                 (void)global->Set(
                     context, v8_string(isolate, "URLSearchParams"),
                     usp_tpl->GetFunction(context).ToLocalChecked());
+            }
+
+            // M11-8 Blob / File / FileReader. Blob/File expose immutable fields
+            // and Promise-returning readers; FileReader is a plain JS instance
+            // backed by a generation-owned state and completes on run_jobs().
+            {
+                DocumentHost* document =
+                    static_cast<DocumentHost*>(document_host_);
+                v8::Local<v8::Value> blob_data =
+                    v8::External::New(isolate, document, kBlobTag);
+                v8::Local<v8::FunctionTemplate> blob_tpl =
+                    v8::FunctionTemplate::New(isolate, &blob_constructor);
+                blob_tpl->SetClassName(
+                    v8::String::NewFromUtf8Literal(isolate, "Blob"));
+                v8::Local<v8::ObjectTemplate> blob_proto =
+                    blob_tpl->PrototypeTemplate();
+                blob_proto->Set(isolate, "slice",
+                                v8::FunctionTemplate::New(
+                                    isolate, &blob_slice, blob_data));
+                blob_proto->Set(isolate, "text",
+                                v8::FunctionTemplate::New(
+                                    isolate, &blob_text, blob_data));
+                blob_proto->Set(isolate, "arrayBuffer",
+                                v8::FunctionTemplate::New(
+                                    isolate, &blob_array_buffer, blob_data));
+                v8::Local<v8::FunctionTemplate> file_tpl =
+                    v8::FunctionTemplate::New(isolate, &file_constructor);
+                file_tpl->SetClassName(
+                    v8::String::NewFromUtf8Literal(isolate, "File"));
+                file_tpl->Inherit(blob_tpl);
+                v8::Local<v8::Function> blob_fn =
+                    blob_tpl->GetFunction(context).ToLocalChecked();
+                document->set_blob_constructor(isolate, blob_fn);
+                (void)global->Set(context, v8_string(isolate, "Blob"), blob_fn);
+                (void)global->Set(
+                    context, v8_string(isolate, "File"),
+                    file_tpl->GetFunction(context).ToLocalChecked());
+                v8::Local<v8::FunctionTemplate> reader_tpl =
+                    v8::FunctionTemplate::New(
+                        isolate, &file_reader_constructor, blob_data);
+                reader_tpl->SetClassName(
+                    v8::String::NewFromUtf8Literal(isolate, "FileReader"));
+                v8::Local<v8::ObjectTemplate> reader_proto =
+                    reader_tpl->PrototypeTemplate();
+                const auto add_reader_method = [&](const char* name,
+                                                   v8::FunctionCallback cb) {
+                    reader_proto->Set(
+                        isolate, name, v8::FunctionTemplate::New(isolate, cb));
+                };
+                add_reader_method("addEventListener",
+                                  &file_reader_add_event_listener);
+                add_reader_method("removeEventListener",
+                                  &file_reader_remove_event_listener);
+                add_reader_method("dispatchEvent",
+                                  &file_reader_dispatch_event);
+                add_reader_method("readAsText", &file_reader_read_as_text);
+                add_reader_method("readAsArrayBuffer",
+                                  &file_reader_read_as_array_buffer);
+                add_reader_method("abort", &file_reader_abort);
+                (void)global->Set(
+                    context, v8_string(isolate, "FileReader"),
+                    reader_tpl->GetFunction(context).ToLocalChecked());
             }
 
             // M11-5 global MutationObserver: constructor + prototype methods.

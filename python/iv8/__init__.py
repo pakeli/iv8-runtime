@@ -851,6 +851,22 @@ the existing Event / EventTarget / bubbling model. Each subclass inherits
 event generation, or new pump. See ``docs/m11_6_event_subclasses.md`` for the
 authoritative boundary.
 
+M11-7 (Web Storage) adds ``localStorage`` and ``sessionStorage`` as two
+independent, insertion-ordered, per-Page in-memory stores with
+``getItem`` / ``setItem`` / ``removeItem`` / ``clear`` / ``key`` and a read-only
+``length``. Entries survive ``Page.load()`` generations of the same Page but are
+never shared across Page instances, disk, origins, or ``storage`` events. See
+``docs/m11_7_web_storage.md`` for the authoritative boundary.
+
+M11-8 (Blob / File / FileReader) adds immutable ``Blob`` and ``File`` byte value
+objects (with ``size`` / ``type`` / ``name`` / ``lastModified``, ``slice``, and
+Promise-returning ``text`` / ``arrayBuffer``) plus a minimal ``FileReader`` whose
+``readAsText`` / ``readAsArrayBuffer`` complete on the existing
+``Page.run_jobs()`` microtask checkpoint and dispatch ``loadstart`` / ``load`` /
+``loadend`` / ``abort`` listener events. There is no network, filesystem,
+object-URL, progress, or data-URL surface. See ``docs/m11_8_blob_file_reader.md``
+for the authoritative boundary.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free
