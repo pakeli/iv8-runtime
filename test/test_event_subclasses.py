@@ -242,8 +242,9 @@ def test_dispatch_custom_event_bubbles():
                              (e.currentTarget === inner));
                 });
                 outer.addEventListener('ping', function (e) {
+                    // Wrapper identity is not guaranteed; assert the id.
                     log.push('outer:' + e.detail.x + ':' +
-                             (e.currentTarget === outer));
+                             (e.currentTarget.id === 'outer'));
                 });
                 document.addEventListener('ping', function (e) {
                     log.push('doc:' + (e.currentTarget === document));
