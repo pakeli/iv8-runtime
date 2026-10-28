@@ -205,14 +205,34 @@ the first runs: `ab1d507` (V8 15.0 `ExternalPointerTypeTag` on
 
 ### Next
 
-Choose `M11-6` from the ranked compatibility backlog
-(`docs/m11_compatibility_backlog.md`).
+`M11-6` is selected: Event subclass cluster — see Priority 3f.
 
 ### Deliberately not done
 
 `characterData` records, `MutationRecord` global, `id`/`className` property
 setters, document-node childList records without `subtree`, JS-finalizer observer
 cleanup, `watch_apis` integration, and any scheduler/new pump.
+
+## Priority 3f: Sixth M11 compatibility slice — SELECTED, IMPLEMENTATION IN PROGRESS (`2026-10-28`)
+
+### What is being built
+
+`M11-6`: **Event subclass cluster** — `CustomEvent` (`detail`), `MouseEvent`
+(`clientX` / `clientY` / `button` / `buttons`), `KeyboardEvent` (`key` / `code`
+/ `repeat`), and `FocusEvent` (`relatedTarget`) as minimal constructors on top
+of the existing `Event` / `EventTarget` / bubbling model. Prototype chains make
+each subclass `instanceof Event`; subclass fields are own read-only values; no
+capture, cancellation, listener options, native event generation, or new pump.
+
+Boundary: `docs/m11_6_event_subclasses.md`. Tests:
+`test/test_event_subclasses.py` (pending).
+
+### Verification pending
+
+Real-V8 CI on branch `m11-6-event-subclasses` must run `release-linux` and
+`release-windows` on the same commit. Expected total: the M11-5 baseline
+(`1265 passed, 2 skipped`) plus the new items. Local checks are static only (no
+C++ toolchain / Windows V8 monolith).
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

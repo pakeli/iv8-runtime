@@ -155,9 +155,14 @@ Settled and implemented so far:
   `docs/m11_5_mutation_observer.md`. Landed and verified on real V8 (Linux +
   Windows) on `2026-10-28`: Linux run `40632597636`, Windows run `40632601387`,
   commit `4fa6469`, each `1265 passed, 2 skipped`. See `docs/m11_5_report.md`.
+- `M11-6` — **Event subclass cluster** (`CustomEvent` / `MouseEvent` /
+  `KeyboardEvent` / `FocusEvent`) — selected on `2026-10-28` from rank 2 of the
+  backlog; boundary document `docs/m11_6_event_subclasses.md`. Implementation
+  and real-V8 verification are in progress on the `m11-6-event-subclasses`
+  branch.
 
-`M11-6` is the open choice. The ranked backlog now exists, so the next slice
-should use it rather than direction alone.
+`M11-6` is selected and in progress; after it lands, `M11-7` should again be
+chosen from this backlog rather than direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

@@ -27,7 +27,7 @@ The ranking is planning guidance, not a promise of full parity.
 | Rank | Candidate | Target evidence | Current gap | Value | Fit/cost | Verdict |
 |---|---|---|---|---|---|---|
 | 1 | **`MutationObserver`** | Listed in the DOM/HTML compatibility table and in the micro-task examples (`README_EN.md`); used by framework and anti-bot code | Our DOM has mutation paths (`appendChild` / `removeChild` / `insertBefore` / `setAttribute` / `removeAttribute` / `textContent`) and M11-4 microtasks, but no observation model | 5 | 5 / 3 | **M11-5 delivered & verified (`2026-10-28`)** |
-| 2 | **Event subclass cluster** (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`) | Target claims 80+ event types; demos use clicks and lifecycle events | We install only a minimal `Event` constructor; no subclasses or their read-only fields | 4 | 5 / 5 | Low-risk fallback |
+| 2 | **Event subclass cluster** (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`) | Target claims 80+ event types; demos use clicks and lifecycle events | We install only a minimal `Event` constructor; no subclasses or their read-only fields | 4 | 5 / 5 | **M11-6 selected (`2026-10-28`)** |
 | 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | Independent, medium slice |
 | 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | Medium slice; async event delivery needed |
 | 5 | **Nested environment + `get_defaults()`** | `JSContext(environment={...})` with nested navigator/screen/location/webgl paths; `get_defaults()` enumerates them | M11-1 has a flat 11-key `Page(environment=...)` baseline and `get_default_environment()` | 3 | 4 / 4 | API-shape decision; subset only |
@@ -83,9 +83,13 @@ Tests: `test/test_mutation_observer.py`.
 
 ## 6. Next step
 
-M11-5 is delivered and verified (`2026-10-28`). The next slice, `M11-6`, should
-be chosen from this ranked list: Event subclasses (rank 2) are the smallest
-follow-on, while Web Storage (rank 3) is the next independent medium slice.
+M11-5 is delivered and verified (`2026-10-28`).
+
+`M11-6` — **Event subclass cluster** — was selected on `2026-10-28` (rank 2:
+`CustomEvent` / `MouseEvent` / `KeyboardEvent` / `FocusEvent`). Its boundary
+document is `docs/m11_6_event_subclasses.md`; implementation and real-V8
+verification are in progress on the `m11-6-event-subclasses` branch. Web
+Storage (rank 3) remains the next independent medium slice after it.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

@@ -143,7 +143,7 @@ to Python `logging`).
 |---|---|
 | Capture phase, `eventPhase`, `composed`, `timeStamp`, `isTrusted` | **absent** |
 | `preventDefault` / `cancelable` / `defaultPrevented` / `stopImmediatePropagation` | **absent** |
-| Event subclass cluster (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`, `UIEvent`, `InputEvent`) | **candidate** (backlog rank 2; likely M11-6) |
+| Event subclass cluster (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`, `UIEvent`, `InputEvent`) | **selected for M11-6** (backlog rank 2) |
 | Listener options (`once` / `capture` / `passive` / `signal`) | **absent** |
 | `on*` handler properties | **absent** |
 | Native event generation and default actions (`click()`, `submit` / `reset` / `input` / `change`, media events) | **excluded** |
