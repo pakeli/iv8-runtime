@@ -2,9 +2,9 @@
 
 Returns a plain JS Array of the elements in the current tree whose class-token set
 contains the given class, document order (recollected live per call; blank -> []).
-name = String(name) split into class tokens; exactly one token matches (same test
-as the .class selector); empty / whitespace-only / multi-token -> [] (no throw). NOT
-an HTMLCollection (no item() / namedItem()), no array/wrapper identity guarantee,
+name = String(name) split into class tokens; M11-19 matches ALL tokens
+(multi-token intersection); empty / whitespace-only -> [] (no throw). NOT an
+HTMLCollection (no item() / namedItem()), no array/wrapper identity guarantee,
 excludes detached-subtree elements. JS-side only; no new Python surface.
 
 Assertions use .length / .id / .tagName only (never wrapper/collection identity).
@@ -172,10 +172,10 @@ def test_detached_excluded():
         ) == "1;a|det;1"
 
 
-# --- empty / whitespace / multi-token -> [] (no throw) --------------------------
+# --- empty / whitespace / multi-token ------------------------------------------
 
 @on_only
-def test_empty_whitespace_multitoken_return_empty():
+def test_empty_whitespace_and_multitoken():
     html = ("<html><body><div id='a' class='x'></div>"
             "<div id='b' class='x y'></div></body></html>")
     with iv8.Page() as page:
@@ -185,13 +185,13 @@ def test_empty_whitespace_multitoken_return_empty():
             (() => {
               return [document.getElementsByClassName('').length,        // 0
                       document.getElementsByClassName('   ').length,      // 0
-                      document.getElementsByClassName('x y').length,      // 0 (multi-token)
-                      document.getElementsByClassName('x  y').length,     // 0
-                      document.getElementsByClassName(' x ').length       // 1 (single token, trimmed)
+                      document.getElementsByClassName('x y').length,      // 1 (all tokens)
+                      document.getElementsByClassName('x  y').length,     // 1
+                      document.getElementsByClassName(' x ').length       // 2 (single token, trimmed)
                      ].join(',');
             })();
             """
-        ) == "0,0,0,0,2"
+        ) == "0,0,1,1,2"
 
 
 # --- repeated load re-collects ---------------------------------------------------

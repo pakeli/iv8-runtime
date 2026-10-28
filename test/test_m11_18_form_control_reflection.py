@@ -221,11 +221,11 @@ def test_reflection_surface_is_scoped():
         assert page.eval("typeof btn.readOnly") == "undefined"
         assert page.eval("typeof btn.placeholder") == "undefined"
         assert page.eval("typeof o0.disabled") == "undefined"
-        # Not added by this slice.
-        assert page.eval("typeof plain.name") == "undefined"
-        assert page.eval("typeof plain.required") == "undefined"
-        assert page.eval("typeof document.createElement('textarea').disabled") == "undefined"
-        assert page.eval("typeof document.createElement('select').disabled") == "undefined"
+        # M11-21 later extends reflection to these controls.
+        assert page.eval("typeof plain.name") != "undefined"
+        assert page.eval("typeof plain.required") != "undefined"
+        assert page.eval("typeof document.createElement('textarea').disabled") != "undefined"
+        assert page.eval("typeof document.createElement('select').disabled") != "undefined"
 
 
 def test_no_new_python_surface():

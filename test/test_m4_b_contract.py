@@ -97,12 +97,13 @@ def test_frozen_items_absent():
                 assert page.eval(f"typeof document.{coll}.{extra}") == "undefined"
         assert page.eval("typeof document.getElementsByClassName('x').item") == "undefined"
         # No document.all / plugins / other collections not yet added.
-        for member in ("all", "plugins", "getElementsByName", "createElementNS",
+        for member in ("all", "plugins", "createElementNS",
                        "createTextNode", "write"):
             assert page.eval(f"typeof document.{member}") == "undefined"
-        # No element.getElementsByClassName.
+        # M11-20 adds getElementsByName; M11-19 adds the element-level class query.
+        assert page.eval("typeof document.getElementsByName") == "function"
         assert page.eval(
-            "typeof document.getElementById('f').getElementsByClassName") == "undefined"
+            "typeof document.getElementById('f').getElementsByClassName") == "function"
         # No attribute-reflection properties — only raw getAttribute.
         assert page.eval("typeof document.getElementById('a').href") == "undefined"
         assert page.eval("typeof document.getElementById('a').name") == "undefined"

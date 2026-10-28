@@ -96,9 +96,9 @@ def test_frozen_items_absent():
         # the rest stay out.)
         for m in ("length", "elements.item"):
             assert page.eval(f"typeof document.getElementById('f').{m}") == "undefined"
-        # element.getElementsByClassName still frozen (M4-B-13 kept it out)
+        # M11-19 adds the element-level class query.
         assert page.eval(
-            "typeof document.getElementById('f').getElementsByClassName") == "undefined"
+            "typeof document.getElementById('f').getElementsByClassName") == "function"
         # select: M11-16 adds options / selectedIndex / multiple / size.
         assert page.eval("document.getElementById('se').options.length") == 1
         assert page.eval("document.getElementById('se').selectedIndex") == -1

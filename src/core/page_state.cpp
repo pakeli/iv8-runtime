@@ -934,6 +934,19 @@ void collect_matching(DomNode* node,
     }
 }
 
+// M11-19: an element matches a multi-token class query when its class token set
+// contains every requested token. The caller guarantees tokens is non-empty.
+bool has_all_class_tokens(const DomNode* node,
+                          const std::vector<std::string>& tokens) {
+    for (const std::string& token : tokens) {
+        if (std::find(node->classes.begin(), node->classes.end(), token) ==
+            node->classes.end()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // M5-5: an <option>'s value — its `value` attribute if present (read live, so
 // setAttribute('value', ...) is reflected), else its text content (empty -> "").
 std::string option_value_of(const DomNode* option) {
@@ -1736,9 +1749,15 @@ public:
         // M11-16: select collection / selection / attribute reflection.
         if (node_->tag == "select") {
             names.push_back("options");
+            // M11-22: read-only option count.
+            names.push_back("length");
             names.push_back("selectedIndex");
             names.push_back("multiple");
             names.push_back("size");
+            // M11-21: reflected name/required/disabled.
+            names.push_back("name");
+            names.push_back("required");
+            names.push_back("disabled");
         }
         // M5-5: `selected` (read-write bool) is exposed only on <option>;
         // M5-8: `text` (read-only) too; M6-3: `defaultSelected` (read-only reset
@@ -1757,21 +1776,30 @@ public:
             names.push_back("checked");
             names.push_back("defaultChecked");
             names.push_back("defaultValue");
-            // M11-18: reflected attribute surface.
+            // M11-18/M11-21: reflected attribute surface.
             names.push_back("type");
             names.push_back("disabled");
             names.push_back("readOnly");
             names.push_back("placeholder");
+            names.push_back("name");
+            names.push_back("required");
         }
         if (node_->tag == "button") {
-            // M11-18: reflected attribute surface.
+            // M11-18/M11-21: reflected attribute surface.
             names.push_back("type");
             names.push_back("disabled");
+            names.push_back("name");
         }
         // M6-5: `defaultValue` (read-only reset baseline) also on <textarea> (its
         // baseline was seeded from the initial text content, M5-4/M6-1).
         if (node_->tag == "textarea") {
             names.push_back("defaultValue");
+            // M11-21: reflected attribute surface.
+            names.push_back("name");
+            names.push_back("required");
+            names.push_back("disabled");
+            names.push_back("readOnly");
+            names.push_back("placeholder");
         }
         return names;
     }
@@ -1785,6 +1813,8 @@ public:
             "replaceChild",     "remove",          "hasChildNodes",
             "cloneNode",        "isSameNode",      "isEqualNode",
             "querySelector",    "querySelectorAll", "getElementsByTagName",
+            // M11-19 descendant class query.
+            "getElementsByClassName",
             // M4-B-2 minimal ancestor/containment check.
             "contains",
             // M4-B-3 single-node selector match.
@@ -1798,6 +1828,11 @@ public:
             names.push_back("reset");
             names.push_back("submit");
             names.push_back("requestSubmit");
+        }
+        if (node_->tag == "select") {
+            // M11-22: option lookup helpers (the options collection stays an Array).
+            names.push_back("item");
+            names.push_back("namedItem");
         }
         const std::vector<std::string>& events = event_method_names();
         names.insert(names.end(), events.begin(), events.end());
@@ -1816,23 +1851,38 @@ public:
         }
         if (node_->tag == "input") {
             names.push_back("checked");
-            // M11-18: reflected attribute writes.
+            // M11-18/M11-21: reflected attribute writes.
             names.push_back("type");
             names.push_back("disabled");
             names.push_back("readOnly");
             names.push_back("placeholder");
+            names.push_back("name");
+            names.push_back("required");
         }
         if (node_->tag == "button") {
-            // M11-18: reflected attribute writes.
+            // M11-18/M11-21: reflected attribute writes.
             names.push_back("type");
             names.push_back("disabled");
+            names.push_back("name");
+        }
+        if (node_->tag == "textarea") {
+            // M11-21: reflected attribute writes.
+            names.push_back("name");
+            names.push_back("required");
+            names.push_back("disabled");
+            names.push_back("readOnly");
+            names.push_back("placeholder");
+        }
+        if (node_->tag == "select") {
+            // M11-21: reflected attribute writes.
+            names.push_back("name");
+            names.push_back("required");
+            names.push_back("disabled");
+            names.push_back("selectedIndex");
         }
         if (node_->tag == "option") {
             // M11-18: label is writable; index is read-only.
             names.push_back("label");
-        }
-        if (node_->tag == "select") {
-            names.push_back("selectedIndex");
         }
         // M7-3..7: form.method (normalized) / action (raw) / enctype (normalized) /
         // target (raw) strings + noValidate (bool coercion) are all read-write.
@@ -1981,7 +2031,10 @@ public:
                 // M4-B-11 all <embed> elements in the current tree.
                 "embeds",
                 // M4-B-12 all <applet> elements in the current tree.
-                "applets"};
+                "applets",
+                // M11-23 deterministic document metadata.
+                "characterSet", "contentType", "compatMode", "referrer",
+                "domain", "visibilityState", "hidden", "activeElement"};
     }
     std::vector<std::string> method_names() const override {
         // M2-6 document methods + M4-A-1 static queries + M4-A-2 createElement +
@@ -1989,8 +2042,12 @@ public:
         std::vector<std::string> names = {"getElementById", "querySelector",
                                           "querySelectorAll", "getElementsByTagName",
                                           "createElement",
-                                          // M4-B-13 single-token class query.
-                                          "getElementsByClassName"};
+                                          // M4-B-13 / M11-19 class query.
+                                          "getElementsByClassName",
+                                          // M11-20 name query.
+                                          "getElementsByName",
+                                          // M11-23 deterministic focus report.
+                                          "hasFocus"};
         const std::vector<std::string>& events = event_method_names();
         names.insert(names.end(), events.begin(), events.end());
         return names;
@@ -2030,6 +2087,19 @@ public:
         if (name == "URL") return v8_string(isolate, url_);
         if (name == "title") return v8_string(isolate, title_);
         if (name == "readyState") return v8_string(isolate, ready_state_);
+        // M11-23: deterministic document metadata (read-only).
+        if (name == "characterSet") return v8_string(isolate, "UTF-8");
+        if (name == "contentType") return v8_string(isolate, "text/html");
+        if (name == "compatMode") return v8_string(isolate, "CSS1Compat");
+        if (name == "referrer") return v8_string(isolate, std::string());
+        if (name == "domain") {
+            return v8_string(isolate, decompose_url(url_).hostname);
+        }
+        if (name == "visibilityState") return v8_string(isolate, "visible");
+        if (name == "hidden") return v8::False(isolate);
+        if (name == "activeElement") {
+            return wrap_element(isolate, context, find_tag("body"));
+        }
         if (name == "currentScript") {  // M3-7: element while a HTML script runs, else null
             return wrap_element(isolate, context, current_script_);
         }
@@ -2148,23 +2218,30 @@ public:
         if (name == "getElementsByTagName") {  // M4-A-1
             return elements_array(isolate, context, elements_by_tag(arg));
         }
-        if (name == "getElementsByClassName") {  // M4-B-13: single-token class query
+        if (name == "getElementsByClassName") {  // M4-B-13 / M11-19 class query
             // String(name) split into class tokens (same tokenizer as className /
-            // setAttribute('class', ...)). Exactly one token -> match every element
-            // whose class token set contains it (same test as the `.class`
-            // selector). Empty / whitespace-only / multi-token -> [] (no throw). No
-            // multi-token intersection, no case folding. Live tree, document order,
-            // detached elements excluded (collect walks roots_).
+            // setAttribute('class', ...)). Match every element whose class token
+            // set contains ALL tokens (multi-token intersection). Empty /
+            // whitespace-only -> [] (no throw). Case-sensitive. Live tree, document
+            // order, detached elements excluded (collect walks roots_).
             std::vector<std::string> tokens = split_class_tokens(arg);
             std::vector<DomNode*> nodes;
-            if (tokens.size() == 1) {
-                const std::string token = tokens[0];
-                nodes = collect([&token](const DomNode* n) {
-                    return std::find(n->classes.begin(), n->classes.end(), token) !=
-                           n->classes.end();
+            if (!tokens.empty()) {
+                nodes = collect([&tokens](const DomNode* n) {
+                    return has_all_class_tokens(n, tokens);
                 });
             }
             return elements_array(isolate, context, nodes);
+        }
+        if (name == "getElementsByName") {  // M11-20: exact name-attribute query
+            std::vector<DomNode*> nodes = collect([&arg](const DomNode* n) {
+                const auto it = n->attributes.find("name");
+                return it != n->attributes.end() && it->second == arg;
+            });
+            return elements_array(isolate, context, nodes);
+        }
+        if (name == "hasFocus") {  // M11-23: no focus machinery -> always false
+            return v8::False(isolate);
         }
         if (name == "createElement") {  // M4-A-2: detached element (not in the tree)
             auto node = std::make_unique<DomNode>();
@@ -3362,21 +3439,39 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
                                      : normalize_button_type(raw));
     }
     if (name == "disabled" &&
-        (node_->tag == "input" || node_->tag == "button")) {
+        (node_->tag == "input" || node_->tag == "button" ||
+         node_->tag == "textarea" || node_->tag == "select")) {
         return v8::Boolean::New(
             isolate, node_->attributes.find("disabled") !=
                          node_->attributes.end());
     }
-    if (name == "readOnly" && node_->tag == "input") {
+    if (name == "readOnly" &&
+        (node_->tag == "input" || node_->tag == "textarea")) {
         return v8::Boolean::New(
             isolate, node_->attributes.find("readonly") !=
                          node_->attributes.end());
     }
-    if (name == "placeholder" && node_->tag == "input") {
+    if (name == "placeholder" &&
+        (node_->tag == "input" || node_->tag == "textarea")) {
         const auto it = node_->attributes.find("placeholder");
         return v8_string(isolate,
                          it != node_->attributes.end() ? it->second
                                                        : std::string());
+    }
+    if (name == "name" &&
+        (node_->tag == "input" || node_->tag == "button" ||
+         node_->tag == "textarea" || node_->tag == "select")) {
+        const auto it = node_->attributes.find("name");
+        return v8_string(isolate,
+                         it != node_->attributes.end() ? it->second
+                                                       : std::string());
+    }
+    if (name == "required" &&
+        (node_->tag == "input" || node_->tag == "textarea" ||
+         node_->tag == "select")) {
+        return v8::Boolean::New(
+            isolate, node_->attributes.find("required") !=
+                         node_->attributes.end());
     }
     if (name == "label" && node_->tag == "option") {
         const auto it = node_->attributes.find("label");
@@ -3405,6 +3500,11 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
         std::vector<DomNode*> options;
         collect_matching(node_, tag_predicate("option"), options);
         return document_->elements_array(isolate, context, options);
+    }
+    if (node_->tag == "select" && name == "length") {
+        // M11-22: read-only count of descendant options.
+        return v8::Integer::New(
+            isolate, static_cast<int>(collect_options(node_).size()));
     }
     if (node_->tag == "select" && name == "selectedIndex") {
         std::vector<DomNode*> options;
@@ -3774,19 +3874,37 @@ void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> cont
         return;
     }
     if (name == "disabled" &&
-        (node_->tag == "input" || node_->tag == "button")) {
+        (node_->tag == "input" || node_->tag == "button" ||
+         node_->tag == "textarea" || node_->tag == "select")) {
         reflect_bool("disabled", value->BooleanValue(isolate));
         return;
     }
-    if (name == "readOnly" && node_->tag == "input") {
+    if (name == "readOnly" &&
+        (node_->tag == "input" || node_->tag == "textarea")) {
         reflect_bool("readonly", value->BooleanValue(isolate));
         return;
     }
-    if (name == "placeholder" && node_->tag == "input") {
+    if (name == "placeholder" &&
+        (node_->tag == "input" || node_->tag == "textarea")) {
         std::string text;
         if (to_reflected_string(text)) {
             reflect_raw_string("placeholder", text);
         }
+        return;
+    }
+    if (name == "name" &&
+        (node_->tag == "input" || node_->tag == "button" ||
+         node_->tag == "textarea" || node_->tag == "select")) {
+        std::string text;
+        if (to_reflected_string(text)) {
+            reflect_raw_string("name", text);
+        }
+        return;
+    }
+    if (name == "required" &&
+        (node_->tag == "input" || node_->tag == "textarea" ||
+         node_->tag == "select")) {
+        reflect_bool("required", value->BooleanValue(isolate));
         return;
     }
     if (name == "label" && node_->tag == "option") {
@@ -4315,6 +4433,51 @@ v8::Local<v8::Value> ElementHost::call_method(
         std::vector<DomNode*> out;
         collect_matching(node_, tag_predicate(arg_string(0)), out);
         return document_->elements_array(isolate, context, out);
+    }
+    if (name == "getElementsByClassName") {  // M11-19: descendants only
+        std::vector<std::string> tokens = split_class_tokens(arg_string(0));
+        std::vector<DomNode*> out;
+        if (!tokens.empty()) {
+            for (DomNode* child : node_->children) {
+                collect_matching(
+                    child,
+                    [&tokens](const DomNode* n) {
+                        return has_all_class_tokens(n, tokens);
+                    },
+                    out);
+            }
+        }
+        return document_->elements_array(isolate, context, out);
+    }
+    if (node_->tag == "select" && (name == "item" || name == "namedItem")) {
+        // M11-22: option lookup helpers. The collection itself stays a plain array.
+        const std::vector<DomNode*> options = collect_options(node_);
+        if (name == "item") {
+            int index = 0;
+            if (args.Length() > 0) {
+                v8::Local<v8::Int32> converted;
+                if (!args[0]->ToInt32(context).ToLocal(&converted)) {
+                    return v8::Null(isolate);
+                }
+                index = converted->Value();
+            }
+            if (index < 0 || index >= static_cast<int>(options.size())) {
+                return v8::Null(isolate);
+            }
+            return document_->wrap_element(
+                isolate, context, options[static_cast<std::size_t>(index)]);
+        }
+        const std::string wanted = arg_string(0);
+        for (DomNode* option : options) {
+            if (option->id == wanted) {
+                return document_->wrap_element(isolate, context, option);
+            }
+            const auto it = option->attributes.find("name");
+            if (it != option->attributes.end() && it->second == wanted) {
+                return document_->wrap_element(isolate, context, option);
+            }
+        }
+        return v8::Null(isolate);
     }
     // M4-B-2 minimal ancestor/containment: true iff the argument is an element in
     // this tree that is this node itself or a descendant of it. A non-element

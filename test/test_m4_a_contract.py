@@ -57,15 +57,15 @@ def test_js_document_surface_not_exceeded():
     html = "<html><head></head><body><div id='d'></div></body></html>"
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
-        # Approved document methods are present (getElementsByClassName: M4-B-13) ...
+        # Approved document methods are present (getElementsByClassName: M4-B-13;
+        # getElementsByName: M11-20) ...
         for member in ("getElementById", "querySelector", "querySelectorAll",
                        "getElementsByTagName", "createElement",
-                       "getElementsByClassName"):
+                       "getElementsByClassName", "getElementsByName"):
             assert page.eval(f"typeof document.{member}") == "function"
         # ... and nothing beyond them leaked. (document.forms/images/links/anchors/
         # embeds/applets arrived in M4-B-7..12; plugins / all stay out.)
-        for member in ("getElementsByName",
-                       "createElementNS", "createTextNode", "createComment",
+        for member in ("createElementNS", "createTextNode", "createComment",
                        "createDocumentFragment", "importNode", "adoptNode",
                        "write", "plugins", "all"):
             assert page.eval(f"typeof document.{member}") == "undefined"
