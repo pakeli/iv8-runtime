@@ -72,10 +72,10 @@ def test_event_bubbles_flag_and_stop_propagation_shape():
 def test_event_out_of_scope_members_absent():
     with iv8.Page() as page:
         _loaded(page)
-        for member in ("preventDefault", "stopImmediatePropagation", "cancelable",
-                       "defaultPrevented", "eventPhase", "composed", "timeStamp"):
+        # M11-6 adds CustomEvent and its subclasses; M11-9 adds cancellation.
+        for member in ("eventPhase", "composed", "timeStamp"):
             assert page.eval(f"typeof new Event('e').{member}") == "undefined"
-        assert page.eval("typeof CustomEvent") == "undefined"
+        assert page.eval("typeof CustomEvent") == "function"
 
 
 # --- (4) a non-bubbling event fires only the target ------------------------------

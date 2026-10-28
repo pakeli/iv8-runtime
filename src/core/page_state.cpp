@@ -1147,15 +1147,23 @@ bool event_bubbles(v8::Isolate* isolate, v8::Local<v8::Context> context,
     return false;
 }
 
-// Internal "propagation stopped" flag, stored as a V8 Private on the event so it
-// is invisible to normal property access (not part of the public Event face).
+// Internal "propagation stopped" / "immediate propagation stopped" flags,
+// stored as V8 Privates on the event so they are invisible to normal property
+// access (not part of the public Event face).
 v8::Local<v8::Private> event_stopped_key(v8::Isolate* isolate) {
     return v8::Private::ForApi(
         isolate, v8::String::NewFromUtf8Literal(isolate, "iv8::event-stopped"));
 }
+v8::Local<v8::Private> event_immediate_stopped_key(v8::Isolate* isolate) {
+    return v8::Private::ForApi(
+        isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8::event-immediate-stopped"));
+}
 void reset_event_stopped(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          v8::Local<v8::Object> event) {
     (void)event->SetPrivate(context, event_stopped_key(isolate),
+                            v8::False(isolate));
+    (void)event->SetPrivate(context, event_immediate_stopped_key(isolate),
                             v8::False(isolate));
 }
 bool event_is_stopped(v8::Isolate* isolate, v8::Local<v8::Context> context,
@@ -1166,13 +1174,63 @@ bool event_is_stopped(v8::Isolate* isolate, v8::Local<v8::Context> context,
     }
     return false;
 }
+bool event_is_immediately_stopped(v8::Isolate* isolate,
+                                  v8::Local<v8::Context> context,
+                                  v8::Local<v8::Object> event) {
+    v8::Local<v8::Value> value;
+    if (event->GetPrivate(context, event_immediate_stopped_key(isolate))
+            .ToLocal(&value)) {
+        return value->BooleanValue(isolate);
+    }
+    return false;
+}
 // event.stopPropagation(): set the private flag on the receiver event. Stops
-// propagation to LATER targets only (no stopImmediatePropagation).
+// propagation to LATER targets only; remaining listeners on the current target
+// still run.
 void stop_propagation_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     (void)info.This()->SetPrivate(context, event_stopped_key(isolate),
                                   v8::True(isolate));
+}
+// event.stopImmediatePropagation(): stop later listeners on this target and all
+// later targets. Setting the ordinary stop flag as well keeps the existing
+// bubbling checks correct without touching every call site.
+void stop_immediate_propagation_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    (void)info.This()->SetPrivate(context, event_stopped_key(isolate),
+                                  v8::True(isolate));
+    (void)info.This()->SetPrivate(context, event_immediate_stopped_key(isolate),
+                                  v8::True(isolate));
+}
+// event.preventDefault(): no-op unless the event is cancelable; otherwise mark
+// defaultPrevented (an ordinary own field, visible to scripts and to the
+// dispatchEvent return value).
+void prevent_default_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::Value> cancelable;
+    if (!info.This()
+             ->Get(context, v8_string(isolate, "cancelable"))
+             .ToLocal(&cancelable) ||
+        !cancelable->BooleanValue(isolate)) {
+        return;
+    }
+    (void)info.This()->Set(context, v8_string(isolate, "defaultPrevented"),
+                           v8::True(isolate));
+}
+bool event_default_prevented(v8::Isolate* isolate,
+                             v8::Local<v8::Context> context,
+                             v8::Local<v8::Object> event) {
+    v8::Local<v8::Value> value;
+    if (event->Get(context, v8_string(isolate, "defaultPrevented"))
+            .ToLocal(&value)) {
+        return value->BooleanValue(isolate);
+    }
+    return false;
 }
 
 // --- M3-3 minimal event model ------------------------------------------------
@@ -1228,12 +1286,15 @@ public:
             return true;
         }
         if (name == "dispatchEvent") {
-            // A non-object event dispatches to nothing (returns true).
+            // A non-object event dispatches to nothing (returns true). A
+            // cancelable event that called preventDefault returns false.
+            bool canceled = false;
             if (args.Length() >= 1 && args[0]->IsObject()) {
-                dispatch_event(isolate, context, args[0].As<v8::Object>(),
-                               args.This());
+                v8::Local<v8::Object> event = args[0].As<v8::Object>();
+                dispatch_event(isolate, context, event, args.This());
+                canceled = event_default_prevented(isolate, context, event);
             }
-            out = v8::Boolean::New(isolate, true);
+            out = v8::Boolean::New(isolate, !canceled);
             return true;
         }
         return false;
@@ -1289,6 +1350,9 @@ public:
             (void)fn->Call(context, receiver, 1, &event_arg);
             if (try_catch.HasCaught()) {
                 try_catch.Reset();  // one listener's error never stops the rest
+            }
+            if (event_is_immediately_stopped(isolate, context, event)) {
+                break;  // stopImmediatePropagation: skip later same-target listeners
             }
         }
     }
@@ -1440,6 +1504,14 @@ struct FileReaderState {
     bool alive = true;
 };
 
+// M11-10: backing for one `element.classList` object. Bindings are owned by the
+// generation's DocumentHost; the returned classList is a fresh plain object per
+// access (the runtime's usual no-identity-guarantee model).
+struct ClassListBinding {
+    DocumentHost* document = nullptr;
+    DomNode* node = nullptr;
+};
+
 // M2-6/M2-7 element host object. Read-only, minimal node/element surface:
 // tagName / nodeName / nodeType / id / className / textContent + parentNode /
 // childNodes / children + getAttribute / hasAttribute. No mutation, no full
@@ -1466,7 +1538,9 @@ public:
             "nextElementSibling",
             // M4-B-1 structural navigation (element-only tree).
             "parentElement", "firstElementChild", "lastElementChild",
-            "childElementCount"};
+            "childElementCount",
+            // M11-10 classList (fresh plain object per access).
+            "classList"};
         // M5-1: `elements` is exposed only on <form> (so non-form elements have no
         // `.elements` property at all). M7-3..7: `method` / `action` / `enctype` /
         // `target` (string) + `noValidate` (bool) — all read-write.
@@ -1526,7 +1600,9 @@ public:
             // M4-B-3 single-node selector match.
             "matches",
             // M4-B-4 nearest-ancestor selector match.
-            "closest"};
+            "closest",
+            // M11-10 boolean attribute toggle.
+            "toggleAttribute"};
         // M6-1: reset() is exposed only on <form>; M7-1: submit(); M7-2: requestSubmit().
         if (node_->tag == "form") {
             names.push_back("reset");
@@ -1986,6 +2062,16 @@ public:
         return raw;
     }
 
+    // M11-10: own a classList binding for this generation.
+    ClassListBinding* create_class_list_binding(DomNode* node) {
+        auto binding = std::make_unique<ClassListBinding>();
+        binding->document = this;
+        binding->node = node;
+        ClassListBinding* raw = binding.get();
+        class_list_bindings_.push_back(std::move(binding));
+        return raw;
+    }
+
     // M4-A-7: dispatch `event` from an element and bubble it along the CURRENT
     // tree. `node` is the element's backing node, `element_host` its host (whose
     // listeners fire first), `receiver` its JS object (the fixed event.target).
@@ -2140,6 +2226,8 @@ private:
     // slice(). Both are released in release_v8_handles().
     std::vector<std::unique_ptr<FileReaderState>> file_readers_;
     v8::Global<v8::Function> blob_constructor_;
+    // M11-10: classList bindings owned for the generation.
+    std::vector<std::unique_ptr<ClassListBinding>> class_list_bindings_;
     // M4-A-7: window's event target (final bubbling hop). Observed, not owned;
     // set at install time. Null before install / in the both-modes shell.
     EventTargetHost* window_target_ = nullptr;
@@ -2597,6 +2685,319 @@ void mo_take_records(const v8::FunctionCallbackInfo<v8::Value>& info) {
             .As<v8::Value>());
 }
 
+// --- M11-10 classList / toggleAttribute -------------------------------------
+// A classList object is a fresh plain object per access; its methods and
+// length/value accessors carry an External to a generation-owned binding.
+
+constexpr v8::ExternalPointerTypeTag kClassListTag =
+    v8::kExternalPointerTypeTagDefault;
+
+ClassListBinding* class_list_binding_from(v8::Local<v8::Value> data) {
+    if (!data->IsExternal()) {
+        return nullptr;
+    }
+    return static_cast<ClassListBinding*>(
+        data.As<v8::External>()->Value(kClassListTag));
+}
+
+void throw_class_list_error(v8::Isolate* isolate, const char* message) {
+    isolate->ThrowException(v8::Exception::TypeError(
+        v8::String::NewFromUtf8(isolate, message).ToLocalChecked()));
+}
+
+bool class_list_token(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                      v8::Local<v8::Value> value, std::string* out) {
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return false;
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    *out = (*utf8 != nullptr)
+               ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+               : std::string();
+    if (out->empty()) {
+        throw_class_list_error(isolate, "classList token must not be empty");
+        return false;
+    }
+    for (char c : *out) {
+        if (std::isspace(static_cast<unsigned char>(c))) {
+            throw_class_list_error(
+                isolate, "classList token must not contain whitespace");
+            return false;
+        }
+    }
+    return true;
+}
+
+void class_list_commit(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                       ClassListBinding* binding, const std::string& old_name,
+                       bool old_has_class) {
+    DomNode* node = binding->node;
+    std::string joined;
+    for (std::size_t i = 0; i < node->classes.size(); i++) {
+        if (i > 0) {
+            joined += ' ';
+        }
+        joined += node->classes[i];
+    }
+    node->class_name = joined;
+    node->has_class = !node->classes.empty();
+    if (node->class_name != old_name || node->has_class != old_has_class) {
+        binding->document->queue_attribute(isolate, context, node, "class",
+                                           old_has_class, old_name);
+    }
+}
+
+void class_list_contains(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        return;
+    }
+    std::string token;
+    if (!class_list_token(isolate, context, info[0], &token)) {
+        return;
+    }
+    info.GetReturnValue().Set(v8::Boolean::New(
+        isolate,
+        std::find(binding->node->classes.begin(), binding->node->classes.end(),
+                  token) != binding->node->classes.end()));
+}
+
+void class_list_add(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        return;
+    }
+    const std::string old_name = binding->node->class_name;
+    const bool old_has_class = binding->node->has_class;
+    std::vector<std::string> tokens;
+    tokens.reserve(static_cast<std::size_t>(info.Length()));
+    for (int i = 0; i < info.Length(); i++) {
+        std::string token;
+        if (!class_list_token(isolate, context, info[i], &token)) {
+            return;  // validate every token before mutating the node
+        }
+        tokens.push_back(std::move(token));
+    }
+    bool changed = false;
+    std::vector<std::string>& classes = binding->node->classes;
+    for (const std::string& token : tokens) {
+        if (std::find(classes.begin(), classes.end(), token) == classes.end()) {
+            classes.push_back(token);
+            changed = true;
+        }
+    }
+    if (changed) {
+        class_list_commit(isolate, context, binding, old_name, old_has_class);
+    }
+}
+
+void class_list_remove(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        return;
+    }
+    const std::string old_name = binding->node->class_name;
+    const bool old_has_class = binding->node->has_class;
+    std::vector<std::string> tokens;
+    tokens.reserve(static_cast<std::size_t>(info.Length()));
+    for (int i = 0; i < info.Length(); i++) {
+        std::string token;
+        if (!class_list_token(isolate, context, info[i], &token)) {
+            return;  // validate every token before mutating the node
+        }
+        tokens.push_back(std::move(token));
+    }
+    bool changed = false;
+    std::vector<std::string>& classes = binding->node->classes;
+    for (const std::string& token : tokens) {
+        const auto it = std::find(classes.begin(), classes.end(), token);
+        if (it != classes.end()) {
+            classes.erase(it);
+            changed = true;
+        }
+    }
+    if (changed) {
+        class_list_commit(isolate, context, binding, old_name, old_has_class);
+    }
+}
+
+void class_list_toggle(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        return;
+    }
+    std::string token;
+    if (!class_list_token(isolate, context, info[0], &token)) {
+        return;
+    }
+    std::vector<std::string>& classes = binding->node->classes;
+    const auto it = std::find(classes.begin(), classes.end(), token);
+    const bool present = it != classes.end();
+    const bool force_specified =
+        info.Length() > 1 && !info[1]->IsUndefined();
+    const bool force = force_specified ? info[1]->BooleanValue(isolate) : false;
+    const bool should_exist = force_specified ? force : !present;
+    if (should_exist != present) {
+        const std::string old_name = binding->node->class_name;
+        const bool old_has_class = binding->node->has_class;
+        if (should_exist) {
+            classes.push_back(token);
+        } else {
+            classes.erase(it);
+        }
+        class_list_commit(isolate, context, binding, old_name, old_has_class);
+    }
+    info.GetReturnValue().Set(v8::Boolean::New(isolate, should_exist));
+}
+
+void class_list_replace(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        return;
+    }
+    std::string old_token;
+    std::string new_token;
+    if (!class_list_token(isolate, context, info[0], &old_token) ||
+        !class_list_token(isolate, context, info[1], &new_token)) {
+        return;
+    }
+    std::vector<std::string>& classes = binding->node->classes;
+    const auto old_it = std::find(classes.begin(), classes.end(), old_token);
+    if (old_it == classes.end()) {
+        info.GetReturnValue().Set(v8::False(isolate));
+        return;
+    }
+    if (old_token != new_token) {
+        const std::string old_name = binding->node->class_name;
+        const bool old_has_class = binding->node->has_class;
+        const auto new_it = std::find(classes.begin(), classes.end(), new_token);
+        if (new_it == classes.end()) {
+            *old_it = new_token;
+        } else {
+            classes.erase(old_it);  // the replacement already exists: dedupe
+        }
+        class_list_commit(isolate, context, binding, old_name, old_has_class);
+    }
+    info.GetReturnValue().Set(v8::True(isolate));
+}
+
+void class_list_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        return;
+    }
+    v8::Local<v8::Uint32> index_value;
+    if (!info[0]->ToUint32(context).ToLocal(&index_value)) {
+        return;
+    }
+    const std::uint32_t index = index_value->Value();
+    if (index >= binding->node->classes.size()) {
+        info.GetReturnValue().Set(v8::Null(isolate));
+        return;
+    }
+    info.GetReturnValue().Set(
+        v8_string(isolate, binding->node->classes[index]));
+}
+
+void class_list_length_getter(v8::Local<v8::Name> property,
+                              const v8::PropertyCallbackInfo<v8::Value>& info) {
+    (void)property;
+    v8::Isolate* isolate = info.GetIsolate();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        return;
+    }
+    info.GetReturnValue().Set(v8::Integer::NewFromUnsigned(
+        isolate, static_cast<unsigned>(binding->node->classes.size())));
+}
+
+void class_list_value_getter(v8::Local<v8::Name> property,
+                             const v8::PropertyCallbackInfo<v8::Value>& info) {
+    (void)property;
+    v8::Isolate* isolate = info.GetIsolate();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        return;
+    }
+    info.GetReturnValue().Set(v8_string(isolate, binding->node->class_name));
+}
+
+void class_list_value_setter(v8::Local<v8::Name> property,
+                             v8::Local<v8::Value> value,
+                             const v8::PropertyCallbackInfo<v8::Boolean>& info) {
+    (void)property;
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    ClassListBinding* binding = class_list_binding_from(info.Data());
+    if (binding == nullptr) {
+        info.GetReturnValue().Set(false);
+        return;
+    }
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        info.GetReturnValue().Set(false);
+        return;
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    const std::string text =
+        (*utf8 != nullptr)
+            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+            : std::string();
+    DomNode* node = binding->node;
+    const std::string old_name = node->class_name;
+    const bool old_has_class = node->has_class;
+    node->class_name = text;
+    node->has_class = true;
+    node->classes = split_class_tokens(text);
+    if (node->class_name != old_name || node->has_class != old_has_class) {
+        binding->document->queue_attribute(isolate, context, node, "class",
+                                           old_has_class, old_name);
+    }
+    info.GetReturnValue().Set(true);
+}
+
+v8::Local<v8::Value> make_class_list(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     DocumentHost* document, DomNode* node) {
+    ClassListBinding* binding = document->create_class_list_binding(node);
+    v8::Local<v8::Value> data =
+        v8::External::New(isolate, binding, kClassListTag);
+    v8::Local<v8::Object> list = v8::Object::New(isolate);
+    const auto add_method = [&](const char* name, v8::FunctionCallback callback) {
+        v8::Local<v8::Function> fn =
+            v8::FunctionTemplate::New(isolate, callback, data)
+                ->GetFunction(context)
+                .ToLocalChecked();
+        (void)list->Set(context, v8_string(isolate, name), fn);
+    };
+    add_method("contains", &class_list_contains);
+    add_method("add", &class_list_add);
+    add_method("remove", &class_list_remove);
+    add_method("toggle", &class_list_toggle);
+    add_method("replace", &class_list_replace);
+    add_method("item", &class_list_item);
+    (void)list->SetNativeDataProperty(
+        context, v8::String::NewFromUtf8Literal(isolate, "length"),
+        &class_list_length_getter, nullptr, data, v8::ReadOnly);
+    (void)list->SetNativeDataProperty(
+        context, v8::String::NewFromUtf8Literal(isolate, "value"),
+        &class_list_value_getter, &class_list_value_setter, data, v8::None);
+    return list;
+}
+
 v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
                                                v8::Local<v8::Context> context,
                                                const std::string& name) {
@@ -2608,6 +3009,9 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     }
     if (name == "id") return v8_string(isolate, node_->id);
     if (name == "className") return v8_string(isolate, node_->class_name);
+    if (name == "classList") {
+        return make_class_list(isolate, context, document_, node_);
+    }
     if (name == "textContent") return v8_string(isolate, node_->text_content);
     if (name == "parentNode") {
         return document_->wrap_element(isolate, context, node_->parent);
@@ -3051,6 +3455,60 @@ v8::Local<v8::Value> ElementHost::call_method(
         }
         return v8::Undefined(isolate);
     }
+    // M11-10 toggleAttribute(name, force?): add an empty attribute or remove it;
+    // an explicit boolean force chooses the outcome. Queues an attribute record
+    // only when presence actually changes. id/class keep their dedicated fields.
+    if (name == "toggleAttribute") {
+        const std::string key = ascii_lower(arg_string(0));
+        bool present = false;
+        std::string old_value;
+        if (key == "id") {
+            present = node_->has_id;
+            old_value = node_->id;
+        } else if (key == "class") {
+            present = node_->has_class;
+            old_value = node_->class_name;
+        } else {
+            const auto it = node_->attributes.find(key);
+            if (it != node_->attributes.end()) {
+                present = true;
+                old_value = it->second;
+            }
+        }
+        const bool force_specified =
+            args.Length() > 1 && !args[1]->IsUndefined();
+        const bool force =
+            force_specified ? args[1]->BooleanValue(isolate) : false;
+        const bool should_exist = force_specified ? force : !present;
+        if (should_exist != present) {
+            if (should_exist) {
+                if (key == "id") {
+                    node_->id.clear();
+                    node_->has_id = true;
+                } else if (key == "class") {
+                    node_->class_name.clear();
+                    node_->has_class = true;
+                    node_->classes.clear();
+                } else {
+                    node_->attributes[key] = std::string();
+                }
+            } else {
+                if (key == "id") {
+                    node_->id.clear();
+                    node_->has_id = false;
+                } else if (key == "class") {
+                    node_->class_name.clear();
+                    node_->has_class = false;
+                    node_->classes.clear();
+                } else {
+                    node_->attributes.erase(key);
+                }
+            }
+            document_->queue_attribute(isolate, context, node_, key, present,
+                                       old_value);
+        }
+        return v8::Boolean::New(isolate, should_exist);
+    }
     // M4-A-3 minimal tree editing. child/ref must be element host objects (ref may
     // be null for insertBefore). Errors throw a JS TypeError (via the eval
     // TryCatch this surfaces as iv8.JSError name "TypeError"). Mutations touch the
@@ -3453,13 +3911,14 @@ void install_global_function(v8::Isolate* isolate, v8::Local<v8::Context> contex
     (void)global->Set(context, v8_string(isolate, name), fn);
 }
 
-// M3-3 / M4-A-7 minimal Event constructor. `new Event(type, init?)` yields a plain
-// JS object with `type` (string, coerced from the first argument), `bubbles`
-// (boolean, from `init.bubbles`: truthy -> true; a missing / non-object init ->
-// false), `target` / `currentTarget` (null until a dispatch sets them), and a
-// `stopPropagation()` method. Intended to be used with `new`. Still no cancelable /
-// defaultPrevented / eventPhase / composed / timeStamp fields and no
-// preventDefault / stopImmediatePropagation / CustomEvent.
+// M3-3 / M4-A-7 / M11-9 minimal Event constructor. `new Event(type, init?)`
+// yields a plain JS object with `type` (string, coerced from the first
+// argument), `bubbles` / `cancelable` (from init: truthy -> true; a missing /
+// non-object init -> false), `defaultPrevented` (false), `target` /
+// `currentTarget` (null until a dispatch sets them), and the propagation /
+// cancellation methods `stopPropagation`, `stopImmediatePropagation`, and
+// `preventDefault`. Still no capture phase, eventPhase / composed / timeStamp,
+// or listener options.
 void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
@@ -3474,8 +3933,9 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
             }
         }
     }
-    // M4-A-7: bubbles from init.bubbles (only when init is an object).
+    // M4-A-7 / M11-9: bubbles / cancelable from init (only when it is an object).
     bool bubbles = false;
+    bool cancelable = false;
     if (info.Length() > 1 && info[1]->IsObject()) {
         v8::Local<v8::Value> value;
         if (info[1].As<v8::Object>()
@@ -3483,21 +3943,40 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 .ToLocal(&value)) {
             bubbles = value->BooleanValue(isolate);
         }
+        if (info[1].As<v8::Object>()
+                ->Get(context, v8_string(isolate, "cancelable"))
+                .ToLocal(&value)) {
+            cancelable = value->BooleanValue(isolate);
+        }
     }
     (void)self->Set(context, v8_string(isolate, "type"), v8_string(isolate, type));
     (void)self->Set(context, v8_string(isolate, "bubbles"),
                     v8::Boolean::New(isolate, bubbles));
+    (void)self->Set(context, v8_string(isolate, "cancelable"),
+                    v8::Boolean::New(isolate, cancelable));
+    (void)self->Set(context, v8_string(isolate, "defaultPrevented"),
+                    v8::False(isolate));
     (void)self->Set(context, v8_string(isolate, "target"), v8::Null(isolate));
     (void)self->Set(context, v8_string(isolate, "currentTarget"),
                     v8::Null(isolate));
-    // M4-A-7: stopPropagation() — marks the event so bubbling skips LATER targets
-    // (the current target still finishes its own listeners). No-arg, returns
-    // undefined; no stopImmediatePropagation.
+    // Propagation / cancellation methods.
     v8::Local<v8::Function> stop_fn =
         v8::FunctionTemplate::New(isolate, &stop_propagation_callback)
             ->GetFunction(context)
             .ToLocalChecked();
     (void)self->Set(context, v8_string(isolate, "stopPropagation"), stop_fn);
+    v8::Local<v8::Function> stop_immediate_fn =
+        v8::FunctionTemplate::New(isolate, &stop_immediate_propagation_callback)
+            ->GetFunction(context)
+            .ToLocalChecked();
+    (void)self->Set(context, v8_string(isolate, "stopImmediatePropagation"),
+                    stop_immediate_fn);
+    v8::Local<v8::Function> prevent_default_fn =
+        v8::FunctionTemplate::New(isolate, &prevent_default_callback)
+            ->GetFunction(context)
+            .ToLocalChecked();
+    (void)self->Set(context, v8_string(isolate, "preventDefault"),
+                    prevent_default_fn);
 }
 
 // --- M11-6 event subclasses --------------------------------------------------

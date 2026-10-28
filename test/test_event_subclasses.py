@@ -323,15 +323,16 @@ def test_stop_propagation_is_inherited():
 # --- non-goals / non-throwing edges ------------------------------------------
 
 @on_only
-def test_no_capture_or_cancellation_surface():
+def test_no_capture_phase_surface():
     with iv8.Page() as page:
         _setup(page)
-        for member in ("preventDefault", "stopImmediatePropagation",
-                       "eventPhase", "cancelable", "defaultPrevented",
-                       "composed", "timeStamp"):
+        for member in ("eventPhase", "composed", "timeStamp"):
             assert page.eval(
                 f"typeof new CustomEvent('x').{member}") == "undefined"
         assert page.eval("typeof new CustomEvent('x').detail") != "undefined"
+        # M11-9 adds cancellation; the inherited methods exist here too.
+        assert page.eval(
+            "typeof new CustomEvent('x').preventDefault") == "function"
 
 
 @on_only

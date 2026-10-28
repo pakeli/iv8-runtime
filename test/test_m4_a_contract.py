@@ -116,12 +116,12 @@ def test_js_element_surface_not_exceeded():
 def test_js_event_surface_not_exceeded():
     with iv8.Page() as page:
         page.load(html="<html><body></body></html>", base_url=BASE)
-        # bubbles + stopPropagation are the only additions over M3-3.
+        # M4-A-7 added bubbles + stopPropagation; M11-6 adds event subclasses and
+        # M11-9 adds cancellation. Capture-phase/derived fields stay absent.
         assert page.eval("typeof new Event('e').bubbles") == "boolean"
         assert page.eval("typeof new Event('e').stopPropagation") == "function"
-        assert page.eval("typeof CustomEvent") == "undefined"
-        for member in ("preventDefault", "stopImmediatePropagation", "cancelable",
-                       "defaultPrevented", "eventPhase", "composed", "timeStamp"):
+        assert page.eval("typeof CustomEvent") == "function"
+        for member in ("eventPhase", "composed", "timeStamp"):
             assert page.eval(f"typeof new Event('e').{member}") == "undefined"
 
 
