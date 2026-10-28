@@ -1953,6 +1953,13 @@ private:
 
 // --- M11-5 MutationObserver native registry / delivery -----------------------
 
+// Tag for the Externals carrying MutationObserverState* / DocumentHost*. V8 15.0
+// requires an ExternalPointerTypeTag on External::New / External::Value; the
+// default suffices and MUST match between New and Value call sites (same rule as
+// kWindowEventsTag below, see 52ded6e).
+constexpr v8::ExternalPointerTypeTag kMutationObserverTag =
+    v8::kExternalPointerTypeTagDefault;
+
 MutationObserverState* DocumentHost::create_mutation_observer(
     v8::Isolate* isolate, v8::Local<v8::Function> callback,
     v8::Local<v8::Object> self) {
@@ -1974,7 +1981,8 @@ void DocumentHost::schedule_mutation_delivery(
     state->delivery_queued = true;
     v8::Local<v8::Function> delivery;
     if (!v8::Function::New(context, &mutation_observer_delivery,
-                           v8::External::New(isolate, state))
+                           v8::External::New(isolate, state,
+                                             kMutationObserverTag))
              .ToLocal(&delivery)) {
         state->delivery_queued = false;
         return;
@@ -2138,7 +2146,7 @@ void mutation_observer_delivery(
         return;
     }
     auto* state = static_cast<MutationObserverState*>(
-        info.Data().As<v8::External>()->Value());
+        info.Data().As<v8::External>()->Value(kMutationObserverTag));
     if (state == nullptr || !state->alive || state->owner == nullptr) {
         return;
     }
@@ -2191,7 +2199,7 @@ MutationObserverState* mo_state_from_this(
         return nullptr;
     }
     return static_cast<MutationObserverState*>(
-        value.As<v8::External>()->Value());
+        value.As<v8::External>()->Value(kMutationObserverTag));
 }
 
 void mutation_observer_constructor(
@@ -2206,7 +2214,7 @@ void mutation_observer_constructor(
     DocumentHost* document = nullptr;
     if (info.Data()->IsExternal()) {
         document = static_cast<DocumentHost*>(
-            info.Data().As<v8::External>()->Value());
+            info.Data().As<v8::External>()->Value(kMutationObserverTag));
     }
     if (document == nullptr) {
         throw_mo_type_error(isolate, "MutationObserver: invalid constructor");
@@ -2220,8 +2228,9 @@ void mutation_observer_constructor(
     v8::Local<v8::Object> self = info.This();
     MutationObserverState* state = document->create_mutation_observer(
         isolate, info[0].As<v8::Function>(), self);
-    (void)self->SetPrivate(context, mo_private_key(isolate),
-                           v8::External::New(isolate, state));
+    (void)self->SetPrivate(
+        context, mo_private_key(isolate),
+        v8::External::New(isolate, state, kMutationObserverTag));
 }
 
 void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
@@ -4832,7 +4841,8 @@ void PageState::install_page(const std::string& base_url,
                 v8::Local<v8::FunctionTemplate> mo_tpl =
                     v8::FunctionTemplate::New(
                         isolate, &mutation_observer_constructor,
-                        v8::External::New(isolate, document_host_));
+                        v8::External::New(isolate, document_host_,
+                                          kMutationObserverTag));
                 mo_tpl->SetClassName(v8::String::NewFromUtf8Literal(
                     isolate, "MutationObserver"));
                 v8::Local<v8::ObjectTemplate> mo_proto =
