@@ -182,11 +182,27 @@ run was green. The affected historical form guards were refreshed in the same
 change. See `docs/m11_18_form_control_reflection.md` and
 `docs/m11_18_report.md`.
 
+### 16. M11-19..M11-23 verified as one five-slice DOM/form batch
+
+Decided/verified `2026-10-28`.
+
+The batch adds multi-token class queries and element-level
+`getElementsByClassName`; `document.getElementsByName`; extended form reflection;
+select `length` / `item` / `namedItem`; and deterministic document metadata
+including `hasFocus()`. All five are JS-side only and add no architecture
+surface. Boundary: `docs/m11_19_23_dom_form_batch.md`.
+
+Verified on real V8 at commit `999c851`: Linux `40704330688`, Windows
+`40704362549`, each wheel lane `1412 passed, 2 skipped`. The first attempt
+(`9f3e459`) failed one historical element-query guard; refreshing it in
+`999c851` was the only change needed. The full suite collects 1414 items
+(1388 previous + 26 batch tests). See `docs/m11_19_23_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-19`?
+### A. Which concrete compatibility slice becomes `M11-24`?
 
 Settled and implemented so far:
 
@@ -258,8 +274,17 @@ direction alone.
   `option.label` / `index`. Boundary:
   `docs/m11_18_form_control_reflection.md`. Verified on real V8 (Linux
   `40698705892`, Windows `40698728631`, commit `08350ce`, each wheel lane
-  `1386 passed, 2 skipped`); see `docs/m11_18_report.md`. The next slice
-  (`M11-19`) should be chosen from the backlog or the gap inventory.
+  `1386 passed, 2 skipped`); see `docs/m11_18_report.md`.
+
+- `M11-19` through `M11-23` — **DOM/form completeness batch** — selected
+  `2026-10-28` from the gap inventory: multi-token class queries and
+  element-level `getElementsByClassName`, `document.getElementsByName`,
+  extended form reflection, select `length` / `item` / `namedItem`, and
+  deterministic document metadata. Boundary:
+  `docs/m11_19_23_dom_form_batch.md`. Verified on real V8 (Linux
+  `40704330688`, Windows `40704362549`, commit `999c851`, each wheel lane
+  `1412 passed, 2 skipped`); see `docs/m11_19_23_report.md`. The next slice
+  (`M11-24`) should be chosen from the backlog or the gap inventory.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

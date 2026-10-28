@@ -393,6 +393,46 @@ affected form frozen-surface guards were refreshed in the same change. Report:
 Choose `M11-19` from `docs/m11_compatibility_backlog.md` or another
 gap-inventory slice with an explicit boundary.
 
+## Priority 3k: M11-19..M11-23 DOM/form completeness batch — DONE (`2026-10-28`)
+
+### What landed
+
+- `M11-19`: multi-token `getElementsByClassName` at document and element level;
+  the element form queries descendants only.
+- `M11-20`: `document.getElementsByName(name)`.
+- `M11-21`: extended form reflection — input `name` / `required`, textarea
+  `name` / `required` / `disabled` / `readOnly` / `placeholder`, select
+  `name` / `required` / `disabled`, button `name`.
+- `M11-22`: select `length` (read-only), `item(index)`, `namedItem(name)`.
+- `M11-23`: document metadata (`characterSet` / `contentType` / `compatMode` /
+  `referrer` / `domain` / `visibilityState` / `hidden` / `activeElement`) and
+  `hasFocus()`.
+
+Boundary: `docs/m11_19_23_dom_form_batch.md`. Tests:
+`test/test_m11_19_class_query.py`, `test/test_m11_20_getelementsbyname.py`,
+`test/test_m11_21_form_reflection_extension.py`,
+`test/test_m11_22_select_convenience.py`,
+`test/test_m11_23_document_metadata.py` (26 items). Full suite collects 1414
+items; each wheel lane: **`1412 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `999c851` (branch `m11-19-23-dom-form-batch`):
+
+- Linux `release-linux` run `40704330688` — cp311–cp314, each
+  `1412 passed, 2 skipped`;
+- Windows `release-windows` run `40704362549` — Python 3.11–3.14, each
+  `1412 passed, 2 skipped`.
+
+All five new test files ran in every lane. The first attempt (`9f3e459`)
+failed one stale `test_element_queries.py` guard; `999c851` refreshed it.
+Report: `docs/m11_19_23_report.md`.
+
+### Next
+
+Choose `M11-24` from `docs/m11_compatibility_backlog.md` or another
+gap-inventory slice with an explicit boundary.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal

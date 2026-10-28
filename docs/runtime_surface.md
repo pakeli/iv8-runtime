@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-28` · Latest verified milestone: **M11-18**
+Last reviewed: `2026-10-28` · Latest verified milestones: **M11-19..M11-23**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -197,13 +197,24 @@ Installed per generation by `install_page`:
 - **URL.searchParams** (M11-15) — a `URLSearchParams` snapshot of the URL's
   `search`; mutating the snapshot does not update the URL. URL fields remain
   read-only;
-- **select extension** (M11-16) — `select.options` (plain array),
-  writable `selectedIndex` (single-select; `-1` clears), and read-only
-  `multiple` / `size` reflection. No `select.length` or multi-select behavior;
-- **form-control attribute reflection** (M11-18) — input `type` / `disabled` /
-  `readOnly` / `placeholder`, button `type` / `disabled`, `form.encoding`
-  (alias of the runtime `enctype` slot), and `option.label` / read-only
-  `index`. Reflected writes queue MutationObserver attribute records;
+- **select extension** (M11-16, M11-22) — `select.options` (plain array),
+  writable `selectedIndex` (single-select; `-1` clears), read-only
+  `multiple` / `size`, read-only `length`, and `item(index)` / `namedItem(name)`
+  lookups. No writable `length`, option-collection methods, or multi-select;
+- **form-control attribute reflection** (M11-18, M11-21) — input `type` /
+  `disabled` / `readOnly` / `placeholder` / `name` / `required`, button
+  `type` / `disabled` / `name`, textarea `name` / `required` / `disabled` /
+  `readOnly` / `placeholder`, select `name` / `required` / `disabled`,
+  `form.encoding` (alias of the runtime `enctype` slot), and `option.label` /
+  read-only `index`. Reflected writes queue MutationObserver attribute records;
+- **query extensions** (M11-19, M11-20) — multi-token
+  `getElementsByClassName` at document and element level (the element form is
+  descendants-only), plus `document.getElementsByName`. Both return live plain
+  arrays in document order;
+- **document metadata** (M11-23) — read-only `characterSet` / `contentType` /
+  `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
+  `activeElement`, plus `hasFocus()` (always `false`). No focus, visibility, or
+  navigation machinery;
 - **animation frames** — `requestAnimationFrame` / `cancelAnimationFrame` (M11-2,
   manual-pump only via `Page.run_animation_frame()`). A separate FIFO queue from the
   timers, with its own handle space; the callback receives no timestamp argument, and
@@ -218,9 +229,11 @@ Installed per generation by `install_page`:
   `removeEventListener` / `dispatchEvent` on `window`, `document`, and elements;
 - **`document`** — `URL` / `title` / `readyState` / `documentElement` / `head` /
   `body` / `currentScript` / `scripts` / `children` / `forms` / `images` / `links` /
-  `anchors` / `embeds` / `applets`, and `getElementById` / `querySelector` /
-  `querySelectorAll` / `getElementsByTagName` / `getElementsByClassName` /
-  `createElement`;
+  `anchors` / `embeds` / `applets`, the M11-23 metadata (`characterSet` /
+  `contentType` / `compatMode` / `referrer` / `domain` / `visibilityState` /
+  `hidden` / `activeElement` / `hasFocus()`), and `getElementById` /
+  `querySelector` / `querySelectorAll` / `getElementsByTagName` /
+  `getElementsByClassName` / `getElementsByName` / `createElement`;
 - **elements** — the minimal node surface (`tagName` / `nodeName` / `nodeType` /
   `id` / `className` / `textContent` / `parentNode` / `childNodes` / `children`),
   connectivity and structural navigation (`ownerDocument` / `isConnected` /
@@ -236,10 +249,13 @@ Installed per generation by `install_page`:
 - **form surface**, exposed only on the relevant tags — `<form>`: `elements` /
   `reset()` / `submit()` / `requestSubmit()` / `method` / `action` / `enctype` /
   `encoding` (M11-18 alias) / `target` / `noValidate`; controls: `form`,
-  `value`, `checked`, `defaultValue`, `defaultChecked`; `<input>`:
-  `type` / `disabled` / `readOnly` / `placeholder` (M11-18); `<button>`:
-  `type` / `disabled` (M11-18); `<select>`: `options` / `selectedIndex` /
-  `multiple` / `size` (M11-16); `<option>`: `value` / `selected` / `text` /
+  `value`, `checked`, `defaultValue`, `defaultChecked`; `<input>`: `type` /
+  `disabled` / `readOnly` / `placeholder` / `name` / `required`
+  (M11-18/M11-21); `<button>`: `type` / `disabled` / `name` (M11-18/M11-21);
+  `<textarea>`: `name` / `required` / `disabled` / `readOnly` / `placeholder`
+  (M11-21); `<select>`: `options` / `length` / `selectedIndex` / `multiple` /
+  `size` / `item` / `namedItem` / `name` / `required` / `disabled`
+  (M11-16/M11-21/M11-22); `<option>`: `value` / `selected` / `text` /
   `defaultSelected` / `label` / `index` (M11-18);
 - **web-platform globals (M8)** — `TextEncoder` / `TextDecoder` (UTF-8 only),
   `URL` (with the non-live `searchParams` snapshot since M11-15),
@@ -251,9 +267,10 @@ Deliberate shape of this DOM: it is **element-only** (no text / comment / fragme
 nodes), collections are plain JS `Array`s (not `HTMLCollection` / `NodeList`, no
 `item()` / `namedItem()`, no identity guarantee), selectors support exactly one of
 `#id` / `.class` / `tagname`, there are no specialized `HTML*Element` classes or
-attribute-reflection properties, and a `<script>` inserted into the tree stays
-**inert**. `form.submit()` / `requestSubmit()` are callable no-ops. Consult the
-milestone summary before assuming any wider behavior.
+general attribute-reflection properties (only the M11-18/M11-21 form-control
+subset), and a `<script>` inserted into the tree stays **inert**.
+`form.submit()` / `requestSubmit()` are callable no-ops. Consult the milestone
+summary before assuming any wider behavior.
 
 ## 4. Standing exclusions
 
@@ -317,6 +334,11 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-16 | `select.options` / `selectedIndex` / `multiple` / `size` — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
 | M11-17 | nested `Page(environment=...)` + `Page.get_defaults()` — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
 | M11-18 | form-control attribute reflection (`input` / `button` / `form.encoding` / `option.label` / `index`) — verified 2026-10-28 | `docs/m11_18_form_control_reflection.md`, `docs/m11_18_report.md` |
+| M11-19 | multi-token class queries + element-level `getElementsByClassName` — verified 2026-10-28 | `docs/m11_19_23_dom_form_batch.md`, `docs/m11_19_23_report.md` |
+| M11-20 | `document.getElementsByName` — verified 2026-10-28 | `docs/m11_19_23_dom_form_batch.md`, `docs/m11_19_23_report.md` |
+| M11-21 | extended form reflection (`name` / `required`, textarea/select) — verified 2026-10-28 | `docs/m11_19_23_dom_form_batch.md`, `docs/m11_19_23_report.md` |
+| M11-22 | select `length` / `item` / `namedItem` — verified 2026-10-28 | `docs/m11_19_23_dom_form_batch.md`, `docs/m11_19_23_report.md` |
+| M11-23 | document metadata + `hasFocus()` — verified 2026-10-28 | `docs/m11_19_23_dom_form_batch.md`, `docs/m11_19_23_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

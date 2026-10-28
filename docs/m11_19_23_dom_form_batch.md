@@ -72,5 +72,13 @@ visibility events, no cookie or referrer machinery, and no navigation.
 
 ## Verification
 
-All five slices share this batch boundary. Real-V8 Linux + Windows CI will run
-after implementation; the batch report is `docs/m11_19_23_report.md`.
+Verified on real V8 at commit `999c851`:
+
+- Linux `release-linux` run `40704330688` — cp311–cp314, each
+  `1412 passed, 2 skipped`;
+- Windows `release-windows` run `40704362549` — Python 3.11–3.14, each
+  `1412 passed, 2 skipped`.
+
+All five new test files ran in every lane (26 items); the full suite collects
+1414 items. The first attempt (`9f3e459`) failed one stale element-query guard;
+it was refreshed in `999c851`. See `docs/m11_19_23_report.md`.

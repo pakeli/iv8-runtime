@@ -111,7 +111,8 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; implementation is through M11-18
-> (form-control attribute reflection), verified on real V8 (Linux + Windows)
-> on `2026-10-28` and merged to `master` on the fork (`pakeli/iv8-runtime`);
-> upstream sync is out of scope. See `docs/m11_18_report.md`.
+> `HEAD` is not an M1-only repository; implementation is through M11-23
+> (M11-19..M11-23 DOM/form completeness batch), verified on real V8 (Linux +
+> Windows) on `2026-10-28` and merged to `master` on the fork
+> (`pakeli/iv8-runtime`); upstream sync is out of scope. See
+> `docs/m11_19_23_report.md`.

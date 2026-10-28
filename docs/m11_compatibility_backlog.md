@@ -125,9 +125,17 @@ the remaining ranked candidates need separate architecture decisions
 (event-loop facade, networking, `expose()`). Boundary:
 `docs/m11_18_form_control_reflection.md`. Delivered and verified on real V8:
 Linux `40698705892`, Windows `40698728631`, commit `08350ce`, each wheel lane
-`1386 passed, 2 skipped`; report `docs/m11_18_report.md`. The next slice
-(`M11-19`) should be chosen from the remaining ranked candidates or another
-gap-inventory slice with an explicit boundary.
+`1386 passed, 2 skipped`; report `docs/m11_18_report.md`.
+
+`M11-19` through `M11-23` — **DOM/form completeness batch** — were selected
+`2026-10-28` from the gap inventory: multi-token class queries and element-level
+`getElementsByClassName`, `document.getElementsByName`, extended form
+reflection, select `length` / `item` / `namedItem`, and deterministic document
+metadata. Boundary: `docs/m11_19_23_dom_form_batch.md`. Delivered and verified
+on real V8: Linux `40704330688`, Windows `40704362549`, commit `999c851`, each
+wheel lane `1412 passed, 2 skipped`; report `docs/m11_19_23_report.md`. The next
+slice (`M11-24`) should be chosen from the remaining ranked candidates or
+another gap-inventory slice with an explicit boundary.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-28` · Baseline: **M11-18** (form-control attribute
-reflection verified `2026-10-28`)
+Last reviewed: `2026-10-28` · Baseline: **M11-23** (DOM/form completeness batch
+verified `2026-10-28`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-18. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-23. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -119,9 +119,11 @@ M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
 |---|---|
 | Combinators (descendant/child/sibling), attribute selectors, pseudo-classes/elements, selector lists | **absent** — only a single `#id` / `.class` / `tag` is supported |
 | Complex selectors in `matches` / `closest` (currently `false` / `null`) | **absent** |
-| Multi-token `getElementsByClassName` (document-level takes exactly one token) | **absent** |
-| `element.getElementsByClassName` | **absent** |
 | `document.all` | **absent** |
+
+Implemented for contrast: M11-19 added multi-token `getElementsByClassName`
+(document + element, descendants only for the element form); M11-20 added
+`document.getElementsByName`.
 
 ### 2.4 Element surface
 
@@ -170,7 +172,7 @@ cancellation (`cancelable` / `defaultPrevented` / `preventDefault` /
 | Automatic `submit` / `reset` / `input` / `change` events and default submit action | **excluded** |
 | `requestSubmit(submitter)` argument and `event.submitter` | **absent** |
 | `FormData` and real form encoding | **absent** |
-| `select.length`, option collection methods, multi-select behavior | **absent** — minimal single-select only |
+| Writable `select.length`, option collection methods, multi-select behavior | **absent** — minimal single-select only |
 | Radio-group exclusivity; type-specific input behavior | **absent** |
 | Browsing-context resolution of `target`; URL resolution of `action` | **absent** — stored verbatim |
 
@@ -212,11 +214,15 @@ Implemented for contrast: inline and classic external `<script>` execution,
 
 | Missing | Status |
 |---|---|
-| `document.cookie`, `referrer`, `domain`, `characterSet`, `contentType`, `compatMode` | **absent** |
-| `document.visibilityState` / `hidden` / `hasFocus` / `activeElement` | **absent** |
+| `document.cookie` | **excluded** |
 | `document.createRange` / `createTreeWalker` / `createNodeIterator` / `createEvent` | **absent** |
 | `document.all` / `plugins` | **absent** |
 | Browsing contexts, frames, `<iframe>` behavior | **absent** |
+
+Implemented for contrast: M11-23 added read-only `characterSet` / `contentType`
+/ `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
+`activeElement` and `hasFocus()`; M11-22 added read-only `select.length`, plus
+`select.item` / `namedItem`.
 
 ## 3. Cross-cutting architecture boundaries
 
@@ -239,7 +245,8 @@ Blob/File/FileReader, event cancellation, and classList/toggleAttribute;
 M11-11 delivered event capture and listener options; M11-12..M11-17 delivered
 the element attribute/tree/clone/URL.searchParams/select extensions and the
 nested environment + `get_defaults()`; M11-18 delivered form-control attribute
-reflection. Remaining candidates (mapping to
+reflection; M11-19..M11-23 delivered query, form, select, and document-metadata
+completeness. Remaining candidates (mapping to
 `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |

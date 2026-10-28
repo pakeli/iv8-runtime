@@ -900,6 +900,15 @@ M11-18 adds minimal form-control attribute reflection: input ``type`` /
 writes and feed the MutationObserver attribute hooks; there is no new Python
 API. See ``docs/m11_18_form_control_reflection.md``.
 
+The M11-19..M11-23 DOM/form batch adds multi-token class queries and
+element-level ``getElementsByClassName``; ``document.getElementsByName``;
+extended form reflection (``name`` / ``required``, textarea and select
+reflections, ``button.name``); select ``length`` / ``item`` / ``namedItem``;
+and deterministic document metadata (``characterSet`` / ``contentType`` /
+``compatMode`` / ``referrer`` / ``domain`` / ``visibilityState`` / ``hidden`` /
+``activeElement`` / ``hasFocus()``). See
+``docs/m11_19_23_dom_form_batch.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free
