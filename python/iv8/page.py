@@ -275,11 +275,11 @@ class Page:
     def run_jobs(self) -> None:
         """Manually pump jobs: drain the pending microtask queue.
 
-        This executes queued ``Promise`` reactions and ``queueMicrotask``
-        callbacks (M11-4), in FIFO order. Microtasks never run automatically.
-        It does not fire timers, animation-frame callbacks, or idle callbacks —
-        those have their own pumps. Raises ``JSContextDisposedError`` after
-        ``dispose()``.
+        This executes queued ``Promise`` reactions, ``queueMicrotask`` callbacks
+        (M11-4), and MutationObserver delivery batches (M11-5), in FIFO order.
+        Microtasks never run automatically. It does not fire timers,
+        animation-frame callbacks, or idle callbacks — those have their own
+        pumps. Raises ``JSContextDisposedError`` after ``dispose()``.
         """
         self._native.run_jobs()
 

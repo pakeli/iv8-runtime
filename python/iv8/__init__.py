@@ -828,8 +828,19 @@ stay usable. ``load()`` discards the old generation's pending microtasks; ``run_
 after ``dispose()`` raises ``JSContextDisposedError``. The microtask queue remains
 independent of the M2-4 timers, M11-2 animation frames, and M11-3 idle queue, so the
 runtime still has exactly four manual pumps. Still **no** automatic event loop, clock /
-``performance.now()``, ``MutationObserver``, scheduler API, or microtask cancellation.
-See ``docs/m11_4_queue_microtask.md`` for the authoritative boundary.
+``performance.now()``, scheduler API, or microtask cancellation. See
+``docs/m11_4_queue_microtask.md`` for the authoritative boundary.
+
+M11-5 (MutationObserver) adds the standard JS global ``MutationObserver`` with
+``observe(target, options)`` / ``disconnect()`` / ``takeRecords()``. Records are
+queued in mutation order and delivered by the existing ``Page.run_jobs()`` microtask
+checkpoint; there is no new Python API and no fifth pump. Supported options are
+``childList`` / ``attributes`` / ``subtree`` / ``attributeOldValue`` /
+``attributeFilter``; the DOM is element-only, so ``characterData`` is accepted but
+inert. Records are plain objects (there is no ``MutationRecord`` global), target
+wrappers follow the runtime's usual no-identity-guarantee model, and observers never
+cross generations. See ``docs/m11_5_mutation_observer.md`` for the authoritative
+boundary.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
