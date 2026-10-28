@@ -92,9 +92,9 @@ Additional rules:
 
 M11-6 deliberately does **not** add:
 
-- capture phase, `eventPhase`, `composed`, `timeStamp`, `isTrusted`;
-- `preventDefault` / `cancelable` / `defaultPrevented` /
-  `stopImmediatePropagation`;
+- capture phase, `eventPhase`, `composed`, `timeStamp`, `isTrusted`
+  (cancellation itself is added by M11-9:
+  `docs/m11_9_event_cancellation.md`);
 - listener options (`once` / `capture` / `passive` / `signal`) or `on*` handler
   properties;
 - native event generation, default actions, or target validation;

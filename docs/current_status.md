@@ -27,12 +27,12 @@ merge point `6f4f6dc`). Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See
 `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`.
 
-**In progress (one verification batch):** `M11-6` (Event subclass cluster),
-`M11-7` (Web Storage), and `M11-8` (`Blob` / `File` / `FileReader`) are
-implemented on the `m11-6-event-subclasses` branch. M11-6 has its own cold
-real-V8 run; the batch rerun after the M11-7/M11-8 changes reuses the V8 cache
-saved by that run. See `docs/m11_6_event_subclasses.md`,
-`docs/m11_7_web_storage.md`, and `docs/m11_8_blob_file_reader.md`.
+**In progress (one five-slice verification batch):** `M11-6` (Event subclass
+cluster), `M11-7` (Web Storage), `M11-8` (`Blob` / `File` / `FileReader`),
+`M11-9` (Event cancellation), and `M11-10` (`classList` / `toggleAttribute`)
+are implemented on the `m11-6-event-subclasses` branch. M11-6 has its own cold
+real-V8 run; the batch rerun on the branch head reuses the V8 cache saved by
+that run. See the five boundary documents.
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -182,7 +182,8 @@ contract. Cross-check with:
   `docs/m11_1_host_environment.md`, `docs/m11_2_animation_frames.md`,
   `docs/m11_3_idle_callbacks.md`, `docs/m11_4_queue_microtask.md`,
   `docs/m11_5_mutation_observer.md`, `docs/m11_6_event_subclasses.md`,
-  `docs/m11_7_web_storage.md`, `docs/m11_8_blob_file_reader.md`
+  `docs/m11_7_web_storage.md`, `docs/m11_8_blob_file_reader.md`,
+  `docs/m11_9_event_cancellation.md`, `docs/m11_10_class_list.md`
 - recent `git log`
 
 ## 6. Next planned phase
@@ -204,19 +205,20 @@ The repository is executing its post-M10 direction:
 - `M11-5` (`MutationObserver` on the existing `run_jobs()` microtask checkpoint) is
   **landed and verified on real V8 (Linux + Windows)** on `2026-10-28`; see
   `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`;
-- `M11-6` (Event subclass cluster), `M11-7` (Web Storage), and `M11-8`
-  (`Blob` / `File` / `FileReader`) are **implemented and awaiting the batched
+- `M11-6` (Event subclasses), `M11-7` (Web Storage), `M11-8`
+  (`Blob` / `File` / `FileReader`), `M11-9` (Event cancellation), and `M11-10`
+  (`classList` / `toggleAttribute`) are **implemented and awaiting the batched
   real-V8 run** on `m11-6-event-subclasses`; see their boundary docs;
-- after that batch lands, the next execution handoff is to choose `M11-9` from
+- after that batch lands, the next execution handoff is to choose `M11-11` from
   the ranked compatibility backlog (`docs/m11_compatibility_backlog.md`).
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-9`? (`docs/decision_log.md`
+- Which concrete compatibility slice should become `M11-11`? (`docs/decision_log.md`
   §A — `M11-1` through `M11-5` are settled, landed, and verified; `M11-6` through
-  `M11-8` are implemented and awaiting the batched real-V8 run; the ranked
+  `M11-10` are implemented and awaiting the batched real-V8 run; the ranked
   compatibility matrix at `docs/m11_compatibility_backlog.md` should drive the
   next choice after that.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
@@ -235,9 +237,9 @@ If you need a one-line answer:
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
 > compatibility-first `M11` line — with `M11-5` (`MutationObserver` on the existing
 > `run_jobs()` microtask checkpoint) landed and verified on real V8 (Linux +
-> Windows) on `2026-10-28`; `M11-6` through `M11-8` (event subclasses, Web
-> Storage, Blob/File/FileReader) are implemented and awaiting one batched
-> real-V8 verification.
+> Windows) on `2026-10-28`; `M11-6` through `M11-10` (event subclasses, Web
+> Storage, Blob/File/FileReader, event cancellation, classList) are implemented
+> and awaiting one batched real-V8 verification.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

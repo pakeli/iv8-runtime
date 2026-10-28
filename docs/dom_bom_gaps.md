@@ -125,8 +125,10 @@ to Python `logging`).
 | Missing | Status |
 |---|---|
 | `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **absent** |
-| `classList`, `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
-| `toggleAttribute`, `hasAttributes`, `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
+| `classList` | **selected for M11-10** (minimal token list) |
+| `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
+| `toggleAttribute` | **selected for M11-10** |
+| `hasAttributes`, `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
 | Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **absent** — use `getAttribute` |
 | `id` / `className` property setters | **excluded** — the getters are read-only |
 | `remove()`, `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren`, `replaceChild` | **absent** — only `appendChild` / `insertBefore` / `removeChild` exist |
@@ -142,7 +144,7 @@ to Python `logging`).
 | Missing | Status |
 |---|---|
 | Capture phase, `eventPhase`, `composed`, `timeStamp`, `isTrusted` | **absent** |
-| `preventDefault` / `cancelable` / `defaultPrevented` / `stopImmediatePropagation` | **absent** |
+| `preventDefault` / `cancelable` / `defaultPrevented` / `stopImmediatePropagation` | **selected for M11-9** |
 | Event subclass cluster (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`, `UIEvent`, `InputEvent`) | **selected for M11-6** (backlog rank 2) |
 | Listener options (`once` / `capture` / `passive` / `signal`) | **absent** |
 | `on*` handler properties | **absent** |
@@ -233,6 +235,8 @@ Mapping to `docs/m11_compatibility_backlog.md`:
 | Event subclasses | 2 | Smallest follow-on; likely M11-6 |
 | Web Storage | 3 | **Selected for M11-7** — per-Page in-memory stores |
 | `Blob` / `File` / `FileReader` | 4 | **Selected for M11-8** — FileReader uses `run_jobs()` delivery |
+| Event cancellation | gap inventory | **Selected for M11-9** |
+| `classList` / `toggleAttribute` | gap inventory | **Selected for M11-10** |
 | Nested environment + `get_defaults()` | 5 | API-shape decision, not a pure feature |
 | Event-loop facade | 6 | Deferred design decision |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |

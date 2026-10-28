@@ -234,9 +234,18 @@ Real-V8 CI on branch `m11-6-event-subclasses` must run `release-linux` and
 (`1265 passed, 2 skipped`) plus the new items. Local checks are static only (no
 C++ toolchain / Windows V8 monolith).
 
-## Priority 3g: Seventh/eighth M11 slices — M11-7 + M11-8 batch — IMPLEMENTED, CI PENDING (`2026-10-28`)
+## Priority 3g: Five-slice batch — M11-6 through M11-10 — IMPLEMENTED, CI PENDING (`2026-10-28`)
 
 ### What landed
+
+- `M11-6`: **Event subclass cluster** — `CustomEvent` / `MouseEvent` /
+  `KeyboardEvent` / `FocusEvent` on the existing Event/EventTarget model.
+- `M11-9`: **Event cancellation** — `cancelable` / `defaultPrevented` /
+  `preventDefault()` / `stopImmediatePropagation()`, and a `dispatchEvent`
+  return value of `false` for canceled cancelable events.
+- `M11-10`: **`classList` / `toggleAttribute`** — `contains` / `add` / `remove`
+  / `toggle` / `replace` / `item` / `length` / `value`, plus boolean attribute
+  presence toggling, both wired into the MutationObserver attribute hooks.
 
 - `M11-7`: **Web Storage** — `localStorage` / `sessionStorage` as two
   independent, insertion-ordered, per-Page in-memory stores with
@@ -250,14 +259,18 @@ C++ toolchain / Windows V8 monolith).
   `loadstart` / `load` / `loadend` / `abort` listener events. No network,
   filesystem, object-URL, progress, or data-URL surface.
 
-Boundaries: `docs/m11_7_web_storage.md`, `docs/m11_8_blob_file_reader.md`.
-Tests: `test/test_web_storage.py`, `test/test_blob_file_reader.py`.
+Boundaries: `docs/m11_6_event_subclasses.md`, `docs/m11_7_web_storage.md`,
+`docs/m11_8_blob_file_reader.md`, `docs/m11_9_event_cancellation.md`,
+`docs/m11_10_class_list.md`. Tests: `test/test_event_subclasses.py`,
+`test/test_web_storage.py`, `test/test_blob_file_reader.py`,
+`test/test_event_cancellation.py`, `test/test_class_list.py`.
 
 ### Verification pending
 
-Batched with M11-6 on the `m11-6-event-subclasses` branch: after the M11-6 cold
-build warms the branch's V8 cache, the M11-7/M11-8 commit gets one fast rerun.
-Expected total: the M11-6 result plus the two new test files' items.
+One batched run on the `m11-6-event-subclasses` branch head, after the M11-6
+cold build warms the branch's V8 cache. Expected total: the M11-5 baseline
+(`1265`) plus the five new test files' items (`30 + 13 + 22 + 9 + 12 = 86`) =
+**1351 passed, 2 skipped** per wheel lane.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

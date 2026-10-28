@@ -165,11 +165,17 @@ Settled and implemented so far:
   `docs/m11_7_web_storage.md`.
 - `M11-8` — **`Blob` / `File` / `FileReader`** — selected on `2026-10-28` from
   rank 4; boundary document `docs/m11_8_blob_file_reader.md`.
+- `M11-9` — **Event cancellation** (`cancelable` / `defaultPrevented` /
+  `preventDefault` / `stopImmediatePropagation`) — selected on `2026-10-28`
+  from the gap inventory; boundary document
+  `docs/m11_9_event_cancellation.md`.
+- `M11-10` — **`classList` / `toggleAttribute`** — selected on `2026-10-28`
+  from the gap inventory; boundary document `docs/m11_10_class_list.md`.
 
-`M11-7` and `M11-8` are being implemented as one batch on the same
-`m11-6-event-subclasses` branch so a single real-V8 build covers the batch.
-After it lands, the next slice (`M11-9`) should again be chosen from this
-backlog rather than direction alone.
+`M11-6` through `M11-10` are being implemented as one five-slice batch on the
+same `m11-6-event-subclasses` branch so a single real-V8 build covers the whole
+batch. After it lands, the next slice (`M11-11`) should again be chosen from
+this backlog rather than direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

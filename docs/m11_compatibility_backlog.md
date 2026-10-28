@@ -95,5 +95,11 @@ selected on `2026-10-28` as one batch on the same verification branch, to
 amortize the cold V8 build. Boundaries:
 `docs/m11_7_web_storage.md`, `docs/m11_8_blob_file_reader.md`.
 
+The batch was extended to five slices on `2026-10-28`: `M11-9` **Event
+cancellation** and `M11-10` **classList / toggleAttribute** come from the gap
+inventory (`docs/dom_bom_gaps.md`) rather than the ranked shortlist, and are
+verified together with M11-6 through M11-8. Boundaries:
+`docs/m11_9_event_cancellation.md`, `docs/m11_10_class_list.md`.
+
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.
