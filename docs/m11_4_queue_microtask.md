@@ -81,8 +81,8 @@ M11-4 deliberately does **not** add:
 - a new Python API or a fifth pump;
 - an automatic event loop, background thread, or automatic microtask checkpoint;
 - a real clock, `performance.now()`, or task deadlines;
-- `MutationObserver` (which would build on microtask delivery but needs a DOM
-  observation model);
+- `MutationObserver` (landed separately in M11-5 — see
+  `docs/m11_5_mutation_observer.md`);
 - `scheduler.postTask` / `scheduler.yield` / task priorities;
 - `queueMicrotask` cancellation (not part of the standard API);
 - `requestPostAnimationFrame`, rendering, layout, networking, navigation,
@@ -103,22 +103,29 @@ binding, or Python symbol.
 
 ## Verification
 
-Status: **implementation complete; real-V8 CI verification pending.**
+Status: **landed and verified on real V8 (Linux + Windows, `2026-10-27`).**
 
-- Static checks in this environment: `git diff --check` and Python AST/`py_compile`
-  pass. The local machine has no C++ toolchain and no supported Python 3.11–3.14
-  runtime, so no native build or runtime pytest was possible here.
-- Skeleton build (expected): the three API-shape guards pass; the 26 runtime test
-  items skip when `_v8_linked` is false.
-- Real-V8 verification uses the existing Linux/Windows release workflows, which run
-  the full suite against an installed wheel. This slice does not change the V8
-  build configuration, so both monolith caches should remain valid.
-- Expected real-V8 result: the M11-3 baseline (`1184 passed, 2 skipped`) plus the 29
-  new test items in `test_queue_microtask.py` — i.e. **1213 passed, 2 skipped** per
-  platform. Confirm the new file appears in the log with all 29 items passing, not
-  skipped.
-- Workflows to run on the branch: `.github/workflows/release-linux.yml` and
-  `.github/workflows/release-windows.yml` (both support `workflow_dispatch`).
+- **Linux** — `release-linux` run `40471874328` on branch
+  `m11-4-queue-microtask` (commit `0305b49`): `linux-wheels` success; cp311–cp314
+  wheels built, installed, and tested. Result: **`1213 passed, 2 skipped in
+  21.44s`**.
+- **Windows** — `release-windows` run `40483069548` on the same commit:
+  `build-v8` success with a V8 cache hit, and the four `wheels` jobs
+  (cp311–cp314) all success. Result: **`1213 passed, 2 skipped in 20.52s`**.
+- The total matches the M11-3 baseline (`1184 passed, 2 skipped`) plus the 29
+  M11-4 test items in `test/test_queue_microtask.py`; the workflow's
+  `_v8_linked` assertion makes the runtime tests run rather than skip.
+- The manylinux cold build needed two build-only fixes on this branch:
+  `a1869e9` (bootstrap depot_tools before `fetch`) and `0305b49` (detect
+  bootstrap via `python3_bin_reldir.txt`, not the checked-in
+  `python-bin/python3` wrapper). Neither changes runtime code. See
+  `docs/m11_4_report.md`.
+- Earlier local checks were static only: `git diff --check`, `bash -n`, and
+  Python AST/`py_compile` pass. This machine has no C++ toolchain or supported
+  Python 3.11–3.14 runtime, so the real-V8 evidence is the CI runs above.
+- Real-V8 verification uses `.github/workflows/release-linux.yml` and
+  `.github/workflows/release-windows.yml`, both `workflow_dispatch`-capable.
+  `.github/workflows/ci.yml` is a skeleton lane and is not acceptance evidence.
 
 ## Open points
 

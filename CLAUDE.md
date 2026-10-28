@@ -26,9 +26,10 @@ git log --oneline --decorate -n 20
 
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
-- As of `2026-10-22`, the latest implemented milestone in the working tree is
-  **M11-4** (`queueMicrotask`), pending real-V8 CI verification; the M11 line is
-  compatibility-first.
+- As of `2026-10-28`, the latest verified milestone is **M11-4**
+  (`queueMicrotask`), green on real V8 Linux + Windows. **M11-5**
+  (`MutationObserver`) is implemented on `m11-5-mutation-observer` and awaiting
+  real-V8 CI verification; the M11 line is compatibility-first.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -75,8 +76,8 @@ Answer roughly as follows:
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
   - M11 compatibility slices through `M11-4`: host environment, rAF,
-    idle callbacks, and `queueMicrotask` (implementation complete, CI verification
-    pending);
+    idle callbacks, and `queueMicrotask` (verified on real V8 Linux + Windows,
+    `2026-10-27`);
   - latest implemented feature: `queueMicrotask()` from M11-4.
 
 ## Handoff Discipline

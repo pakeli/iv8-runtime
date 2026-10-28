@@ -1,14 +1,15 @@
 # Current Status
 
-Last reviewed: `2026-10-22`
+Last reviewed: `2026-10-28`
 
 ## 1. Summary
 
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of the current repository state, the latest implemented milestone is **M11-4**.
-Its code and tests are in the working tree; real-V8 CI verification is still pending:
+As of `2026-10-27`, the latest implemented and verified milestone is **M11-4**.
+Real-V8 CI is green on both platforms — Linux run `40471874328`, Windows run
+`40483069548`, both on commit `0305b49`, each reporting `1213 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -18,13 +19,9 @@ Its code and tests are in the working tree; real-V8 CI verification is still pen
 - `M11-3`: `requestIdleCallback` / `cancelIdleCallback` / `Page.run_idle_callbacks()`
 - `M11-4`: `queueMicrotask(callback)` (drained by the existing `Page.run_jobs()`)
 
-- `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
-- `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
-- `M11-1`: `Page(environment=...)` / `Page.get_default_environment()`
-- `M11-2`: `requestAnimationFrame` / `cancelAnimationFrame` /
-  `Page.run_animation_frame()`
-- `M11-3`: `requestIdleCallback` / `cancelIdleCallback` / `Page.run_idle_callbacks()`
-- `M11-4`: `queueMicrotask(callback)` (drained by the existing `Page.run_jobs()`)
+**In progress:** `M11-5` (`MutationObserver`) is implemented on branch
+`m11-5-mutation-observer`; real-V8 CI verification is pending. See
+`docs/m11_5_mutation_observer.md` and `docs/m11_compatibility_backlog.md`.
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -109,8 +106,9 @@ Implemented and present at `HEAD`:
   V8 microtask queue; `Page.run_jobs()` is still the only trigger, so there is no new
   Python API and no fifth pump. A non-callable argument throws a JS `TypeError` before
   enqueueing; callbacks run FIFO, interleave with `Promise` reactions, and a throwing
-  callback is swallowed by V8's explicit checkpoint. See
-  `docs/m11_4_queue_microtask.md`.
+  callback is swallowed by V8's explicit checkpoint. Landed and verified on real V8
+  (Linux + Windows) on `2026-10-27`; see `docs/m11_4_queue_microtask.md` and
+  `docs/m11_4_report.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -124,6 +122,7 @@ Recent implementation sequence from Git history:
 - `M11-2`: `requestAnimationFrame` / `cancelAnimationFrame` manual frame pump
 - `M11-3`: `requestIdleCallback` / `cancelIdleCallback` manual idle pump
 - `M11-4`: `queueMicrotask` on the existing manual `run_jobs()` microtask pump
+  (verified `2026-10-27`)
 
 ## 4. Release / Distribution Status
 
@@ -176,20 +175,19 @@ The repository is executing its post-M10 direction:
 - `M11-3` (`requestIdleCallback` / `cancelIdleCallback` manual idle pump) has
   **landed** — see `docs/m11_3_idle_callbacks.md` and `docs/m11_3_report.md`;
 - `M11-4` (`queueMicrotask` on the existing `run_jobs()` microtask pump) is
-  **implemented** — real-V8 Linux/Windows CI verification is pending; see
-  `docs/m11_4_queue_microtask.md`;
-- after that CI pass, the next execution handoff is to choose `M11-5` from the
-  compatibility backlog rather than by intuition.
+  **landed and verified on real V8 (Linux + Windows)** on `2026-10-27`; see
+  `docs/m11_4_queue_microtask.md` and `docs/m11_4_report.md`;
+- the CI pass is complete; the next execution handoff is to choose `M11-5` from a
+  ranked compatibility backlog rather than by intuition.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
 - Which concrete compatibility slice should become `M11-5`? (`docs/decision_log.md`
-  §A — still open. `M11-1`, `M11-2`, `M11-3` are settled and landed; `M11-4` is
-  implemented and awaiting real-V8 CI verification. The ranked compatibility matrix
-  that should drive the next choice still does not exist — `docs/next_tasks.md`
-  Priority 4.)
+  §A — still open. `M11-1` through `M11-4` are settled, landed, and verified; the
+  ranked compatibility matrix that should drive the next choice still does not
+  exist — `docs/next_tasks.md` Priority 4.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -203,10 +201,10 @@ These are the questions a new coding session should resolve before major new wor
 If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
-> hosted runtime and the M9–M10 monitoring extensions, and has now entered the
+> hosted runtime and the M9–M10 monitoring extensions, and is executing the
 > compatibility-first `M11` line — with `M11-4` (`queueMicrotask` on the existing
-> `run_jobs()` microtask pump) implemented and awaiting real-V8 CI verification;
-> `M11-5` is not yet chosen.
+> `run_jobs()` microtask pump) landed and verified on real V8 (Linux + Windows) on
+> `2026-10-27`; `M11-5` is not yet chosen.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

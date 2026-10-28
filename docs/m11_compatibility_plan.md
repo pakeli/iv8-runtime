@@ -2,9 +2,9 @@
 
 Last reviewed: `2026-08-06`
 
-> **Scope note (`2026-10-22`).** This is the original M11 planning document. The
-> compatibility line has since landed `M11-1` through `M11-4`; for the current
-> milestone and surface, read `docs/current_status.md` and
+> **Scope note (`2026-10-27`).** This is the original M11 planning document. The
+> compatibility line has since landed and verified `M11-1` through `M11-4`; for the
+> current milestone and surface, read `docs/current_status.md` and
 > `docs/runtime_surface.md`. The stage judgment below records the state at the time
 > of planning.
 

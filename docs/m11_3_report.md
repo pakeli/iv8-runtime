@@ -2,10 +2,11 @@
 
 Date: `2026-08-06` · Status: **landed and verified on real V8 (Linux + Windows)**
 
-> **Postscript (`2026-10-22`).** The "natural neighbour" suggested in §8 below,
-> `queueMicrotask`, has since landed as **M11-4** — see
-> `docs/m11_4_queue_microtask.md`. The rest of this page remains the historical
-> M11-3 delivery record.
+> **Postscript (`2026-10-27`).** The "natural neighbour" suggested in §8 below,
+> `queueMicrotask`, has since landed and been verified as **M11-4** on real V8
+> (Linux + Windows) — see `docs/m11_4_queue_microtask.md` and
+> `docs/m11_4_report.md`. The rest of this page remains the historical M11-3
+> delivery record.
 
 Boundary document: `docs/m11_3_idle_callbacks.md` (authoritative for behavior and
 non-goals). This page is the delivery record: what was asked, what shipped, how it was

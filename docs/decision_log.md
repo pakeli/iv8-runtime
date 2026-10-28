@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-10-22`
+Last reviewed: `2026-10-27`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -127,14 +127,16 @@ Settled and implemented so far:
   not implemented. See `docs/m11_3_idle_callbacks.md`.
 - `M11-4` — **`queueMicrotask(callback)`** on the existing manual `Page.run_jobs()`
   microtask pump. No new Python API and no fifth pump; a non-callable argument throws a
-  JS `TypeError`; callbacks are FIFO and interleave with `Promise` reactions. Implemented
-  but **awaiting real-V8 Linux/Windows CI verification**. See
-  `docs/m11_4_queue_microtask.md`.
+  JS `TypeError`; callbacks are FIFO and interleave with `Promise` reactions. Landed and
+  verified on real V8 (Linux + Windows) on `2026-10-27`: Linux run `40471874328`,
+  Windows run `40483069548`, commit `0305b49`, each `1213 passed, 2 skipped`. See
+  `docs/m11_4_queue_microtask.md` and `docs/m11_4_report.md`.
 
-Still open: `M11-5`. All four slices were chosen by direction rather than from a
-ranked source-backed survey, so the compatibility matrix that was supposed to drive
-slice selection still does not exist. Building it is `next_tasks.md` Priority 4, and it
-should precede the `M11-5` choice.
+`M11-5` — **`MutationObserver`** — was selected on `2026-10-28` from the new ranked
+backlog (`docs/m11_compatibility_backlog.md`); its boundary document is
+`docs/m11_5_mutation_observer.md`. Implementation and real-V8 CI verification are in
+progress on the `m11-5-mutation-observer` branch. The backlog now exists, so the
+next choice (`M11-6`) should use it rather than direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

@@ -1,6 +1,6 @@
 # Development Setup
 
-Last reviewed: `2026-08-06`
+Last reviewed: `2026-10-27`
 
 This document is a practical quick-start for resuming development on a new machine.
 
@@ -111,5 +111,7 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; the working tree includes implementation
-> through M11-4 (`queueMicrotask`), with real-V8 CI verification pending.
+> `HEAD` is not an M1-only repository; implementation is through M11-4
+> (`queueMicrotask`), verified on real V8 (Linux + Windows) on `2026-10-27`; see
+> `docs/m11_4_report.md`. M11-5 (`MutationObserver`) is implemented on branch
+> `m11-5-mutation-observer` and awaiting real-V8 CI verification.

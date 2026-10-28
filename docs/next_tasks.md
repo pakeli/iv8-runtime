@@ -1,6 +1,6 @@
 # Next Tasks
 
-Last reviewed: `2026-10-22`
+Last reviewed: `2026-10-27`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
@@ -142,7 +142,7 @@ Boundary and non-goals: `docs/m11_3_idle_callbacks.md`. Report:
 Like M11-1 and M11-2, this slice was chosen by direction rather than from a ranked
 source-backed survey. Priority 4 below is still outstanding and now covers `M11-5`.
 
-## Priority 3d: Fourth M11 compatibility slice — IMPLEMENTED, CI VERIFICATION PENDING (`2026-10-22`)
+## Priority 3d: Fourth M11 compatibility slice — DONE (`2026-10-27`)
 
 ### What landed
 
@@ -159,8 +159,10 @@ frames, and idle callbacks.
 
 Boundary and non-goals: `docs/m11_4_queue_microtask.md`. Tests:
 `test/test_queue_microtask.py`. Local verification was static only (no C++ toolchain,
-no supported Python runtime); the real-V8 Linux/Windows release workflows must run the
-full suite before this is marked landed.
+no supported Python runtime). Real-V8 CI on `2026-10-27`: Linux run `40471874328` and
+Windows run `40483069548`, both on commit `0305b49`, each reported
+`1213 passed, 2 skipped`; the Linux cold build required build-only bootstrap fixes
+`a1869e9` / `0305b49`. See `docs/m11_4_report.md`.
 
 ### Deliberately not done
 
@@ -169,11 +171,49 @@ cancellation, or changes to the four existing pumps. Like the earlier M11 slices
 was chosen before the ranked compatibility matrix existed; Priority 4 below now covers
 `M11-5`.
 
-## Priority 4: Build the ranked compatibility backlog and pick M11-5
+## Priority 3e: Fifth M11 compatibility slice — IMPLEMENTED, CI VERIFICATION PENDING (`2026-10-28`)
+
+### What landed
+
+`M11-5`: **`MutationObserver`** — the minimal JS global with
+`observe(target, options)` / `disconnect()` / `takeRecords()`. Records cover
+`childList` and `attributes` (including `subtree`, `attributeOldValue`,
+`attributeFilter`), are queued in mutation order, and are delivered only by the
+existing `Page.run_jobs()` microtask checkpoint. Element and document targets are
+accepted; `characterData` is accepted but inert because the DOM is element-only.
+There is no new Python API, no fifth pump, no `MutationRecord` global, and no
+cross-generation observer state.
+
+Boundary: `docs/m11_5_mutation_observer.md`. Tests:
+`test/test_mutation_observer.py` (52 collected items; the skeleton shape guard
+passes locally, runtime tests require a rebuilt wheel).
+
+### Verification pending
+
+Real-V8 CI on branch `m11-5-mutation-observer` must run `release-linux` and
+`release-windows` on the same commit. Expected total: the M11-4 baseline
+(`1213 passed, 2 skipped`) plus the 52 new items = **1265 passed, 2 skipped** per
+platform. Local checks are static only (no C++ toolchain / Windows V8 monolith).
+
+### Deliberately not done
+
+`characterData` records, `MutationRecord` global, `id`/`className` property
+setters, document-node childList records without `subtree`, JS-finalizer observer
+cleanup, `watch_apis` integration, and any scheduler/new pump.
+
+## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal
 
 Replace per-slice intuition with a documented, ranked compatibility backlog.
+
+### What was delivered
+
+- `docs/m11_compatibility_backlog.md` — a source-backed survey (target README and
+  demos vs. the current surface), scored candidates, and a ranked shortlist;
+- `M11-5` selected from that backlog: `MutationObserver`;
+- explicit scope, non-goals, delivery model, and tests frozen in
+  `docs/m11_5_mutation_observer.md`.
 
 ### Why this matters
 
@@ -188,7 +228,7 @@ Replace per-slice intuition with a documented, ranked compatibility backlog.
 - a ranked shortlist of remaining slices;
 - one chosen `M11-5` slice with acceptance criteria.
 
-### Acceptance
+### Acceptance — met
 
 - the backlog is written down and ranked;
 - `M11-5` is selected from it with explicit scope, non-goals, and tests.
