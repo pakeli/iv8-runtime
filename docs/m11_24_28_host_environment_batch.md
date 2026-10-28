@@ -102,5 +102,13 @@ extended for the new key set.
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `a00e140`:
+
+- Linux `release-linux` run `40711526339` — cp311–cp314, each
+  `1474 passed, 2 skipped`;
+- Windows `release-windows` run `40711548915` — Python 3.11–3.14, each
+  `1474 passed, 2 skipped`.
+
+All five new test files ran in every lane (22 items); the full suite collects
+1476 items. The first attempt (`f857d03`) failed one fresh-array test, fixed in
+`a00e140`. See `docs/m11_24_28_report.md`.

@@ -133,9 +133,16 @@ Linux `40698705892`, Windows `40698728631`, commit `08350ce`, each wheel lane
 reflection, select `length` / `item` / `namedItem`, and deterministic document
 metadata. Boundary: `docs/m11_19_23_dom_form_batch.md`. Delivered and verified
 on real V8: Linux `40704330688`, Windows `40704362549`, commit `999c851`, each
-wheel lane `1412 passed, 2 skipped`; report `docs/m11_19_23_report.md`. The next
-slice (`M11-24`) should be chosen from the remaining ranked candidates or
-another gap-inventory slice with an explicit boundary.
+wheel lane `1412 passed, 2 skipped`; report `docs/m11_19_23_report.md`.
+
+`M11-24` through `M11-28` — **host environment / console batch** — were selected
+`2026-10-28` from the gap inventory: navigator metadata/identity, screen
+color/pixel depth, outer window geometry, and console method extensions.
+Boundary: `docs/m11_24_28_host_environment_batch.md`. Delivered and verified on
+real V8: Linux `40711526339`, Windows `40711548915`, commit `a00e140`, each wheel
+lane `1474 passed, 2 skipped`; report `docs/m11_24_28_report.md`. The next slice
+(`M11-29`) should be chosen from the remaining ranked candidates or another
+gap-inventory slice with an explicit boundary.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

@@ -741,8 +741,8 @@ key, so their hits carry only ``resource_name`` + ``type``. See ``docs/m9_summar
 M11-1 (configurable host environment) opens the compatibility-first M11 line with the
 first **Python-side** `Page` addition since M3-5: the optional constructor parameter
 ``Page(environment=...)`` plus the static template reader
-``Page.get_default_environment()``. The environment is a mapping over exactly eleven
-keys — ``userAgent`` / ``platform`` / ``language`` (``str``), ``webdriver`` (``bool``),
+``Page.get_default_environment()``. M11-1 added a mapping over exactly eleven
+keys (later expanded by M11-17 and M11-24..M11-28) — ``userAgent`` / ``platform`` / ``language`` (``str``), ``webdriver`` (``bool``),
 ``screenWidth`` / ``screenHeight`` / ``availWidth`` / ``availHeight`` / ``innerWidth``
 / ``innerHeight`` (``int``), and ``devicePixelRatio`` (``int`` or ``float``, stored as
 ``float``) — and it configures the page's **read-only** environment surface:
@@ -908,6 +908,13 @@ and deterministic document metadata (``characterSet`` / ``contentType`` /
 ``compatMode`` / ``referrer`` / ``domain`` / ``visibilityState`` / ``hidden`` /
 ``activeElement`` / ``hasFocus()``). See
 ``docs/m11_19_23_dom_form_batch.md``.
+
+The M11-24..M11-28 host-environment batch extends the configurable
+``Page(environment=...)`` surface with navigator metadata/identity, screen
+color/pixel depth, and outer window geometry (27 flat keys total), and adds
+deterministic console methods (debug/trace/table/dir/group/groupEnd/time/
+timeEnd/assert/count). Existing environment keys/defaults are unchanged. See
+``docs/m11_24_28_host_environment_batch.md``.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are

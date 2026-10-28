@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-28` · Latest verified milestones: **M11-19..M11-23**
+Last reviewed: `2026-10-28` · Latest verified milestones: **M11-24..M11-28**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -73,7 +73,7 @@ milestone.
 | `run_idle_callbacks()` | M11-3 | manual pump; runs one round of `requestIdleCallback` callbacks |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
-| `Page(environment=None)` | M11-1, M11-17 | optional read-only host-environment baseline; accepts the flat eleven-key form or nested `navigator` / `screen` / `window` sections |
+| `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27 | optional read-only host-environment baseline; accepts the flat 27-key form or nested `navigator` / `screen` / `window` sections |
 | `get_default_environment()` | M11-1 | static; returns a fresh flat `dict` copy of the default template |
 | `get_defaults()` | M11-17 | static; returns a fresh nested `{navigator, screen, window}` dict |
 
@@ -81,18 +81,23 @@ milestone.
 (M11-1) is the next one. `Page` has no `document` / DOM / event API on the Python
 side — the DOM is JS-side only.
 
-The M11-1 environment accepts exactly eleven keys — `userAgent` / `platform` /
-`language` (`str`), `webdriver` (`bool`), `screenWidth` / `screenHeight` /
-`availWidth` / `availHeight` / `innerWidth` / `innerHeight` (`int`), and
+The environment now accepts 27 flat keys. Navigator: `userAgent` / `platform` /
+`language` / `appName` / `appCodeName` / `product` / `vendor` / `vendorSub` /
+`productSub` (`str`), `webdriver` / `onLine` / `cookieEnabled` (`bool`),
+`languages` (non-empty `list[str]`), and `hardwareConcurrency` (`int`). Screen and
+window: `screenWidth` / `screenHeight` / `availWidth` / `availHeight` /
+`screenColorDepth` / `screenPixelDepth` / `innerWidth` / `innerHeight` /
+`outerWidth` / `outerHeight` / `screenX` / `screenY` (`int`) and
 `devicePixelRatio` (`int` or `float`, stored `float`). Omitted keys inherit the
-defaults, and the defaults reproduce the previous fixed `navigator` constants, so an
-unconfigured page is unchanged. Validation is strict and runs in the Python facade
-before any native page exists (unknown key or wrong type → `TypeError`, nothing
-partially installed). Values are re-applied to every `load()` generation. M11-17
-additionally accepts the nested form `{"navigator": {...}, "screen": {...},
-"window": {...}}` (flattened to the same eleven keys; mixing nested and flat keys
-is rejected) and adds `Page.get_defaults()` for the nested shape. See
-`docs/m11_1_host_environment.md` and `docs/m11_12_17_dom_web_batch.md`.
+defaults, and the original eleven values are unchanged. Validation is strict and
+runs in the Python facade before any native page exists (unknown key or wrong
+type → `TypeError`, nothing partially installed). Values are re-applied to every
+`load()` generation. M11-17 additionally accepts the nested form
+`{"navigator": {...}, "screen": {...}, "window": {...}}` (flattened to the same
+keys; mixing nested and flat keys is rejected) and adds `Page.get_defaults()` for
+the nested shape. See `docs/m11_1_host_environment.md`,
+`docs/m11_12_17_dom_web_batch.md`, and
+`docs/m11_24_28_host_environment_batch.md`.
 
 ### 2.3 `Page` — second-layer monitoring
 
@@ -131,17 +136,23 @@ pause evidence (M9-3).
 Installed per generation by `install_page`:
 
 - **global roots** — `window` / `globalThis` / `self` (all the same object);
-- `console` (`log` / `info` / `warn` / `error` → Python `logging`, logger
-  `iv8.console`);
-- `navigator` (`userAgent` / `platform` / `language` / `webdriver`) and `location`
-  (`href` / `origin` / `protocol` / `host` / `hostname` / `pathname` / `search` /
-  `hash` / `toString()`) — both read-only; `navigator`'s four values are configurable
-  per page since M11-1, `location` still derives from the base URL;
-- `screen` (`width` / `height` / `availWidth` / `availHeight`) and the `window`
-  dimensions `devicePixelRatio` / `innerWidth` / `innerHeight` — read-only, M11-1,
-  configured via `Page(environment=...)`. No `colorDepth` / `orientation` /
-  `outerWidth` / `screenX` / scroll / `matchMedia`, and these dimensions feed no
-  layout engine;
+- `console` (`log` / `info` / `warn` / `error` plus M11-28 `debug` / `trace` /
+  `table` / `dir` / `group` / `groupEnd` / `time` / `timeEnd` / `assert` /
+  `count` → Python `logging`, logger `iv8.console`; no clock, stack, formatting,
+  or nesting);
+- `navigator` (`userAgent` / `platform` / `language` / `webdriver` plus M11-24
+  `languages` / `onLine` / `cookieEnabled` / `hardwareConcurrency` and M11-27
+  `appName` / `appCodeName` / `product` / `vendor` / `vendorSub` /
+  `productSub`) and `location` (`href` / `origin` / `protocol` / `host` /
+  `hostname` / `pathname` / `search` / `hash` / `toString()`) — both read-only;
+  the configured navigator values are fixed per page, `location` still derives
+  from the base URL;
+- `screen` (`width` / `height` / `availWidth` / `availHeight` plus M11-25
+  `colorDepth` / `pixelDepth`) and the `window` dimensions `devicePixelRatio` /
+  `innerWidth` / `innerHeight` plus M11-26 `outerWidth` / `outerHeight` /
+  `screenX` / `screenY` — read-only, configured via `Page(environment=...)`. No
+  `orientation` / scroll / `matchMedia`, no `window.name`, and these dimensions
+  feed no layout engine;
 - **timers** — `setTimeout` / `clearTimeout` / `setInterval` / `clearInterval`
   (manual-pump only);
 - **microtasks** — `queueMicrotask(callback)` (M11-4), drained only by
@@ -339,6 +350,11 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-21 | extended form reflection (`name` / `required`, textarea/select) — verified 2026-10-28 | `docs/m11_19_23_dom_form_batch.md`, `docs/m11_19_23_report.md` |
 | M11-22 | select `length` / `item` / `namedItem` — verified 2026-10-28 | `docs/m11_19_23_dom_form_batch.md`, `docs/m11_19_23_report.md` |
 | M11-23 | document metadata + `hasFocus()` — verified 2026-10-28 | `docs/m11_19_23_dom_form_batch.md`, `docs/m11_19_23_report.md` |
+| M11-24 | navigator metadata (`languages` / `onLine` / `cookieEnabled` / `hardwareConcurrency`) — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
+| M11-25 | screen `colorDepth` / `pixelDepth` — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
+| M11-26 | window `outerWidth` / `outerHeight` / `screenX` / `screenY` — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
+| M11-27 | navigator identity fields — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
+| M11-28 | extended console methods — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

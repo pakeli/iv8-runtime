@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-28` · Baseline: **M11-23** (DOM/form completeness batch
-verified `2026-10-28`)
+Last reviewed: `2026-10-28` · Baseline: **M11-28** (host environment / console
+batch verified `2026-10-28`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-23. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-28. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -66,28 +66,32 @@ verified `2026-10-28`)
 | `crypto` (`getRandomValues`, SubtleCrypto) | **absent** |
 | `Worker` / `SharedWorker` / `ServiceWorker` | **absent** |
 | `navigator.clipboard`, `geolocation`, `Notification`, `Permissions` | **absent** |
-| `navigator.languages` / `onLine` / `cookieEnabled` / `hardwareConcurrency` / `connection` / `userAgentData` | **absent** |
+| `navigator.connection` / `userAgentData` | **absent** |
+| `navigator.maxTouchPoints` / permissions / clipboard / geolocation | **absent** |
 | `structuredClone` and other transfer/serialization APIs | **absent** |
 
 ### 1.6 Screen and window metadata
 
 | Missing | Status |
 |---|---|
-| `screen.colorDepth` / `pixelDepth` / `orientation` / `availLeft` / `availTop` | **absent** |
-| `window.outerWidth` / `outerHeight` / `screenX` / `screenY` / `name` / `length` | **absent** |
+| `screen.orientation` / `availLeft` / `availTop` | **absent** |
+| `window.name` / `length` | **absent** |
 
 Implemented for contrast: `screen.width` / `height` / `availWidth` /
-`availHeight`, `window.devicePixelRatio` / `innerWidth` / `innerHeight` (read-only
-reported values, M11-1).
+`availHeight` / `colorDepth` / `pixelDepth`, and `window.devicePixelRatio` /
+`innerWidth` / `innerHeight` / `outerWidth` / `outerHeight` / `screenX` /
+`screenY` (read-only reported values, M11-1/M11-25/M11-26).
 
 ### 1.7 Console
 
 | Missing | Status |
 |---|---|
-| `console.debug` / `trace` / `table` / `group` / `groupEnd` / `time` / `timeEnd` / `assert` / `count` / `dir` | **absent** |
+| Console formatting, stack capture, table rendering, group nesting, real timing | **absent** — M11-28 provides deterministic method aliases |
 
-Implemented for contrast: `console.log` / `info` / `warn` / `error` only (routed
-to Python `logging`).
+Implemented for contrast: `console.log` / `info` / `warn` / `error`, plus
+M11-28 `debug` / `trace` / `table` / `dir` / `group` / `groupEnd` / `time` /
+`timeEnd` / `assert` / `count`, all routed to Python `logging`; no clock,
+formatting, stack, or nesting state.
 
 ## 2. DOM gaps
 
@@ -246,7 +250,8 @@ M11-11 delivered event capture and listener options; M11-12..M11-17 delivered
 the element attribute/tree/clone/URL.searchParams/select extensions and the
 nested environment + `get_defaults()`; M11-18 delivered form-control attribute
 reflection; M11-19..M11-23 delivered query, form, select, and document-metadata
-completeness. Remaining candidates (mapping to
+completeness; M11-24..M11-28 delivered navigator/screen/window metadata and the
+console method cluster. Remaining candidates (mapping to
 `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |

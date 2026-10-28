@@ -8,9 +8,9 @@ Last reviewed: `2026-10-28`
 implementation in `master` has progressed well beyond the original M1 boundary.
 
 As of `2026-10-28`, the latest implemented and verified milestones are
-**M11-19..M11-23** (DOM/form completeness batch). Real-V8 CI is green on both
-platforms — Linux run `40704330688`, Windows run `40704362549`, both on commit
-`999c851`, each wheel lane reporting `1412 passed, 2 skipped`:
+**M11-24..M11-28** (host environment / console batch). Real-V8 CI is green on
+both platforms — Linux run `40711526339`, Windows run `40711548915`, both on
+commit `a00e140`, each wheel lane reporting `1474 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -44,6 +44,13 @@ platforms — Linux run `40704330688`, Windows run `40704362549`, both on commit
   reflections, `button.name`)
 - `M11-22`: select `length` / `item` / `namedItem`
 - `M11-23`: deterministic document metadata + `hasFocus()`
+- `M11-24`: navigator `languages` / `onLine` / `cookieEnabled` /
+  `hardwareConcurrency`
+- `M11-25`: screen `colorDepth` / `pixelDepth`
+- `M11-26`: window `outerWidth` / `outerHeight` / `screenX` / `screenY`
+- `M11-27`: navigator identity fields (`appName` / `appCodeName` / `product` /
+  `vendor` / `vendorSub` / `productSub`)
+- `M11-28`: extended console methods
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -56,9 +63,12 @@ verified as one six-slice DOM/web batch on branch
 `m11-18-form-control-reflection` (final commit `08350ce`) and merged to the
 fork's `master`. M11-19 through M11-23 (DOM/form completeness batch) were
 verified on `m11-19-23-dom-form-batch` (final commit `999c851`) and merged to
-the fork's `master`. Upstream `investforever/iv8-runtime` remains at M11-3;
-upstream sync is out of scope and the fork is the working master. See the
-report documents (`docs/m11_6_report.md` … `docs/m11_19_23_report.md`).
+the fork's `master`. M11-24 through M11-28 (host environment / console batch)
+were verified on `m11-24-28-host-environment-batch` (final commit `a00e140`)
+and merged to the fork's `master`. Upstream `investforever/iv8-runtime`
+remains at M11-3; upstream sync is out of scope and the fork is the working
+master. See the report documents (`docs/m11_6_report.md` …
+`docs/m11_24_28_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -206,6 +216,10 @@ Implemented and present at `HEAD`:
   `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
   `activeElement` / `hasFocus()`). Verified `2026-10-28`; see
   `docs/m11_19_23_dom_form_batch.md`.
+- `M11-24`..`M11-28` host environment / console batch — configurable
+  navigator metadata/identity, screen color/pixel depth, outer window geometry,
+  and deterministic console method extensions. Verified `2026-10-28`; see
+  `docs/m11_24_28_host_environment_batch.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -235,6 +249,9 @@ Recent implementation sequence from Git history:
 - `M11-19` through `M11-23`: DOM/form completeness batch — query extensions,
   form reflection, select convenience, and document metadata (verified as one
   five-slice batch, `2026-10-28`)
+- `M11-24` through `M11-28`: host environment / console batch — navigator
+  metadata/identity, screen depth, outer window geometry, and console methods
+  (verified as one five-slice batch, `2026-10-28`)
 
 ## 4. Release / Distribution Status
 
@@ -315,7 +332,11 @@ The repository is executing its post-M10 direction:
 - `M11-19` through `M11-23` (DOM/form completeness batch) are **landed and
   verified on real V8 (Linux + Windows)** on `2026-10-28`; see
   `docs/m11_19_23_dom_form_batch.md` and `docs/m11_19_23_report.md`;
-- the next execution handoff is to choose `M11-24` from the ranked
+- `M11-24` through `M11-28` (host environment / console batch) are **landed and
+  verified on real V8 (Linux + Windows)** on `2026-10-28`; see
+  `docs/m11_24_28_host_environment_batch.md` and
+  `docs/m11_24_28_report.md`;
+- the next execution handoff is to choose `M11-29` from the ranked
   compatibility backlog (`docs/m11_compatibility_backlog.md`) or another
   gap-inventory slice with an explicit boundary.
 
@@ -323,8 +344,8 @@ The repository is executing its post-M10 direction:
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-24`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-23` are settled, landed, and verified; the ranked
+- Which concrete compatibility slice should become `M11-29`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-28` are settled, landed, and verified; the ranked
   compatibility matrix at `docs/m11_compatibility_backlog.md` should drive the
   next choice, with `docs/dom_bom_gaps.md` as the fallback inventory.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
@@ -341,9 +362,9 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with `M11-19` through `M11-23` (DOM/form
-> completeness batch) landed and verified on real V8 (Linux + Windows) on
-> `2026-10-28`.
+> compatibility-first `M11` line — with `M11-24` through `M11-28` (host
+> environment / console batch) landed and verified on real V8 (Linux + Windows)
+> on `2026-10-28`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

@@ -198,11 +198,26 @@ Verified on real V8 at commit `999c851`: Linux `40704330688`, Windows
 `999c851` was the only change needed. The full suite collects 1414 items
 (1388 previous + 26 batch tests). See `docs/m11_19_23_report.md`.
 
+### 17. M11-24..M11-28 verified as one host environment / console batch
+
+Decided/verified `2026-10-28`.
+
+The batch extends the configurable environment with navigator metadata and
+identity fields, screen color/pixel depth, and outer window geometry, then adds
+deterministic console methods. The flat environment grows from 11 to 27 keys;
+existing keys/defaults are unchanged and no new Python method or setter exists.
+
+Verified on real V8 at commit `a00e140`: Linux `40711526339`, Windows
+`40711548915`, each wheel lane `1474 passed, 2 skipped`. The first attempt
+(`f857d03`) failed one fresh-array test, fixed in `a00e140`. The full suite
+collects 1476 items (1414 previous + 62 from the extended environment matrix
+and 22 new tests). See `docs/m11_24_28_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-24`?
+### A. Which concrete compatibility slice becomes `M11-29`?
 
 Settled and implemented so far:
 
@@ -283,8 +298,15 @@ direction alone.
   deterministic document metadata. Boundary:
   `docs/m11_19_23_dom_form_batch.md`. Verified on real V8 (Linux
   `40704330688`, Windows `40704362549`, commit `999c851`, each wheel lane
-  `1412 passed, 2 skipped`); see `docs/m11_19_23_report.md`. The next slice
-  (`M11-24`) should be chosen from the backlog or the gap inventory.
+  `1412 passed, 2 skipped`); see `docs/m11_19_23_report.md`.
+
+- `M11-24` through `M11-28` — **host environment / console batch** — selected
+  `2026-10-28`: navigator metadata/identity, screen depth, outer window
+  geometry, and console method extensions. Boundary:
+  `docs/m11_24_28_host_environment_batch.md`. Verified on real V8 (Linux
+  `40711526339`, Windows `40711548915`, commit `a00e140`, each wheel lane
+  `1474 passed, 2 skipped`); see `docs/m11_24_28_report.md`. The next slice
+  (`M11-29`) should be chosen from the backlog or the gap inventory.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

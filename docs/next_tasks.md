@@ -433,6 +433,48 @@ Report: `docs/m11_19_23_report.md`.
 Choose `M11-24` from `docs/m11_compatibility_backlog.md` or another
 gap-inventory slice with an explicit boundary.
 
+## Priority 3l: M11-24..M11-28 host environment / console batch — DONE (`2026-10-28`)
+
+### What landed
+
+- `M11-24`: navigator `languages` / `onLine` / `cookieEnabled` /
+  `hardwareConcurrency`.
+- `M11-25`: screen `colorDepth` / `pixelDepth`.
+- `M11-26`: window `outerWidth` / `outerHeight` / `screenX` / `screenY`.
+- `M11-27`: navigator identity (`appName` / `appCodeName` / `product` /
+  `vendor` / `vendorSub` / `productSub`).
+- `M11-28`: console `debug` / `trace` / `table` / `dir` / `group` /
+  `groupEnd` / `time` / `timeEnd` / `assert` / `count`.
+
+The flat environment grows from 11 to 27 keys; the nested form and
+`get_defaults()` carry the same keys. Existing keys/defaults are unchanged; no
+new Python method or setter. Boundary:
+`docs/m11_24_28_host_environment_batch.md`. Tests:
+`test/test_m11_24_navigator_metadata.py`,
+`test/test_m11_25_screen_metadata.py`,
+`test/test_m11_26_window_metadata.py`,
+`test/test_m11_27_navigator_identity.py`,
+`test/test_m11_28_console_methods.py` (22 items). Full suite collects 1476
+items; each wheel lane: **`1474 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `a00e140` (branch `m11-24-28-host-environment-batch`):
+
+- Linux `release-linux` run `40711526339` — cp311–cp314, each
+  `1474 passed, 2 skipped`;
+- Windows `release-windows` run `40711548915` — Python 3.11–3.14, each
+  `1474 passed, 2 skipped`.
+
+All five new test files ran in every lane. The first attempt (`f857d03`)
+failed one fresh-array test; `a00e140` fixed it. Report:
+`docs/m11_24_28_report.md`.
+
+### Next
+
+Choose `M11-29` from `docs/m11_compatibility_backlog.md` or another
+gap-inventory slice with an explicit boundary.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal
