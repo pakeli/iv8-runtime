@@ -113,5 +113,5 @@ If you only remember one thing:
 
 > `HEAD` is not an M1-only repository; implementation is through M11-5
 > (`MutationObserver`), verified on real V8 (Linux + Windows) on `2026-10-28`
-> and merged to `master` on the fork (`pakeli/iv8-runtime`); upstream PR pending.
-> See `docs/m11_5_report.md`.
+> and merged to `master` on the fork (`pakeli/iv8-runtime`); upstream sync is
+> out of scope. See `docs/m11_5_report.md`.

@@ -23,10 +23,10 @@ Real-V8 CI is green on both platforms — Linux run `40632597636`, Windows run
   the existing `Page.run_jobs()` microtask checkpoint)
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
-commit `6f4f6dc`); upstream `investforever/iv8-runtime` master remains at M11-3
-pending a PR. See `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`;
-the next slice (`M11-6`) should be chosen from
-`docs/m11_compatibility_backlog.md`.
+merge point `6f4f6dc`). Upstream `investforever/iv8-runtime` remains at M11-3;
+upstream sync is out of scope and the fork is the working master. See
+`docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`; the next slice
+(`M11-6`) should be chosen from `docs/m11_compatibility_backlog.md`.
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
