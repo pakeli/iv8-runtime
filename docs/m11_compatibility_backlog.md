@@ -86,3 +86,6 @@ Tests: `test/test_mutation_observer.py`.
 M11-5 is delivered and verified (`2026-10-28`). The next slice, `M11-6`, should
 be chosen from this ranked list: Event subclasses (rank 2) are the smallest
 follow-on, while Web Storage (rank 3) is the next independent medium slice.
+
+Browser-surface gaps that are not (yet) ranked here are inventoried in
+`docs/dom_bom_gaps.md`.

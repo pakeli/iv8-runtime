@@ -266,6 +266,7 @@ narrative in prose and is kept in sync with these summaries.
 
 - current implementation status → `docs/current_status.md`
 - task queue → `docs/next_tasks.md`
+- browser-surface gaps (DOM / BOM) → `docs/dom_bom_gaps.md`
 - project-level decisions and open questions → `docs/decision_log.md`
 - local build / test setup → `docs/dev_setup.md`
 - agent working rules → `AGENTS.md`, `CLAUDE.md`
