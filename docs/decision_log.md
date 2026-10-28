@@ -165,11 +165,28 @@ frozen-surface guards; refreshing those guards in `8d606e9` was the only
 change needed. The full suite collects 1380 items (1370 previous + 8 batch
 tests).
 
+### 15. M11-18 delivered form-control attribute reflection
+
+Decided/verified `2026-10-28`.
+
+M11-18 adds a minimal reflected surface: input `type` / `disabled` /
+`readOnly` / `placeholder`, button `type` / `disabled`, `form.encoding` (an
+alias of the existing `.enctype` runtime slot), and `option.label` / read-only
+`index`. Reflected writes are real attribute writes and feed the existing
+MutationObserver attribute hooks; `form.encoding` changes only the runtime
+slot. No Python API, validation, or form-submission behavior was added.
+
+Verified on real V8 at commit `08350ce`: Linux `40698705892`, Windows
+`40698728631`, each wheel lane `1386 passed, 2 skipped`. The first verification
+run was green. The affected historical form guards were refreshed in the same
+change. See `docs/m11_18_form_control_reflection.md` and
+`docs/m11_18_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-18`?
+### A. Which concrete compatibility slice becomes `M11-19`?
 
 Settled and implemented so far:
 
@@ -239,8 +256,10 @@ direction alone.
   architecture decisions): input `type` / `disabled` / `readOnly` /
   `placeholder`, button `type` / `disabled`, `form.encoding`, and
   `option.label` / `index`. Boundary:
-  `docs/m11_18_form_control_reflection.md`. Implementation and real-V8
-  verification are in progress on `m11-18-form-control-reflection`.
+  `docs/m11_18_form_control_reflection.md`. Verified on real V8 (Linux
+  `40698705892`, Windows `40698728631`, commit `08350ce`, each wheel lane
+  `1386 passed, 2 skipped`); see `docs/m11_18_report.md`. The next slice
+  (`M11-19`) should be chosen from the backlog or the gap inventory.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

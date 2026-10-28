@@ -26,9 +26,9 @@ git log --oneline --decorate -n 20
 
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
-- As of `2026-10-28`, the latest verified milestone is **M11-12..M11-17**
-  (six-slice DOM/web completeness batch), green on real V8 Linux + Windows
-  (commit `8d606e9`, merged to `master` on the fork; upstream sync out of
+- As of `2026-10-28`, the latest verified milestone is **M11-18**
+  (form-control attribute reflection), green on real V8 Linux + Windows
+  (commit `08350ce`, merged to `master` on the fork; upstream sync out of
   scope). The M11 line is compatibility-first.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
@@ -79,15 +79,16 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-17`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-18`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
     Storage, Blob/File/FileReader, event cancellation,
     `classList`/`toggleAttribute`, event capture + listener options, element
     attribute/tree helpers, clone/equality, `URL.searchParams`, select
-    extension, and nested environment + `get_defaults()` (verified on real V8
-    Linux + Windows; latest verification `2026-10-28`);
-  - latest implemented and verified feature: the M11-12..M11-17 DOM/web
-    completeness batch.
+    extension, nested environment + `get_defaults()`, and form-control
+    attribute reflection (verified on real V8 Linux + Windows; latest
+    verification `2026-10-28`);
+  - latest implemented and verified feature: form-control attribute
+    reflection from M11-18.
 
 ## Handoff Discipline
 

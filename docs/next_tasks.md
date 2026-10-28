@@ -356,7 +356,7 @@ stale frozen-surface guards; `8d606e9` refreshed them. Report:
 Choose `M11-18` from `docs/m11_compatibility_backlog.md` (or another
 gap-inventory slice with an explicit boundary).
 
-## Priority 3j: M11-18 form-control attribute reflection — IMPLEMENTED, CI PENDING (`2026-10-28`)
+## Priority 3j: M11-18 form-control attribute reflection — DONE (`2026-10-28`)
 
 ### What landed
 
@@ -373,12 +373,25 @@ no form behavior, and no validation surface.
 
 Boundary: `docs/m11_18_form_control_reflection.md`. Tests:
 `test/test_m11_18_form_control_reflection.py` (8 items). Full suite collects
-1388 items; expected each wheel lane: **`1386 passed, 2 skipped`**.
+1388 items; each wheel lane: **`1386 passed, 2 skipped`**.
 
-### Verification pending
+### Verification — passed
 
-Real-V8 CI on branch `m11-18-form-control-reflection` (master V8 cache should
-be reused). Report: `docs/m11_18_report.md` (created at verification).
+Final commit `08350ce` (branch `m11-18-form-control-reflection`):
+
+- Linux `release-linux` run `40698705892` — cp311–cp314, each
+  `1386 passed, 2 skipped`;
+- Windows `release-windows` run `40698728631` — Python 3.11–3.14, each
+  `1386 passed, 2 skipped`.
+
+The new test file ran in every lane; the first verification run was green. The
+affected form frozen-surface guards were refreshed in the same change. Report:
+`docs/m11_18_report.md`.
+
+### Next
+
+Choose `M11-19` from `docs/m11_compatibility_backlog.md` or another
+gap-inventory slice with an explicit boundary.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

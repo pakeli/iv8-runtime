@@ -123,8 +123,11 @@ Linux `40695004440`, Windows `40695029530`, commit `8d606e9`, each wheel lane
 `2026-10-28` from `docs/dom_bom_gaps.md` rather than the ranked list, because
 the remaining ranked candidates need separate architecture decisions
 (event-loop facade, networking, `expose()`). Boundary:
-`docs/m11_18_form_control_reflection.md`; implementation and real-V8
-verification are in progress on `m11-18-form-control-reflection`.
+`docs/m11_18_form_control_reflection.md`. Delivered and verified on real V8:
+Linux `40698705892`, Windows `40698728631`, commit `08350ce`, each wheel lane
+`1386 passed, 2 skipped`; report `docs/m11_18_report.md`. The next slice
+(`M11-19`) should be chosen from the remaining ranked candidates or another
+gap-inventory slice with an explicit boundary.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

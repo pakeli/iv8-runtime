@@ -1,7 +1,6 @@
 # M11-18 — Form control attribute reflection (minimal)
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-28`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-28`)**
 
 M11-18 is a bounded follow-up to M11-12 (attribute API) and the M5–M7 form
 layers. It adds a small set of reflected properties to form controls so common
@@ -68,5 +67,12 @@ alias, `option.label`/`index`, MutationObserver records, and shape guards.
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `08350ce`:
+
+- Linux `release-linux` run `40698705892` — cp311–cp314, each
+  `1386 passed, 2 skipped`;
+- Windows `release-windows` run `40698728631` — Python 3.11–3.14, each
+  `1386 passed, 2 skipped`.
+
+The new test file ran in every lane (8 items); the full suite collects 1388
+items. See `docs/m11_18_report.md`.

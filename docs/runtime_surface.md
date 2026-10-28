@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-28` · Latest verified milestone: **M11-12..M11-17**
+Last reviewed: `2026-10-28` · Latest verified milestone: **M11-18**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -200,6 +200,10 @@ Installed per generation by `install_page`:
 - **select extension** (M11-16) — `select.options` (plain array),
   writable `selectedIndex` (single-select; `-1` clears), and read-only
   `multiple` / `size` reflection. No `select.length` or multi-select behavior;
+- **form-control attribute reflection** (M11-18) — input `type` / `disabled` /
+  `readOnly` / `placeholder`, button `type` / `disabled`, `form.encoding`
+  (alias of the runtime `enctype` slot), and `option.label` / read-only
+  `index`. Reflected writes queue MutationObserver attribute records;
 - **animation frames** — `requestAnimationFrame` / `cancelAnimationFrame` (M11-2,
   manual-pump only via `Page.run_animation_frame()`). A separate FIFO queue from the
   timers, with its own handle space; the callback receives no timestamp argument, and
@@ -231,10 +235,12 @@ Installed per generation by `install_page`:
   `closest`;
 - **form surface**, exposed only on the relevant tags — `<form>`: `elements` /
   `reset()` / `submit()` / `requestSubmit()` / `method` / `action` / `enctype` /
-  `target` / `noValidate`; controls: `form`, `value`, `checked`, `defaultValue`,
-  `defaultChecked`; `<select>`: `options` / `selectedIndex` / `multiple` /
-  `size` (M11-16); `<option>`: `value` / `selected` / `text` /
-  `defaultSelected`;
+  `encoding` (M11-18 alias) / `target` / `noValidate`; controls: `form`,
+  `value`, `checked`, `defaultValue`, `defaultChecked`; `<input>`:
+  `type` / `disabled` / `readOnly` / `placeholder` (M11-18); `<button>`:
+  `type` / `disabled` (M11-18); `<select>`: `options` / `selectedIndex` /
+  `multiple` / `size` (M11-16); `<option>`: `value` / `selected` / `text` /
+  `defaultSelected` / `label` / `index` (M11-18);
 - **web-platform globals (M8)** — `TextEncoder` / `TextDecoder` (UTF-8 only),
   `URL` (with the non-live `searchParams` snapshot since M11-15),
   `URLSearchParams`, `atob` / `btoa`.
@@ -310,6 +316,7 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-15 | `URL.searchParams` snapshot — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
 | M11-16 | `select.options` / `selectedIndex` / `multiple` / `size` — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
 | M11-17 | nested `Page(environment=...)` + `Page.get_defaults()` — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
+| M11-18 | form-control attribute reflection (`input` / `button` / `form.encoding` / `option.label` / `index`) — verified 2026-10-28 | `docs/m11_18_form_control_reflection.md`, `docs/m11_18_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

@@ -893,6 +893,13 @@ plus ``hasAttributes`` / ``getAttributeNames``; ``replaceChild`` / ``remove`` /
 ``selectedIndex`` / ``multiple`` / ``size``; and nested ``Page(environment=...)``
 plus ``Page.get_defaults()``. See ``docs/m11_12_17_dom_web_batch.md``.
 
+M11-18 adds minimal form-control attribute reflection: input ``type`` /
+``disabled`` / ``readOnly`` / ``placeholder``, button ``type`` / ``disabled``,
+``form.encoding`` (an alias of the runtime ``enctype`` slot), and
+``option.label`` / read-only ``index``. Reflected writes are real attribute
+writes and feed the MutationObserver attribute hooks; there is no new Python
+API. See ``docs/m11_18_form_control_reflection.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

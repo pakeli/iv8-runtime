@@ -7,10 +7,10 @@ Last reviewed: `2026-10-28`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-28`, the latest implemented and verified milestone is
-**M11-12..M11-17** (six-slice DOM/web batch). Real-V8 CI is green on both
-platforms — Linux run `40695004440`, Windows run `40695029530`, both on commit
-`8d606e9`, each wheel lane reporting `1378 passed, 2 skipped`:
+As of `2026-10-28`, the latest implemented and verified milestone is **M11-18**
+(form-control attribute reflection). Real-V8 CI is green on both platforms —
+Linux run `40698705892`, Windows run `40698728631`, both on commit `08350ce`,
+each wheel lane reporting `1386 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -36,6 +36,8 @@ platforms — Linux run `40695004440`, Windows run `40695029530`, both on commit
 - `M11-15`: `URL.searchParams` snapshot
 - `M11-16`: `select.options` / `selectedIndex` / `multiple` / `size`
 - `M11-17`: nested `Page(environment=...)` + `Page.get_defaults()`
+- `M11-18`: input/button `type` / `disabled` reflection, input `readOnly` /
+  `placeholder`, `form.encoding`, `option.label` / `index`
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -44,15 +46,11 @@ the fork's `master`. M11-11 was verified on `m11-11-event-capture` (commit
 `a269aa9`) and merged to the fork's `master`. M11-12 through M11-17 were
 verified as one six-slice DOM/web batch on branch
 `m11-12-17-dom-web-batch` (final commit `8d606e9`) and merged to the fork's
-`master`. Upstream `investforever/iv8-runtime` remains at M11-3; upstream sync
-is out of scope and the fork is the working master. See the report documents
-(`docs/m11_6_report.md` … `docs/m11_12_17_report.md`).
-
-**In progress:** `M11-18` (form-control attribute reflection: input
-`type` / `disabled` / `readOnly` / `placeholder`, button `type` / `disabled`,
-`form.encoding`, `option.label` / `index`) is implemented on
-`m11-18-form-control-reflection`; real-V8 CI verification is pending. See
-`docs/m11_18_form_control_reflection.md`.
+`master`. M11-18 (form-control attribute reflection) was verified on
+`m11-18-form-control-reflection` (final commit `08350ce`) and merged to the
+fork's `master`. Upstream `investforever/iv8-runtime` remains at M11-3;
+upstream sync is out of scope and the fork is the working master. See the
+report documents (`docs/m11_6_report.md` … `docs/m11_18_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -188,6 +186,11 @@ Implemented and present at `HEAD`:
   `selectedIndex` / `multiple` / `size`, and nested `Page(environment=...)` +
   `Page.get_defaults()`. Verified `2026-10-28`; see
   `docs/m11_12_17_dom_web_batch.md`.
+- `M11-18` form-control attribute reflection — input `type` / `disabled` /
+  `readOnly` / `placeholder`, button `type` / `disabled`, `form.encoding`
+  (enctype alias), and `option.label` / read-only `index`; reflected writes
+  feed the MutationObserver attribute hooks. Verified `2026-10-28`; see
+  `docs/m11_18_form_control_reflection.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -213,6 +216,7 @@ Recent implementation sequence from Git history:
   cloneNode/equality, `URL.searchParams` snapshot, select extension, and nested
   environment + `get_defaults()` — verified as one six-slice batch
   (`2026-10-28`)
+- `M11-18`: form-control attribute reflection (verified `2026-10-28`)
 
 ## 4. Release / Distribution Status
 
@@ -287,17 +291,21 @@ The repository is executing its post-M10 direction:
   `get_defaults()`) are **landed and verified on real V8 (Linux + Windows)** on
   `2026-10-28` as one six-slice batch; see
   `docs/m11_12_17_dom_web_batch.md` and `docs/m11_12_17_report.md`;
-- the next execution handoff is to choose `M11-18` from the ranked
-  compatibility backlog (`docs/m11_compatibility_backlog.md`).
+- `M11-18` (form-control attribute reflection) is **landed and verified on
+  real V8 (Linux + Windows)** on `2026-10-28`; see
+  `docs/m11_18_form_control_reflection.md` and `docs/m11_18_report.md`;
+- the next execution handoff is to choose `M11-19` from the ranked
+  compatibility backlog (`docs/m11_compatibility_backlog.md`) or another
+  gap-inventory slice with an explicit boundary.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-18`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-17` are settled, landed, and verified; the ranked
+- Which concrete compatibility slice should become `M11-19`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-18` are settled, landed, and verified; the ranked
   compatibility matrix at `docs/m11_compatibility_backlog.md` should drive the
-  next choice.)
+  next choice, with `docs/dom_bom_gaps.md` as the fallback inventory.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -312,8 +320,8 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with `M11-12` through `M11-17` (DOM/web
-> completeness batch) landed and verified on real V8 (Linux + Windows) on
+> compatibility-first `M11` line — with `M11-18` (form-control attribute
+> reflection) landed and verified on real V8 (Linux + Windows) on
 > `2026-10-28`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.

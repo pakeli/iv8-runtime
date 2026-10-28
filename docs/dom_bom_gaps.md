@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-28` · Baseline: **M11-17** (`M11-12..M11-17` DOM/web
-batch verified `2026-10-28`)
+Last reviewed: `2026-10-28` · Baseline: **M11-18** (form-control attribute
+reflection verified `2026-10-28`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-17. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-18. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -130,7 +130,7 @@ M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
 | `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **absent** |
 | `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
 | `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
-| Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **partially selected for M11-18** — form-control subset only; other reflections **absent** |
+| Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **partially implemented (M11-18)** — form-control subset only; other reflections **absent** |
 | `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **absent** — need text-node/string semantics |
 | Specialized `HTML*Element` classes | **excluded** |
 | Shadow DOM (`attachShadow`, `ShadowRoot`, slots), Custom Elements, `<template>` | **absent** |
@@ -172,16 +172,15 @@ cancellation (`cancelable` / `defaultPrevented` / `preventDefault` /
 | `FormData` and real form encoding | **absent** |
 | `select.length`, option collection methods, multi-select behavior | **absent** — minimal single-select only |
 | Radio-group exclusivity; type-specific input behavior | **absent** |
-| `input.type` / `disabled` / `readOnly` / `placeholder`; `button.type` / `disabled` | **selected for M11-18** |
-| `option.label` / `option.index` | **selected for M11-18** |
 | Browsing-context resolution of `target`; URL resolution of `action` | **absent** — stored verbatim |
-| `form.encoding` (the `enctype` alias) | **selected for M11-18** |
 
 Implemented for contrast: `form.elements` (plain array), `reset()`, no-op
 `submit()` / `requestSubmit()`, the five form metadata properties,
 control `value` / `checked` / `default*` / `form`, and the option surface.
 M11-16 added `select.options`, writable `selectedIndex`, and read-only
-`multiple` / `size`; `URL.searchParams` (M11-15) is a non-live snapshot.
+`multiple` / `size`; M11-18 added input `type` / `disabled` / `readOnly` /
+`placeholder`, button `type` / `disabled`, `form.encoding`, and
+`option.label` / `index`; `URL.searchParams` (M11-15) is a non-live snapshot.
 
 ### 2.7 Scripts and document loading
 
@@ -239,7 +238,8 @@ The M11-6..M11-10 batch delivered event subclasses, Web Storage,
 Blob/File/FileReader, event cancellation, and classList/toggleAttribute;
 M11-11 delivered event capture and listener options; M11-12..M11-17 delivered
 the element attribute/tree/clone/URL.searchParams/select extensions and the
-nested environment + `get_defaults()`. Remaining candidates (mapping to
+nested environment + `get_defaults()`; M11-18 delivered form-control attribute
+reflection. Remaining candidates (mapping to
 `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
