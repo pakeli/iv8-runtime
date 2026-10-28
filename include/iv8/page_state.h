@@ -13,10 +13,10 @@
 
 namespace iv8 {
 
-// M11-1 configurable host-environment baseline. These are the values the page's
-// read-only environment surface reports: navigator (userAgent / platform /
-// language / webdriver), screen (width / height / availWidth / availHeight), and
-// window (devicePixelRatio / innerWidth / innerHeight).
+// M11-1/M11-17/M11-24..M11-27 configurable host-environment baseline. These are
+// the values the page's read-only environment surface reports: navigator
+// identity/metadata, screen dimensions and color depth, and window
+// dimensions/geometry.
 //
 // This struct carries NO defaults. The Python facade (python/iv8/page.py) owns the
 // single default template and always passes a fully-resolved, already-validated set
@@ -32,13 +32,32 @@ struct HostEnvironment {
     std::string platform;
     std::string language;
     bool webdriver = false;
+    // M11-24..M11-27: deterministic navigator metadata / identity values.
+    std::vector<std::string> languages;
+    bool on_line = false;
+    bool cookie_enabled = false;
+    int hardware_concurrency = 0;
+    std::string app_name;
+    std::string app_code_name;
+    std::string product;
+    std::string vendor;
+    std::string vendor_sub;
+    std::string product_sub;
     int screen_width = 0;
     int screen_height = 0;
     int avail_width = 0;
     int avail_height = 0;
+    // M11-25: screen depth metadata.
+    int color_depth = 0;
+    int pixel_depth = 0;
     double device_pixel_ratio = 0.0;
     int inner_width = 0;
     int inner_height = 0;
+    // M11-26: reported window geometry (read-only; no layout engine).
+    int outer_width = 0;
+    int outer_height = 0;
+    int screen_x = 0;
+    int screen_y = 0;
 };
 
 class ContextState;

@@ -26,14 +26,33 @@ void register_page(py::module_& module) {
             resolved.platform = environment["platform"].cast<std::string>();
             resolved.language = environment["language"].cast<std::string>();
             resolved.webdriver = environment["webdriver"].cast<bool>();
+            resolved.languages =
+                environment["languages"].cast<std::vector<std::string>>();
+            resolved.on_line = environment["onLine"].cast<bool>();
+            resolved.cookie_enabled = environment["cookieEnabled"].cast<bool>();
+            resolved.hardware_concurrency =
+                environment["hardwareConcurrency"].cast<int>();
+            resolved.app_name = environment["appName"].cast<std::string>();
+            resolved.app_code_name =
+                environment["appCodeName"].cast<std::string>();
+            resolved.product = environment["product"].cast<std::string>();
+            resolved.vendor = environment["vendor"].cast<std::string>();
+            resolved.vendor_sub = environment["vendorSub"].cast<std::string>();
+            resolved.product_sub = environment["productSub"].cast<std::string>();
             resolved.screen_width = environment["screenWidth"].cast<int>();
             resolved.screen_height = environment["screenHeight"].cast<int>();
             resolved.avail_width = environment["availWidth"].cast<int>();
             resolved.avail_height = environment["availHeight"].cast<int>();
+            resolved.color_depth = environment["screenColorDepth"].cast<int>();
+            resolved.pixel_depth = environment["screenPixelDepth"].cast<int>();
             resolved.device_pixel_ratio =
                 environment["devicePixelRatio"].cast<double>();
             resolved.inner_width = environment["innerWidth"].cast<int>();
             resolved.inner_height = environment["innerHeight"].cast<int>();
+            resolved.outer_width = environment["outerWidth"].cast<int>();
+            resolved.outer_height = environment["outerHeight"].cast<int>();
+            resolved.screen_x = environment["screenX"].cast<int>();
+            resolved.screen_y = environment["screenY"].cast<int>();
             return std::make_unique<iv8::PageState>(std::move(resolved));
         }), py::arg("environment"))
         .def_property_readonly("disposed", &iv8::PageState::disposed)

@@ -1,10 +1,11 @@
-"""M11-1 acceptance tests: configurable host-environment baseline.
+"""M11-1/M11-24..M11-27 acceptance tests: configurable host-environment baseline.
 
 `Page(environment=...)` configures the page's read-only environment surface and
 `Page.get_default_environment()` returns the default template as a plain dict. The
-eleven supported keys map onto navigator.userAgent / platform / language / webdriver,
+original eleven keys map onto navigator.userAgent / platform / language / webdriver,
 screen.width / height / availWidth / availHeight, and window.devicePixelRatio /
-innerWidth / innerHeight.
+innerWidth / innerHeight. M11-24..M11-27 add navigator metadata/identity fields,
+screen color/pixel depth, and outer window geometry.
 
 Every value is a fixed constant (never OS/display/locale-derived), the whole surface
 is read-only from JS, values stay identical across repeated `load()` generations, and
@@ -28,13 +29,29 @@ EXPECTED_KEYS = {
     "platform": str,
     "language": str,
     "webdriver": bool,
+    "languages": list,
+    "onLine": bool,
+    "cookieEnabled": bool,
+    "hardwareConcurrency": int,
+    "appName": str,
+    "appCodeName": str,
+    "product": str,
+    "vendor": str,
+    "vendorSub": str,
+    "productSub": str,
     "screenWidth": int,
     "screenHeight": int,
     "availWidth": int,
     "availHeight": int,
+    "screenColorDepth": int,
+    "screenPixelDepth": int,
     "devicePixelRatio": float,
     "innerWidth": int,
     "innerHeight": int,
+    "outerWidth": int,
+    "outerHeight": int,
+    "screenX": int,
+    "screenY": int,
 }
 
 # The documented defaults. The four navigator values must match what M2-3 shipped,
@@ -44,13 +61,29 @@ EXPECTED_DEFAULTS = {
     "platform": "iv8",
     "language": "en-US",
     "webdriver": False,
+    "languages": ["en-US", "en"],
+    "onLine": True,
+    "cookieEnabled": True,
+    "hardwareConcurrency": 8,
+    "appName": "Netscape",
+    "appCodeName": "Mozilla",
+    "product": "Gecko",
+    "vendor": "",
+    "vendorSub": "",
+    "productSub": "20100101",
     "screenWidth": 1920,
     "screenHeight": 1080,
     "availWidth": 1920,
     "availHeight": 1040,
+    "screenColorDepth": 24,
+    "screenPixelDepth": 24,
     "devicePixelRatio": 1.0,
     "innerWidth": 1280,
     "innerHeight": 720,
+    "outerWidth": 1280,
+    "outerHeight": 720,
+    "screenX": 0,
+    "screenY": 0,
 }
 
 # The JS expression that reads each environment key, for value round-tripping.
@@ -59,14 +92,35 @@ JS_READER = {
     "platform": "navigator.platform",
     "language": "navigator.language",
     "webdriver": "navigator.webdriver",
+    "languages": "navigator.languages",
+    "onLine": "navigator.onLine",
+    "cookieEnabled": "navigator.cookieEnabled",
+    "hardwareConcurrency": "navigator.hardwareConcurrency",
+    "appName": "navigator.appName",
+    "appCodeName": "navigator.appCodeName",
+    "product": "navigator.product",
+    "vendor": "navigator.vendor",
+    "vendorSub": "navigator.vendorSub",
+    "productSub": "navigator.productSub",
     "screenWidth": "screen.width",
     "screenHeight": "screen.height",
     "availWidth": "screen.availWidth",
     "availHeight": "screen.availHeight",
+    "screenColorDepth": "screen.colorDepth",
+    "screenPixelDepth": "screen.pixelDepth",
     "devicePixelRatio": "devicePixelRatio",
     "innerWidth": "innerWidth",
     "innerHeight": "innerHeight",
+    "outerWidth": "outerWidth",
+    "outerHeight": "outerHeight",
+    "screenX": "screenX",
+    "screenY": "screenY",
 }
+
+
+def _read_env(page, key):
+    # to_py=True is needed for the languages array; scalars are unchanged.
+    return page.eval(JS_READER[key], to_py=True)
 
 # A full override set, every value distinct from the default so a leaked default is
 # always visible as a failure.
@@ -75,13 +129,29 @@ OVERRIDE = {
     "platform": "Linux x86_64",
     "language": "zh-CN",
     "webdriver": True,
+    "languages": ["fr-FR", "fr"],
+    "onLine": False,
+    "cookieEnabled": False,
+    "hardwareConcurrency": 4,
+    "appName": "CustomApp",
+    "appCodeName": "CustomCode",
+    "product": "CustomProduct",
+    "vendor": "CustomVendor",
+    "vendorSub": "CustomSub",
+    "productSub": "CustomProductSub",
     "screenWidth": 2560,
     "screenHeight": 1440,
     "availWidth": 2550,
     "availHeight": 1400,
+    "screenColorDepth": 30,
+    "screenPixelDepth": 30,
     "devicePixelRatio": 2.5,
     "innerWidth": 1024,
     "innerHeight": 768,
+    "outerWidth": 1111,
+    "outerHeight": 777,
+    "screenX": 12,
+    "screenY": 34,
 }
 
 
@@ -126,6 +196,7 @@ def test_default_environment_returns_a_fresh_copy():
     first = iv8.Page.get_default_environment()
     first["userAgent"] = "mutated"
     first["screenWidth"] = -1
+    first["languages"].append("mutated")
     del first["language"]
     # A later call is unaffected by mutating an earlier result.
     assert iv8.Page.get_default_environment() == EXPECTED_DEFAULTS
@@ -143,7 +214,7 @@ def test_default_environment_callable_without_a_page():
 def test_js_reports_defaults_when_unconfigured():
     with iv8.Page() as page:
         for key, expected in EXPECTED_DEFAULTS.items():
-            assert page.eval(JS_READER[key]) == expected, key
+            assert _read_env(page, key) == expected, key
 
 
 @on_only
@@ -157,7 +228,7 @@ def test_environment_none_matches_omitted():
 def test_empty_mapping_yields_defaults():
     with iv8.Page(environment={}) as page:
         for key, expected in EXPECTED_DEFAULTS.items():
-            assert page.eval(JS_READER[key]) == expected, key
+            assert _read_env(page, key) == expected, key
 
 
 @on_only
@@ -177,7 +248,7 @@ def test_screen_and_window_objects_exist():
 def test_full_override_visible_in_js():
     with iv8.Page(environment=OVERRIDE) as page:
         for key, expected in OVERRIDE.items():
-            assert page.eval(JS_READER[key]) == expected, key
+            assert _read_env(page, key) == expected, key
 
 
 @on_only
@@ -186,7 +257,7 @@ def test_single_key_override_leaves_the_rest_at_default(key):
     with iv8.Page(environment={key: OVERRIDE[key]}) as page:
         for other, default in EXPECTED_DEFAULTS.items():
             expected = OVERRIDE[key] if other == key else default
-            assert page.eval(JS_READER[other]) == expected, other
+            assert _read_env(page, other) == expected, other
 
 
 @on_only
@@ -261,6 +332,13 @@ def test_environment_surface_is_read_only():
             == OVERRIDE["devicePixelRatio"]
         assert page.eval("innerWidth = 9; innerWidth") == OVERRIDE["innerWidth"]
         assert page.eval("innerHeight = 9; innerHeight") == OVERRIDE["innerHeight"]
+        assert page.eval("navigator.onLine = true; navigator.onLine") is False
+        assert page.eval("navigator.languages = []; navigator.languages.join(',')") \
+            == "fr-FR,fr"
+        assert page.eval("screen.colorDepth = 1; screen.colorDepth") \
+            == OVERRIDE["screenColorDepth"]
+        assert page.eval("outerWidth = 9; outerWidth") == OVERRIDE["outerWidth"]
+        assert page.eval("screenX = 9; screenX") == OVERRIDE["screenX"]
 
 
 @on_only
@@ -281,7 +359,7 @@ def test_values_survive_repeated_load():
         for generation in range(3):
             page.load("<html><body></body></html>", f"{BASE}{generation}")
             for key, expected in OVERRIDE.items():
-                assert page.eval(JS_READER[key]) == expected, (generation, key)
+                assert _read_env(page, key) == expected, (generation, key)
 
 
 @on_only
@@ -289,7 +367,7 @@ def test_defaults_survive_repeated_load():
     with iv8.Page() as page:
         page.load("<html><body></body></html>", BASE)
         for key, expected in EXPECTED_DEFAULTS.items():
-            assert page.eval(JS_READER[key]) == expected, key
+            assert _read_env(page, key) == expected, key
 
 
 @on_only
@@ -332,7 +410,7 @@ def test_non_mapping_environment_raises_type_error():
 
 
 def test_unknown_key_raises_type_error():
-    for bad_key in ("userAgentData", "colorDepth", "outerWidth", "", "useragent",
+    for bad_key in ("userAgentData", "colorDepth", "pixelDepth", "", "useragent",
                     "UserAgent"):
         with pytest.raises(TypeError, match="unknown environment key"):
             iv8.Page(environment={bad_key: 1})
@@ -343,34 +421,55 @@ def test_unknown_key_rejected_even_beside_valid_keys():
         iv8.Page(environment={"userAgent": "ok", "colorDepth": 24})
 
 
-@pytest.mark.parametrize("key", ["userAgent", "platform", "language"])
+@pytest.mark.parametrize("key", ["userAgent", "platform", "language",
+                                 "appName", "appCodeName", "product", "vendor",
+                                 "vendorSub", "productSub"])
 def test_string_keys_reject_non_strings(key):
     for bad in (1, 1.0, True, None, [], {}, b"bytes"):
         with pytest.raises(TypeError, match="must be a str"):
             iv8.Page(environment={key: bad})
 
 
-def test_webdriver_rejects_non_bool():
+@pytest.mark.parametrize("key", ["webdriver", "onLine", "cookieEnabled"])
+def test_bool_keys_reject_non_bools(key):
     for bad in (1, 0, "true", None, [], 1.0):
         with pytest.raises(TypeError, match="must be a bool"):
-            iv8.Page(environment={"webdriver": bad})
+            iv8.Page(environment={key: bad})
 
 
-@pytest.mark.parametrize("key", ["screenWidth", "screenHeight", "availWidth",
-                                 "availHeight", "innerWidth", "innerHeight"])
+@pytest.mark.parametrize("key", ["hardwareConcurrency", "screenWidth",
+                                 "screenHeight", "availWidth", "availHeight",
+                                 "screenColorDepth", "screenPixelDepth",
+                                 "innerWidth", "innerHeight", "outerWidth",
+                                 "outerHeight", "screenX", "screenY"])
 def test_int_keys_reject_non_ints(key):
     for bad in ("1920", 1920.0, None, [], {}, 1920.5):
         with pytest.raises(TypeError, match="must be an int"):
             iv8.Page(environment={key: bad})
 
 
-@pytest.mark.parametrize("key", ["screenWidth", "screenHeight", "availWidth",
-                                 "availHeight", "innerWidth", "innerHeight"])
+@pytest.mark.parametrize("key", ["hardwareConcurrency", "screenWidth",
+                                 "screenHeight", "availWidth", "availHeight",
+                                 "screenColorDepth", "screenPixelDepth",
+                                 "innerWidth", "innerHeight", "outerWidth",
+                                 "outerHeight", "screenX", "screenY"])
 def test_int_keys_reject_bool(key):
     # bool is a subclass of int in Python; a dimension must not silently accept it.
     for bad in (True, False):
         with pytest.raises(TypeError, match="must be an int"):
             iv8.Page(environment={key: bad})
+
+
+def test_languages_validation():
+    for bad in ([], ["en", 3], ["en", ""], "en-US", ("en-US",), None):
+        with pytest.raises(TypeError, match="non-empty list of str"):
+            iv8.Page(environment={"languages": bad})
+
+
+@on_only
+def test_languages_override_applied():
+    with iv8.Page(environment={"languages": ["ja-JP"]}) as page:
+        assert page.eval("navigator.languages.join(',')") == "ja-JP"
 
 
 def test_device_pixel_ratio_rejects_non_numbers():

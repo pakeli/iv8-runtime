@@ -37,29 +37,63 @@ _DEFAULT_ENVIRONMENT = {
     "platform": "iv8",
     "language": "en-US",
     "webdriver": False,
+    "languages": ["en-US", "en"],
+    "onLine": True,
+    "cookieEnabled": True,
+    "hardwareConcurrency": 8,
+    "appName": "Netscape",
+    "appCodeName": "Mozilla",
+    "product": "Gecko",
+    "vendor": "",
+    "vendorSub": "",
+    "productSub": "20100101",
     "screenWidth": 1920,
     "screenHeight": 1080,
     "availWidth": 1920,
     "availHeight": 1040,
+    "screenColorDepth": 24,
+    "screenPixelDepth": 24,
     "devicePixelRatio": 1.0,
     "innerWidth": 1280,
     "innerHeight": 720,
+    "outerWidth": 1280,
+    "outerHeight": 720,
+    "screenX": 0,
+    "screenY": 0,
 }
 
 # Per-key type rules for _normalize_environment. The integer keys reject `bool`
 # explicitly (in Python `bool` is a subclass of `int`, so `isinstance(True, int)` is
 # True and a stray boolean would otherwise pass as a dimension).
-_STR_KEYS = ("userAgent", "platform", "language")
-_BOOL_KEYS = ("webdriver",)
+_STR_KEYS = (
+    "userAgent",
+    "platform",
+    "language",
+    "appName",
+    "appCodeName",
+    "product",
+    "vendor",
+    "vendorSub",
+    "productSub",
+)
+_BOOL_KEYS = ("webdriver", "onLine", "cookieEnabled")
 _INT_KEYS = (
+    "hardwareConcurrency",
     "screenWidth",
     "screenHeight",
     "availWidth",
     "availHeight",
+    "screenColorDepth",
+    "screenPixelDepth",
     "innerWidth",
     "innerHeight",
+    "outerWidth",
+    "outerHeight",
+    "screenX",
+    "screenY",
 )
 _FLOAT_KEYS = ("devicePixelRatio",)
+_LIST_STR_KEYS = ("languages",)
 
 # M11-17: nested environment sections -> flat native keys.
 _NESTED_ENVIRONMENT = {
@@ -68,17 +102,33 @@ _NESTED_ENVIRONMENT = {
         "platform": "platform",
         "language": "language",
         "webdriver": "webdriver",
+        "languages": "languages",
+        "onLine": "onLine",
+        "cookieEnabled": "cookieEnabled",
+        "hardwareConcurrency": "hardwareConcurrency",
+        "appName": "appName",
+        "appCodeName": "appCodeName",
+        "product": "product",
+        "vendor": "vendor",
+        "vendorSub": "vendorSub",
+        "productSub": "productSub",
     },
     "screen": {
         "width": "screenWidth",
         "height": "screenHeight",
         "availWidth": "availWidth",
         "availHeight": "availHeight",
+        "colorDepth": "screenColorDepth",
+        "pixelDepth": "screenPixelDepth",
     },
     "window": {
         "devicePixelRatio": "devicePixelRatio",
         "innerWidth": "innerWidth",
         "innerHeight": "innerHeight",
+        "outerWidth": "outerWidth",
+        "outerHeight": "outerHeight",
+        "screenX": "screenX",
+        "screenY": "screenY",
     },
 }
 
@@ -88,7 +138,8 @@ def _normalize_environment(environment):
 
     ``environment`` must be ``None`` (or omitted) or a mapping whose keys are a
     subset of ``_DEFAULT_ENVIRONMENT``. The result is always a full dict with all
-    eleven keys: supplied values override the defaults and the rest are inherited.
+    supported keys: supplied values override the defaults and the rest are
+    inherited.
 
     Validation is strict and happens entirely here, before any native page state
     exists — so a bad environment can never leave a partially-installed page:
@@ -98,9 +149,11 @@ def _normalize_environment(environment):
     - a value of the wrong type for its key raises ``TypeError``.
 
     ``devicePixelRatio`` accepts an ``int`` or a ``float`` and is stored as
-    ``float``; every other key requires its exact type.
+    ``float``; ``languages`` requires a non-empty list of non-empty strings.
+    Every other key requires its exact type.
     """
     resolved = dict(_DEFAULT_ENVIRONMENT)
+    resolved["languages"] = list(resolved["languages"])
     if environment is None:
         return resolved
     if not isinstance(environment, Mapping):
@@ -153,6 +206,15 @@ def _normalize_environment(environment):
             if isinstance(value, bool) or not isinstance(value, (int, float)):
                 raise TypeError(f"environment[{key!r}] must be a real number")
             resolved[key] = float(value)
+    for key in _LIST_STR_KEYS:
+        if key in environment:
+            value = environment[key]
+            if (not isinstance(value, list) or not value or
+                    any(not isinstance(item, str) or not item for item in value)):
+                raise TypeError(
+                    f"environment[{key!r}] must be a non-empty list of str"
+                )
+            resolved[key] = list(value)
     return resolved
 
 
@@ -218,7 +280,8 @@ class Page:
 
     M11-17 additionally accepts the nested ``navigator`` / ``screen`` / ``window``
     form and adds :meth:`get_defaults` for that shape. Mixing nested and flat keys
-    in one mapping is rejected.
+    in one mapping is rejected. M11-24..M11-27 extend both forms with navigator
+    metadata/identity, screen depth, and outer window geometry.
     """
 
     @staticmethod
@@ -226,10 +289,14 @@ class Page:
         """M11-17: return the nested default environment template.
 
         Sections: ``navigator`` (``userAgent`` / ``platform`` / ``language`` /
-        ``webdriver``), ``screen`` (``width`` / ``height`` / ``availWidth`` /
-        ``availHeight``), and ``window`` (``devicePixelRatio`` /
-        ``innerWidth`` / ``innerHeight``). The result is a fresh, fully nested
-        ``dict``; it is accepted directly by ``Page(environment=...)``.
+        ``webdriver`` / ``languages`` / ``onLine`` / ``cookieEnabled`` /
+        ``hardwareConcurrency`` / ``appName`` / ``appCodeName`` / ``product`` /
+        ``vendor`` / ``vendorSub`` / ``productSub``), ``screen`` (``width`` /
+        ``height`` / ``availWidth`` / ``availHeight`` / ``colorDepth`` /
+        ``pixelDepth``), and ``window`` (``devicePixelRatio`` / ``innerWidth`` /
+        ``innerHeight`` / ``outerWidth`` / ``outerHeight`` / ``screenX`` /
+        ``screenY``). The result is a fresh, fully nested ``dict``; it is
+        accepted directly by ``Page(environment=...)``.
         """
         return {
             "navigator": {
@@ -237,17 +304,34 @@ class Page:
                 "platform": _DEFAULT_ENVIRONMENT["platform"],
                 "language": _DEFAULT_ENVIRONMENT["language"],
                 "webdriver": _DEFAULT_ENVIRONMENT["webdriver"],
+                "languages": list(_DEFAULT_ENVIRONMENT["languages"]),
+                "onLine": _DEFAULT_ENVIRONMENT["onLine"],
+                "cookieEnabled": _DEFAULT_ENVIRONMENT["cookieEnabled"],
+                "hardwareConcurrency":
+                    _DEFAULT_ENVIRONMENT["hardwareConcurrency"],
+                "appName": _DEFAULT_ENVIRONMENT["appName"],
+                "appCodeName": _DEFAULT_ENVIRONMENT["appCodeName"],
+                "product": _DEFAULT_ENVIRONMENT["product"],
+                "vendor": _DEFAULT_ENVIRONMENT["vendor"],
+                "vendorSub": _DEFAULT_ENVIRONMENT["vendorSub"],
+                "productSub": _DEFAULT_ENVIRONMENT["productSub"],
             },
             "screen": {
                 "width": _DEFAULT_ENVIRONMENT["screenWidth"],
                 "height": _DEFAULT_ENVIRONMENT["screenHeight"],
                 "availWidth": _DEFAULT_ENVIRONMENT["availWidth"],
                 "availHeight": _DEFAULT_ENVIRONMENT["availHeight"],
+                "colorDepth": _DEFAULT_ENVIRONMENT["screenColorDepth"],
+                "pixelDepth": _DEFAULT_ENVIRONMENT["screenPixelDepth"],
             },
             "window": {
                 "devicePixelRatio": _DEFAULT_ENVIRONMENT["devicePixelRatio"],
                 "innerWidth": _DEFAULT_ENVIRONMENT["innerWidth"],
                 "innerHeight": _DEFAULT_ENVIRONMENT["innerHeight"],
+                "outerWidth": _DEFAULT_ENVIRONMENT["outerWidth"],
+                "outerHeight": _DEFAULT_ENVIRONMENT["outerHeight"],
+                "screenX": _DEFAULT_ENVIRONMENT["screenX"],
+                "screenY": _DEFAULT_ENVIRONMENT["screenY"],
             },
         }
 
@@ -259,10 +343,15 @@ class Page:
         existing page, or a later ``Page()``. Its keys are exactly the keys
         ``Page(environment=...)`` accepts:
 
-        ``userAgent`` / ``platform`` / ``language`` (``str``), ``webdriver``
-        (``bool``), ``screenWidth`` / ``screenHeight`` / ``availWidth`` /
-        ``availHeight`` / ``innerWidth`` / ``innerHeight`` (``int``), and
-        ``devicePixelRatio`` (``float``).
+        Navigator values: ``userAgent`` / ``platform`` / ``language`` /
+        ``appName`` / ``appCodeName`` / ``product`` / ``vendor`` / ``vendorSub``
+        / ``productSub`` (``str``), ``webdriver`` / ``onLine`` /
+        ``cookieEnabled`` (``bool``), ``languages`` (non-empty ``list[str]``),
+        and ``hardwareConcurrency`` (``int``). Screen/window values:
+        ``screenWidth`` / ``screenHeight`` / ``availWidth`` / ``availHeight`` /
+        ``screenColorDepth`` / ``screenPixelDepth`` / ``innerWidth`` /
+        ``innerHeight`` / ``outerWidth`` / ``outerHeight`` / ``screenX`` /
+        ``screenY`` (``int``), and ``devicePixelRatio`` (``float``).
 
         The intended use is to read the template, override the keys you care about,
         and pass it back:
@@ -278,7 +367,9 @@ class Page:
         callable on the class (no page needed) and in a V8-free skeleton build, since
         it touches no native state.
         """
-        return dict(_DEFAULT_ENVIRONMENT)
+        env = dict(_DEFAULT_ENVIRONMENT)
+        env["languages"] = list(env["languages"])
+        return env
 
     def __init__(self, environment=None) -> None:
         # M11-1: validate and resolve the environment BEFORE the V8-link check and

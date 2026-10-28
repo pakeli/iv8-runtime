@@ -87,11 +87,14 @@ public:
     }
 };
 
-// M2-2 minimal `console`. A host object exposing log/info/warn/error. Arguments
-// are stringified with JS's own ToString (minimal, deterministic; NOT browser
-// console format-string compatible) and joined by a single space. The message
-// defaults to Python `logging` on the "iv8.console" logger:
-//   log, info -> INFO ; warn -> WARNING ; error -> ERROR.
+// M2-2/M11-28 minimal `console`. A host object exposing the classic logging
+// methods plus debug/trace/table/dir/group/groupEnd/time/timeEnd/assert/count.
+// Arguments are stringified with JS's own ToString (minimal, deterministic; NOT
+// browser console format-string compatible) and joined by a single space. The
+// message lands in Python `logging` on the "iv8.console" logger:
+//   log/info/table/dir/group/time -> INFO ; debug/trace -> DEBUG ;
+//   warn -> WARNING ; error/assert -> ERROR.
+// There is no clock, stack capture, table formatting, group nesting, or timing.
 // The callback runs during eval with the GIL released, so it reacquires the GIL
 // only for the logging call and never lets a Python error escape into V8.
 class ConsoleHost : public HostObject {
@@ -101,7 +104,9 @@ public:
     std::vector<std::string> property_names() const override { return {}; }
 
     std::vector<std::string> method_names() const override {
-        return {"log", "info", "warn", "error"};
+        return {"log",   "info",  "warn",  "error", "debug",
+                "trace", "table", "dir",   "group", "groupEnd",
+                "time",  "timeEnd", "assert", "count"};
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
@@ -113,39 +118,78 @@ public:
         v8::Isolate* isolate, v8::Local<v8::Context> context,
         const std::string& name,
         const v8::FunctionCallbackInfo<v8::Value>& args) override {
+        if (name == "groupEnd") {
+            return v8::Undefined(isolate);  // no nesting state in this slice
+        }
+        if (name == "assert") {
+            const bool condition =
+                args.Length() > 0 && args[0]->BooleanValue(isolate);
+            if (condition) {
+                return v8::Undefined(isolate);
+            }
+            const std::string detail =
+                join_args(isolate, context, args, 1);
+            log_message("error", detail.empty()
+                                     ? std::string("Assertion failed")
+                                     : "Assertion failed: " + detail);
+            return v8::Undefined(isolate);
+        }
+        if (name == "count") {
+            const std::string label =
+                args.Length() > 0
+                    ? join_args(isolate, context, args)
+                    : std::string("default");
+            const int next = ++counts_[label];
+            log_message("info", label + ": " + std::to_string(next));
+            return v8::Undefined(isolate);
+        }
+        if (name == "time" || name == "timeEnd") {
+            const std::string label =
+                args.Length() > 0
+                    ? join_args(isolate, context, args)
+                    : std::string("default");
+            log_message("info",
+                        (name == "time" ? "Timer started: "
+                                        : "Timer ended: ") + label);
+            return v8::Undefined(isolate);
+        }
         const std::string message = join_args(isolate, context, args);
-
-        const char* level = "info";  // log, info
-        if (name == "warn") {
+        const char* level = "info";  // log, info, table, dir, group
+        if (name == "debug" || name == "trace") {
+            level = "debug";
+        } else if (name == "warn") {
             level = "warning";
         } else if (name == "error") {
             level = "error";
         }
-
-        {
-            py::gil_scoped_acquire gil;
-            try {
-                py::module_::import("logging")
-                    .attr("getLogger")("iv8.console")
-                    .attr(level)(py::str(message));
-            } catch (const py::error_already_set&) {
-                // A logging failure must never break JS execution; swallow it
-                // (the GIL is held here, so clearing the Python error is safe).
-            }
-        }
+        log_message(level, message);
         return v8::Undefined(isolate);
     }
 
 private:
+    static void log_message(const char* level, const std::string& message) {
+        py::gil_scoped_acquire gil;
+        try {
+            py::module_::import("logging")
+                .attr("getLogger")("iv8.console")
+                .attr(level)(py::str(message));
+        } catch (const py::error_already_set&) {
+            // A logging failure must never break JS execution; swallow it
+            // (the GIL is held here, so clearing the Python error is safe).
+        }
+    }
+
     // Minimal deterministic stringification: JS ToString per argument, joined by
     // a single space. A throwing toString is swallowed (console stays
-    // non-throwing) and rendered as a fixed placeholder.
+    // non-throwing) and rendered as a fixed placeholder. `start` supports
+    // console.assert, which excludes the condition argument.
     static std::string join_args(v8::Isolate* isolate,
                                  v8::Local<v8::Context> context,
-                                 const v8::FunctionCallbackInfo<v8::Value>& args) {
+                                 const v8::FunctionCallbackInfo<v8::Value>& args,
+                                 int start = 0) {
         std::string message;
-        for (int i = 0; i < args.Length(); ++i) {
-            if (i > 0) {
+        for (int i = start; i < args.Length(); ++i) {
+            if (i > start) {
                 message += ' ';
             }
             v8::TryCatch try_catch(isolate);
@@ -162,6 +206,10 @@ private:
         }
         return message;
     }
+
+    // Per-console-instance count labels. ConsoleHost is recreated per generation,
+    // so counts reset on Page.load(), matching the rest of the page state.
+    std::unordered_map<std::string, int> counts_;
 };
 
 v8::Local<v8::Value> v8_string(v8::Isolate* isolate, const std::string& s) {
@@ -300,12 +348,12 @@ void storage_length_getter(v8::Local<v8::Name> property,
         v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size())));
 }
 
-// M2-3 minimal navigator (read-only), configurable since M11-1. Values come from
-// the page's HostEnvironment, which the Python facade always supplies fully
-// resolved — this class holds no defaults and never derives a value from the host
-// OS, display, or locale, so a page is deterministic and identical across
-// Linux/Windows. Still no feature detection and no fingerprinting surface beyond
-// these four (no UA-CH / userAgentData).
+// M2-3 minimal navigator (read-only), configurable since M11-1 and extended by
+// M11-24/M11-27. Values come from the page's HostEnvironment, which the Python
+// facade always supplies fully resolved — this class holds no defaults and never
+// derives a value from the host OS, display, or locale, so a page is
+// deterministic and identical across Linux/Windows. Still no UA-CH /
+// userAgentData, connection, or device-permission surface.
 class NavigatorHost : public HostObject {
 public:
     explicit NavigatorHost(const HostEnvironment* environment)
@@ -314,12 +362,17 @@ public:
     std::string global_name() const override { return "navigator"; }
 
     std::vector<std::string> property_names() const override {
-        return {"userAgent", "platform", "language", "webdriver"};
+        return {"userAgent",     "platform",          "language",
+                "webdriver",     "languages",         "onLine",
+                "cookieEnabled", "hardwareConcurrency", "appName",
+                "appCodeName",   "product",           "vendor",
+                "vendorSub",     "productSub"};
     }
 
     std::vector<std::string> method_names() const override { return {}; }
 
-    v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context> context,
                                       const std::string& name) override {
         if (name == "userAgent") {
             return v8_string(isolate, environment_->user_agent);
@@ -332,6 +385,44 @@ public:
         }
         if (name == "webdriver") {
             return v8::Boolean::New(isolate, environment_->webdriver);
+        }
+        if (name == "languages") {
+            const std::vector<std::string>& languages = environment_->languages;
+            v8::Local<v8::Array> array =
+                v8::Array::New(isolate, static_cast<int>(languages.size()));
+            for (std::size_t i = 0; i < languages.size(); i++) {
+                (void)array->Set(context, static_cast<std::uint32_t>(i),
+                                 v8_string(isolate, languages[i]));
+            }
+            return array;
+        }
+        if (name == "onLine") {
+            return v8::Boolean::New(isolate, environment_->on_line);
+        }
+        if (name == "cookieEnabled") {
+            return v8::Boolean::New(isolate, environment_->cookie_enabled);
+        }
+        if (name == "hardwareConcurrency") {
+            return v8::Integer::New(isolate,
+                                    environment_->hardware_concurrency);
+        }
+        if (name == "appName") {
+            return v8_string(isolate, environment_->app_name);
+        }
+        if (name == "appCodeName") {
+            return v8_string(isolate, environment_->app_code_name);
+        }
+        if (name == "product") {
+            return v8_string(isolate, environment_->product);
+        }
+        if (name == "vendor") {
+            return v8_string(isolate, environment_->vendor);
+        }
+        if (name == "vendorSub") {
+            return v8_string(isolate, environment_->vendor_sub);
+        }
+        if (name == "productSub") {
+            return v8_string(isolate, environment_->product_sub);
         }
         return v8::Undefined(isolate);
     }
@@ -348,11 +439,11 @@ private:
     const HostEnvironment* environment_;
 };
 
-// M11-1 minimal screen (read-only). Four static dimensions sourced from the page's
-// HostEnvironment. Deliberately NOT a full Screen object: no colorDepth /
-// pixelDepth / availLeft / availTop / orientation, no ScreenOrientation, and no
-// media-query or layout integration. avail* are independent configured values, not
-// computed from width/height.
+// M11-1/M11-25 minimal screen (read-only). Static dimensions and color/pixel
+// depth sourced from the page's HostEnvironment. Deliberately NOT a full Screen
+// object: no availLeft / availTop / orientation, no ScreenOrientation, and no
+// media-query or layout integration. avail* are independent configured values,
+// not computed from width/height.
 class ScreenHost : public HostObject {
 public:
     explicit ScreenHost(const HostEnvironment* environment)
@@ -361,7 +452,8 @@ public:
     std::string global_name() const override { return "screen"; }
 
     std::vector<std::string> property_names() const override {
-        return {"width", "height", "availWidth", "availHeight"};
+        return {"width",      "height",     "availWidth", "availHeight",
+                "colorDepth", "pixelDepth"};
     }
 
     std::vector<std::string> method_names() const override { return {}; }
@@ -379,6 +471,12 @@ public:
         }
         if (name == "availHeight") {
             return v8::Integer::New(isolate, environment_->avail_height);
+        }
+        if (name == "colorDepth") {
+            return v8::Integer::New(isolate, environment_->color_depth);
+        }
+        if (name == "pixelDepth") {
+            return v8::Integer::New(isolate, environment_->pixel_depth);
         }
         return v8::Undefined(isolate);
     }
@@ -7026,6 +7124,16 @@ void PageState::install_page(const std::string& base_url,
                 define_readonly(
                     "innerHeight",
                     v8::Integer::New(isolate, environment_.inner_height));
+                // M11-26: reported window geometry (read-only; no layout engine).
+                define_readonly("outerWidth",
+                                v8::Integer::New(isolate, environment_.outer_width));
+                define_readonly(
+                    "outerHeight",
+                    v8::Integer::New(isolate, environment_.outer_height));
+                define_readonly("screenX",
+                                v8::Integer::New(isolate, environment_.screen_x));
+                define_readonly("screenY",
+                                v8::Integer::New(isolate, environment_.screen_y));
             }
             // M11-7 Web Storage: two independent, per-Page in-memory stores.
             // The backings live in PageState (so they survive load()); each

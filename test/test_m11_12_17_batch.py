@@ -175,31 +175,47 @@ def test_nested_environment_defaults_shape():
     defaults = iv8.Page.get_defaults()
     assert set(defaults) == {"navigator", "screen", "window"}
     assert set(defaults["navigator"]) == {
-        "userAgent", "platform", "language", "webdriver"}
+        "userAgent", "platform", "language", "webdriver", "languages",
+        "onLine", "cookieEnabled", "hardwareConcurrency", "appName",
+        "appCodeName", "product", "vendor", "vendorSub", "productSub"}
     assert set(defaults["screen"]) == {
-        "width", "height", "availWidth", "availHeight"}
+        "width", "height", "availWidth", "availHeight", "colorDepth",
+        "pixelDepth"}
     assert set(defaults["window"]) == {
-        "devicePixelRatio", "innerWidth", "innerHeight"}
+        "devicePixelRatio", "innerWidth", "innerHeight", "outerWidth",
+        "outerHeight", "screenX", "screenY"}
     defaults["navigator"]["userAgent"] = "mutated"
+    defaults["navigator"]["languages"].append("mutated")
     assert iv8.Page.get_defaults()["navigator"]["userAgent"] != "mutated"
+    assert "mutated" not in iv8.Page.get_defaults()["navigator"]["languages"]
     assert "userAgent" in iv8.Page.get_default_environment()
 
 
 @on_only
 def test_nested_environment_applied():
     environment = {
-        "navigator": {"userAgent": "nested-UA", "language": "fr"},
-        "screen": {"width": 800, "height": 600},
-        "window": {"devicePixelRatio": 2, "innerWidth": 640},
+        "navigator": {"userAgent": "nested-UA", "language": "fr",
+                      "languages": ["fr-FR", "fr"], "onLine": False,
+                      "hardwareConcurrency": 6, "appName": "NestedApp"},
+        "screen": {"width": 800, "height": 600, "colorDepth": 30},
+        "window": {"devicePixelRatio": 2, "innerWidth": 640,
+                   "outerWidth": 900, "screenX": 5},
     }
     with iv8.Page(environment=environment) as page:
         page.load("<html><body></body></html>", BASE)
         assert page.eval("navigator.userAgent") == "nested-UA"
         assert page.eval("navigator.language") == "fr"
+        assert page.eval("navigator.languages.join(',')") == "fr-FR,fr"
+        assert page.eval("navigator.onLine") is False
+        assert page.eval("navigator.hardwareConcurrency") == 6
+        assert page.eval("navigator.appName") == "NestedApp"
         assert page.eval("navigator.platform") == "iv8"  # default inherited
         assert page.eval("screen.width") == 800
+        assert page.eval("screen.colorDepth") == 30
         assert page.eval("screen.availHeight") == 1040  # default inherited
         assert page.eval("window.innerWidth") == 640
+        assert page.eval("window.outerWidth") == 900
+        assert page.eval("window.screenX") == 5
         assert page.eval("window.devicePixelRatio") == 2
 
 
@@ -212,3 +228,5 @@ def test_nested_environment_validation():
         iv8.Page(environment={"screen": "not-a-mapping"})
     with pytest.raises(TypeError):
         iv8.Page(environment={"navigator": {"webdriver": "yes"}})
+    with pytest.raises(TypeError):
+        iv8.Page(environment={"navigator": {"languages": []}})
