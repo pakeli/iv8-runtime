@@ -318,7 +318,7 @@ suite collects 1372 items. The first verification run was green. See
 
 Choose `M11-12` from `docs/m11_compatibility_backlog.md`.
 
-## Priority 3i: M11-12..M11-17 DOM/web batch — IMPLEMENTED, CI PENDING (`2026-10-28`)
+## Priority 3i: M11-12..M11-17 DOM/web batch — DONE (`2026-10-28`)
 
 ### What landed
 
@@ -334,12 +334,27 @@ Choose `M11-12` from `docs/m11_compatibility_backlog.md`.
 
 Boundary: `docs/m11_12_17_dom_web_batch.md`. Tests:
 `test/test_m11_12_17_batch.py` (8 items). Full suite collects 1380 items;
-expected each wheel lane: **`1378 passed, 2 skipped`**.
+each wheel lane: **`1378 passed, 2 skipped`**.
 
-### Verification pending
+### Verification — passed
 
-Real-V8 CI on branch `m11-12-17-dom-web-batch` (master V8 cache should be
-reused). Report: `docs/m11_12_17_report.md` (created at verification).
+Final commit `8d606e9` (branch `m11-12-17-dom-web-batch`):
+
+- Linux `release-linux` run `40695004440` — cp311–cp314, each
+  `1378 passed, 2 skipped`;
+- Windows `release-windows` run `40695029530` — Python 3.11–3.14, each
+  `1378 passed, 2 skipped`.
+
+`test/test_m11_12_17_batch.py` (8 items) ran in every lane. 1378 is the
+M11-11 baseline (1370) plus the 8 new items. The first attempt (`0c47ecb`,
+Linux `40693054124` / Windows `40693059780`) built all wheels but failed 15
+stale frozen-surface guards; `8d606e9` refreshed them. Report:
+`docs/m11_12_17_report.md`.
+
+### Next
+
+Choose `M11-18` from `docs/m11_compatibility_backlog.md` (or another
+gap-inventory slice with an explicit boundary).
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

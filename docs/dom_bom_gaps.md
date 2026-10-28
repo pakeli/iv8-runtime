@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-28` · Baseline: **M11-5** (`MutationObserver`, verified
-`2026-10-28`)
+Last reviewed: `2026-10-28` · Baseline: **M11-17** (`M11-12..M11-17` DOM/web
+batch verified `2026-10-28`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-5. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-17. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -98,10 +98,12 @@ to Python `logging`).
 | Text, comment, and CDATA nodes; `createTextNode` / `createComment` / `createCDATASection` | **excluded** — the DOM is element-only |
 | `DocumentFragment` and `createDocumentFragment` | **absent** |
 | Live re-aggregation of `textContent` after structural edits | **excluded** — `textContent` is a parse-time/write-time aggregate |
-| Raw Node members on elements: `firstChild` / `lastChild` / `previousSibling` / `nextSibling` / `hasChildNodes` | **absent** (only the `*ElementSibling` / `*ElementChild` forms exist) |
-| `cloneNode`, `isEqualNode`, `isSameNode` | **selected for M11-14** |
 | `importNode`, `adoptNode`, `normalize`, `compareDocumentPosition`, `getRootNode` | **absent** |
 | `Range`, `Selection`, `TreeWalker`, `NodeIterator` | **absent** |
+
+Implemented for contrast: M11-13 added raw `firstChild` / `lastChild` /
+`previousSibling` / `nextSibling` / `hasChildNodes()` (element-only aliases);
+M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
 
 ### 2.2 Collections
 
@@ -127,17 +129,18 @@ to Python `logging`).
 |---|---|
 | `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **absent** |
 | `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
-| `hasAttributes`, `getAttributeNames` | **selected for M11-12** |
 | `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
 | Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **absent** — use `getAttribute` |
-| `id` / `className` property setters | **selected for M11-12** |
-| `remove()`, `replaceChild` | **selected for M11-13** |
 | `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **absent** — need text-node/string semantics |
 | Specialized `HTML*Element` classes | **excluded** |
 | Shadow DOM (`attachShadow`, `ShadowRoot`, slots), Custom Elements, `<template>` | **absent** |
 | SVG / MathML namespaces (`createElementNS`) | **absent** |
 | Layout/geometry members (`getBoundingClientRect`, `offset*`, `client*`, `scroll*`) | **absent** — no layout engine |
 | Resource-backed element behavior (`img` loading, `naturalWidth`, media elements) | **absent** |
+
+Implemented for contrast: M11-12 added writable `id` / `className`,
+`hasAttributes()`, and `getAttributeNames()`; M11-13 added `remove()` and
+`replaceChild()`.
 
 ### 2.5 Events
 
@@ -154,7 +157,10 @@ to Python `logging`).
 
 Implemented for contrast: `Event(type, {bubbles})`, `target` / `currentTarget`,
 `stopPropagation()`, bubbling up to `document` / `window`, and the
-`readystatechange` / `DOMContentLoaded` / `load` lifecycle events.
+`readystatechange` / `DOMContentLoaded` / `load` lifecycle events. M11-9 added
+cancellation (`cancelable` / `defaultPrevented` / `preventDefault` /
+`stopImmediatePropagation`); M11-11 added the capture phase, `eventPhase`, and
+`capture` / `once` / `passive` listener options.
 
 ### 2.6 Forms
 
@@ -164,7 +170,6 @@ Implemented for contrast: `Event(type, {bubbles})`, `target` / `currentTarget`,
 | Automatic `submit` / `reset` / `input` / `change` events and default submit action | **excluded** |
 | `requestSubmit(submitter)` argument and `event.submitter` | **absent** |
 | `FormData` and real form encoding | **absent** |
-| `select.options` / `selectedIndex` / `multiple` / `size` | **selected for M11-16** |
 | `select.length`, option collection methods, multi-select behavior | **absent** — minimal single-select only |
 | Radio-group exclusivity; type-specific input behavior | **absent** |
 | `input.type` / `disabled` / `readOnly` / `placeholder`; `button.type` / `disabled` | **absent** |
@@ -174,6 +179,8 @@ Implemented for contrast: `Event(type, {bubbles})`, `target` / `currentTarget`,
 Implemented for contrast: `form.elements` (plain array), `reset()`, no-op
 `submit()` / `requestSubmit()`, the five form metadata properties,
 control `value` / `checked` / `default*` / `form`, and the option surface.
+M11-16 added `select.options`, writable `selectedIndex`, and read-only
+`multiple` / `size`; `URL.searchParams` (M11-15) is a non-live snapshot.
 
 ### 2.7 Scripts and document loading
 
@@ -229,13 +236,13 @@ These are not ordinary missing APIs; changing them is a project-level decision:
 
 The M11-6..M11-10 batch delivered event subclasses, Web Storage,
 Blob/File/FileReader, event cancellation, and classList/toggleAttribute;
-M11-11 delivered event capture and listener options. Remaining candidates
-(mapping to `docs/m11_compatibility_backlog.md`):
+M11-11 delivered event capture and listener options; M11-12..M11-17 delivered
+the element attribute/tree/clone/URL.searchParams/select extensions and the
+nested environment + `get_defaults()`. Remaining candidates (mapping to
+`docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|
-| Element attribute API / tree editing / cloneNode / select / URL.searchParams | gap inventory | **Selected for M11-12..M11-16** |
-| Nested environment + `get_defaults()` | 5 | **Selected for M11-17** — API-shape decision |
 | Event-loop facade | 6 | Deferred design decision |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |
 | JS→Python `expose()` | 8 | Requires a separate architecture decision |

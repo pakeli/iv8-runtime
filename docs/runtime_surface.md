@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-28` · Latest verified milestone: **M11-11**
+Last reviewed: `2026-10-28` · Latest verified milestone: **M11-12..M11-17**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -73,8 +73,9 @@ milestone.
 | `run_idle_callbacks()` | M11-3 | manual pump; runs one round of `requestIdleCallback` callbacks |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
-| `Page(environment=None)` | M11-1 | optional read-only host-environment baseline; fixed for the page's lifetime |
-| `get_default_environment()` | M11-1 | static; returns a fresh `dict` copy of the default template |
+| `Page(environment=None)` | M11-1, M11-17 | optional read-only host-environment baseline; accepts the flat eleven-key form or nested `navigator` / `screen` / `window` sections |
+| `get_default_environment()` | M11-1 | static; returns a fresh flat `dict` copy of the default template |
+| `get_defaults()` | M11-17 | static; returns a fresh nested `{navigator, screen, window}` dict |
 
 `resources` (M3-5) was the only new Python parameter M3–M8 added; `environment`
 (M11-1) is the next one. `Page` has no `document` / DOM / event API on the Python
@@ -87,8 +88,11 @@ The M11-1 environment accepts exactly eleven keys — `userAgent` / `platform` /
 defaults, and the defaults reproduce the previous fixed `navigator` constants, so an
 unconfigured page is unchanged. Validation is strict and runs in the Python facade
 before any native page exists (unknown key or wrong type → `TypeError`, nothing
-partially installed). Values are re-applied to every `load()` generation. See
-`docs/m11_1_host_environment.md`.
+partially installed). Values are re-applied to every `load()` generation. M11-17
+additionally accepts the nested form `{"navigator": {...}, "screen": {...},
+"window": {...}}` (flattened to the same eleven keys; mixing nested and flat keys
+is rejected) and adds `Page.get_defaults()` for the nested shape. See
+`docs/m11_1_host_environment.md` and `docs/m11_12_17_dom_web_batch.md`.
 
 ### 2.3 `Page` — second-layer monitoring
 
@@ -180,6 +184,22 @@ Installed per generation by `install_page`:
   `value`, a fresh plain object per access) and
   `element.toggleAttribute(name, force?)`, both feeding the MutationObserver
   attribute hooks;
+- **attribute API** (M11-12) — writable `id` / `className` property setters
+  (they update the dedicated fields and queue attribute records like
+  `setAttribute`), `hasAttributes()`, and `getAttributeNames()` (id/class first,
+  then the remaining raw names ASCII-sorted);
+- **tree editing + node navigation** (M11-13) — `replaceChild()`, `remove()`,
+  `hasChildNodes()`, and raw `firstChild` / `lastChild` / `previousSibling` /
+  `nextSibling` aliases. The tree is element-only, so the raw aliases equal the
+  element variants;
+- **clone / equality** (M11-14) — detached `cloneNode(deep?)`, identity
+  `isSameNode()`, and structural `isEqualNode()`;
+- **URL.searchParams** (M11-15) — a `URLSearchParams` snapshot of the URL's
+  `search`; mutating the snapshot does not update the URL. URL fields remain
+  read-only;
+- **select extension** (M11-16) — `select.options` (plain array),
+  writable `selectedIndex` (single-select; `-1` clears), and read-only
+  `multiple` / `size` reflection. No `select.length` or multi-select behavior;
 - **animation frames** — `requestAnimationFrame` / `cancelAnimationFrame` (M11-2,
   manual-pump only via `Page.run_animation_frame()`). A separate FIFO queue from the
   timers, with its own handle space; the callback receives no timestamp argument, and
@@ -197,18 +217,26 @@ Installed per generation by `install_page`:
   `anchors` / `embeds` / `applets`, and `getElementById` / `querySelector` /
   `querySelectorAll` / `getElementsByTagName` / `getElementsByClassName` /
   `createElement`;
-- **elements** — the minimal node surface (`tagName` / `nodeName` / `nodeType` / `id`
-  / `className` / `textContent` / `parentNode` / `childNodes` / `children`),
+- **elements** — the minimal node surface (`tagName` / `nodeName` / `nodeType` /
+  `id` / `className` / `textContent` / `parentNode` / `childNodes` / `children`),
   connectivity and structural navigation (`ownerDocument` / `isConnected` /
-  `parentElement` / sibling and first/last child members / `childElementCount`),
-  attributes (`getAttribute` / `hasAttribute` / `setAttribute` / `removeAttribute`),
-  tree editing (`appendChild` / `removeChild` / `insertBefore`), subtree queries, and
-  `contains` / `matches` / `closest`;
+  `parentElement` / sibling and first/last child members / `childElementCount`,
+  plus raw `firstChild` / `lastChild` / `previousSibling` / `nextSibling` and
+  `hasChildNodes()` since M11-13), attributes (`getAttribute` /
+  `hasAttribute` / `setAttribute` / `removeAttribute`, plus writable
+  `id` / `className`, `hasAttributes()`, and `getAttributeNames()` since
+  M11-12), tree editing (`appendChild` / `removeChild` / `insertBefore`, plus
+  `replaceChild` / `remove` since M11-13), `cloneNode` / `isSameNode` /
+  `isEqualNode` since M11-14, subtree queries, and `contains` / `matches` /
+  `closest`;
 - **form surface**, exposed only on the relevant tags — `<form>`: `elements` /
   `reset()` / `submit()` / `requestSubmit()` / `method` / `action` / `enctype` /
   `target` / `noValidate`; controls: `form`, `value`, `checked`, `defaultValue`,
-  `defaultChecked`; `<option>`: `value` / `selected` / `text` / `defaultSelected`;
-- **web-platform globals (M8)** — `TextEncoder` / `TextDecoder` (UTF-8 only), `URL`,
+  `defaultChecked`; `<select>`: `options` / `selectedIndex` / `multiple` /
+  `size` (M11-16); `<option>`: `value` / `selected` / `text` /
+  `defaultSelected`;
+- **web-platform globals (M8)** — `TextEncoder` / `TextDecoder` (UTF-8 only),
+  `URL` (with the non-live `searchParams` snapshot since M11-15),
   `URLSearchParams`, `atob` / `btoa`.
 
 `hostProbe` is M2-1 framework infrastructure, not a stable API.
@@ -276,6 +304,12 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-9 | event cancellation (`preventDefault` / `stopImmediatePropagation`) — verified 2026-10-28 | `docs/m11_9_event_cancellation.md`, `docs/m11_9_report.md` |
 | M11-10 | `classList` / `toggleAttribute` — verified 2026-10-28 | `docs/m11_10_class_list.md`, `docs/m11_10_report.md` |
 | M11-11 | event capture phase, `eventPhase`, `capture` / `once` / `passive` — verified 2026-10-28 | `docs/m11_11_event_capture.md`, `docs/m11_11_report.md` |
+| M11-12 | writable `id` / `className`, `hasAttributes()` / `getAttributeNames()` — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
+| M11-13 | `replaceChild` / `remove` / `hasChildNodes` + raw sibling aliases — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
+| M11-14 | `cloneNode` / `isSameNode` / `isEqualNode` — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
+| M11-15 | `URL.searchParams` snapshot — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
+| M11-16 | `select.options` / `selectedIndex` / `multiple` / `size` — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
+| M11-17 | nested `Page(environment=...)` + `Page.get_defaults()` — verified 2026-10-28 | `docs/m11_12_17_dom_web_batch.md`, `docs/m11_12_17_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

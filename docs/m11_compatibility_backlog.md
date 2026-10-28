@@ -30,7 +30,7 @@ The ranking is planning guidance, not a promise of full parity.
 | 2 | **Event subclass cluster** (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`) | Target claims 80+ event types; demos use clicks and lifecycle events | We install only a minimal `Event` constructor; no subclasses or their read-only fields | 4 | 5 / 5 | **M11-6 delivered & verified (`2026-10-28`)** |
 | 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | **M11-7 delivered & verified (`2026-10-28`)** |
 | 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | **M11-8 delivered & verified (`2026-10-28`)** |
-| 5 | **Nested environment + `get_defaults()`** | `JSContext(environment={...})` with nested navigator/screen/location/webgl paths; `get_defaults()` enumerates them | M11-1 has a flat 11-key `Page(environment=...)` baseline and `get_default_environment()` | 3 | 4 / 4 | API-shape decision; subset only |
+| 5 | **Nested environment + `get_defaults()`** | `JSContext(environment={...})` with nested navigator/screen/location/webgl paths; `get_defaults()` enumerates them | M11-1 has a flat 11-key `Page(environment=...)` baseline and `get_default_environment()` | 3 | 4 / 4 | **M11-17 delivered & verified (`2026-10-28`)** |
 | 6 | **Event-loop facade** (`advance` / `sleep` / `tick` / `drain`) | Central to the target's `window.__iv8__.eventLoop` model | We deliberately expose four independent manual pumps and no scheduler | 5 | 2 / 2 | Deferred design decision |
 | 7 | **Offline resources + runtime XHR/fetch** | Community edition matches XHR/fetch/external resources against an injected offline bundle (`add_resource`, `page.load.resources`) | `Page.load(resources)` only pre-resolves `<script src>`; no runtime XHR/fetch | 5 | 2 / 2 | High-risk; standing networking exclusion needs approval |
 | 8 | **JS→Python `expose()`** | Target exposes Python objects under `__iv8__.data` | Explicitly never implemented; architecture boundary | 5 | 1 / 1 | Requires a separate architecture decision |
@@ -115,7 +115,9 @@ verified (Linux `40683001239`, Windows `40683010032`, commit `a269aa9`, each
 `M11-12` through `M11-17` are a six-slice DOM/web completeness batch selected
 on `2026-10-28` (attribute API, tree editing, cloneNode/equality,
 URL.searchParams snapshot, select extension, nested environment); boundary
-document `docs/m11_12_17_dom_web_batch.md`. After it lands, the next slice
+document `docs/m11_12_17_dom_web_batch.md`. Delivered and verified on real V8:
+Linux `40695004440`, Windows `40695029530`, commit `8d606e9`, each wheel lane
+`1378 passed, 2 skipped`; report `docs/m11_12_17_report.md`. The next slice
 (`M11-18`) should be chosen from the remaining ranked candidates below (or
 another gap-inventory slice with an explicit boundary).
 

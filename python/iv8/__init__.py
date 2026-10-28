@@ -870,7 +870,8 @@ for the authoritative boundary.
 M11-9 (event cancellation) adds ``cancelable`` / ``defaultPrevented``,
 ``preventDefault()``, and ``stopImmediatePropagation()`` to the flat Event
 model; ``dispatchEvent`` returns ``false`` for a canceled cancelable event. The
-capture phase, default actions, and listener options remain out of scope. See
+capture phase, default actions, and listener options remained out of scope at
+M11-9 (capture and listener options arrived in M11-11). See
 ``docs/m11_9_event_cancellation.md``.
 
 M11-10 (classList / toggleAttribute) adds ``element.classList`` with

@@ -81,10 +81,12 @@ Installed per generation by `install_page`:
   when the attribute was absent. Otherwise `oldValue` is `null`.
 - The `id` and `class` dedicated fields are observed through `setAttribute` /
   `removeAttribute` as attribute names `id` / `class`.
-- **Out of scope:** `.id = ...` and `.className = ...` property setters do not
-  exist in this runtime (their getters are read-only), so they produce no
-  records. `.value` / `.checked` / `.selected` and the form runtime slots are not
-  attribute mutations and produce no records. `form.reset()` produces none.
+- **Out of scope:** `.id = ...` and `.className = ...` property setters did not
+  exist when M11-5 landed (their getters were read-only), so they produced no
+  records. **Superseded by M11-12:** both are now writable and queue the same
+  `id` / `class` attribute records as `setAttribute`. `.value` / `.checked` /
+  `.selected` and the form runtime slots are not attribute mutations and produce
+  no records. `form.reset()` produces none.
 
 ### Matching
 
@@ -171,7 +173,8 @@ M11-5 deliberately does **not** add:
 - a Python API, a fifth pump, or an automatic event loop;
 - `characterData` / text-node mutation records (this DOM has no text nodes);
 - a `MutationRecord` constructor/global;
-- `id` / `className` property setters (existing read-only behavior);
+- `id` / `className` property setters (existing read-only behavior at M11-5;
+  M11-12 later added them);
 - document-node mutation records beyond subtree matching;
 - JS-finalizer-based observer cleanup;
 - `watch_apis()` integration for observer methods;

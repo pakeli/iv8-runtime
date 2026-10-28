@@ -92,6 +92,15 @@ methods, or multi-select behavior.
 
 ## Verification
 
-All six slices share `test/test_m11_12_17_batch.py`. Real-V8 CI will run the
-full suite on Linux + Windows; the batch report is
+All six slices share `test/test_m11_12_17_batch.py` (8 items). Verified on real
+V8 at commit `8d606e9`:
+
+- Linux `release-linux` run `40695004440` — cp311–cp314, each
+  `1378 passed, 2 skipped`;
+- Windows `release-windows` run `40695029530` — Python 3.11–3.14, each
+  `1378 passed, 2 skipped`.
+
+The batch test ran in every lane; the full suite collects 1380 items. The
+first attempt (`0c47ecb`) had green wheel builds but 15 stale frozen-surface
+guards; they were refreshed in `8d606e9`. See
 `docs/m11_12_17_report.md`.

@@ -117,7 +117,9 @@ Decided/verified `2026-10-28`.
 fifth pump, no `MutationRecord` global, no `id` / `className` property setters,
 and no cross-generation observer state. Records cover `childList` and
 `attributes` (with `subtree` / `attributeOldValue` / `attributeFilter`);
-`characterData` is accepted but inert because the DOM is element-only.
+`characterData` is accepted but inert because the DOM is element-only. The
+missing `id` / `className` setters were later added by M11-12; those writes now
+queue the same attribute records as `setAttribute`.
 
 Real-V8 verification on Linux run `40632597636` and Windows run `40632601387`
 (commit `4fa6469`): all eight wheel lanes reported `1265 passed, 2 skipped`.
@@ -149,6 +151,19 @@ The event model now has a capturing phase (window → document → ancestors),
 non-bubbling events; `once` removes before invocation and `passive` suppresses
 `preventDefault` for that listener. Verified on Linux `40683001239` and Windows
 `40683010032` (commit `a269aa9`), each wheel lane `1370 passed, 2 skipped`.
+
+### 14. M11-12..M11-17 verified as one six-slice DOM/web batch
+
+Decided/verified `2026-10-28`.
+
+The batch (element attribute API, tree editing, cloneNode/equality,
+`URL.searchParams` snapshot, select extension, nested environment +
+`get_defaults()`) was verified on real V8 at commit `8d606e9`: Linux
+`40695004440`, Windows `40695029530`, each wheel lane `1378 passed, 2 skipped`.
+The first attempt at `0c47ecb` built every wheel but failed 15 historical
+frozen-surface guards; refreshing those guards in `8d606e9` was the only
+change needed. The full suite collects 1380 items (1370 previous + 8 batch
+tests).
 
 ## Pending Decisions
 
@@ -214,9 +229,10 @@ verification run. `M11-11` followed with the master cache warmed first.
 on `2026-10-28`: element attribute API, tree-edit conveniences,
 `cloneNode`/equality, `URL.searchParams` snapshot, select extension, and nested
 environment + `get_defaults()`. Boundary: `docs/m11_12_17_dom_web_batch.md`.
-Implementation and real-V8 verification are in progress on
-`m11-12-17-dom-web-batch`. After it lands, the next slice (`M11-18`) should
-again be chosen from this backlog rather than direction alone.
+The batch is delivered and verified (Linux `40695004440`, Windows `40695029530`,
+commit `8d606e9`, each wheel lane `1378 passed, 2 skipped`). After it lands, the
+next slice (`M11-18`) should again be chosen from this backlog rather than
+direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);
