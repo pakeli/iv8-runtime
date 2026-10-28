@@ -61,6 +61,27 @@ _INT_KEYS = (
 )
 _FLOAT_KEYS = ("devicePixelRatio",)
 
+# M11-17: nested environment sections -> flat native keys.
+_NESTED_ENVIRONMENT = {
+    "navigator": {
+        "userAgent": "userAgent",
+        "platform": "platform",
+        "language": "language",
+        "webdriver": "webdriver",
+    },
+    "screen": {
+        "width": "screenWidth",
+        "height": "screenHeight",
+        "availWidth": "availWidth",
+        "availHeight": "availHeight",
+    },
+    "window": {
+        "devicePixelRatio": "devicePixelRatio",
+        "innerWidth": "innerWidth",
+        "innerHeight": "innerHeight",
+    },
+}
+
 
 def _normalize_environment(environment):
     """Validate the M11-1 ``environment`` input and return a complete environment.
@@ -84,6 +105,27 @@ def _normalize_environment(environment):
         return resolved
     if not isinstance(environment, Mapping):
         raise TypeError("environment must be a mapping")
+    # M11-17: accept the nested navigator/screen/window form (or the original
+    # flat form, but not a mixture).
+    if any(section in environment for section in _NESTED_ENVIRONMENT):
+        extra = [key for key in environment if key not in _NESTED_ENVIRONMENT]
+        if extra:
+            raise TypeError(
+                "environment must not mix nested and flat keys: "
+                f"{extra!r}"
+            )
+        flat = {}
+        for section, values in environment.items():
+            if not isinstance(values, Mapping):
+                raise TypeError(f"environment[{section!r}] must be a mapping")
+            for key, value in values.items():
+                target = _NESTED_ENVIRONMENT[section].get(key)
+                if target is None:
+                    raise TypeError(
+                        f"unknown environment key: {section}.{key}"
+                    )
+                flat[target] = value
+        environment = flat
     for key in environment:
         if key not in _DEFAULT_ENVIRONMENT:
             raise TypeError(f"unknown environment key: {key!r}")
@@ -173,7 +215,41 @@ class Page:
     :meth:`get_default_environment` for the accepted keys). It is fixed for the
     page's lifetime: there is no setter, and every ``load()`` generation reports the
     same values. Omitting it yields the documented defaults.
+
+    M11-17 additionally accepts the nested ``navigator`` / ``screen`` / ``window``
+    form and adds :meth:`get_defaults` for that shape. Mixing nested and flat keys
+    in one mapping is rejected.
     """
+
+    @staticmethod
+    def get_defaults() -> dict:
+        """M11-17: return the nested default environment template.
+
+        Sections: ``navigator`` (``userAgent`` / ``platform`` / ``language`` /
+        ``webdriver``), ``screen`` (``width`` / ``height`` / ``availWidth`` /
+        ``availHeight``), and ``window`` (``devicePixelRatio`` /
+        ``innerWidth`` / ``innerHeight``). The result is a fresh, fully nested
+        ``dict``; it is accepted directly by ``Page(environment=...)``.
+        """
+        return {
+            "navigator": {
+                "userAgent": _DEFAULT_ENVIRONMENT["userAgent"],
+                "platform": _DEFAULT_ENVIRONMENT["platform"],
+                "language": _DEFAULT_ENVIRONMENT["language"],
+                "webdriver": _DEFAULT_ENVIRONMENT["webdriver"],
+            },
+            "screen": {
+                "width": _DEFAULT_ENVIRONMENT["screenWidth"],
+                "height": _DEFAULT_ENVIRONMENT["screenHeight"],
+                "availWidth": _DEFAULT_ENVIRONMENT["availWidth"],
+                "availHeight": _DEFAULT_ENVIRONMENT["availHeight"],
+            },
+            "window": {
+                "devicePixelRatio": _DEFAULT_ENVIRONMENT["devicePixelRatio"],
+                "innerWidth": _DEFAULT_ENVIRONMENT["innerWidth"],
+                "innerHeight": _DEFAULT_ENVIRONMENT["innerHeight"],
+            },
+        }
 
     @staticmethod
     def get_default_environment() -> dict:

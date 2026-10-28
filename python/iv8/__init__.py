@@ -885,6 +885,13 @@ M11-11 (event capture + listener options) adds the capture phase,
 window through the tree even for non-bubbling events; ``passive`` listeners
 cannot ``preventDefault``. See ``docs/m11_11_event_capture.md``.
 
+The M11-12..M11-17 DOM/web batch adds element ``id`` / ``className`` setters
+plus ``hasAttributes`` / ``getAttributeNames``; ``replaceChild`` / ``remove`` /
+``hasChildNodes`` and raw child/sibling aliases; ``cloneNode`` / ``isSameNode``
+/ ``isEqualNode``; ``URL.searchParams`` (snapshot); ``select.options`` /
+``selectedIndex`` / ``multiple`` / ``size``; and nested ``Page(environment=...)``
+plus ``Page.get_defaults()``. See ``docs/m11_12_17_dom_web_batch.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

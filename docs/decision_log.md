@@ -154,7 +154,7 @@ non-bubbling events; `once` removes before invocation and `passive` suppresses
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-12`?
+### A. Which concrete compatibility slice becomes `M11-18`?
 
 Settled and implemented so far:
 
@@ -208,9 +208,15 @@ Settled and implemented so far:
 
 `M11-6` through `M11-10` were delivered as one five-slice batch on the
 `m11-6-event-subclasses` branch, with one cold V8 build reused by the cached
-verification run. `M11-11` followed with the master cache warmed first. The
-next slice (`M11-12`) should again be chosen from this backlog rather than
-direction alone.
+verification run. `M11-11` followed with the master cache warmed first.
+
+`M11-12` through `M11-17` are a six-slice DOM/web completeness batch selected
+on `2026-10-28`: element attribute API, tree-edit conveniences,
+`cloneNode`/equality, `URL.searchParams` snapshot, select extension, and nested
+environment + `get_defaults()`. Boundary: `docs/m11_12_17_dom_web_batch.md`.
+Implementation and real-V8 verification are in progress on
+`m11-12-17-dom-web-batch`. After it lands, the next slice (`M11-18`) should
+again be chosen from this backlog rather than direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

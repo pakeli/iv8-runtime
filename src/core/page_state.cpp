@@ -5,6 +5,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -1674,6 +1675,8 @@ public:
             // M4-B-1 structural navigation (element-only tree).
             "parentElement", "firstElementChild", "lastElementChild",
             "childElementCount",
+            // M11-13 raw Node aliases (element-only tree).
+            "firstChild", "lastChild", "previousSibling", "nextSibling",
             // M11-10 classList (fresh plain object per access).
             "classList"};
         // M5-1: `elements` is exposed only on <form> (so non-form elements have no
@@ -1699,6 +1702,13 @@ public:
             node_->tag == "button" || node_->tag == "select" ||
             node_->tag == "option") {
             names.push_back("value");
+        }
+        // M11-16: select collection / selection / attribute reflection.
+        if (node_->tag == "select") {
+            names.push_back("options");
+            names.push_back("selectedIndex");
+            names.push_back("multiple");
+            names.push_back("size");
         }
         // M5-5: `selected` (read-write bool) is exposed only on <option>;
         // M5-8: `text` (read-only) too; M6-3: `defaultSelected` (read-only reset
@@ -1727,9 +1737,11 @@ public:
         // M4-A-5 subtree queries + M3-3 event methods.
         std::vector<std::string> names = {
             "getAttribute",     "hasAttribute",    "setAttribute",
-            "removeAttribute",  "appendChild",     "removeChild",
-            "insertBefore",     "querySelector",   "querySelectorAll",
-            "getElementsByTagName",
+            "removeAttribute",  "hasAttributes",   "getAttributeNames",
+            "appendChild",      "removeChild",     "insertBefore",
+            "replaceChild",     "remove",          "hasChildNodes",
+            "cloneNode",        "isSameNode",      "isEqualNode",
+            "querySelector",    "querySelectorAll", "getElementsByTagName",
             // M4-B-2 minimal ancestor/containment check.
             "contains",
             // M4-B-3 single-node selector match.
@@ -1751,7 +1763,7 @@ public:
     // M2-8: textContent is writable; M5-3/4/5/6: value on input/textarea/button/
     // select (option.value is READ-ONLY); M5-5: option.selected is writable.
     std::vector<std::string> writable_property_names() const override {
-        std::vector<std::string> names = {"textContent"};
+        std::vector<std::string> names = {"textContent", "id", "className"};
         if (node_->tag == "input" || node_->tag == "textarea" ||
             node_->tag == "button" || node_->tag == "select") {
             names.push_back("value");
@@ -1761,6 +1773,9 @@ public:
         }
         if (node_->tag == "input") {
             names.push_back("checked");
+        }
+        if (node_->tag == "select") {
+            names.push_back("selectedIndex");
         }
         // M7-3..7: form.method (normalized) / action (raw) / enctype (normalized) /
         // target (raw) strings + noValidate (bool coercion) are all read-write.
@@ -2100,6 +2115,79 @@ public:
             return wrap_element(isolate, context, raw);
         }
         return v8::Undefined(isolate);
+    }
+
+    // M11-14: deep/shallow detached clone. The clone is inserted into the
+    // detached pool (never into roots_), so document queries ignore it.
+    DomNode* clone_detached(DomNode* source, bool deep) {
+        auto clone = std::make_unique<DomNode>();
+        DomNode* raw = clone.get();
+        raw->tag = source->tag;
+        raw->id = source->id;
+        raw->has_id = source->has_id;
+        raw->class_name = source->class_name;
+        raw->has_class = source->has_class;
+        raw->classes = source->classes;
+        raw->src = source->src;
+        raw->has_src = source->has_src;
+        raw->attributes = source->attributes;
+        raw->text_content = source->text_content;
+        raw->value = source->value;
+        raw->selected = source->selected;
+        raw->checked = source->checked;
+        raw->method = source->method;
+        raw->action = source->action;
+        raw->enctype = source->enctype;
+        raw->target = source->target;
+        raw->no_validate = source->no_validate;
+        raw->initial_value = source->initial_value;
+        raw->initial_selected = source->initial_selected;
+        raw->initial_checked = source->initial_checked;
+        raw->content_start = source->content_start;
+        raw->content_end = source->content_end;
+        if (deep) {
+            for (DomNode* child : source->children) {
+                DomNode* child_clone = clone_detached(child, true);
+                child_clone->parent = raw;
+                raw->children.push_back(child_clone);
+            }
+        }
+        detached_pool_.push_back(std::move(clone));
+        return raw;
+    }
+
+    // M11-14: structural equality used by Element.isEqualNode.
+    bool nodes_equal(const DomNode* a, const DomNode* b) const {
+        if (a == b) {
+            return true;
+        }
+        if (a == nullptr || b == nullptr) {
+            return false;
+        }
+        if (a->tag != b->tag || a->id != b->id || a->has_id != b->has_id ||
+            a->class_name != b->class_name ||
+            a->has_class != b->has_class || a->classes != b->classes ||
+            a->src != b->src || a->has_src != b->has_src ||
+            a->attributes != b->attributes ||
+            a->text_content != b->text_content || a->value != b->value ||
+            a->selected != b->selected || a->checked != b->checked ||
+            a->method != b->method || a->action != b->action ||
+            a->enctype != b->enctype || a->target != b->target ||
+            a->no_validate != b->no_validate ||
+            a->initial_value != b->initial_value ||
+            a->initial_selected != b->initial_selected ||
+            a->initial_checked != b->initial_checked) {
+            return false;
+        }
+        if (a->children.size() != b->children.size()) {
+            return false;
+        }
+        for (std::size_t i = 0; i < a->children.size(); i++) {
+            if (!nodes_equal(a->children[i], b->children[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // Wrap a node as a JS element host object (JS null for nullptr). Public so
@@ -3204,6 +3292,58 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     if (name == "classList") {
         return make_class_list(isolate, context, document_, node_);
     }
+    // M11-16: select.options / selectedIndex / multiple / size.
+    if (node_->tag == "select" && name == "options") {
+        std::vector<DomNode*> options;
+        collect_matching(node_, tag_predicate("option"), options);
+        return document_->elements_array(isolate, context, options);
+    }
+    if (node_->tag == "select" && name == "selectedIndex") {
+        std::vector<DomNode*> options;
+        collect_matching(node_, tag_predicate("option"), options);
+        for (std::size_t i = 0; i < options.size(); i++) {
+            if (options[i]->selected) {
+                return v8::Integer::New(isolate, static_cast<int>(i));
+            }
+        }
+        return v8::Integer::New(isolate, -1);
+    }
+    if (node_->tag == "select" && name == "multiple") {
+        return v8::Boolean::New(
+            isolate, node_->attributes.find("multiple") !=
+                         node_->attributes.end());
+    }
+    if (node_->tag == "select" && name == "size") {
+        const auto it = node_->attributes.find("size");
+        long size = 0;
+        if (it != node_->attributes.end()) {
+            size = std::strtol(it->second.c_str(), nullptr, 10);
+        }
+        return v8::Integer::New(isolate,
+                                static_cast<int>(size < 0 ? 0 : size));
+    }
+    // M11-13: raw Node aliases (element-only tree, so they equal the element
+    // variants).
+    if (name == "firstChild") {
+        return node_->children.empty()
+                   ? v8::Null(isolate)
+                   : document_->wrap_element(isolate, context,
+                                             node_->children.front());
+    }
+    if (name == "lastChild") {
+        return node_->children.empty()
+                   ? v8::Null(isolate)
+                   : document_->wrap_element(isolate, context,
+                                             node_->children.back());
+    }
+    if (name == "previousSibling" || name == "nextSibling") {
+        DomNode* previous = nullptr;
+        DomNode* next = nullptr;
+        siblings_of(node_, &previous, &next);
+        return document_->wrap_element(isolate, context,
+                                       name == "previousSibling" ? previous
+                                                                 : next);
+    }
     if (name == "textContent") return v8_string(isolate, node_->text_content);
     if (name == "parentNode") {
         return document_->wrap_element(isolate, context, node_->parent);
@@ -3411,6 +3551,55 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
 // no longer see the removed nodes; no separate index needs updating.
 void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
                                const std::string& name, v8::Local<v8::Value> value) {
+    // M11-16: select.selectedIndex = i — single-select model; -1 clears all,
+    // out-of-range values are ignored.
+    if (name == "selectedIndex") {
+        v8::Local<v8::Int32> index_value;
+        if (!value->ToInt32(context).ToLocal(&index_value)) {
+            return;
+        }
+        const int index = index_value->Value();
+        std::vector<DomNode*> options;
+        collect_matching(node_, tag_predicate("option"), options);
+        if (index < -1 || index >= static_cast<int>(options.size())) {
+            return;
+        }
+        for (std::size_t i = 0; i < options.size(); i++) {
+            options[i]->selected =
+                index >= 0 && static_cast<int>(i) == index;
+        }
+        return;
+    }
+    // M11-12: id / className setters keep the dedicated fields, queries, and
+    // MutationObserver attribute records consistent with setAttribute.
+    if (name == "id" || name == "className") {
+        v8::Local<v8::String> str;
+        if (!value->ToString(context).ToLocal(&str)) {
+            return;
+        }
+        v8::String::Utf8Value utf8(isolate, str);
+        const std::string text =
+            (*utf8 != nullptr)
+                ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+                : std::string();
+        if (name == "id") {
+            const bool old_has = node_->has_id;
+            const std::string old_value = node_->id;
+            node_->id = text;
+            node_->has_id = true;
+            document_->queue_attribute(isolate, context, node_, "id", old_has,
+                                       old_value);
+        } else {
+            const bool old_has = node_->has_class;
+            const std::string old_value = node_->class_name;
+            node_->class_name = text;
+            node_->has_class = true;
+            node_->classes = split_class_tokens(text);
+            document_->queue_attribute(isolate, context, node_, "class",
+                                       old_has, old_value);
+        }
+        return;
+    }
     // M5-5: option.selected = ... — boolean (truthy) coercion, runtime slot only
     // (does NOT write the `selected` attribute). Writable only on <option>.
     if (name == "selected") {
@@ -3549,6 +3738,31 @@ v8::Local<v8::Value> ElementHost::call_method(
     // .id / .className / setAttribute); every other name is looked up in the raw
     // attribute table. Name match is ASCII case-insensitive. Missing -> null /
     // false; a valueless/boolean attribute reads "" (and hasAttribute -> true).
+    // M11-12: attribute presence / name enumeration.
+    if (name == "hasAttributes") {
+        return v8::Boolean::New(
+            isolate, node_->has_id || node_->has_class ||
+                         !node_->attributes.empty());
+    }
+    if (name == "getAttributeNames") {
+        std::vector<std::string> names;
+        if (node_->has_id) names.push_back("id");
+        if (node_->has_class) names.push_back("class");
+        std::vector<std::string> raw;
+        raw.reserve(node_->attributes.size());
+        for (const auto& entry : node_->attributes) {
+            raw.push_back(entry.first);
+        }
+        std::sort(raw.begin(), raw.end());
+        names.insert(names.end(), raw.begin(), raw.end());
+        v8::Local<v8::Array> array =
+            v8::Array::New(isolate, static_cast<int>(names.size()));
+        for (std::size_t i = 0; i < names.size(); i++) {
+            (void)array->Set(context, static_cast<std::uint32_t>(i),
+                             v8_string(isolate, names[i]));
+        }
+        return array;
+    }
     if (name == "getAttribute" || name == "hasAttribute") {
         const std::string key = ascii_lower(arg_string(0));
         bool present = false;
@@ -3712,6 +3926,105 @@ v8::Local<v8::Value> ElementHost::call_method(
                                                             .As<v8::String>()));
         return v8::Undefined(isolate);
     };
+    // M11-13: detach this element from its parent.
+    if (name == "remove") {
+        DomNode* parent = node_->parent;
+        if (parent != nullptr) {
+            DomNode* previous = nullptr;
+            DomNode* next = nullptr;
+            siblings_of(node_, &previous, &next);
+            detach_from_parent(node_);
+            std::vector<DomNode*> added;
+            std::vector<DomNode*> removed = {node_};
+            document_->queue_child_list(isolate, context, parent, added,
+                                        removed, previous, next);
+        }
+        return v8::Undefined(isolate);
+    }
+    if (name == "hasChildNodes") {
+        return v8::Boolean::New(isolate, !node_->children.empty());
+    }
+    // M11-14: detached shallow/deep clone and node identity/equality.
+    if (name == "cloneNode") {
+        const bool deep =
+            args.Length() > 0 && args[0]->BooleanValue(isolate);
+        DomNode* clone = document_->clone_detached(node_, deep);
+        return document_->wrap_element(isolate, context, clone);
+    }
+    if (name == "isSameNode" || name == "isEqualNode") {
+        DomNode* other =
+            node_of_arg(args.Length() > 0 ? args[0]
+                                          : v8::Local<v8::Value>());
+        if (other == nullptr) {
+            return v8::False(isolate);
+        }
+        return v8::Boolean::New(
+            isolate, name == "isSameNode"
+                         ? other == node_
+                         : document_->nodes_equal(node_, other));
+    }
+    // M11-13: replace a direct child with another element node.
+    if (name == "replaceChild") {
+        DomNode* new_child = node_of_arg(args.Length() > 0
+                                             ? args[0]
+                                             : v8::Local<v8::Value>());
+        DomNode* old_child = node_of_arg(args.Length() > 1
+                                             ? args[1]
+                                             : v8::Local<v8::Value>());
+        if (new_child == nullptr || old_child == nullptr) {
+            return throw_type_error("replaceChild: arguments must be elements");
+        }
+        if (old_child->parent != node_) {
+            return throw_type_error(
+                "replaceChild: oldChild is not a child of this node");
+        }
+        if (new_child == old_child) {
+            return args[1];
+        }
+        if (is_self_or_ancestor(new_child, node_)) {
+            return throw_type_error(
+                "replaceChild: cannot insert a node into its own subtree");
+        }
+        if (new_child->parent != nullptr) {
+            DomNode* old_parent = new_child->parent;
+            DomNode* previous = nullptr;
+            DomNode* next = nullptr;
+            siblings_of(new_child, &previous, &next);
+            detach_from_parent(new_child);
+            std::vector<DomNode*> added;
+            std::vector<DomNode*> removed = {new_child};
+            document_->queue_child_list(isolate, context, old_parent, added,
+                                        removed, previous, next);
+        }
+        DomNode* old_previous = nullptr;
+        DomNode* old_next = nullptr;
+        siblings_of(old_child, &old_previous, &old_next);
+        std::size_t index = 0;
+        const auto old_it =
+            std::find(node_->children.begin(), node_->children.end(), old_child);
+        if (old_it != node_->children.end()) {
+            index = static_cast<std::size_t>(
+                std::distance(node_->children.begin(), old_it));
+        }
+        detach_from_parent(old_child);
+        std::vector<DomNode*> added;
+        std::vector<DomNode*> removed = {old_child};
+        document_->queue_child_list(isolate, context, node_, added, removed,
+                                    old_previous, old_next);
+        if (index > node_->children.size()) {
+            index = node_->children.size();
+        }
+        new_child->parent = node_;
+        node_->children.insert(node_->children.begin() + index, new_child);
+        DomNode* new_previous = nullptr;
+        DomNode* new_next = nullptr;
+        siblings_of(new_child, &new_previous, &new_next);
+        added = {new_child};
+        removed.clear();
+        document_->queue_child_list(isolate, context, node_, added, removed,
+                                    new_previous, new_next);
+        return old_child == nullptr ? v8::Undefined(isolate) : args[1];
+    }
     if (name == "appendChild" || name == "removeChild" ||
         name == "insertBefore") {
         DomNode* child = node_of_arg(args.Length() > 0 ? args[0]
@@ -4631,6 +4944,25 @@ void url_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     define("pathname", parts.pathname);
     define("search", parts.search);
     define("hash", parts.hash);
+    // M11-15: URLSearchParams snapshot of this URL's search. It is NOT live:
+    // mutating the snapshot does not rewrite the URL (no live-link state).
+    v8::Local<v8::Value> usp_value;
+    v8::Local<v8::Value> search_params = v8::Null(isolate);
+    if (context->Global()
+            ->Get(context, v8_string(isolate, "URLSearchParams"))
+            .ToLocal(&usp_value) &&
+        usp_value->IsFunction()) {
+        v8::Local<v8::Value> search_arg = v8_string(isolate, parts.search);
+        v8::Local<v8::Object> parsed;
+        if (usp_value.As<v8::Function>()
+                ->NewInstance(context, 1, &search_arg)
+                .ToLocal(&parsed)) {
+            search_params = parsed;
+        }
+    }
+    (void)self->DefineOwnProperty(
+        context, v8::String::NewFromUtf8Literal(isolate, "searchParams"),
+        search_params, v8::ReadOnly);
 }
 
 // url.toString() / url.toJSON() — both return this.href.

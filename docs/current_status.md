@@ -39,6 +39,12 @@ the fork's `master`. M11-11 was verified on `m11-11-event-capture` (commit
 the fork is the working master. See the report documents
 (`docs/m11_6_report.md` … `docs/m11_11_report.md`).
 
+**In progress:** the six-slice M11-12..M11-17 DOM/web batch (attribute API,
+tree editing, cloneNode/equality, URL.searchParams snapshot, select extension,
+nested environment + `get_defaults()`) is implemented on
+`m11-12-17-dom-web-batch`; real-V8 CI verification is pending. See
+`docs/m11_12_17_dom_web_batch.md`.
+
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
 DevTools/monitoring surface.
@@ -226,7 +232,7 @@ contract. Cross-check with:
   `docs/m11_5_mutation_observer.md`, `docs/m11_6_event_subclasses.md`,
   `docs/m11_7_web_storage.md`, `docs/m11_8_blob_file_reader.md`,
   `docs/m11_9_event_cancellation.md`, `docs/m11_10_class_list.md`,
-  `docs/m11_11_event_capture.md`
+  `docs/m11_11_event_capture.md`, `docs/m11_12_17_dom_web_batch.md`
 - recent `git log`
 
 ## 6. Next planned phase

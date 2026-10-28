@@ -99,7 +99,8 @@ to Python `logging`).
 | `DocumentFragment` and `createDocumentFragment` | **absent** |
 | Live re-aggregation of `textContent` after structural edits | **excluded** — `textContent` is a parse-time/write-time aggregate |
 | Raw Node members on elements: `firstChild` / `lastChild` / `previousSibling` / `nextSibling` / `hasChildNodes` | **absent** (only the `*ElementSibling` / `*ElementChild` forms exist) |
-| `cloneNode`, `importNode`, `adoptNode`, `normalize`, `isEqualNode`, `isSameNode`, `compareDocumentPosition`, `getRootNode` | **absent** |
+| `cloneNode`, `isEqualNode`, `isSameNode` | **selected for M11-14** |
+| `importNode`, `adoptNode`, `normalize`, `compareDocumentPosition`, `getRootNode` | **absent** |
 | `Range`, `Selection`, `TreeWalker`, `NodeIterator` | **absent** |
 
 ### 2.2 Collections
@@ -126,11 +127,12 @@ to Python `logging`).
 |---|---|
 | `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **absent** |
 | `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
-| `hasAttributes`, `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
+| `hasAttributes`, `getAttributeNames` | **selected for M11-12** |
+| `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
 | Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **absent** — use `getAttribute` |
-| `id` / `className` property setters | **excluded** — the getters are read-only |
-| `remove()`, `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren`, `replaceChild` | **absent** — only `appendChild` / `insertBefore` / `removeChild` exist |
-| `cloneNode` | **absent** |
+| `id` / `className` property setters | **selected for M11-12** |
+| `remove()`, `replaceChild` | **selected for M11-13** |
+| `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **absent** — need text-node/string semantics |
 | Specialized `HTML*Element` classes | **excluded** |
 | Shadow DOM (`attachShadow`, `ShadowRoot`, slots), Custom Elements, `<template>` | **absent** |
 | SVG / MathML namespaces (`createElementNS`) | **absent** |
@@ -162,7 +164,8 @@ Implemented for contrast: `Event(type, {bubbles})`, `target` / `currentTarget`,
 | Automatic `submit` / `reset` / `input` / `change` events and default submit action | **excluded** |
 | `requestSubmit(submitter)` argument and `event.submitter` | **absent** |
 | `FormData` and real form encoding | **absent** |
-| `select.options` / `selectedIndex` / `multiple` / `size` / `length` | **absent** — minimal single-select only |
+| `select.options` / `selectedIndex` / `multiple` / `size` | **selected for M11-16** |
+| `select.length`, option collection methods, multi-select behavior | **absent** — minimal single-select only |
 | Radio-group exclusivity; type-specific input behavior | **absent** |
 | `input.type` / `disabled` / `readOnly` / `placeholder`; `button.type` / `disabled` | **absent** |
 | Browsing-context resolution of `target`; URL resolution of `action` | **absent** — stored verbatim |
@@ -231,7 +234,8 @@ M11-11 delivered event capture and listener options. Remaining candidates
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|
-| Nested environment + `get_defaults()` | 5 | API-shape decision, not a pure feature |
+| Element attribute API / tree editing / cloneNode / select / URL.searchParams | gap inventory | **Selected for M11-12..M11-16** |
+| Nested environment + `get_defaults()` | 5 | **Selected for M11-17** — API-shape decision |
 | Event-loop facade | 6 | Deferred design decision |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |
 | JS→Python `expose()` | 8 | Requires a separate architecture decision |

@@ -110,8 +110,13 @@ All five slices are delivered and verified. Final batch runs: Linux
 selected on `2026-10-28` from the gap inventory and is now delivered and
 verified (Linux `40683001239`, Windows `40683010032`, commit `a269aa9`, each
 `1370 passed, 2 skipped`); boundary document
-`docs/m11_11_event_capture.md`, report `docs/m11_11_report.md`. The next slice
-(`M11-12`) should be chosen from the remaining ranked candidates below (or
+`docs/m11_11_event_capture.md`, report `docs/m11_11_report.md`.
+
+`M11-12` through `M11-17` are a six-slice DOM/web completeness batch selected
+on `2026-10-28` (attribute API, tree editing, cloneNode/equality,
+URL.searchParams snapshot, select extension, nested environment); boundary
+document `docs/m11_12_17_dom_web_batch.md`. After it lands, the next slice
+(`M11-18`) should be chosen from the remaining ranked candidates below (or
 another gap-inventory slice with an explicit boundary).
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in

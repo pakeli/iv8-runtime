@@ -318,6 +318,29 @@ suite collects 1372 items. The first verification run was green. See
 
 Choose `M11-12` from `docs/m11_compatibility_backlog.md`.
 
+## Priority 3i: M11-12..M11-17 DOM/web batch — IMPLEMENTED, CI PENDING (`2026-10-28`)
+
+### What landed
+
+- `M11-12`: `id` / `className` setters, `hasAttributes()`,
+  `getAttributeNames()`.
+- `M11-13`: `replaceChild`, `remove`, `hasChildNodes`, raw
+  `firstChild` / `lastChild` / `previousSibling` / `nextSibling` aliases.
+- `M11-14`: `cloneNode(deep?)`, `isSameNode`, `isEqualNode`.
+- `M11-15`: `URL.searchParams` snapshot (no live linkage; URL fields remain
+  read-only).
+- `M11-16`: `select.options`, `selectedIndex`, read-only `multiple` / `size`.
+- `M11-17`: nested `Page(environment=...)` + `Page.get_defaults()`.
+
+Boundary: `docs/m11_12_17_dom_web_batch.md`. Tests:
+`test/test_m11_12_17_batch.py` (8 items). Full suite collects 1380 items;
+expected each wheel lane: **`1378 passed, 2 skipped`**.
+
+### Verification pending
+
+Real-V8 CI on branch `m11-12-17-dom-web-batch` (master V8 cache should be
+reused). Report: `docs/m11_12_17_report.md` (created at verification).
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal
