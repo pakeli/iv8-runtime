@@ -108,11 +108,29 @@ Consequences of this decision:
 
 The planning artifact for this decision is `docs/m11_compatibility_plan.md`.
 
+### 11. M11-5 delivered `MutationObserver` without a new pump
+
+Decided/verified `2026-10-28`.
+
+`M11-5` implements the JS global `MutationObserver` on the existing
+`Page.run_jobs()` microtask checkpoint. It deliberately adds no Python API, no
+fifth pump, no `MutationRecord` global, no `id` / `className` property setters,
+and no cross-generation observer state. Records cover `childList` and
+`attributes` (with `subtree` / `attributeOldValue` / `attributeFilter`);
+`characterData` is accepted but inert because the DOM is element-only.
+
+Real-V8 verification on Linux run `40632597636` and Windows run `40632601387`
+(commit `4fa6469`): all eight wheel lanes reported `1265 passed, 2 skipped`.
+Two post-implementation fixes were required — `ab1d507` restored the V8 15.0
+`ExternalPointerTypeTag` argument on `External::New` / `External::Value`, and
+`4fa6469` corrected the tests to set ids through `setAttribute`. See
+`docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-5`?
+### A. Which concrete compatibility slice becomes `M11-6`?
 
 Settled and implemented so far:
 
@@ -132,11 +150,14 @@ Settled and implemented so far:
   Windows run `40483069548`, commit `0305b49`, each `1213 passed, 2 skipped`. See
   `docs/m11_4_queue_microtask.md` and `docs/m11_4_report.md`.
 
-`M11-5` — **`MutationObserver`** — was selected on `2026-10-28` from the new ranked
-backlog (`docs/m11_compatibility_backlog.md`); its boundary document is
-`docs/m11_5_mutation_observer.md`. Implementation and real-V8 CI verification are in
-progress on the `m11-5-mutation-observer` branch. The backlog now exists, so the
-next choice (`M11-6`) should use it rather than direction alone.
+- `M11-5` — **`MutationObserver`** — selected on `2026-10-28` from the ranked
+  backlog (`docs/m11_compatibility_backlog.md`); boundary document
+  `docs/m11_5_mutation_observer.md`. Landed and verified on real V8 (Linux +
+  Windows) on `2026-10-28`: Linux run `40632597636`, Windows run `40632601387`,
+  commit `4fa6469`, each `1265 passed, 2 skipped`. See `docs/m11_5_report.md`.
+
+`M11-6` is the open choice. The ranked backlog now exists, so the next slice
+should use it rather than direction alone.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);

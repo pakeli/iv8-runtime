@@ -111,7 +111,7 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; implementation is through M11-4
-> (`queueMicrotask`), verified on real V8 (Linux + Windows) on `2026-10-27`; see
-> `docs/m11_4_report.md`. M11-5 (`MutationObserver`) is implemented on branch
-> `m11-5-mutation-observer` and awaiting real-V8 CI verification.
+> `HEAD` is not an M1-only repository; implementation is through M11-5
+> (`MutationObserver`), verified on real V8 (Linux + Windows) on `2026-10-28` on
+> branch `m11-5-mutation-observer` (not yet merged to `master`); see
+> `docs/m11_5_report.md`.

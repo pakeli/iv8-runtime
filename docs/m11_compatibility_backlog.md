@@ -26,7 +26,7 @@ The ranking is planning guidance, not a promise of full parity.
 
 | Rank | Candidate | Target evidence | Current gap | Value | Fit/cost | Verdict |
 |---|---|---|---|---|---|---|
-| 1 | **`MutationObserver`** | Listed in the DOM/HTML compatibility table and in the micro-task examples (`README_EN.md`); used by framework and anti-bot code | Our DOM has mutation paths (`appendChild` / `removeChild` / `insertBefore` / `setAttribute` / `removeAttribute` / `textContent`) and M11-4 microtasks, but no observation model | 5 | 5 / 3 | **M11-5 selected (`2026-10-28`)** |
+| 1 | **`MutationObserver`** | Listed in the DOM/HTML compatibility table and in the micro-task examples (`README_EN.md`); used by framework and anti-bot code | Our DOM has mutation paths (`appendChild` / `removeChild` / `insertBefore` / `setAttribute` / `removeAttribute` / `textContent`) and M11-4 microtasks, but no observation model | 5 | 5 / 3 | **M11-5 delivered & verified (`2026-10-28`)** |
 | 2 | **Event subclass cluster** (`CustomEvent`, `MouseEvent`, `KeyboardEvent`, `FocusEvent`) | Target claims 80+ event types; demos use clicks and lifecycle events | We install only a minimal `Event` constructor; no subclasses or their read-only fields | 4 | 5 / 5 | Low-risk fallback |
 | 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | Independent, medium slice |
 | 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | Medium slice; async event delivery needed |
@@ -39,7 +39,8 @@ The ranking is planning guidance, not a promise of full parity.
 ## 4. Decision
 
 **M11-5: `MutationObserver`** — selected by the owner on `2026-10-28`; boundary
-document: `docs/m11_5_mutation_observer.md`.
+document: `docs/m11_5_mutation_observer.md`. Delivered and verified on real V8
+(Linux + Windows) on `2026-10-28`; see `docs/m11_5_report.md`.
 
 Why this slice:
 
@@ -82,7 +83,6 @@ Tests: `test/test_mutation_observer.py`.
 
 ## 6. Next step
 
-M11-5 is confirmed; the boundary document is `docs/m11_5_mutation_observer.md`.
-Implement only the frozen scope above, add focused tests, and update
-`docs/current_status.md`, `docs/next_tasks.md`, and `docs/decision_log.md` when
-the slice lands.
+M11-5 is delivered and verified (`2026-10-28`). The next slice, `M11-6`, should
+be chosen from this ranked list: Event subclasses (rank 2) are the smallest
+follow-on, while Web Storage (rank 3) is the next independent medium slice.

@@ -1,8 +1,7 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-28` · Latest verified milestone: **M11-4**
-(`queueMicrotask`); **M11-5** (`MutationObserver`) is implemented on
-`m11-5-mutation-observer` and awaiting real-V8 CI verification.
+Last reviewed: `2026-10-28` · Latest verified milestone: **M11-5**
+(`MutationObserver`), verified on real V8 (Linux + Windows) on `2026-10-28`.
 
 ## 0. What this document is
 
@@ -209,8 +208,9 @@ configured, and there is no UA-CH / canvas / webgl surface to spoof.
 
 Also still excluded: a real clock, background threads, and any automatic event loop.
 Every asynchronous queue is drained by an explicit Python pump — `run_timers()`,
-`run_jobs()` (microtasks, including `queueMicrotask` since M11-4),
-`run_animation_frame()` (M11-2), and `run_idle_callbacks()` (M11-3).
+`run_jobs()` (microtasks, including `queueMicrotask` since M11-4 and
+`MutationObserver` delivery since M11-5), `run_animation_frame()` (M11-2), and
+`run_idle_callbacks()` (M11-3).
 Nothing in this runtime advances on its own, and there is no `performance.now()` /
 frame-rate / vsync notion; frames and idle rounds are counted queues, not timed ones.
 There is also **no unified scheduler**: each pump drains exactly one queue, and no
@@ -239,7 +239,7 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-2 | `requestAnimationFrame` / `cancelAnimationFrame` + `Page.run_animation_frame()` | `docs/m11_2_animation_frames.md` |
 | M11-3 | `requestIdleCallback` / `cancelIdleCallback` + `Page.run_idle_callbacks()` | `docs/m11_3_idle_callbacks.md` |
 | M11-4 | `queueMicrotask` (drained by `Page.run_jobs()`) — verified 2026-10-27 | `docs/m11_4_queue_microtask.md`, `docs/m11_4_report.md` |
-| M11-5 | `MutationObserver` (childList/attributes/subtree; `run_jobs()` delivery) — implementation pending CI | `docs/m11_5_mutation_observer.md` |
+| M11-5 | `MutationObserver` (childList/attributes/subtree; `run_jobs()` delivery) — verified 2026-10-28 | `docs/m11_5_mutation_observer.md`, `docs/m11_5_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

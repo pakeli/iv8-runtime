@@ -7,9 +7,10 @@ Last reviewed: `2026-10-28`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-27`, the latest implemented and verified milestone is **M11-4**.
-Real-V8 CI is green on both platforms — Linux run `40471874328`, Windows run
-`40483069548`, both on commit `0305b49`, each reporting `1213 passed, 2 skipped`:
+As of `2026-10-28`, the latest implemented and verified milestone is **M11-5**.
+Real-V8 CI is green on both platforms — Linux run `40632597636`, Windows run
+`40632601387`, both on commit `4fa6469`, each wheel lane reporting
+`1265 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -18,10 +19,12 @@ Real-V8 CI is green on both platforms — Linux run `40471874328`, Windows run
   `Page.run_animation_frame()`
 - `M11-3`: `requestIdleCallback` / `cancelIdleCallback` / `Page.run_idle_callbacks()`
 - `M11-4`: `queueMicrotask(callback)` (drained by the existing `Page.run_jobs()`)
+- `M11-5`: `MutationObserver` (childList/attributes/subtree records delivered by
+  the existing `Page.run_jobs()` microtask checkpoint)
 
-**In progress:** `M11-5` (`MutationObserver`) is implemented on branch
-`m11-5-mutation-observer`; real-V8 CI verification is pending. See
-`docs/m11_5_mutation_observer.md` and `docs/m11_compatibility_backlog.md`.
+M11-5 is verified on branch `m11-5-mutation-observer` and is not yet merged to
+`master`. See `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`; the
+next slice (`M11-6`) should be chosen from `docs/m11_compatibility_backlog.md`.
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -109,6 +112,15 @@ Implemented and present at `HEAD`:
   callback is swallowed by V8's explicit checkpoint. Landed and verified on real V8
   (Linux + Windows) on `2026-10-27`; see `docs/m11_4_queue_microtask.md` and
   `docs/m11_4_report.md`.
+- `M11-5` mutation observers — the JS global `MutationObserver` with
+  `observe(target, options)` / `disconnect()` / `takeRecords()`. Records cover
+  `childList` and `attributes` (including `subtree`, `attributeOldValue`,
+  `attributeFilter`), are queued in mutation order, and are delivered only by the
+  existing `Page.run_jobs()` microtask checkpoint. Element and document targets are
+  accepted; `characterData` is accepted but inert because the DOM is element-only.
+  There is no new Python API, no fifth pump, and no `MutationRecord` global;
+  observer state is per generation. Verified on real V8 (Linux + Windows) on
+  `2026-10-28`; see `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -123,6 +135,8 @@ Recent implementation sequence from Git history:
 - `M11-3`: `requestIdleCallback` / `cancelIdleCallback` manual idle pump
 - `M11-4`: `queueMicrotask` on the existing manual `run_jobs()` microtask pump
   (verified `2026-10-27`)
+- `M11-5`: `MutationObserver` with `run_jobs()` delivery batches
+  (verified `2026-10-28`)
 
 ## 4. Release / Distribution Status
 
@@ -158,7 +172,8 @@ contract. Cross-check with:
   `docs/m7_summary.md`, `docs/m8_summary.md`, `docs/m9_summary.md`,
   `docs/m10_1_watch_reflect_ownkeys.md`, `docs/m10_2_watch_object_keys.md`,
   `docs/m11_1_host_environment.md`, `docs/m11_2_animation_frames.md`,
-  `docs/m11_3_idle_callbacks.md`, `docs/m11_4_queue_microtask.md`
+  `docs/m11_3_idle_callbacks.md`, `docs/m11_4_queue_microtask.md`,
+  `docs/m11_5_mutation_observer.md`
 - recent `git log`
 
 ## 6. Next planned phase
@@ -177,17 +192,20 @@ The repository is executing its post-M10 direction:
 - `M11-4` (`queueMicrotask` on the existing `run_jobs()` microtask pump) is
   **landed and verified on real V8 (Linux + Windows)** on `2026-10-27`; see
   `docs/m11_4_queue_microtask.md` and `docs/m11_4_report.md`;
-- the CI pass is complete; the next execution handoff is to choose `M11-5` from a
-  ranked compatibility backlog rather than by intuition.
+- `M11-5` (`MutationObserver` on the existing `run_jobs()` microtask checkpoint) is
+  **landed and verified on real V8 (Linux + Windows)** on `2026-10-28`; see
+  `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`;
+- the next execution handoff is to choose `M11-6` from the ranked compatibility
+  backlog (`docs/m11_compatibility_backlog.md`) rather than by intuition.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-5`? (`docs/decision_log.md`
-  §A — still open. `M11-1` through `M11-4` are settled, landed, and verified; the
-  ranked compatibility matrix that should drive the next choice still does not
-  exist — `docs/next_tasks.md` Priority 4.)
+- Which concrete compatibility slice should become `M11-6`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-5` are settled, landed, and verified; the ranked
+  compatibility matrix now exists at `docs/m11_compatibility_backlog.md` and should
+  drive the next choice.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -202,9 +220,10 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with `M11-4` (`queueMicrotask` on the existing
-> `run_jobs()` microtask pump) landed and verified on real V8 (Linux + Windows) on
-> `2026-10-27`; `M11-5` is not yet chosen.
+> compatibility-first `M11` line — with `M11-5` (`MutationObserver` on the existing
+> `run_jobs()` microtask checkpoint) landed and verified on real V8 (Linux +
+> Windows) on `2026-10-28`; the next slice is `M11-6`, chosen from the ranked
+> compatibility backlog.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

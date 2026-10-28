@@ -194,16 +194,21 @@ M11-5 deliberately does **not** add:
 
 ## Verification
 
-Status: **implementation complete; real-V8 CI verification pending.**
+Status: **verified on real V8 (Linux + Windows), `2026-10-28`.**
 
-- Focused tests: `test/test_mutation_observer.py` (52 collected items; the
-  skeleton shape guard passes against the M11-4 wheel, runtime tests require the
-  rebuilt wheel).
-- Real-V8 CI uses `.github/workflows/release-linux.yml` and
-  `.github/workflows/release-windows.yml`; `ci.yml` is the skeleton shape-guard
-  lane.
-- Expected total after the slice: the M11-4 baseline (`1213 passed, 2 skipped`)
-  plus the new test file's item count, identical on both platforms.
+- Focused tests: `test/test_mutation_observer.py` — 52 items.
+- Real-V8 CI on commit `4fa6469`: Linux run `40632597636` (cp311–cp314) and
+  Windows run `40632601387` (Python 3.11–3.14); every wheel lane reported
+  `1265 passed, 2 skipped` — the M11-4 baseline (`1213 passed, 2 skipped`)
+  plus the 52 new items. `test/test_mutation_observer.py` has its own progress
+  line in every lane.
+- Two post-implementation fixes were required and are part of the verified
+  commit: `ab1d507` (V8 15.0 requires `ExternalPointerTypeTag` on
+  `External::New` / `External::Value`) and `4fa6469` (the tests set ids via
+  `setAttribute`, since this runtime has no `.id` setter). See
+  `docs/m11_5_report.md`.
+- `ci.yml` remains the skeleton shape-guard lane; macOS is outside acceptance
+  scope.
 
 ## Open points
 

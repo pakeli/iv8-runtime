@@ -1,6 +1,6 @@
 # Next Tasks
 
-Last reviewed: `2026-10-27`
+Last reviewed: `2026-10-28`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
@@ -171,7 +171,7 @@ cancellation, or changes to the four existing pumps. Like the earlier M11 slices
 was chosen before the ranked compatibility matrix existed; Priority 4 below now covers
 `M11-5`.
 
-## Priority 3e: Fifth M11 compatibility slice — IMPLEMENTED, CI VERIFICATION PENDING (`2026-10-28`)
+## Priority 3e: Fifth M11 compatibility slice — DONE (`2026-10-28`)
 
 ### What landed
 
@@ -188,12 +188,25 @@ Boundary: `docs/m11_5_mutation_observer.md`. Tests:
 `test/test_mutation_observer.py` (52 collected items; the skeleton shape guard
 passes locally, runtime tests require a rebuilt wheel).
 
-### Verification pending
+### Verification — passed
 
-Real-V8 CI on branch `m11-5-mutation-observer` must run `release-linux` and
-`release-windows` on the same commit. Expected total: the M11-4 baseline
-(`1213 passed, 2 skipped`) plus the 52 new items = **1265 passed, 2 skipped** per
-platform. Local checks are static only (no C++ toolchain / Windows V8 monolith).
+Real-V8 CI on branch `m11-5-mutation-observer`, commit `4fa6469`:
+
+- Linux `release-linux` run `40632597636` — cp311–cp314, each
+  `1265 passed, 2 skipped`;
+- Windows `release-windows` run `40632601387` — Python 3.11–3.14, each
+  `1265 passed, 2 skipped`.
+
+`test/test_mutation_observer.py` ran in every lane; 1265 is the M11-4 baseline
+(`1213 passed, 2 skipped`) plus the 52 new items. Two fixes were needed after
+the first runs: `ab1d507` (V8 15.0 `ExternalPointerTypeTag` on
+`External::New` / `External::Value`) and `4fa6469` (the tests set ids via
+`setAttribute`, since `.id` has no setter). See `docs/m11_5_report.md`.
+
+### Next
+
+Choose `M11-6` from the ranked compatibility backlog
+(`docs/m11_compatibility_backlog.md`).
 
 ### Deliberately not done
 
