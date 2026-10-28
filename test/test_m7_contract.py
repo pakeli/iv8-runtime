@@ -80,10 +80,11 @@ def test_m7_capabilities_present():
 def test_frozen_items_absent():
     with iv8.Page() as page:
         page.load(html="<html><body><form id='f'></form></body></html>", base_url=BASE)
-        # no validation surface / no enctype alias
-        for m in ("encoding", "checkValidity", "reportValidity", "willValidate",
-                  "validity", "submitter"):
+        # no validation surface; M11-18 adds the encoding alias
+        for m in ("checkValidity", "reportValidity", "willValidate", "validity",
+                  "submitter"):
             assert page.eval(f"typeof document.getElementById('f').{m}") == "undefined"
+        assert page.eval("typeof document.getElementById('f').encoding") == "string"
         # FormData is not introduced into the global
         assert page.eval("typeof globalThis.FormData") == "undefined"
         # requestSubmit(submitter) has no submitter semantics: the no-arg call is the

@@ -130,7 +130,7 @@ M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
 | `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **absent** |
 | `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
 | `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
-| Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **absent** — use `getAttribute` |
+| Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **partially selected for M11-18** — form-control subset only; other reflections **absent** |
 | `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **absent** — need text-node/string semantics |
 | Specialized `HTML*Element` classes | **excluded** |
 | Shadow DOM (`attachShadow`, `ShadowRoot`, slots), Custom Elements, `<template>` | **absent** |
@@ -172,9 +172,10 @@ cancellation (`cancelable` / `defaultPrevented` / `preventDefault` /
 | `FormData` and real form encoding | **absent** |
 | `select.length`, option collection methods, multi-select behavior | **absent** — minimal single-select only |
 | Radio-group exclusivity; type-specific input behavior | **absent** |
-| `input.type` / `disabled` / `readOnly` / `placeholder`; `button.type` / `disabled` | **absent** |
+| `input.type` / `disabled` / `readOnly` / `placeholder`; `button.type` / `disabled` | **selected for M11-18** |
+| `option.label` / `option.index` | **selected for M11-18** |
 | Browsing-context resolution of `target`; URL resolution of `action` | **absent** — stored verbatim |
-| `form.encoding` (the `enctype` alias) | **absent** |
+| `form.encoding` (the `enctype` alias) | **selected for M11-18** |
 
 Implemented for contrast: `form.elements` (plain array), `reset()`, no-op
 `submit()` / `requestSubmit()`, the five form metadata properties,

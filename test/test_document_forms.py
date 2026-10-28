@@ -41,8 +41,8 @@ def test_forms_is_a_plain_array():
         # <form> gains no form behaviour beyond the minimal entry points
         # (form.elements M5-1; reset() M6-1; submit() M7-1; requestSubmit() M7-2;
         # method M7-3; action M7-4; enctype M7-5; target M7-6; noValidate M7-7).
-        # No FormData / encoding-alias surface.
-        assert page.eval("typeof document.forms[0].encoding") == "undefined"
+        # M11-18 adds the encoding alias; there is still no FormData.
+        assert page.eval("typeof document.forms[0].encoding") == "string"
 
 
 # --- fresh document -> empty array ----------------------------------------------

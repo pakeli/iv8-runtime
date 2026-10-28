@@ -41,9 +41,8 @@ def test_action_only_on_form():
         assert page.eval("typeof document.getElementById('f').action") == "string"
         for eid in ("in", "bt", "dv"):
             assert page.eval(f"typeof document.getElementById('{eid}').action") == "undefined"
-        # sibling metadata stays frozen (form.enctype M7-5, target M7-6, noValidate M7-7)
-        for m in ("encoding",):
-            assert page.eval(f"typeof document.getElementById('f').{m}") == "undefined"
+        # M11-18 adds the form.encoding alias of the M7-5 enctype slot.
+        assert page.eval("typeof document.getElementById('f').encoding") == "string"
 
 
 # --- default "": no attribute + createElement -----------------------------------

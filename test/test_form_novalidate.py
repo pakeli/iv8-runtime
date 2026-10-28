@@ -43,9 +43,10 @@ def test_novalidate_only_on_form():
         for eid in ("in", "bt", "dv"):
             assert page.eval(
                 f"typeof document.getElementById('{eid}').noValidate") == "undefined"
-        # validation surface stays frozen
-        for m in ("checkValidity", "reportValidity", "willValidate", "encoding"):
+        # validation surface stays frozen; M11-18 adds the encoding alias.
+        for m in ("checkValidity", "reportValidity", "willValidate"):
             assert page.eval(f"typeof document.getElementById('f').{m}") == "undefined"
+        assert page.eval("typeof document.getElementById('f').encoding") == "string"
 
 
 # --- default false: no attribute + createElement --------------------------------

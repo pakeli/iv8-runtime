@@ -967,6 +967,34 @@ std::string normalize_form_enctype(const std::string& raw) {
     return "application/x-www-form-urlencoded";
 }
 
+// M11-18: input.type / button.type reflection. The getter lower-cases the raw
+// attribute and returns it only when it is a known type; an absent, empty, or
+// unknown value maps to the documented default. The setter (see ElementHost)
+// writes the raw string back to the attribute.
+std::string normalize_input_type(const std::string& raw) {
+    static const char* const known[] = {
+        "hidden", "text",     "search", "tel",      "url",
+        "email",  "password", "date",   "month",    "week",
+        "time",   "datetime-local", "number", "range", "color",
+        "checkbox", "radio",  "file",   "submit",   "image",
+        "reset",  "button"};
+    const std::string lower = ascii_lower(raw);
+    for (const char* candidate : known) {
+        if (lower == candidate) {
+            return lower;
+        }
+    }
+    return "text";
+}
+
+std::string normalize_button_type(const std::string& raw) {
+    const std::string lower = ascii_lower(raw);
+    if (lower == "reset" || lower == "button") {
+        return lower;
+    }
+    return "submit";
+}
+
 // M5-5: the <option> descendants of `root` in document order (used by
 // select.value's read/write and the initial-selection normalization).
 inline std::vector<DomNode*> collect_options(DomNode* root) {
@@ -1687,6 +1715,8 @@ public:
             names.push_back("method");
             names.push_back("action");
             names.push_back("enctype");
+            // M11-18: alias of the enctype runtime slot.
+            names.push_back("encoding");
             names.push_back("target");
             names.push_back("noValidate");
         }
@@ -1717,6 +1747,9 @@ public:
             names.push_back("selected");
             names.push_back("text");
             names.push_back("defaultSelected");
+            // M11-18: label reflection + read-only position in the owning select.
+            names.push_back("label");
+            names.push_back("index");
         }
         // M5-7: `checked` (read-write bool) is exposed only on <input>;
         // M6-2/M6-4: `defaultChecked` / `defaultValue` (read-only reset baselines).
@@ -1724,6 +1757,16 @@ public:
             names.push_back("checked");
             names.push_back("defaultChecked");
             names.push_back("defaultValue");
+            // M11-18: reflected attribute surface.
+            names.push_back("type");
+            names.push_back("disabled");
+            names.push_back("readOnly");
+            names.push_back("placeholder");
+        }
+        if (node_->tag == "button") {
+            // M11-18: reflected attribute surface.
+            names.push_back("type");
+            names.push_back("disabled");
         }
         // M6-5: `defaultValue` (read-only reset baseline) also on <textarea> (its
         // baseline was seeded from the initial text content, M5-4/M6-1).
@@ -1773,6 +1816,20 @@ public:
         }
         if (node_->tag == "input") {
             names.push_back("checked");
+            // M11-18: reflected attribute writes.
+            names.push_back("type");
+            names.push_back("disabled");
+            names.push_back("readOnly");
+            names.push_back("placeholder");
+        }
+        if (node_->tag == "button") {
+            // M11-18: reflected attribute writes.
+            names.push_back("type");
+            names.push_back("disabled");
+        }
+        if (node_->tag == "option") {
+            // M11-18: label is writable; index is read-only.
+            names.push_back("label");
         }
         if (node_->tag == "select") {
             names.push_back("selectedIndex");
@@ -1783,6 +1840,8 @@ public:
             names.push_back("method");
             names.push_back("action");
             names.push_back("enctype");
+            // M11-18: alias of enctype.
+            names.push_back("encoding");
             names.push_back("target");
             names.push_back("noValidate");
         }
@@ -3292,6 +3351,55 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     if (name == "classList") {
         return make_class_list(isolate, context, document_, node_);
     }
+    // M11-18: minimal form-control attribute reflection.
+    if (name == "type" &&
+        (node_->tag == "input" || node_->tag == "button")) {
+        const auto it = node_->attributes.find("type");
+        const std::string raw =
+            it != node_->attributes.end() ? it->second : std::string();
+        return v8_string(isolate, node_->tag == "input"
+                                     ? normalize_input_type(raw)
+                                     : normalize_button_type(raw));
+    }
+    if (name == "disabled" &&
+        (node_->tag == "input" || node_->tag == "button")) {
+        return v8::Boolean::New(
+            isolate, node_->attributes.find("disabled") !=
+                         node_->attributes.end());
+    }
+    if (name == "readOnly" && node_->tag == "input") {
+        return v8::Boolean::New(
+            isolate, node_->attributes.find("readonly") !=
+                         node_->attributes.end());
+    }
+    if (name == "placeholder" && node_->tag == "input") {
+        const auto it = node_->attributes.find("placeholder");
+        return v8_string(isolate,
+                         it != node_->attributes.end() ? it->second
+                                                       : std::string());
+    }
+    if (name == "label" && node_->tag == "option") {
+        const auto it = node_->attributes.find("label");
+        return v8_string(isolate,
+                         it != node_->attributes.end() ? it->second
+                                                       : node_->text_content);
+    }
+    if (name == "index" && node_->tag == "option") {
+        DomNode* select = node_->parent;
+        while (select != nullptr && select->tag != "select") {
+            select = select->parent;
+        }
+        if (select == nullptr) {
+            return v8::Integer::New(isolate, 0);
+        }
+        const std::vector<DomNode*> options = collect_options(select);
+        const auto it = std::find(options.begin(), options.end(), node_);
+        return v8::Integer::New(
+            isolate, it == options.end()
+                         ? 0
+                         : static_cast<int>(
+                               std::distance(options.begin(), it)));
+    }
     // M11-16: select.options / selectedIndex / multiple / size.
     if (node_->tag == "select" && name == "options") {
         std::vector<DomNode*> options;
@@ -3528,6 +3636,10 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     if (name == "enctype") {
         return v8_string(isolate, node_->enctype);
     }
+    // M11-18: form.encoding is an alias of the enctype runtime slot.
+    if (name == "encoding") {
+        return v8_string(isolate, node_->enctype);
+    }
     // M7-6: form.target — the current raw submission-target string, read-write,
     // exposed only on <form>. Decoupled from the `target` attribute (reading returns
     // the runtime slot). No browsing-context / window resolution / _self,_blank,...
@@ -3597,6 +3709,90 @@ void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> cont
             node_->classes = split_class_tokens(text);
             document_->queue_attribute(isolate, context, node_, "class",
                                        old_has, old_value);
+        }
+        return;
+    }
+    // M11-18: reflected form-control string/boolean attribute writes. These are
+    // real attribute writes (unlike the value/checked/selected runtime slots), so
+    // getAttribute/hasAttribute and MutationObserver records stay consistent.
+    const auto to_reflected_string = [&](std::string& out) -> bool {
+        v8::Local<v8::String> str;
+        if (!value->ToString(context).ToLocal(&str)) {
+            return false;
+        }
+        v8::String::Utf8Value utf8(isolate, str);
+        out = (*utf8 != nullptr)
+                  ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+                  : std::string();
+        return true;
+    };
+    const auto reflect_raw_string = [&](const std::string& key,
+                                        const std::string& text) {
+        bool old_has = false;
+        std::string old_value;
+        const auto it = node_->attributes.find(key);
+        if (it != node_->attributes.end()) {
+            old_has = true;
+            old_value = it->second;
+        }
+        node_->attributes[key] = text;
+        document_->queue_attribute(isolate, context, node_, key, old_has,
+                                   old_value);
+    };
+    const auto reflect_bool = [&](const std::string& key, bool on) {
+        const auto it = node_->attributes.find(key);
+        if (on) {
+            bool old_has = false;
+            std::string old_value;
+            if (it != node_->attributes.end()) {
+                old_has = true;
+                old_value = it->second;
+            }
+            node_->attributes[key] = std::string();
+            document_->queue_attribute(isolate, context, node_, key, old_has,
+                                       old_value);
+        } else if (it != node_->attributes.end()) {
+            const std::string old_value = it->second;
+            node_->attributes.erase(it);
+            document_->queue_attribute(isolate, context, node_, key, true,
+                                       old_value);
+        }
+    };
+    if (name == "encoding" && node_->tag == "form") {
+        std::string text;
+        if (to_reflected_string(text)) {
+            node_->enctype = normalize_form_enctype(text);
+        }
+        return;
+    }
+    if (name == "type" &&
+        (node_->tag == "input" || node_->tag == "button")) {
+        std::string text;
+        if (to_reflected_string(text)) {
+            reflect_raw_string("type", text);
+        }
+        return;
+    }
+    if (name == "disabled" &&
+        (node_->tag == "input" || node_->tag == "button")) {
+        reflect_bool("disabled", value->BooleanValue(isolate));
+        return;
+    }
+    if (name == "readOnly" && node_->tag == "input") {
+        reflect_bool("readonly", value->BooleanValue(isolate));
+        return;
+    }
+    if (name == "placeholder" && node_->tag == "input") {
+        std::string text;
+        if (to_reflected_string(text)) {
+            reflect_raw_string("placeholder", text);
+        }
+        return;
+    }
+    if (name == "label" && node_->tag == "option") {
+        std::string text;
+        if (to_reflected_string(text)) {
+            reflect_raw_string("label", text);
         }
         return;
     }

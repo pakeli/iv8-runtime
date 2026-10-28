@@ -117,9 +117,14 @@ on `2026-10-28` (attribute API, tree editing, cloneNode/equality,
 URL.searchParams snapshot, select extension, nested environment); boundary
 document `docs/m11_12_17_dom_web_batch.md`. Delivered and verified on real V8:
 Linux `40695004440`, Windows `40695029530`, commit `8d606e9`, each wheel lane
-`1378 passed, 2 skipped`; report `docs/m11_12_17_report.md`. The next slice
-(`M11-18`) should be chosen from the remaining ranked candidates below (or
-another gap-inventory slice with an explicit boundary).
+`1378 passed, 2 skipped`; report `docs/m11_12_17_report.md`.
+
+`M11-18` — **form-control attribute reflection** — was selected on
+`2026-10-28` from `docs/dom_bom_gaps.md` rather than the ranked list, because
+the remaining ranked candidates need separate architecture decisions
+(event-loop facade, networking, `expose()`). Boundary:
+`docs/m11_18_form_control_reflection.md`; implementation and real-V8
+verification are in progress on `m11-18-form-control-reflection`.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

@@ -36,9 +36,11 @@ def test_value_on_button_not_div():
         page.load(html=html, base_url=BASE)
         assert page.eval("typeof document.getElementById('bt').value") == "string"
         assert page.eval("typeof document.getElementById('dv').value") == "undefined"
-        # No button-specific extras this phase.
-        for member in ("type", "disabled", "defaultValue"):
-            assert page.eval(f"typeof document.getElementById('bt').{member}") == "undefined"
+        # M11-18 adds type/disabled reflection; defaultValue stays absent.
+        assert page.eval("document.getElementById('bt').type") == "submit"
+        assert page.eval("document.getElementById('bt').disabled") is False
+        assert page.eval(
+            "typeof document.getElementById('bt').defaultValue") == "undefined"
 
 
 # --- initial value from attribute / empty ---------------------------------------

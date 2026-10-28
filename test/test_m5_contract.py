@@ -104,17 +104,17 @@ def test_frozen_items_absent():
         assert page.eval("document.getElementById('se').selectedIndex") == -1
         assert page.eval("document.getElementById('se').multiple") is False
         assert page.eval("document.getElementById('se').size") == 0
-        # input: no type / disabled. (defaultChecked arrived in M6-2, defaultValue in
-        # M6-4 — see their test files.)
-        for m in ("type", "disabled"):
-            assert page.eval(f"typeof document.getElementById('in').{m}") == "undefined"
-        # option: no label / index. (defaultSelected arrived in M6-3 — see
+        # input: M11-18 adds type / disabled reflection. (defaultChecked arrived in
+        # M6-2, defaultValue in M6-4 — see their test files.)
+        assert page.eval("document.getElementById('in').type") == "text"
+        assert page.eval("document.getElementById('in').disabled") is False
+        # option: M11-18 adds label / index. (defaultSelected arrived in M6-3 — see
         # test_option_default_selected.py.)
-        for m in ("label", "index"):
-            assert page.eval(f"typeof document.getElementById('op').{m}") == "undefined"
-        # button: no type / disabled
-        for m in ("type", "disabled"):
-            assert page.eval(f"typeof document.getElementById('bt').{m}") == "undefined"
+        assert page.eval("document.getElementById('op').label") == "ot"
+        assert page.eval("document.getElementById('op').index") == 0
+        # button: M11-18 adds type / disabled reflection.
+        assert page.eval("document.getElementById('bt').type") == "submit"
+        assert page.eval("document.getElementById('bt').disabled") is False
 
 
 # --- (4) mixed-page cooperation over a live tree --------------------------------

@@ -48,6 +48,12 @@ verified as one six-slice DOM/web batch on branch
 is out of scope and the fork is the working master. See the report documents
 (`docs/m11_6_report.md` … `docs/m11_12_17_report.md`).
 
+**In progress:** `M11-18` (form-control attribute reflection: input
+`type` / `disabled` / `readOnly` / `placeholder`, button `type` / `disabled`,
+`form.encoding`, `option.label` / `index`) is implemented on
+`m11-18-form-control-reflection`; real-V8 CI verification is pending. See
+`docs/m11_18_form_control_reflection.md`.
+
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
 DevTools/monitoring surface.

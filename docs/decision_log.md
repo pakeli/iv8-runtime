@@ -234,6 +234,14 @@ commit `8d606e9`, each wheel lane `1378 passed, 2 skipped`). After it lands, the
 next slice (`M11-18`) should again be chosen from this backlog rather than
 direction alone.
 
+- `M11-18` — **Form-control attribute reflection** — selected on `2026-10-28`
+  from the gap inventory (the ranked backlog's remaining entries need separate
+  architecture decisions): input `type` / `disabled` / `readOnly` /
+  `placeholder`, button `type` / `disabled`, `form.encoding`, and
+  `option.label` / `index`. Boundary:
+  `docs/m11_18_form_control_reflection.md`. Implementation and real-V8
+  verification are in progress on `m11-18-form-control-reflection`.
+
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);
 `queueMicrotask` deliberately feeds `run_jobs` instead of adding a fifth. Whether the

@@ -356,6 +356,30 @@ stale frozen-surface guards; `8d606e9` refreshed them. Report:
 Choose `M11-18` from `docs/m11_compatibility_backlog.md` (or another
 gap-inventory slice with an explicit boundary).
 
+## Priority 3j: M11-18 form-control attribute reflection — IMPLEMENTED, CI PENDING (`2026-10-28`)
+
+### What landed
+
+- `<input>`: `type` (normalized known set; default `"text"`), `disabled`,
+  `readOnly`, `placeholder`.
+- `<button>`: `type` (normalized `submit` / `reset` / `button`; default
+  `"submit"`), `disabled`.
+- `<form>`: `encoding`, an alias of the existing `.enctype` runtime slot.
+- `<option>`: `label` (attribute, falling back to text) and read-only `index`.
+
+Property writes are real attribute writes and feed the MutationObserver
+attribute hooks; `form.encoding` changes only the runtime slot. No Python API,
+no form behavior, and no validation surface.
+
+Boundary: `docs/m11_18_form_control_reflection.md`. Tests:
+`test/test_m11_18_form_control_reflection.py` (8 items). Full suite collects
+1388 items; expected each wheel lane: **`1386 passed, 2 skipped`**.
+
+### Verification pending
+
+Real-V8 CI on branch `m11-18-form-control-reflection` (master V8 cache should
+be reused). Report: `docs/m11_18_report.md` (created at verification).
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal
