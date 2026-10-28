@@ -150,7 +150,7 @@ def test_append_child_record():
         page.eval("""
             obs.observe(root, {childList: true});
             var c = document.createElement('div');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
         """)
         assert _record_count(page) == 0
@@ -195,7 +195,7 @@ def test_insert_before_record():
         page.eval("""
             obs.observe(root, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.insertBefore(c, document.getElementById('a'));
         """)
         page.run_jobs()
@@ -211,7 +211,7 @@ def test_same_parent_reorder_is_removal_plus_addition():
         _setup(page)
         page.eval("""
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
             obs.observe(root, {childList: true});
             root.appendChild(document.getElementById('a'));
@@ -234,7 +234,7 @@ def test_cross_parent_move_records_both_parents():
         _setup(page)
         page.eval("""
             var box = document.createElement('div');
-            box.id = 'box';
+            box.setAttribute('id', 'box');
             document.body.appendChild(box);
             obs.observe(root, {childList: true});
             obs.observe(box, {childList: true});
@@ -268,7 +268,7 @@ def test_text_content_removes_all_children():
         _setup(page)
         page.eval("""
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
             obs.observe(root, {childList: true});
             root.textContent = 'x';
@@ -289,7 +289,7 @@ def test_text_content_without_children_has_no_record():
         _setup(page)
         page.eval("""
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             obs.observe(root, {childList: true});
             c.textContent = 'x';
         """)
@@ -413,7 +413,7 @@ def test_subtree_matches_descendant_mutations():
         page.eval("""
             obs.observe(root, {childList: true, subtree: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             document.getElementById('a').appendChild(c);
         """)
         page.run_jobs()
@@ -429,7 +429,7 @@ def test_without_subtree_descendant_mutations_are_ignored():
         page.eval("""
             obs.observe(root, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             document.getElementById('a').appendChild(c);
         """)
         page.run_jobs()
@@ -444,7 +444,7 @@ def test_document_target_with_subtree_observes_descendants():
             obs.observe(document, {childList: true, subtree: true,
                                    attributes: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
             root.setAttribute('data-x', '1');
         """)
@@ -464,7 +464,7 @@ def test_document_target_without_subtree_is_inert():
         page.eval("""
             obs.observe(document, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
         """)
         page.run_jobs()
@@ -480,7 +480,7 @@ def test_only_run_jobs_delivers():
         page.eval("""
             obs.observe(root, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
         """)
         page.run_timers()
@@ -498,9 +498,9 @@ def test_records_are_delivered_in_mutation_order():
         page.eval("""
             obs.observe(root, {childList: true});
             var c1 = document.createElement('b');
-            c1.id = 'c1';
+            c1.setAttribute('id', 'c1');
             var c2 = document.createElement('b');
-            c2.id = 'c2';
+            c2.setAttribute('id', 'c2');
             root.appendChild(c1);
             root.appendChild(c2);
         """)
@@ -526,7 +526,7 @@ def test_observer_creation_order_is_delivery_order():
             o1.observe(root, {childList: true});
             o2.observe(root, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
         """)
         page.run_jobs()
@@ -543,13 +543,13 @@ def test_mutation_inside_callback_delivers_in_same_run_jobs():
                 order.push('cb' + order.length + ':' + records.length);
                 if (order.length === 1) {
                     var c = document.createElement('span');
-                    c.id = 'c2';
+                    c.setAttribute('id', 'c2');
                     root.appendChild(c);
                 }
             });
             o.observe(root, {childList: true});
             var c = document.createElement('span');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
         """)
         page.run_jobs()
@@ -567,7 +567,7 @@ def test_interleaves_with_queue_microtask():
             });
             o.observe(root, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
             queueMicrotask(function () { order.push('micro'); });
         """)
@@ -584,7 +584,7 @@ def test_take_records_returns_and_clears():
         page.eval("""
             obs.observe(root, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
             globalThis.taken = obs.takeRecords();
         """)
@@ -602,7 +602,7 @@ def test_disconnect_discards_pending_and_future_records():
         page.eval("""
             obs.observe(root, {childList: true});
             var c1 = document.createElement('b');
-            c1.id = 'c1';
+            c1.setAttribute('id', 'c1');
             root.appendChild(c1);
             obs.disconnect();
         """)
@@ -610,7 +610,7 @@ def test_disconnect_discards_pending_and_future_records():
         assert _record_count(page) == 0
         page.eval("""
             var c2 = document.createElement('b');
-            c2.id = 'c2';
+            c2.setAttribute('id', 'c2');
             root.appendChild(c2);
         """)
         page.run_jobs()
@@ -633,7 +633,7 @@ def test_throwing_callback_is_isolated():
             bad.observe(root, {childList: true});
             good.observe(root, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
         """)
         page.run_jobs()
@@ -649,7 +649,7 @@ def test_reobserve_replaces_options():
             obs.observe(root, {childList: true});
             obs.observe(root, {attributes: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
             root.setAttribute('data-x', '1');
         """)
@@ -669,7 +669,7 @@ def test_load_discards_observers_and_pending_records():
         page.eval("""
             obs.observe(root, {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             root.appendChild(c);
         """)
         page.load("<html><body><div id='root'></div></body></html>", BASE)
@@ -683,7 +683,7 @@ def test_load_discards_observers_and_pending_records():
             });
             o2.observe(document.getElementById('root'), {childList: true});
             var c = document.createElement('b');
-            c.id = 'c1';
+            c.setAttribute('id', 'c1');
             document.getElementById('root').appendChild(c);
         """)
         page.run_jobs()
@@ -698,7 +698,7 @@ def test_dispose_with_pending_observer_is_clean_and_run_jobs_raises():
         globalThis.o = new MutationObserver(function () {});
         o.observe(document.getElementById('root'), {childList: true});
         var c = document.createElement('b');
-        c.id = 'c1';
+        c.setAttribute('id', 'c1');
         document.getElementById('root').appendChild(c);
     """)
     page.dispose()
@@ -712,9 +712,9 @@ def test_detached_subtree_is_observable():
         _setup(page)
         page.eval("""
             var parent = document.createElement('div');
-            parent.id = 'det';
+            parent.setAttribute('id', 'det');
             var child = document.createElement('span');
-            child.id = 'c1';
+            child.setAttribute('id', 'c1');
             parent.appendChild(child);
             obs.observe(parent, {childList: true});
             parent.removeChild(child);
