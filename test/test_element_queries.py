@@ -219,10 +219,9 @@ def test_shape_guard():
         page.load(html=html, base_url=BASE)
         el = "document.getElementById('d')"
         # (matches arrived in M4-B-3, closest in M4-B-4 — see test_matches.py /
-        # test_closest.py. document.getElementsByClassName arrived in M4-B-13, but
-        # the ELEMENT-level getElementsByClassName intentionally stays out.)
-        for member in ("getElementsByClassName",):
-            assert page.eval(f"typeof {el}.{member}") == "undefined"
+        # test_closest.py. document.getElementsByClassName arrived in M4-B-13;
+        # M11-19 adds the ELEMENT-level getElementsByClassName.)
+        assert page.eval(f"typeof {el}.getElementsByClassName") == "function"
         # Returned arrays carry no HTMLCollection extras.
         assert page.eval(f"typeof {el}.querySelectorAll('span').item") == "undefined"
         assert page.eval(f"typeof {el}.getElementsByTagName('span').namedItem") == "undefined"
