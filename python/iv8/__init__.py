@@ -842,6 +842,15 @@ wrappers follow the runtime's usual no-identity-guarantee model, and observers n
 cross generations. See ``docs/m11_5_mutation_observer.md`` for the authoritative
 boundary.
 
+M11-6 (event subclasses) adds ``CustomEvent`` (``detail``), ``MouseEvent``
+(``clientX`` / ``clientY`` / ``button`` / ``buttons``), ``KeyboardEvent``
+(``key`` / ``code`` / ``repeat``), and ``FocusEvent`` (``relatedTarget``) on top of
+the existing Event / EventTarget / bubbling model. Each subclass inherits
+``Event.prototype`` and carries own read-only fields; the constructors require
+``new``. There is still no capture phase, cancellation, listener options, native
+event generation, or new pump. See ``docs/m11_6_event_subclasses.md`` for the
+authoritative boundary.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

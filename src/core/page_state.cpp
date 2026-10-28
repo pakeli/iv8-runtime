@@ -3306,6 +3306,172 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     (void)self->Set(context, v8_string(isolate, "stopPropagation"), stop_fn);
 }
 
+// --- M11-6 event subclasses --------------------------------------------------
+//
+// The four constructors below reuse event_constructor() for the inherited Event
+// fields (type / bubbles / target / currentTarget / stopPropagation) and add a
+// small set of own read-only fields. They intentionally do NOT change Event
+// itself: no capture phase, cancellation, listener options, native event
+// generation, or Python surface is added.
+
+bool event_construct_check(const v8::FunctionCallbackInfo<v8::Value>& info,
+                           const char* name) {
+    if (info.IsConstructCall()) {
+        return true;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    const std::string message =
+        std::string(name) + " constructor requires 'new'";
+    isolate->ThrowException(v8::Exception::TypeError(
+        v8::String::NewFromUtf8(isolate, message.c_str()).ToLocalChecked()));
+    return false;
+}
+
+// Reads init[name] when init is an object; absent / non-object init yields
+// undefined. Returns false only when the getter threw (exception left pending).
+bool event_init_field(v8::Local<v8::Context> context,
+                      const v8::FunctionCallbackInfo<v8::Value>& info,
+                      const char* name, v8::Local<v8::Value>* out) {
+    v8::Isolate* isolate = info.GetIsolate();
+    if (info.Length() < 2 || !info[1]->IsObject()) {
+        *out = v8::Undefined(isolate);
+        return true;
+    }
+    return info[1]
+        .As<v8::Object>()
+        ->Get(context, v8_string(isolate, name))
+        .ToLocal(out);
+}
+
+// Subclass fields are own read-only data properties (sloppy assignment is a
+// silent no-op; strict assignment throws). The inherited Event fields stay
+// writable because dispatch still sets target / currentTarget on the object.
+void set_event_field(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                     v8::Local<v8::Object> self, const char* name,
+                     v8::Local<v8::Value> value) {
+    (void)self->DefineOwnProperty(
+        context, v8::String::NewFromUtf8(isolate, name).ToLocalChecked(), value,
+        v8::ReadOnly);
+}
+
+// WebIDL-lite integer conversion: ToNumber, non-finite -> 0, truncate toward
+// zero. Deliberately no 32-bit wrap-around (see the boundary note).
+bool event_int_field(v8::Local<v8::Context> context, v8::Local<v8::Value> value,
+                     double* out) {
+    v8::Local<v8::Number> number;
+    if (!value->ToNumber(context).ToLocal(&number)) {
+        return false;
+    }
+    const double number_value = number->Value();
+    *out = std::isfinite(number_value) ? std::trunc(number_value) : 0.0;
+    return true;
+}
+
+bool event_string_field(v8::Local<v8::Context> context, v8::Isolate* isolate,
+                        v8::Local<v8::Value> value, std::string* out) {
+    if (value->IsUndefined()) {
+        out->clear();
+        return true;
+    }
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return false;
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    *out = (*utf8 != nullptr)
+               ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+               : std::string();
+    return true;
+}
+
+void custom_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "CustomEvent")) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    event_constructor(info);
+    v8::Local<v8::Value> detail;
+    if (!event_init_field(context, info, "detail", &detail)) {
+        return;
+    }
+    if (detail->IsUndefined()) {
+        detail = v8::Null(isolate);
+    }
+    set_event_field(isolate, context, info.This(), "detail", detail);
+}
+
+void mouse_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "MouseEvent")) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    event_constructor(info);
+    v8::Local<v8::Object> self = info.This();
+    const char* const fields[] = {"clientX", "clientY", "button", "buttons"};
+    for (const char* field : fields) {
+        v8::Local<v8::Value> value;
+        if (!event_init_field(context, info, field, &value)) {
+            return;
+        }
+        double number = 0;
+        if (!event_int_field(context, value, &number)) {
+            return;
+        }
+        set_event_field(isolate, context, self, field,
+                        v8::Number::New(isolate, number));
+    }
+}
+
+void keyboard_event_constructor(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "KeyboardEvent")) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    event_constructor(info);
+    v8::Local<v8::Object> self = info.This();
+    const char* const fields[] = {"key", "code"};
+    for (const char* field : fields) {
+        v8::Local<v8::Value> value;
+        if (!event_init_field(context, info, field, &value)) {
+            return;
+        }
+        std::string text;
+        if (!event_string_field(context, isolate, value, &text)) {
+            return;
+        }
+        set_event_field(isolate, context, self, field, v8_string(isolate, text));
+    }
+    v8::Local<v8::Value> repeat_value;
+    if (!event_init_field(context, info, "repeat", &repeat_value)) {
+        return;
+    }
+    set_event_field(isolate, context, self, "repeat",
+                    v8::Boolean::New(
+                        isolate, repeat_value->BooleanValue(isolate)));
+}
+
+void focus_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "FocusEvent")) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    event_constructor(info);
+    v8::Local<v8::Value> related_target;
+    if (!event_init_field(context, info, "relatedTarget", &related_target)) {
+        return;
+    }
+    if (related_target->IsUndefined()) {
+        related_target = v8::Null(isolate);
+    }
+    set_event_field(isolate, context, info.This(), "relatedTarget",
+                    related_target);
+}
+
 // Tag for the External carrying the WindowEventTarget* in the window event
 // functions' Data. V8 15.0 requires an ExternalPointerTypeTag on External::New /
 // External::Value; the default suffices for this single pointer type and MUST
@@ -4740,9 +4906,41 @@ void PageState::install_page(const std::string& base_url,
             // Local<Value>), so build the name string directly.
             event_template->SetClassName(
                 v8::String::NewFromUtf8Literal(isolate, "Event"));
+            // M11-6: the subclass templates inherit Event and must be created
+            // before either template is instantiated. Each subclass reuses
+            // event_constructor for type / bubbles / target / currentTarget /
+            // stopPropagation.
+            auto make_event_subclass = [&](const char* name,
+                                           v8::FunctionCallback callback) {
+                v8::Local<v8::FunctionTemplate> tpl =
+                    v8::FunctionTemplate::New(isolate, callback);
+                tpl->SetClassName(
+                    v8::String::NewFromUtf8(isolate, name).ToLocalChecked());
+                tpl->Inherit(event_template);
+                return tpl;
+            };
+            const auto custom_event_template =
+                make_event_subclass("CustomEvent", &custom_event_constructor);
+            const auto mouse_event_template =
+                make_event_subclass("MouseEvent", &mouse_event_constructor);
+            const auto keyboard_event_template = make_event_subclass(
+                "KeyboardEvent", &keyboard_event_constructor);
+            const auto focus_event_template =
+                make_event_subclass("FocusEvent", &focus_event_constructor);
             (void)global->Set(
                 context, v8_string(isolate, "Event"),
                 event_template->GetFunction(context).ToLocalChecked());
+            const auto install_event_subclass =
+                [&](const char* name,
+                    v8::Local<v8::FunctionTemplate> tpl) {
+                    (void)global->Set(
+                        context, v8_string(isolate, name),
+                        tpl->GetFunction(context).ToLocalChecked());
+                };
+            install_event_subclass("CustomEvent", custom_event_template);
+            install_event_subclass("MouseEvent", mouse_event_template);
+            install_event_subclass("KeyboardEvent", keyboard_event_template);
+            install_event_subclass("FocusEvent", focus_event_template);
             // M3-4: window becomes an event target. window is the intrinsic global
             // object, so its three event methods are bare globals whose External
             // data points at window_events_ (created above). They therefore share
