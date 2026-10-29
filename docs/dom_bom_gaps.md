@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-28` · Baseline: **M11-28** (host environment / console
-batch verified `2026-10-28`)
+Last reviewed: `2026-10-29` · Baseline: **M11-29** (deterministic event-loop
+facade verified `2026-10-29`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-28. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-29. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -47,7 +47,7 @@ batch verified `2026-10-28`)
 | `requestAnimationFrame` callback timestamp argument | **absent** — manual frames are counted, not timed |
 | `requestIdleCallback` `options.timeout` firing semantics | **deferred** — validated but never fires |
 | `scheduler.postTask`, microtask cancellation | **absent** |
-| Event-loop facade (`advance` / `sleep` / `tick` / `drain`) | **deferred** (backlog rank 6) |
+| Full event-loop facade (rAF/idle + real sleep/clock) | **partially implemented** — M11-29 adds virtual `tick` / `advance` / `run_until_idle` for timers + microtasks |
 | Automatic event loop / background timers | **excluded** — four explicit Python pumps only |
 
 ### 1.4 Dialogs and UI
@@ -251,12 +251,13 @@ the element attribute/tree/clone/URL.searchParams/select extensions and the
 nested environment + `get_defaults()`; M11-18 delivered form-control attribute
 reflection; M11-19..M11-23 delivered query, form, select, and document-metadata
 completeness; M11-24..M11-28 delivered navigator/screen/window metadata and the
-console method cluster. Remaining candidates (mapping to
+console method cluster; M11-29 delivered the deterministic timer/microtask
+event-loop facade. Remaining candidates (mapping to
 `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|
-| Event-loop facade | 6 | Deferred design decision |
+| rAF/idle integration into the event-loop facade | 6 | M11-29 timers/microtasks delivered; this remains |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |
 | JS→Python `expose()` | 8 | Requires a separate architecture decision |
 | Canvas / WebGL / CSSOM / Workers / full storage | 9 | Not a near-term slice |

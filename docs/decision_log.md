@@ -213,11 +213,28 @@ Verified on real V8 at commit `a00e140`: Linux `40711526339`, Windows
 collects 1476 items (1414 previous + 62 from the extended environment matrix
 and 22 new tests). See `docs/m11_24_28_report.md`.
 
+### 18. M11-29 delivered the deterministic event-loop facade
+
+Decided/verified `2026-10-29`.
+
+M11-29 adds `Page.tick()`, `advance(ms, max_steps)`, `run_until_idle(max_steps)`
+and the read-only `event_loop_time_ms` over the existing timer and microtask
+queues. Timers are ordered by virtual due time and registration sequence;
+microtasks drain after each task; intervals use a 1ms virtual floor and bounded
+steps. The legacy pumps and rAF/idle remain unchanged and are not run by the
+facade in this phase.
+
+Verified on real V8 at commit `b211481` (feature commit `0bc75a2`): Linux
+`40820152813`, Windows `40820163797`, each wheel lane `1495 passed, 2 skipped`.
+The first attempt (`0bc75a2`) failed three stale pump non-goal guards, refreshed
+in `b211481`. The full suite collects 1497 items (1476 previous + 21 tests). See
+`docs/m11_29_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-29`?
+### A. Which concrete compatibility slice becomes `M11-30`?
 
 Settled and implemented so far:
 
@@ -305,14 +322,20 @@ direction alone.
   geometry, and console method extensions. Boundary:
   `docs/m11_24_28_host_environment_batch.md`. Verified on real V8 (Linux
   `40711526339`, Windows `40711548915`, commit `a00e140`, each wheel lane
-  `1474 passed, 2 skipped`); see `docs/m11_24_28_report.md`. The next slice
-  (`M11-29`) should be chosen from the backlog or the gap inventory.
+  `1474 passed, 2 skipped`); see `docs/m11_24_28_report.md`.
+
+- `M11-29` — **deterministic event-loop facade** — selected/frozen on
+  `2026-10-29`: `tick` / `advance` / `run_until_idle` / `event_loop_time_ms`
+  over timers and microtasks. Boundary:
+  `docs/m11_29_event_loop_facade.md`. Verified on real V8 (Linux
+  `40820152813`, Windows `40820163797`, commit `b211481`, each wheel lane
+  `1495 passed, 2 skipped`); see `docs/m11_29_report.md`. The next slice
+  (`M11-30`) is the natural rAF/idle integration or another gap-inventory item.
 
 A related question this slice raises: the runtime still has **four** independent manual
 pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);
-`queueMicrotask` deliberately feeds `run_jobs` instead of adding a fifth. Whether the
-four should eventually gain a single composed driver is a real design decision,
-deliberately deferred — see `docs/m11_3_report.md` "Open questions".
+M11-29 composes timers + microtasks only. Whether rAF/idle should join the same
+facade is now the next design choice — see `docs/m11_3_report.md` "Open questions".
 
 ### B. Should `Page` gain a unified public contract document?
 

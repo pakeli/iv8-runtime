@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-28` · Latest verified milestones: **M11-24..M11-28**
+Last reviewed: `2026-10-29` · Latest verified milestone: **M11-29**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -71,6 +71,10 @@ milestone.
 | `run_jobs()` | M2-4, M11-4, M11-5, M11-8 | drains the microtask queue (`Promise` reactions + `queueMicrotask` + MutationObserver + FileReader deliveries) |
 | `run_animation_frame()` | M11-2 | manual pump; runs one frame of `requestAnimationFrame` callbacks |
 | `run_idle_callbacks()` | M11-3 | manual pump; runs one round of `requestIdleCallback` callbacks |
+| `tick()` | M11-29 | one virtual-time turn: microtasks + at most one due timer |
+| `advance(ms, max_steps=10000)` | M11-29 | bounded virtual-time window over timers + microtasks |
+| `run_until_idle(max_steps=1000)` | M11-29 | auto-advance through future timers until none remain |
+| `event_loop_time_ms` | M11-29 | read-only per-generation virtual clock; reset by `load()` |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
 | `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27 | optional read-only host-environment baseline; accepts the flat 27-key form or nested `navigator` / `screen` / `window` sections |
@@ -299,16 +303,16 @@ fingerprint simulation or randomization: a page reports exactly what the caller
 configured, and there is no UA-CH / canvas / webgl surface to spoof.
 
 Also still excluded: a real clock, background threads, and any automatic event loop.
-Every asynchronous queue is drained by an explicit Python pump — `run_timers()`,
+The M2–M11 queues remain available as explicit pumps — `run_timers()`,
 `run_jobs()` (microtasks, including `queueMicrotask` since M11-4,
 `MutationObserver` delivery since M11-5, and `FileReader` completion since
 M11-8), `run_animation_frame()` (M11-2), and `run_idle_callbacks()` (M11-3).
-Nothing in this runtime advances on its own, and there is no `performance.now()` /
-frame-rate / vsync notion; frames and idle rounds are counted queues, not timed ones.
-There is also **no unified scheduler**: each pump drains exactly one queue, and no
-`tick()` / `drain()` / `run_until_idle()` / `scheduler.postTask` surface exists.
-Consequently `IdleDeadline.timeRemaining()` is a constant and `options.timeout` never
-fires — a real deadline would need the clock this runtime deliberately lacks.
+M11-29 adds a **deterministic, synchronous facade** over timers + microtasks:
+`tick()` / `advance()` / `run_until_idle()` advance a virtual clock and drain
+microtasks after each task; it is still only driven by explicit Python calls.
+There is no background loop, `performance.now()` / frame-rate / vsync notion, and
+rAF/idle are still independent pumps. `IdleDeadline.timeRemaining()` remains a
+constant and `options.timeout` never fires; `scheduler.postTask` is still absent.
 
 ## 5. Milestone map
 
@@ -355,6 +359,7 @@ fires — a real deadline would need the clock this runtime deliberately lacks.
 | M11-26 | window `outerWidth` / `outerHeight` / `screenX` / `screenY` — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
 | M11-27 | navigator identity fields — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
 | M11-28 | extended console methods — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
+| M11-29 | deterministic event-loop facade (`tick` / `advance` / `run_until_idle` / `event_loop_time_ms`) — verified 2026-10-29 | `docs/m11_29_event_loop_facade.md`, `docs/m11_29_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

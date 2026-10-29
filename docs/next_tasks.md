@@ -475,6 +475,44 @@ failed one fresh-array test; `a00e140` fixed it. Report:
 Choose `M11-29` from `docs/m11_compatibility_backlog.md` or another
 gap-inventory slice with an explicit boundary.
 
+## Priority 3m: M11-29 deterministic event-loop facade — DONE (`2026-10-29`)
+
+### What landed
+
+- `Page.tick()` — one virtual-time turn (microtasks, one due timer, microtasks).
+- `Page.advance(ms, max_steps=10000)` — bounded virtual-time window with due-time
+  ordering and microtask checkpoints.
+- `Page.run_until_idle(max_steps=1000)` — auto-advance through future timers.
+- `Page.event_loop_time_ms` — per-generation virtual clock, reset by `load()`.
+
+Timers use `(due_ms, registration seq)` ordering; intervals reschedule with a
+1ms virtual floor and are bounded by `max_steps`. Legacy pumps and rAF/idle
+semantics are unchanged; rAF/idle are not driven by this facade in this phase.
+
+Boundary: `docs/m11_29_event_loop_facade.md`. Tests:
+`test/test_event_loop_facade.py` (21 items). Full suite collects 1497 items;
+each wheel lane: **`1495 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `b211481` (feature commit `0bc75a2`, branch
+`m11-29-event-loop-facade`):
+
+- Linux `release-linux` run `40820152813` — cp311–cp314, each
+  `1495 passed, 2 skipped`;
+- Windows `release-windows` run `40820163797` — Python 3.11–3.14, each
+  `1495 passed, 2 skipped`.
+
+The new test file ran in every lane. The first attempt (`0bc75a2`) failed three
+historical pump non-goal guards; `b211481` refreshed them. Report:
+`docs/m11_29_report.md`.
+
+### Next
+
+Choose `M11-30` — the natural follow-up is integrating rAF/idle into the
+facade; otherwise use `docs/m11_compatibility_backlog.md` or another
+gap-inventory slice with an explicit boundary.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal

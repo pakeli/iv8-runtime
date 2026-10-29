@@ -916,6 +916,13 @@ deterministic console methods (debug/trace/table/dir/group/groupEnd/time/
 timeEnd/assert/count). Existing environment keys/defaults are unchanged. See
 ``docs/m11_24_28_host_environment_batch.md``.
 
+M11-29 adds a deterministic event-loop facade over the existing timer and
+microtask queues: ``Page.tick()``, ``Page.advance(ms, max_steps=...)``,
+``Page.run_until_idle(max_steps=...)`` and read-only
+``Page.event_loop_time_ms``. Timers fire by virtual due time, microtasks drain
+after each task, and intervals are bounded. The legacy pumps and rAF/idle
+semantics are unchanged. See ``docs/m11_29_event_loop_facade.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

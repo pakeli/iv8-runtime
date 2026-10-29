@@ -1,7 +1,6 @@
 # M11-29 — Deterministic event-loop facade (timers + microtasks)
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-29`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-29`)**
 
 M11-29 adds a higher-level, deterministic event-loop driver on top of the
 existing timer and microtask queues. It does **not** add a background thread,
@@ -72,5 +71,13 @@ callback errors, load/dispose, legacy-pump compatibility, and rAF/idle isolation
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `b211481` (feature commit `0bc75a2`):
+
+- Linux `release-linux` run `40820152813` — cp311–cp314, each
+  `1495 passed, 2 skipped`;
+- Windows `release-windows` run `40820163797` — Python 3.11–3.14, each
+  `1495 passed, 2 skipped`.
+
+The new test file ran in every lane (21 items); the full suite collects 1497
+items. The first attempt (`0bc75a2`) failed three stale pump non-goal guards,
+refreshed in `b211481`. See `docs/m11_29_report.md`.

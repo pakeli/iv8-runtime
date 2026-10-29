@@ -31,7 +31,7 @@ The ranking is planning guidance, not a promise of full parity.
 | 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | **M11-7 delivered & verified (`2026-10-28`)** |
 | 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | **M11-8 delivered & verified (`2026-10-28`)** |
 | 5 | **Nested environment + `get_defaults()`** | `JSContext(environment={...})` with nested navigator/screen/location/webgl paths; `get_defaults()` enumerates them | M11-1 has a flat 11-key `Page(environment=...)` baseline and `get_default_environment()` | 3 | 4 / 4 | **M11-17 delivered & verified (`2026-10-28`)** |
-| 6 | **Event-loop facade** (`advance` / `sleep` / `tick` / `drain`) | Central to the target's `window.__iv8__.eventLoop` model | We deliberately expose four independent manual pumps and no scheduler | 5 | 2 / 2 | Deferred design decision |
+| 6 | **Event-loop facade** (`advance` / `sleep` / `tick` / `drain`) | Central to the target's `window.__iv8__.eventLoop` model | We deliberately expose four independent manual pumps and no scheduler | 5 | 2 / 2 | **M11-29 delivered timers + microtasks; rAF/idle integration deferred** |
 | 7 | **Offline resources + runtime XHR/fetch** | Community edition matches XHR/fetch/external resources against an injected offline bundle (`add_resource`, `page.load.resources`) | `Page.load(resources)` only pre-resolves `<script src>`; no runtime XHR/fetch | 5 | 2 / 2 | High-risk; standing networking exclusion needs approval |
 | 8 | **JS→Python `expose()`** | Target exposes Python objects under `__iv8__.data` | Explicitly never implemented; architecture boundary | 5 | 1 / 1 | Requires a separate architecture decision |
 | 9 | **Canvas / WebGL / CSSOM / Workers / full Storage stack** | Large target categories | Entirely absent | 5 | 1 / 1 | Not a near-term slice |
@@ -78,8 +78,9 @@ Tests: `test/test_mutation_observer.py`.
 - **Nested environment / `get_defaults()`** is an API-shape convergence question
   (`docs/decision_log.md` §B) rather than a pure runtime feature; it should not be
   smuggled in under M11-5.
-- **Event-loop facade**, **networking**, and **`expose()`** all represent larger
-  architecture decisions and remain deliberately deferred.
+- **Event-loop facade** now has a deterministic timer/microtask slice (M11-29);
+  rAF/idle integration, **networking**, and **`expose()`** remain larger
+  architecture decisions and are still deliberately deferred.
 
 ## 6. Next step
 
@@ -140,9 +141,14 @@ wheel lane `1412 passed, 2 skipped`; report `docs/m11_19_23_report.md`.
 color/pixel depth, outer window geometry, and console method extensions.
 Boundary: `docs/m11_24_28_host_environment_batch.md`. Delivered and verified on
 real V8: Linux `40711526339`, Windows `40711548915`, commit `a00e140`, each wheel
-lane `1474 passed, 2 skipped`; report `docs/m11_24_28_report.md`. The next slice
-(`M11-29`) should be chosen from the remaining ranked candidates or another
-gap-inventory slice with an explicit boundary.
+lane `1474 passed, 2 skipped`; report `docs/m11_24_28_report.md`.
+
+`M11-29` — **deterministic event-loop facade** — was selected/frozen on
+`2026-10-29` as the first composed driver over timers + microtasks. Boundary:
+`docs/m11_29_event_loop_facade.md`. Delivered and verified on real V8: Linux
+`40820152813`, Windows `40820163797`, commit `b211481`, each wheel lane
+`1495 passed, 2 skipped`; report `docs/m11_29_report.md`. The next slice
+(`M11-30`) is the natural rAF/idle integration or another gap-inventory item.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.
