@@ -920,8 +920,15 @@ M11-29 adds a deterministic event-loop facade over the existing timer and
 microtask queues: ``Page.tick()``, ``Page.advance(ms, max_steps=...)``,
 ``Page.run_until_idle(max_steps=...)`` and read-only
 ``Page.event_loop_time_ms``. Timers fire by virtual due time, microtasks drain
-after each task, and intervals are bounded. The legacy pumps and rAF/idle
-semantics are unchanged. See ``docs/m11_29_event_loop_facade.md``.
+after each task, and intervals are bounded. See
+``docs/m11_29_event_loop_facade.md``.
+
+M11-30 extends the facade to animation frames and idle callbacks:
+``requestAnimationFrame`` runs at fixed 16ms virtual frame boundaries,
+``requestIdleCallback`` runs one round when no timer/frame is due, and every
+task is followed by a microtask checkpoint. The legacy one-queue pumps remain
+available and are not part of the facade timeline. See
+``docs/m11_30_frame_idle_facade.md``.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are

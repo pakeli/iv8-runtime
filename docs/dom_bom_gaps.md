@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-29` · Baseline: **M11-29** (deterministic event-loop
-facade verified `2026-10-29`)
+Last reviewed: `2026-10-29` · Baseline: **M11-30** (rAF/idle facade integration
+verified `2026-10-29`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-29. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-30. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -47,8 +47,8 @@ facade verified `2026-10-29`)
 | `requestAnimationFrame` callback timestamp argument | **absent** — manual frames are counted, not timed |
 | `requestIdleCallback` `options.timeout` firing semantics | **deferred** — validated but never fires |
 | `scheduler.postTask`, microtask cancellation | **absent** |
-| Full event-loop facade (rAF/idle + real sleep/clock) | **partially implemented** — M11-29 adds virtual `tick` / `advance` / `run_until_idle` for timers + microtasks |
-| Automatic event loop / background timers | **excluded** — four explicit Python pumps only |
+| Full event-loop facade (rAF/idle + real sleep/clock) | **partially implemented** — M11-29/M11-30 add virtual `tick` / `advance` / `run_until_idle` for timers, microtasks, rAF, and idle; real sleep/clock remain absent |
+| Automatic event loop / background timers | **excluded** — explicit Python pumps/facade only; no background execution |
 
 ### 1.4 Dialogs and UI
 
@@ -252,12 +252,12 @@ nested environment + `get_defaults()`; M11-18 delivered form-control attribute
 reflection; M11-19..M11-23 delivered query, form, select, and document-metadata
 completeness; M11-24..M11-28 delivered navigator/screen/window metadata and the
 console method cluster; M11-29 delivered the deterministic timer/microtask
-event-loop facade. Remaining candidates (mapping to
-`docs/m11_compatibility_backlog.md`):
+event-loop facade, and M11-30 integrated rAF/idle into it. Remaining candidates
+(mapping to `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|
-| rAF/idle integration into the event-loop facade | 6 | M11-29 timers/microtasks delivered; this remains |
+| Real clock / sleep semantics in the event-loop facade | 6 | M11-29/M11-30 deliver virtual time; `performance.now()` and real sleeping remain absent |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |
 | JS→Python `expose()` | 8 | Requires a separate architecture decision |
 | Canvas / WebGL / CSSOM / Workers / full storage | 9 | Not a near-term slice |

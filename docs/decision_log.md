@@ -230,11 +230,33 @@ The first attempt (`0bc75a2`) failed three stale pump non-goal guards, refreshed
 in `b211481`. The full suite collects 1497 items (1476 previous + 21 tests). See
 `docs/m11_29_report.md`.
 
+### 19. M11-30 integrated animation frames and idle callbacks into the facade
+
+Decided/verified `2026-10-29`.
+
+M11-30 extends the M11-29 facade to drive `requestAnimationFrame` at fixed 16ms
+virtual frame boundaries and `requestIdleCallback` one round at a time when no
+timer/frame is due. Priority is due timer → due frame → idle; every task is
+followed by a microtask checkpoint. `tick()` runs one current-time turn;
+`advance()` and `run_until_idle()` cover all four queues with bounded steps.
+The legacy one-queue pumps are unchanged and do not advance the facade clock.
+
+The first verification attempt (`32f9289`) hung on every lane: the clock jump in
+`advance()` / `run_until_idle()` used the timer id returned by
+`next_timer_due()` as a due timestamp, so a future timer whose id was not
+greater than the current clock spun the loop without counting a step.
+`7dde955` looks up `due_ms` instead.
+
+Verified on real V8 at commit `7dde955` (feature commit `32f9289`): Linux
+`40826630371`, Windows `40826634489`, each wheel lane `1509 passed, 2 skipped`.
+The full suite collects 1511 items (1497 previous + 14 tests). See
+`docs/m11_30_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-30`?
+### A. Which concrete compatibility slice becomes `M11-31`?
 
 Settled and implemented so far:
 
@@ -329,13 +351,23 @@ direction alone.
   over timers and microtasks. Boundary:
   `docs/m11_29_event_loop_facade.md`. Verified on real V8 (Linux
   `40820152813`, Windows `40820163797`, commit `b211481`, each wheel lane
-  `1495 passed, 2 skipped`); see `docs/m11_29_report.md`. The next slice
-  (`M11-30`) is the natural rAF/idle integration or another gap-inventory item.
+  `1495 passed, 2 skipped`); see `docs/m11_29_report.md`.
 
-A related question this slice raises: the runtime still has **four** independent manual
-pumps (`run_timers` / `run_jobs` / `run_animation_frame` / `run_idle_callbacks`);
-M11-29 composes timers + microtasks only. Whether rAF/idle should join the same
-facade is now the next design choice — see `docs/m11_3_report.md` "Open questions".
+- `M11-30` — **rAF/idle integration into the event-loop facade** — selected and
+  frozen on `2026-10-29`: fixed 16ms virtual frames, idle rounds when no
+  timer/frame is due, and microtask checkpoints after every task. Boundary:
+  `docs/m11_30_frame_idle_facade.md`. Verified on real V8 (Linux `40826630371`,
+  Windows `40826634489`, commit `7dde955`, each wheel lane
+  `1509 passed, 2 skipped`); see `docs/m11_30_report.md`. The next slice
+  (`M11-31`) should again be chosen from the ranked backlog or gap inventory.
+
+A related question this slice raises: the runtime still has **four** independent
+legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /
+`run_idle_callbacks`). M11-29 composed timers + microtasks, and M11-30 added
+rAF/idle to the same facade; the legacy pumps remain valid but are intentionally
+not a single coherent timeline with the facade. A real clock, automatic loop,
+and background execution remain open design questions — see
+`docs/m11_3_report.md` "Open questions".
 
 ### B. Should `Page` gain a unified public contract document?
 

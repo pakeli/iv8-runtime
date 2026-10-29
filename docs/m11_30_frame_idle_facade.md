@@ -1,7 +1,6 @@
 # M11-30 — Frame / idle integration into the event-loop facade
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-29`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-29`)**
 
 M11-30 extends the M11-29 deterministic facade (`tick` / `advance` /
 `run_until_idle`) to drive `requestAnimationFrame` and `requestIdleCallback` in
@@ -61,9 +60,18 @@ allowed but intentionally not a single coherent timeline.
 
 `test/test_m11_30_frame_idle_facade.py` covers 16ms frame boundaries, rAF
 snapshot/requeue behavior, idle priority, microtask checkpoints, advance/run-until
-idle caps, legacy pump isolation, load/dispose, and argument validation.
+idle caps, legacy pump isolation, `load()` reset, and swallowed callback errors.
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `7dde955` (feature commit `32f9289`):
+
+- Linux `release-linux` run `40826630371` — cp311–cp314, each
+  `1509 passed, 2 skipped`;
+- Windows `release-windows` run `40826634489` — Python 3.11–3.14, each
+  `1509 passed, 2 skipped`.
+
+The new test file ran in every lane (14 items); the full suite collects 1511
+items. The first attempt (`32f9289`) hung on all lanes because
+`advance()` / `run_until_idle()` treated the timer id as the virtual due time;
+`7dde955` fixed the clock jump. See `docs/m11_30_report.md`.

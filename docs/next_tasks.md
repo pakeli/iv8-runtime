@@ -513,6 +513,43 @@ Choose `M11-30` — the natural follow-up is integrating rAF/idle into the
 facade; otherwise use `docs/m11_compatibility_backlog.md` or another
 gap-inventory slice with an explicit boundary.
 
+## Priority 3n: M11-30 rAF/idle facade integration — DONE (`2026-10-29`)
+
+### What landed
+
+- rAF callbacks run at fixed 16ms virtual frame boundaries inside the facade,
+  with a per-frame snapshot; callbacks registered during a frame run in the
+  next frame.
+- Idle rounds run one at a time when no timer/frame is due; self-rescheduling
+  idle callbacks remain pending and are bounded by `max_steps`.
+- `tick` / `advance` / `run_until_idle` cover timers, microtasks, animation
+  frames, and idle callbacks; every task is followed by a microtask checkpoint.
+- Legacy pumps keep their one-queue semantics and do not advance the facade
+  clock.
+
+Boundary: `docs/m11_30_frame_idle_facade.md`. Tests:
+`test/test_m11_30_frame_idle_facade.py` (14 items). Full suite collects 1511
+items; each wheel lane: **`1509 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `7dde955` (feature commit `32f9289`, branch
+`m11-30-frame-idle-facade`):
+
+- Linux `release-linux` run `40826630371` — cp311–cp314, each
+  `1509 passed, 2 skipped`;
+- Windows `release-windows` run `40826634489` — Python 3.11–3.14, each
+  `1509 passed, 2 skipped`.
+
+The new test file ran in every lane. The first attempt (`32f9289`) hung in all
+lanes because the clock jump used timer ids as due times; `7dde955` fixed it.
+Report: `docs/m11_30_report.md`.
+
+### Next
+
+Choose `M11-31` from `docs/m11_compatibility_backlog.md` or another
+gap-inventory slice with an explicit boundary.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal

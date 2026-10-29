@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-29` · Latest verified milestone: **M11-29**
+Last reviewed: `2026-10-29` · Latest verified milestone: **M11-30**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -71,10 +71,10 @@ milestone.
 | `run_jobs()` | M2-4, M11-4, M11-5, M11-8 | drains the microtask queue (`Promise` reactions + `queueMicrotask` + MutationObserver + FileReader deliveries) |
 | `run_animation_frame()` | M11-2 | manual pump; runs one frame of `requestAnimationFrame` callbacks |
 | `run_idle_callbacks()` | M11-3 | manual pump; runs one round of `requestIdleCallback` callbacks |
-| `tick()` | M11-29 | one virtual-time turn: microtasks + at most one due timer |
-| `advance(ms, max_steps=10000)` | M11-29 | bounded virtual-time window over timers + microtasks |
-| `run_until_idle(max_steps=1000)` | M11-29 | auto-advance through future timers until none remain |
-| `event_loop_time_ms` | M11-29 | read-only per-generation virtual clock; reset by `load()` |
+| `tick()` | M11-29, M11-30 | one virtual-time turn: microtasks, then the earliest due timer, due frame, or one idle round |
+| `advance(ms, max_steps=10000)` | M11-29, M11-30 | bounded virtual-time window over timers, frames, idle, and microtasks |
+| `run_until_idle(max_steps=1000)` | M11-29, M11-30 | auto-advance through timers/frames/idle until all queues are empty |
+| `event_loop_time_ms` | M11-29, M11-30 | read-only per-generation virtual clock advanced by timer/frame due times; reset by `load()` |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
 | `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27 | optional read-only host-environment baseline; accepts the flat 27-key form or nested `navigator` / `screen` / `window` sections |
@@ -309,10 +309,14 @@ The M2–M11 queues remain available as explicit pumps — `run_timers()`,
 M11-8), `run_animation_frame()` (M11-2), and `run_idle_callbacks()` (M11-3).
 M11-29 adds a **deterministic, synchronous facade** over timers + microtasks:
 `tick()` / `advance()` / `run_until_idle()` advance a virtual clock and drain
-microtasks after each task; it is still only driven by explicit Python calls.
-There is no background loop, `performance.now()` / frame-rate / vsync notion, and
-rAF/idle are still independent pumps. `IdleDeadline.timeRemaining()` remains a
-constant and `options.timeout` never fires; `scheduler.postTask` is still absent.
+microtasks after each task. M11-30 extends the same facade to drive
+`requestAnimationFrame` at fixed 16ms virtual frame boundaries and
+`requestIdleCallback` one round at a time when no timer/frame is due; every task
+is followed by a microtask checkpoint. It is still only driven by explicit
+Python calls: there is no background loop, no `performance.now()` / real clock,
+and no vsync. The legacy one-queue pumps remain available and independent.
+`IdleDeadline.timeRemaining()` remains a constant and `options.timeout` never
+fires; `scheduler.postTask` is still absent.
 
 ## 5. Milestone map
 
@@ -360,6 +364,7 @@ constant and `options.timeout` never fires; `scheduler.postTask` is still absent
 | M11-27 | navigator identity fields — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
 | M11-28 | extended console methods — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
 | M11-29 | deterministic event-loop facade (`tick` / `advance` / `run_until_idle` / `event_loop_time_ms`) — verified 2026-10-29 | `docs/m11_29_event_loop_facade.md`, `docs/m11_29_report.md` |
+| M11-30 | rAF/idle integration into the event-loop facade (16ms virtual frames, idle rounds) — verified 2026-10-29 | `docs/m11_30_frame_idle_facade.md`, `docs/m11_30_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference
