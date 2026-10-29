@@ -15,7 +15,7 @@ def _load(page, body=""):
     # This runtime has no id-to-global shortcut; expose the ids used by the tests.
     page.eval("""
         for (const id of ['f', 'i', 't', 's', 'b', 'd', 'c', 'e', 'u',
-                          'p', 'n', 'a', 'h', 'rs', 'bt']) {
+                          'p', 'n', 'a', 'h', 'r', 'rs', 'bt']) {
           const el = document.getElementById(id);
           if (el) globalThis[id] = el;
         }
