@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -15,6 +16,18 @@
 namespace py = pybind11;
 
 namespace iv8 {
+
+namespace {
+
+std::int64_t saturating_add_ms(std::int64_t a, std::int64_t b) {
+    constexpr std::int64_t kMax = std::numeric_limits<std::int64_t>::max();
+    if (b > 0 && a > kMax - b) {
+        return kMax;
+    }
+    return a + b;
+}
+
+}  // namespace
 
 OperationScope::OperationScope(ContextState& state)
     : lock_(state.op_mutex_, std::try_to_lock) {
@@ -120,6 +133,10 @@ std::int64_t ContextState::register_timer(v8::Local<v8::Function> callback,
     entry.delay = delay < 0 ? 0 : delay;
     entry.repeating = repeating;
     entry.seq = next_timer_seq_++;
+    // M11-29: due time for the deterministic event-loop facade. The legacy
+    // run_timers() path keeps ignoring this field.
+    entry.due_ms = saturating_add_ms(
+        virtual_now_ms_, static_cast<std::int64_t>(entry.delay));
     timers_.emplace(id, std::move(entry));
     return id;
 }
@@ -179,6 +196,154 @@ void ContextState::run_timers() {
             try_catch.Reset();  // swallow: page/context stays usable
         }
     }
+}
+
+std::int64_t ContextState::next_timer_due(std::int64_t limit,
+                                          bool bounded) const {
+    std::int64_t best_id = -1;
+    std::int64_t best_due = 0;
+    std::uint64_t best_seq = 0;
+    for (const auto& entry : timers_) {
+        if (bounded && entry.second.due_ms > limit) {
+            continue;
+        }
+        if (best_id < 0 || entry.second.due_ms < best_due ||
+            (entry.second.due_ms == best_due &&
+             entry.second.seq < best_seq)) {
+            best_id = entry.first;
+            best_due = entry.second.due_ms;
+            best_seq = entry.second.seq;
+        }
+    }
+    return best_id;
+}
+
+void ContextState::fire_timer_locked(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     std::int64_t id) {
+    auto it = timers_.find(id);
+    if (it == timers_.end()) {
+        return;
+    }
+    v8::Local<v8::Function> callback = it->second.callback.Get(isolate);
+    if (it->second.repeating) {
+        // A 1ms floor keeps a zero-delay interval from making no virtual-time
+        // progress; max_steps bounds genuinely endless workloads.
+        const std::int64_t step =
+            std::max<std::int64_t>(1, static_cast<std::int64_t>(it->second.delay));
+        it->second.due_ms = saturating_add_ms(it->second.due_ms, step);
+    } else {
+        it->second.callback.Reset();
+        timers_.erase(it);  // one-shot: gone before it runs
+    }
+    v8::TryCatch try_catch(isolate);
+    {
+        py::gil_scoped_release release_gil;
+        v8::Local<v8::Value> recv = context->Global();
+        (void)callback->Call(context, recv, 0, nullptr);
+    }
+    if (try_catch.HasCaught()) {
+        try_catch.Reset();  // swallow: page/context stays usable
+    }
+}
+
+void ContextState::drain_microtasks_locked(v8::Isolate* isolate) {
+    py::gil_scoped_release release_gil;
+    isolate->PerformMicrotaskCheckpoint();
+}
+
+bool ContextState::tick() {
+    OperationScope guard(*this);
+    v8::Isolate* isolate = isolate_host_->isolate();
+    v8::Locker locker(isolate);
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = context_.Get(isolate);
+    v8::Context::Scope context_scope(context);
+
+    drain_microtasks_locked(isolate);
+    const std::int64_t id = next_timer_due(virtual_now_ms_, true);
+    if (id < 0) {
+        return false;
+    }
+    const std::int64_t due = timers_.at(id).due_ms;
+    if (due > virtual_now_ms_) {
+        virtual_now_ms_ = due;
+    }
+    fire_timer_locked(isolate, context, id);
+    drain_microtasks_locked(isolate);
+    return true;
+}
+
+bool ContextState::advance(std::int64_t ms, std::uint32_t max_steps) {
+    OperationScope guard(*this);
+    v8::Isolate* isolate = isolate_host_->isolate();
+    v8::Locker locker(isolate);
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = context_.Get(isolate);
+    v8::Context::Scope context_scope(context);
+
+    const std::int64_t delta = ms > 0 ? ms : 0;
+    const std::int64_t target = saturating_add_ms(virtual_now_ms_, delta);
+    drain_microtasks_locked(isolate);
+
+    std::uint32_t steps = 0;
+    while (steps < max_steps) {
+        const std::int64_t id = next_timer_due(target, true);
+        if (id < 0) {
+            virtual_now_ms_ = target;
+            drain_microtasks_locked(isolate);
+            return true;
+        }
+        const std::int64_t due = timers_.at(id).due_ms;
+        if (due > virtual_now_ms_) {
+            virtual_now_ms_ = due;
+        }
+        fire_timer_locked(isolate, context, id);
+        drain_microtasks_locked(isolate);
+        ++steps;
+    }
+    // The cap may have stopped exactly after the last due task.
+    if (next_timer_due(target, true) < 0) {
+        virtual_now_ms_ = target;
+        drain_microtasks_locked(isolate);
+        return true;
+    }
+    return false;
+}
+
+bool ContextState::run_until_idle(std::uint32_t max_steps) {
+    OperationScope guard(*this);
+    v8::Isolate* isolate = isolate_host_->isolate();
+    v8::Locker locker(isolate);
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = context_.Get(isolate);
+    v8::Context::Scope context_scope(context);
+
+    drain_microtasks_locked(isolate);
+    std::uint32_t steps = 0;
+    while (steps < max_steps) {
+        const std::int64_t id = next_timer_due(0, false);
+        if (id < 0) {
+            drain_microtasks_locked(isolate);
+            return true;
+        }
+        const std::int64_t due = timers_.at(id).due_ms;
+        if (due > virtual_now_ms_) {
+            virtual_now_ms_ = due;
+        }
+        fire_timer_locked(isolate, context, id);
+        drain_microtasks_locked(isolate);
+        ++steps;
+    }
+    // The cap may have stopped exactly after the last timer.
+    if (next_timer_due(0, false) < 0) {
+        drain_microtasks_locked(isolate);
+        return true;
+    }
+    return false;
 }
 
 std::int64_t ContextState::register_animation_frame(

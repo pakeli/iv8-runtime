@@ -99,6 +99,13 @@ public:
     void run_timers();
     void run_jobs();
 
+    // M11-29 deterministic event-loop facade (timers + microtasks only). These
+    // reuse the M1 operation guard and do not add a background thread or clock.
+    bool tick();
+    bool advance(std::int64_t ms, std::uint32_t max_steps);
+    bool run_until_idle(std::uint32_t max_steps);
+    std::int64_t event_loop_time_ms() const;
+
     // M11-2 manual animation-frame pump: run the callbacks queued for the current
     // frame, in registration order. A callback that re-requests a frame lands in the
     // NEXT frame (so one call = one frame). Delegates to the owned context, reusing

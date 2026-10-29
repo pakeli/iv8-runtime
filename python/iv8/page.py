@@ -450,6 +450,66 @@ class Page:
         """
         self._native.run_jobs()
 
+    @property
+    def event_loop_time_ms(self) -> int:
+        """M11-29: current generation's virtual event-loop time in milliseconds.
+
+        Starts at 0 and is reset by ``load()``. The legacy manual pumps do not
+        advance it; only ``tick`` (never), ``advance`` and ``run_until_idle`` do.
+        Raises ``JSContextDisposedError`` after ``dispose()``.
+        """
+        if self._native.disposed:
+            raise JSContextDisposedError("Page is disposed")
+        return self._native.event_loop_time_ms
+
+    def tick(self) -> bool:
+        """Run one M11-29 event-loop turn (timers + microtasks only).
+
+        Drains pending microtasks, runs at most one timer whose virtual due time
+        is already reached, then drains microtasks again. Does not advance the
+        virtual clock. Returns ``True`` if a timer ran. Animation-frame and idle
+        callbacks remain independent pumps in this phase.
+        """
+        return self._native.tick()
+
+    def advance(self, ms: int, *, max_steps: int = 10_000) -> bool:
+        """Advance the M11-29 virtual clock by ``ms`` and run due work.
+
+        Timers due within the window run in ``(due_ms, registration order)``
+        order, with a microtask checkpoint after each callback. Timers scheduled
+        by a callback are eligible if they are also due inside the window. The
+        clock is set to the target when the window completes.
+
+        Returns ``True`` when the full window was processed, or ``False`` when
+        ``max_steps`` stopped it first (the clock then stays at the last
+        processed task's virtual time). ``ms`` must be a non-negative int;
+        ``max_steps`` must be a positive int. A repeating timer is rescheduled
+        with a 1ms virtual-time floor so zero-delay intervals cannot spin
+        without progress. Raises ``JSContextDisposedError`` after ``dispose()``.
+        """
+        if isinstance(ms, bool) or not isinstance(ms, int) or ms < 0:
+            raise TypeError("ms must be a non-negative int")
+        if ms > 9_223_372_036_854_775_807:
+            raise TypeError("ms is too large")
+        if (isinstance(max_steps, bool) or not isinstance(max_steps, int) or
+                max_steps <= 0 or max_steps > 4_294_967_295):
+            raise TypeError("max_steps must be a positive int")
+        return self._native.advance(ms, max_steps)
+
+    def run_until_idle(self, *, max_steps: int = 1_000) -> bool:
+        """Run timers and microtasks until no timer remains.
+
+        Each turn runs the earliest timer, advancing the virtual clock to its due
+        time, then drains microtasks. Returns ``True`` only when no timers remain;
+        an interval normally returns ``False`` at ``max_steps``. This phase does
+        not run ``requestAnimationFrame`` / ``requestIdleCallback`` callbacks.
+        Raises ``JSContextDisposedError`` after ``dispose()``.
+        """
+        if (isinstance(max_steps, bool) or not isinstance(max_steps, int) or
+                max_steps <= 0 or max_steps > 4_294_967_295):
+            raise TypeError("max_steps must be a positive int")
+        return self._native.run_until_idle(max_steps)
+
     def run_animation_frame(self) -> None:
         """Manually pump **one** animation frame: run the ``requestAnimationFrame``
         callbacks queued for the current frame, in registration order.

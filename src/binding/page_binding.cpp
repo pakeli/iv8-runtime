@@ -61,6 +61,14 @@ void register_page(py::module_& module) {
         .def("dispose", &iv8::PageState::dispose)
         .def("run_timers", &iv8::PageState::run_timers)
         .def("run_jobs", &iv8::PageState::run_jobs)
+        // M11-29 deterministic event-loop facade over timers + microtasks.
+        .def("tick", &iv8::PageState::tick)
+        .def("advance", &iv8::PageState::advance, py::arg("ms"),
+             py::arg("max_steps"))
+        .def("run_until_idle", &iv8::PageState::run_until_idle,
+             py::arg("max_steps"))
+        .def_property_readonly("event_loop_time_ms",
+                               &iv8::PageState::event_loop_time_ms)
         // M11-2 manual animation-frame pump (public surface is
         // Page.run_animation_frame()).
         .def("run_animation_frame", &iv8::PageState::run_animation_frame)

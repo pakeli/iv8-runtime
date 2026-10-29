@@ -89,6 +89,22 @@ public:
     // Manual pump: drain the pending microtask (job) queue.
     void run_jobs();
 
+    // --- M11-29 deterministic event-loop facade (timers + microtasks) ----------
+    // Run one event-loop turn: drain microtasks, fire at most one timer whose
+    // virtual due time is <= the current virtual clock, then drain microtasks.
+    // Returns true if a timer ran. Never advances the virtual clock.
+    bool tick();
+    // Advance the virtual clock by `ms`, firing due timers in (due, seq) order
+    // and draining microtasks after each callback. Returns true when the full
+    // window was processed; false if max_steps stopped it first.
+    bool advance(std::int64_t ms, std::uint32_t max_steps);
+    // Repeatedly run the earliest timer (advancing virtual time to its due time)
+    // and drain microtasks until no timers remain. Returns true only when no
+    // timers remain; intervals normally return false at max_steps.
+    bool run_until_idle(std::uint32_t max_steps);
+    // Current generation's virtual clock (ms). Reset with each generation.
+    std::int64_t event_loop_time_ms() const { return virtual_now_ms_; }
+
     // --- M11-2 animation frames -----------------------------------------------
     // Register an animation-frame callback and return its handle. Called from the
     // requestAnimationFrame host function WHILE the operation guard is already
@@ -200,10 +216,24 @@ private:
         std::int32_t delay = 0;
         bool repeating = false;
         std::uint64_t seq = 0;
+        // M11-29: virtual due time; unused by the legacy run_timers() path.
+        std::int64_t due_ms = 0;
     };
     std::unordered_map<std::int64_t, TimerEntry> timers_;
     std::int64_t next_timer_id_ = 1;
     std::uint64_t next_timer_seq_ = 0;
+    // M11-29 virtual clock, reset with the generation.
+    std::int64_t virtual_now_ms_ = 0;
+
+    // M11-29 helpers. `bounded` selects timers with due_ms <= limit; the
+    // unbounded form returns the globally earliest timer. Returns -1 when none.
+    std::int64_t next_timer_due(std::int64_t limit, bool bounded) const;
+    // Fire one timer under the already-held operation guard/scopes; repeating
+    // timers are rescheduled before the callback, one-shots are removed first.
+    void fire_timer_locked(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                           std::int64_t id);
+    // Perform a microtask checkpoint under the already-held guard/scopes.
+    void drain_microtasks_locked(v8::Isolate* isolate);
 
     // Animation-frame queue (M11-2). A vector, not a map: RAF is strict FIFO with
     // no delay key, so registration order IS the run order and a vector preserves

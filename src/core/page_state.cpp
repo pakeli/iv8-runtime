@@ -7577,6 +7577,25 @@ void PageState::dispose() { state_->dispose(); }
 
 void PageState::run_timers() { state_->run_timers(); }
 
+// M11-29: deterministic event-loop facade; delegates to the owned context so
+// the M1 operation guard / disposed / busy rules apply unchanged.
+bool PageState::tick() { return state_->tick(); }
+
+bool PageState::advance(std::int64_t ms, std::uint32_t max_steps) {
+    return state_->advance(ms, max_steps);
+}
+
+bool PageState::run_until_idle(std::uint32_t max_steps) {
+    return state_->run_until_idle(max_steps);
+}
+
+std::int64_t PageState::event_loop_time_ms() const {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    return state_->event_loop_time_ms();
+}
+
 // M11-2: pump exactly one animation frame (delegates to the owned context, like
 // run_timers / run_jobs — so the disposed/busy rules are the M1 ones).
 void PageState::run_animation_frame() { state_->run_animation_frame(); }
