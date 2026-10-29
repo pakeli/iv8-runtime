@@ -172,8 +172,13 @@ the runtime's single deliberate non-deterministic surface. Boundary:
 `docs/m11_33_crypto_random.md`. Delivered and verified on real V8: Linux
 `40834145493`, Windows `40834153439`, commit `c9b2fb5`, each wheel lane
 `1553 passed, 2 skipped`; report `docs/m11_33_report.md`. `crypto.subtle` and
-algorithm implementations remain deferred; the next slice (`M11-34`) should
-again be chosen from this backlog or the gap inventory.
+algorithm implementations remain deferred.
 
-Browser-surface gaps that are not (yet) ranked here are inventoried in
+`M11-34` — **CSS selector engine expansion** — was selected/frozen on
+`2026-10-29`: selector lists, compound selectors, type/universal selectors, all
+four combinators, and attribute selectors shared by query/matches/closest.
+Boundary: `docs/m11_34_selector_engine.md`. Delivered and verified on real V8:
+Linux `40855935052`, Windows `40855940659`, commit `49f8582`, each wheel lane
+`1565 passed, 2 skipped`; report `docs/m11_34_report.md`. Pseudo-classes are
+the planned M11-35 follow-up; other gaps remain inventoried in
 `docs/dom_bom_gaps.md`.

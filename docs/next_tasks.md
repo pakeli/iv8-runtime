@@ -623,6 +623,44 @@ Choose `M11-34` — candidates include selector-engine expansion, `innerHTML`,
 Crypto `subtle.digest`, event-surface completion, or another gap-inventory
 slice with an explicit boundary.
 
+## Priority 3q: M11-34 CSS selector engine — DONE (`2026-10-29`)
+
+### What landed
+
+- Shared selector engine for document/element `querySelector[All]`, `matches()`,
+  and `closest()`.
+- Selector lists with document order/dedupe, compound selectors, type selectors,
+  and universal `*`.
+- Descendant / child / adjacent-sibling / general-sibling combinators.
+- Attribute selectors (`[a]`, `=`, `~=`, `|=`, `^=`, `$=`, `*=`) with quoted or
+  unquoted values; names case-insensitive, values case-sensitive.
+- Malformed/unsupported selectors keep stable empty/null/false behavior;
+  pseudo-classes remain M11-35.
+
+Boundary: `docs/m11_34_selector_engine.md`. Tests:
+`test/test_m11_34_selector_engine.py` (12 items). Full suite collects 1567
+items; each wheel lane: **`1565 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `49f8582` (feature commit `a8fe60d`, branch
+`m11-34-selector-engine`):
+
+- Linux `release-linux` run `40855935052` — cp311–cp314, each
+  `1565 passed, 2 skipped`;
+- Windows `release-windows` run `40855940659` — Python 3.11–3.14, each
+  `1565 passed, 2 skipped`.
+
+The new test file ran in every lane. The first attempt (`a8fe60d`) failed one
+refreshed `closest('div.box')` expectation; `49f8582` fixed the test. Report:
+`docs/m11_34_report.md`.
+
+### Next
+
+Choose `M11-35` — the planned follow-up is selector pseudo-classes
+(`:first-child`, `:nth-child`, `:not`, form-state pseudo-classes); otherwise
+use another gap-inventory slice with an explicit boundary.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal

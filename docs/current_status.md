@@ -7,10 +7,10 @@ Last reviewed: `2026-10-29`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-29`, the latest implemented and verified milestone is **M11-33**
-(OS-backed `crypto.getRandomValues` / `randomUUID`). Real-V8 CI is green on both
-platforms — Linux run `40834145493`, Windows run `40834153439`, both on commit
-`c9b2fb5`, each wheel lane reporting `1553 passed, 2 skipped`:
+As of `2026-10-29`, the latest implemented and verified milestone is **M11-34**
+(CSS selector engine expansion). Real-V8 CI is green on both platforms — Linux
+run `40855935052`, Windows run `40855940659`, both on commit `49f8582`, each
+wheel lane reporting `1565 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -63,6 +63,8 @@ platforms — Linux run `40834145493`, Windows run `40834153439`, both on commit
 - `M11-33`: OS-backed Crypto random — `crypto.getRandomValues()` and
   `crypto.randomUUID()`; the platform CSPRNG is the runtime's single deliberate
   non-deterministic surface
+- `M11-34`: CSS selector engine expansion — selector lists, compound and
+  attribute selectors, combinators, and `*` shared by query/matches/closest
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -85,10 +87,11 @@ the fork's `master`. M11-30 (rAF/idle facade integration) was verified on
 verified as one batch on `m11-31-32-perf-validation-batch` (final commit
 `a88b69d`) and merged to the fork's `master`. M11-33 (OS-backed crypto random)
 was verified on `m11-33-crypto-random` (commit `c9b2fb5`) and merged to the
-fork's `master`. Upstream
-`investforever/iv8-runtime` remains at M11-3;
+fork's `master`. M11-34 (CSS selector engine) was verified on
+`m11-34-selector-engine` (final commit `49f8582`) and merged to the fork's
+`master`. Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
-report documents (`docs/m11_6_report.md` … `docs/m11_33_report.md`).
+report documents (`docs/m11_6_report.md` … `docs/m11_34_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -262,6 +265,10 @@ Implemented and present at `HEAD`:
   TypedArrays, `crypto.randomUUID()` returns a v4 UUID, and the platform CSPRNG
   is the deliberate non-deterministic exception. No `crypto.subtle` yet.
   Verified `2026-10-29`; see `docs/m11_33_crypto_random.md`.
+- `M11-34` CSS selector engine expansion — selector lists, compound selectors,
+  descendant/child/sibling combinators, attribute selectors, and `*`, shared by
+  `querySelector[All]`, `matches()`, and `closest()`. Pseudo-classes are M11-35.
+  Verified `2026-10-29`; see `docs/m11_34_selector_engine.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -300,6 +307,7 @@ Recent implementation sequence from Git history:
 - `M11-32`: minimal form validation API (verified `2026-10-29`)
 - `M11-33`: OS-backed Crypto random (`getRandomValues` / `randomUUID`;
   verified `2026-10-29`)
+- `M11-34`: CSS selector engine expansion (verified `2026-10-29`)
 
 ## 4. Release / Distribution Status
 
@@ -397,18 +405,22 @@ The repository is executing its post-M10 direction:
 - `M11-33` (OS-backed `crypto.getRandomValues` / `randomUUID`) is **landed and
   verified on real V8 (Linux + Windows)** on `2026-10-29`; see
   `docs/m11_33_crypto_random.md` and `docs/m11_33_report.md`;
-- the next execution handoff is to choose `M11-34` from the ranked
-  compatibility backlog (`docs/m11_compatibility_backlog.md`) or another
-  gap-inventory slice with an explicit boundary.
+- `M11-34` (CSS selector engine expansion) is **landed and verified on real V8
+  (Linux + Windows)** on `2026-10-29`; see `docs/m11_34_selector_engine.md` and
+  `docs/m11_34_report.md`;
+- the next execution handoff is to choose `M11-35` — the planned follow-up is
+  selector pseudo-classes; otherwise use `docs/m11_compatibility_backlog.md` or
+  another gap-inventory slice with an explicit boundary.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-34`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-33` are settled, landed, and verified; the ranked
-  compatibility matrix at `docs/m11_compatibility_backlog.md` should drive the
-  next choice, with `docs/dom_bom_gaps.md` as the fallback inventory.)
+- Which concrete compatibility slice should become `M11-35`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-34` are settled, landed, and verified; the planned
+  follow-up is selector pseudo-classes, or the ranked compatibility matrix at
+  `docs/m11_compatibility_backlog.md` / `docs/dom_bom_gaps.md` can drive another
+  choice.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -423,7 +435,7 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with `M11-33` (OS-backed Crypto random)
+> compatibility-first `M11` line — with `M11-34` (CSS selector engine expansion)
 > landed and verified on real V8 (Linux + Windows) on `2026-10-29`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.

@@ -959,6 +959,16 @@ is no seed or replay mode. ``crypto.subtle``, ``CryptoKey``, digest/AES/RSA/
 ECDH/HMAC/KDF algorithms, and a Python Crypto API remain out of scope. See
 ``docs/m11_33_crypto_random.md``.
 
+M11-34 expands the CSS selector engine used by ``querySelector`` /
+``querySelectorAll`` / ``matches`` / ``closest``: selector lists, compound
+selectors, type/universal selectors, descendant/child/adjacent-sibling/
+general-sibling combinators, and attribute selectors (``[a]``, ``=``, ``~=``,
+``|=``, ``^=``, ``$=``, ``*=``). Element-scoped queries keep the
+subtree-includes-self semantics; malformed/unsupported selectors retain the
+stable empty/null/false behavior. Pseudo-classes/elements, escapes, namespaces,
+and ``i``/``s`` flags remain out of scope. See
+``docs/m11_34_selector_engine.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

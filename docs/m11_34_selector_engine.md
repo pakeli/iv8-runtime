@@ -1,7 +1,6 @@
 # M11-34 — CSS selector engine expansion
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-29`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-29`)**
 
 M11-34 replaces the M2-era single-token selector matcher with a small CSS
 Selectors engine shared by `querySelector`, `querySelectorAll`, `matches`, and
@@ -75,5 +74,14 @@ subtrees, and malformed/unsupported selectors. Historical guards in
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `49f8582` (feature commit `a8fe60d`):
+
+- Linux `release-linux` run `40855935052` — cp311–cp314, each
+  `1565 passed, 2 skipped`;
+- Windows `release-windows` run `40855940659` — Python 3.11–3.14, each
+  `1565 passed, 2 skipped`.
+
+`test/test_m11_34_selector_engine.py` ran in every lane (12 items); the full
+suite collects 1567 items. The first attempt (`a8fe60d`) failed one refreshed
+`closest('div.box')` expectation (it returns the ancestor `a`, not `c`); the
+test fix is `49f8582`. See `docs/m11_34_report.md`.

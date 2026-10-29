@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-29` · Latest verified milestone: **M11-33**
+Last reviewed: `2026-10-29` · Latest verified milestone: **M11-34**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -401,6 +401,7 @@ intentional non-deterministic surface; it does not affect the virtual clock.
 | M11-31 | virtual `performance.now()` / `timeOrigin` + rAF timestamps — verified 2026-10-29 | `docs/m11_31_32_perf_validation_batch.md`, `docs/m11_31_32_report.md` |
 | M11-32 | minimal form constraint validation (`willValidate` / `validity` / `checkValidity()` / `setCustomValidity()`, `invalid` events) — verified 2026-10-29 | `docs/m11_31_32_perf_validation_batch.md`, `docs/m11_31_32_report.md` |
 | M11-33 | OS-backed `crypto.getRandomValues()` / `randomUUID()` (platform CSPRNG) — verified 2026-10-29 | `docs/m11_33_crypto_random.md`, `docs/m11_33_report.md` |
+| M11-34 | CSS selector engine expansion (lists, compound/attribute selectors, combinators, `*`) — verified 2026-10-29 | `docs/m11_34_selector_engine.md`, `docs/m11_34_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

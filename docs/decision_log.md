@@ -294,11 +294,34 @@ Verified on real V8 at commit `c9b2fb5`: Linux `40834145493`, Windows
 `40834153439`, each wheel lane `1553 passed, 2 skipped`. The full suite collects
 1555 items (1542 previous + 13 tests). See `docs/m11_33_report.md`.
 
+### 22. M11-34 expanded the CSS selector engine
+
+Decided/verified `2026-10-29`.
+
+M11-34 replaces the single-token selector matcher with a small CSS Selectors
+engine shared by `querySelector[All]`, `matches()`, and `closest()`. It supports
+selector lists, compound selectors, type/universal selectors, all four
+combinators, and attribute selectors (`[a]`, `=`, `~=`, `|=`, `^=`, `$=`, `*=`)
+with quoted/unquoted values. Attribute names are case-insensitive and values
+case-sensitive; element-scoped queries keep the subtree-includes-self semantics.
+Malformed/unsupported selectors retain stable empty/null/false behavior.
+Pseudo-classes/elements, escapes, namespaces, and `i`/`s` flags are deferred
+(M11-35 for pseudo-classes).
+
+The first verification attempt (`a8fe60d`) failed one refreshed
+`closest('div.box')` expectation (the engine correctly returned the ancestor
+`a`, not `c`); `49f8582` fixed the test.
+
+Verified on real V8 at commit `49f8582` (feature commit `a8fe60d`): Linux
+`40855935052`, Windows `40855940659`, each wheel lane `1565 passed, 2 skipped`.
+The full suite collects 1567 items (1555 previous + 12 tests). See
+`docs/m11_34_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-34`?
+### A. Which concrete compatibility slice becomes `M11-35`?
 
 Settled and implemented so far:
 
@@ -415,8 +438,16 @@ direction alone.
   runtime's single deliberate non-deterministic surface. Boundary:
   `docs/m11_33_crypto_random.md`. Verified on real V8 (Linux `40834145493`,
   Windows `40834153439`, commit `c9b2fb5`, each wheel lane
-  `1553 passed, 2 skipped`); see `docs/m11_33_report.md`. The next slice
-  (`M11-34`) should again be chosen from the ranked backlog or gap inventory.
+  `1553 passed, 2 skipped`); see `docs/m11_33_report.md`.
+
+- `M11-34` — **CSS selector engine expansion** — selected/frozen on
+  `2026-10-29`: selector lists, compound selectors, type/universal selectors,
+  all four combinators, and attribute selectors shared by query/matches/closest.
+  Boundary: `docs/m11_34_selector_engine.md`. Verified on real V8 (Linux
+  `40855935052`, Windows `40855940659`, commit `49f8582`, each wheel lane
+  `1565 passed, 2 skipped`); see `docs/m11_34_report.md`. The next planned
+  slice (`M11-35`) is selector pseudo-classes; otherwise choose another
+  gap-inventory item with an explicit boundary.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /
