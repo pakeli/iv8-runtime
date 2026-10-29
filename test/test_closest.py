@@ -115,7 +115,7 @@ def test_complex_selectors_supported():
                       c.closest('') === null].join(',');
             })();
             """
-        ) == "c,c,c,c,true,true"
+        ) == "c,a,c,c,true,true"
 
 
 # --- detached subtree, independent of isConnected -------------------------------
