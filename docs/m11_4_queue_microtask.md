@@ -80,7 +80,9 @@ M11-4 deliberately does **not** add:
 
 - a new Python API or a fifth pump;
 - an automatic event loop, background thread, or automatic microtask checkpoint;
-- a real clock, `performance.now()`, or task deadlines;
+- a real clock, `performance.now()`, or task deadlines (M11-31 later adds a
+  *virtual* `performance.now()` tied to the facade clock; there is still no real
+  clock);
 - `MutationObserver` (landed separately in M11-5 — see
   `docs/m11_5_mutation_observer.md`);
 - `scheduler.postTask` / `scheduler.yield` / task priorities;

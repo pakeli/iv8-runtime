@@ -252,11 +252,32 @@ Verified on real V8 at commit `7dde955` (feature commit `32f9289`): Linux
 The full suite collects 1511 items (1497 previous + 14 tests). See
 `docs/m11_30_report.md`.
 
+### 20. M11-31/M11-32 added a virtual performance clock and minimal form validation
+
+Decided/verified `2026-10-29`.
+
+M11-31 exposes `performance.now()` / `performance.timeOrigin` over the
+M11-29/M11-30 facade clock and passes the current virtual timestamp to
+`requestAnimationFrame` callbacks. M11-32 adds a minimal constraint-validation
+surface: `willValidate` / `validity` / `validationMessage` / `checkValidity()` /
+`reportValidity()` / `setCustomValidity()` on controls, form-level aggregation,
+and target-only `invalid` events. Supported constraints are `required`,
+`minlength` / `maxlength`, email/URL `typeMismatch`, and custom errors; pattern,
+min/max/step, radio-group semantics, and native UI remain deferred.
+
+The first verification attempt (`faf5e28`) failed one new validation test
+because the test helper omitted the `r` id; `a88b69d` fixed the test.
+
+Verified on real V8 at commit `a88b69d` (feature commit `faf5e28`): Linux
+`40831677507`, Windows `40831682182`, each wheel lane `1540 passed, 2 skipped`.
+The full suite collects 1542 items (1511 previous + 31 tests). See
+`docs/m11_31_32_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-31`?
+### A. Which concrete compatibility slice becomes `M11-33`?
 
 Settled and implemented so far:
 
@@ -358,16 +379,24 @@ direction alone.
   timer/frame is due, and microtask checkpoints after every task. Boundary:
   `docs/m11_30_frame_idle_facade.md`. Verified on real V8 (Linux `40826630371`,
   Windows `40826634489`, commit `7dde955`, each wheel lane
-  `1509 passed, 2 skipped`); see `docs/m11_30_report.md`. The next slice
-  (`M11-31`) should again be chosen from the ranked backlog or gap inventory.
+  `1509 passed, 2 skipped`); see `docs/m11_30_report.md`.
+
+- `M11-31` / `M11-32` — **virtual performance clock + minimal form validation**
+  — selected/frozen on `2026-10-29` as one batch. M11-31 adds
+  `performance.now()` / `timeOrigin` over the facade clock and rAF timestamps;
+  M11-32 adds the bounded constraint-validation surface. Boundary:
+  `docs/m11_31_32_perf_validation_batch.md`. Verified on real V8 (Linux
+  `40831677507`, Windows `40831682182`, commit `a88b69d`, each wheel lane
+  `1540 passed, 2 skipped`); see `docs/m11_31_32_report.md`. The next slice
+  (`M11-33`) should again be chosen from the ranked backlog or gap inventory.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /
-`run_idle_callbacks`). M11-29 composed timers + microtasks, and M11-30 added
-rAF/idle to the same facade; the legacy pumps remain valid but are intentionally
-not a single coherent timeline with the facade. A real clock, automatic loop,
-and background execution remain open design questions — see
-`docs/m11_3_report.md` "Open questions".
+`run_idle_callbacks`). M11-29 composed timers + microtasks, M11-30 added rAF/idle,
+and M11-31 exposes the same virtual clock to JS; the legacy pumps remain valid
+but are intentionally not a single coherent timeline with the facade. A **real**
+clock, automatic loop, and background execution remain open design questions —
+see `docs/m11_3_report.md` "Open questions".
 
 ### B. Should `Page` gain a unified public contract document?
 

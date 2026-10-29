@@ -26,9 +26,9 @@ git log --oneline --decorate -n 20
 
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
-- As of `2026-10-29`, the latest verified milestone is **M11-30** (rAF/idle
-  integration into the deterministic event-loop facade), green on real V8
-  Linux + Windows (commit `7dde955`, merged to `master` on the fork; upstream
+- As of `2026-10-29`, the latest verified milestone is the **M11-31 / M11-32
+  batch** (virtual performance clock + minimal form validation), green on real
+  V8 Linux + Windows (commit `a88b69d`, merged to `master` on the fork; upstream
   sync out of scope). The M11 line is compatibility-first.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
@@ -79,19 +79,21 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-30`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-32`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
     Storage, Blob/File/FileReader, event cancellation,
     `classList`/`toggleAttribute`, event capture + listener options, element
     attribute/tree helpers, clone/equality, `URL.searchParams`, select
     extension, nested environment + `get_defaults()`, form-control attribute
     reflection, query/form/document completeness, host metadata/console
-    extensions, and the deterministic event-loop facade over timers,
-    microtasks, animation frames, and idle callbacks (verified on real V8
-    Linux + Windows; latest verification `2026-10-29`);
-  - latest implemented and verified feature: the M11-30 rAF/idle facade
-    integration (fixed 16ms virtual frames, idle rounds, `tick` / `advance` /
-    `run_until_idle` / `event_loop_time_ms`).
+    extensions, the deterministic event-loop facade over timers, microtasks,
+    animation frames, and idle callbacks, the virtual performance clock with
+    rAF timestamps, and minimal form validation (verified on real V8 Linux +
+    Windows; latest verification `2026-10-29`);
+  - latest implemented and verified feature: the M11-31 / M11-32 batch
+    (`performance.now()` / `timeOrigin`, rAF timestamps, and
+    `willValidate` / `validity` / `checkValidity()` / `reportValidity()` /
+    `setCustomValidity()`).
 
 ## Handoff Discipline
 

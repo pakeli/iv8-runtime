@@ -31,7 +31,7 @@ The ranking is planning guidance, not a promise of full parity.
 | 3 | **Web Storage** (`localStorage`, `sessionStorage`) | Listed in the Storage compatibility category | No storage surface at all | 4 | 4 / 4 | **M11-7 delivered & verified (`2026-10-28`)** |
 | 4 | **`Blob` / `File` / `FileReader`** | Listed under Encoding & File | We have `TextEncoder` / `TextDecoder`, `URL`, `URLSearchParams`, `atob` / `btoa`; no binary/file objects | 3 | 4 / 3 | **M11-8 delivered & verified (`2026-10-28`)** |
 | 5 | **Nested environment + `get_defaults()`** | `JSContext(environment={...})` with nested navigator/screen/location/webgl paths; `get_defaults()` enumerates them | M11-1 has a flat 11-key `Page(environment=...)` baseline and `get_default_environment()` | 3 | 4 / 4 | **M11-17 delivered & verified (`2026-10-28`)** |
-| 6 | **Event-loop facade** (`advance` / `sleep` / `tick` / `drain`) | Central to the target's `window.__iv8__.eventLoop` model | We deliberately expose four independent manual pumps and no scheduler | 5 | 2 / 2 | **M11-29 delivered timers + microtasks; M11-30 delivered rAF/idle integration; real clock/sleep deferred** |
+| 6 | **Event-loop facade** (`advance` / `sleep` / `tick` / `drain`) | Central to the target's `window.__iv8__.eventLoop` model | We deliberately expose four independent manual pumps and no scheduler | 5 | 2 / 2 | **M11-29 delivered timers + microtasks; M11-30 delivered rAF/idle integration; M11-31 exposes the virtual clock as performance.now(); real clock/sleep deferred** |
 | 7 | **Offline resources + runtime XHR/fetch** | Community edition matches XHR/fetch/external resources against an injected offline bundle (`add_resource`, `page.load.resources`) | `Page.load(resources)` only pre-resolves `<script src>`; no runtime XHR/fetch | 5 | 2 / 2 | High-risk; standing networking exclusion needs approval |
 | 8 | **JS→Python `expose()`** | Target exposes Python objects under `__iv8__.data` | Explicitly never implemented; architecture boundary | 5 | 1 / 1 | Requires a separate architecture decision |
 | 9 | **Canvas / WebGL / CSSOM / Workers / full Storage stack** | Large target categories | Entirely absent | 5 | 1 / 1 | Not a near-term slice |
@@ -79,8 +79,10 @@ Tests: `test/test_mutation_observer.py`.
   (`docs/decision_log.md` §B) rather than a pure runtime feature; it should not be
   smuggled in under M11-5.
 - **Event-loop facade** now has a deterministic timer/microtask/rAF/idle slice
-  (M11-29 + M11-30); real clock/sleep, **networking**, and **`expose()`** remain
-  larger architecture decisions and are still deliberately deferred.
+  with a JS-visible virtual clock (M11-29 + M11-30 + M11-31); real clock/sleep,
+  **networking**, and **`expose()`** remain larger architecture decisions and are
+  still deliberately deferred. Form validation (M11-32) was a bounded DOM gap,
+  not a backlog-ranked item.
 
 ## 6. Next step
 
@@ -154,8 +156,16 @@ selected/frozen on `2026-10-29`: fixed 16ms virtual frames, idle rounds when no
 timer/frame is due, and microtask checkpoints after every task. Boundary:
 `docs/m11_30_frame_idle_facade.md`. Delivered and verified on real V8: Linux
 `40826630371`, Windows `40826634489`, commit `7dde955`, each wheel lane
-`1509 passed, 2 skipped`; report `docs/m11_30_report.md`. The next slice
-(`M11-31`) should again be chosen from this backlog or the gap inventory.
+`1509 passed, 2 skipped`; report `docs/m11_30_report.md`.
+
+`M11-31` / `M11-32` — **virtual performance clock + minimal form validation** —
+were selected/frozen on `2026-10-29` as one batch. M11-31 exposes the facade
+clock as `performance.now()` / `timeOrigin` and passes virtual timestamps to rAF
+callbacks; M11-32 adds the bounded constraint-validation surface. Boundary:
+`docs/m11_31_32_perf_validation_batch.md`. Delivered and verified on real V8:
+Linux `40831677507`, Windows `40831682182`, commit `a88b69d`, each wheel lane
+`1540 passed, 2 skipped`; report `docs/m11_31_32_report.md`. The next slice
+(`M11-33`) should again be chosen from this backlog or the gap inventory.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

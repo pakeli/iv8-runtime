@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-29` · Baseline: **M11-30** (rAF/idle facade integration
-verified `2026-10-29`)
+Last reviewed: `2026-10-29` · Baseline: **M11-31 / M11-32 batch** (virtual
+performance clock + minimal form validation verified `2026-10-29`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-30. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-32. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -186,7 +186,10 @@ control `value` / `checked` / `default*` / `form`, and the option surface.
 M11-16 added `select.options`, writable `selectedIndex`, and read-only
 `multiple` / `size`; M11-18 added input `type` / `disabled` / `readOnly` /
 `placeholder`, button `type` / `disabled`, `form.encoding`, and
-`option.label` / `index`; `URL.searchParams` (M11-15) is a non-live snapshot.
+`option.label` / `index`; M11-32 added the bounded validation surface
+(`required`, `minlength` / `maxlength`, email/URL `typeMismatch`, custom
+validity, form aggregation, and `invalid` events); `URL.searchParams` (M11-15)
+is a non-live snapshot.
 
 ### 2.7 Scripts and document loading
 
@@ -252,12 +255,13 @@ nested environment + `get_defaults()`; M11-18 delivered form-control attribute
 reflection; M11-19..M11-23 delivered query, form, select, and document-metadata
 completeness; M11-24..M11-28 delivered navigator/screen/window metadata and the
 console method cluster; M11-29 delivered the deterministic timer/microtask
-event-loop facade, and M11-30 integrated rAF/idle into it. Remaining candidates
+event-loop facade, M11-30 integrated rAF/idle into it, and M11-31/M11-32 added
+the virtual performance clock and minimal form validation. Remaining candidates
 (mapping to `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|
-| Real clock / sleep semantics in the event-loop facade | 6 | M11-29/M11-30 deliver virtual time; `performance.now()` and real sleeping remain absent |
+| Real clock / sleep semantics in the event-loop facade | 6 | M11-29/M11-31 expose virtual time to JS; real sleeping and a wall clock remain absent |
 | Offline XHR/fetch | 7 | Requires approval of the networking exclusion |
 | JS→Python `expose()` | 8 | Requires a separate architecture decision |
 | Canvas / WebGL / CSSOM / Workers / full storage | 9 | Not a near-term slice |

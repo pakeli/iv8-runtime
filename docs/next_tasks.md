@@ -550,6 +550,44 @@ Report: `docs/m11_30_report.md`.
 Choose `M11-31` from `docs/m11_compatibility_backlog.md` or another
 gap-inventory slice with an explicit boundary.
 
+## Priority 3o: M11-31/32 performance clock + form validation — DONE (`2026-10-29`)
+
+### What landed
+
+- M11-31: `performance.now()` reports the M11-29/30 virtual facade clock;
+  `performance.timeOrigin` is the virtual epoch `0`; rAF callbacks receive the
+  current virtual timestamp.
+- M11-32: minimal constraint validation on input/button/select/textarea —
+  `willValidate` / `validity` / `validationMessage` / `checkValidity()` /
+  `reportValidity()` / `setCustomValidity()`; form-level aggregation; `required`,
+  `minlength` / `maxlength`, email/URL `typeMismatch`, custom errors, and
+  target-only `invalid` events.
+- Historical clock/validation guards refreshed in the same change.
+
+Boundary: `docs/m11_31_32_perf_validation_batch.md`. Tests:
+`test/test_m11_31_virtual_performance_clock.py` (14 items) and
+`test/test_m11_32_form_validation.py` (17 items). Full suite collects 1542
+items; each wheel lane: **`1540 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `a88b69d` (feature commit `faf5e28`, branch
+`m11-31-32-perf-validation-batch`):
+
+- Linux `release-linux` run `40831677507` — cp311–cp314, each
+  `1540 passed, 2 skipped`;
+- Windows `release-windows` run `40831682182` — Python 3.11–3.14, each
+  `1540 passed, 2 skipped`.
+
+Both new test files ran in every lane. The first attempt (`faf5e28`) failed the
+readOnly test because the test helper omitted the `r` id; `a88b69d` fixed the
+test. Report: `docs/m11_31_32_report.md`.
+
+### Next
+
+Choose `M11-33` from `docs/m11_compatibility_backlog.md` or another
+gap-inventory slice with an explicit boundary.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal

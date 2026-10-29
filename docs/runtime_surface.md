@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-29` · Latest verified milestone: **M11-30**
+Last reviewed: `2026-10-29` · Latest verified milestone: **M11-31 / M11-32 batch**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -159,6 +159,11 @@ Installed per generation by `install_page`:
   feed no layout engine;
 - **timers** — `setTimeout` / `clearTimeout` / `setInterval` / `clearInterval`
   (manual-pump only);
+- **virtual performance clock** (M11-31) — `performance.now()` reports the
+  M11-29/M11-30 facade clock (`Page.event_loop_time_ms`), and
+  `performance.timeOrigin` is the virtual epoch `0`; both are read-only. There
+  is no real clock; `Date` remains V8's wall clock. `performance.mark` /
+  `measure` / timelines / timing entries are absent;
 - **microtasks** — `queueMicrotask(callback)` (M11-4), drained only by
   `Page.run_jobs()` (the same queue `Promise` reactions use). A non-callable
   argument throws a JS `TypeError`; callbacks run FIFO, may enqueue further
@@ -231,15 +236,18 @@ Installed per generation by `install_page`:
   `activeElement`, plus `hasFocus()` (always `false`). No focus, visibility, or
   navigation machinery;
 - **animation frames** — `requestAnimationFrame` / `cancelAnimationFrame` (M11-2,
-  manual-pump only via `Page.run_animation_frame()`). A separate FIFO queue from the
-  timers, with its own handle space; the callback receives no timestamp argument, and
-  a re-request lands in the next frame. No clock and no `performance.now()`;
+  manual-pump only via `Page.run_animation_frame()`, and driven by the M11-30
+  facade at fixed 16ms virtual frames). A separate FIFO queue from the timers,
+  with its own handle space; M11-31 passes the current virtual timestamp as the
+  callback's only argument, and a re-request lands in the next frame. No real
+  clock;
 - **idle callbacks** — `requestIdleCallback` / `cancelIdleCallback` (M11-3,
-  manual-pump only via `Page.run_idle_callbacks()`). Another separate FIFO queue with
-  its own handle space; a re-request lands in the next round. The callback receives a
-  minimal `IdleDeadline`-style object (`didTimeout` always `false`, `timeRemaining()`
-  a fixed 50ms) — deterministic, since there is no clock. `options.timeout` is
-  type-validated but has **no** firing semantics;
+  manual-pump only via `Page.run_idle_callbacks()`, and driven by the M11-30
+  facade when no timer/frame is due). Another separate FIFO queue with its own
+  handle space; a re-request lands in the next round. The callback receives a
+  minimal `IdleDeadline`-style object (`didTimeout` always `false`,
+  `timeRemaining()` a fixed 50ms) — deterministic, since there is no real clock.
+  `options.timeout` is type-validated but has **no** firing semantics;
 - **events** — the `Event` constructor plus `addEventListener` /
   `removeEventListener` / `dispatchEvent` on `window`, `document`, and elements;
 - **`document`** — `URL` / `title` / `readyState` / `documentElement` / `head` /
@@ -272,6 +280,14 @@ Installed per generation by `install_page`:
   `size` / `item` / `namedItem` / `name` / `required` / `disabled`
   (M11-16/M11-21/M11-22); `<option>`: `value` / `selected` / `text` /
   `defaultSelected` / `label` / `index` (M11-18);
+- **form validation** (M11-32) — on each control: `willValidate` (read-only),
+  `validity` (fresh read-only flags), `validationMessage`, `checkValidity()` /
+  `reportValidity()`, and `setCustomValidity(message)`; on `<form>`:
+  `checkValidity()` / `reportValidity()` over `elements`. Supported constraints:
+  `required`, `minlength` / `maxlength`, email/URL `typeMismatch`, and custom
+  errors. Unsupported flags stay `false`; invalid controls receive a
+  target-only, non-bubbling `invalid` event. No native UI, pattern/min/max/step,
+  radio-group semantics, or `ValidityState` global;
 - **web-platform globals (M8)** — `TextEncoder` / `TextDecoder` (UTF-8 only),
   `URL` (with the non-live `searchParams` snapshot since M11-15),
   `URLSearchParams`, `atob` / `btoa`.
@@ -284,8 +300,9 @@ nodes), collections are plain JS `Array`s (not `HTMLCollection` / `NodeList`, no
 `#id` / `.class` / `tagname`, there are no specialized `HTML*Element` classes or
 general attribute-reflection properties (only the M11-18/M11-21 form-control
 subset), and a `<script>` inserted into the tree stays **inert**.
-`form.submit()` / `requestSubmit()` are callable no-ops. Consult the milestone
-summary before assuming any wider behavior.
+`form.submit()` / `requestSubmit()` are callable no-ops. Form validation is the
+bounded M11-32 subset above, not the full HTML constraint-validation algorithm.
+Consult the milestone summary before assuming any wider behavior.
 
 ## 4. Standing exclusions
 
@@ -312,8 +329,9 @@ M11-29 adds a **deterministic, synchronous facade** over timers + microtasks:
 microtasks after each task. M11-30 extends the same facade to drive
 `requestAnimationFrame` at fixed 16ms virtual frame boundaries and
 `requestIdleCallback` one round at a time when no timer/frame is due; every task
-is followed by a microtask checkpoint. It is still only driven by explicit
-Python calls: there is no background loop, no `performance.now()` / real clock,
+is followed by a microtask checkpoint. M11-31 exposes that same virtual clock to
+JS as `performance.now()` and passes it to rAF callbacks. It is still only
+driven by explicit Python calls: there is no background loop, no **real** clock,
 and no vsync. The legacy one-queue pumps remain available and independent.
 `IdleDeadline.timeRemaining()` remains a constant and `options.timeout` never
 fires; `scheduler.postTask` is still absent.
@@ -365,6 +383,8 @@ fires; `scheduler.postTask` is still absent.
 | M11-28 | extended console methods — verified 2026-10-28 | `docs/m11_24_28_host_environment_batch.md`, `docs/m11_24_28_report.md` |
 | M11-29 | deterministic event-loop facade (`tick` / `advance` / `run_until_idle` / `event_loop_time_ms`) — verified 2026-10-29 | `docs/m11_29_event_loop_facade.md`, `docs/m11_29_report.md` |
 | M11-30 | rAF/idle integration into the event-loop facade (16ms virtual frames, idle rounds) — verified 2026-10-29 | `docs/m11_30_frame_idle_facade.md`, `docs/m11_30_report.md` |
+| M11-31 | virtual `performance.now()` / `timeOrigin` + rAF timestamps — verified 2026-10-29 | `docs/m11_31_32_perf_validation_batch.md`, `docs/m11_31_32_report.md` |
+| M11-32 | minimal form constraint validation (`willValidate` / `validity` / `checkValidity()` / `setCustomValidity()`, `invalid` events) — verified 2026-10-29 | `docs/m11_31_32_perf_validation_batch.md`, `docs/m11_31_32_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

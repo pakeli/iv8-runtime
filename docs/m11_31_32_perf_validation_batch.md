@@ -1,7 +1,6 @@
 # M11-31 / M11-32 batch — Virtual performance clock + form validation
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-29`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-29`)**
 
 This batch adds two independent compatibility slices on top of M11-30:
 
@@ -147,5 +146,14 @@ are refreshed in this batch.
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `a88b69d` (feature commit `faf5e28`):
+
+- Linux `release-linux` run `40831677507` — cp311–cp314, each
+  `1540 passed, 2 skipped`;
+- Windows `release-windows` run `40831682182` — Python 3.11–3.14, each
+  `1540 passed, 2 skipped`.
+
+Both new test files ran in every lane (14 + 17 items); the full suite collects
+1542 items. The first attempt (`faf5e28`) failed the readOnly test because the
+test helper omitted the `r` id (not a runtime defect); `a88b69d` fixed it. See
+`docs/m11_31_32_report.md`.

@@ -775,14 +775,16 @@ automatic event loop**: nothing runs until the pump is called, and one call runs
 callback that calls ``requestAnimationFrame()`` again schedules into the **next** frame
 and cannot run in the same pump, so a self-rescheduling callback advances one frame per
 call instead of spinning. A callback runs at most once per registration (no repeating
-form), receives **no timestamp argument** (there is no clock), and a throwing callback
+form), receives **no timestamp argument** at M11-2 (M11-31 later adds the virtual
+timestamp), and a throwing callback
 is swallowed so the rest of the frame still runs. A non-function / missing argument
 queues nothing and returns ``undefined``. Mid-frame cancellation works: a callback may
 cancel a later one in the same frame. The frame queue is **independent** of the M2-4
 timers and the microtask queue, with its own handle space — ``run_animation_frame()``
 fires no timers and drains no microtasks, ``run_timers()`` / ``run_jobs()`` run no frame
-callbacks, and ``cancelAnimationFrame`` / ``clearTimeout`` never cross-cancel. Still
-**no** ``performance.now()`` / frame-rate / vsync notion, no ``requestIdleCallback``
+callbacks, and ``cancelAnimationFrame`` / ``clearTimeout`` never cross-cancel. At
+M11-2 there is **no** ``performance.now()`` / frame-rate / vsync notion (M11-31 later
+adds a virtual ``performance.now()``), no ``requestIdleCallback``
 (landed in M11-3) / ``queueMicrotask`` (landed in M11-4), no combined event-loop or
 "run N frames" driver, and no rendering /
 layout / paint / canvas. See ``docs/m11_2_animation_frames.md`` for the authoritative
@@ -810,11 +812,12 @@ Mid-round cancellation works, a callback runs at most once per registration, and
 throwing callback is swallowed. The idle queue is **independent** of the M2-4 timers, the
 M11-2 animation frames, and the microtask queue, with its own handle space — the runtime
 now has four manual pumps, each draining exactly one queue, and no cross-cancellation
-between them. Still **no** ``IdleDeadline`` global / ``performance.now()`` / unified
-``tick()`` / ``drain()`` / ``run_until_idle()`` scheduler / ``scheduler.postTask`` / task
-priorities, and no network / navigation / storage / canvas / webgl. (``queueMicrotask``
-landed separately in M11-4.) See ``docs/m11_3_idle_callbacks.md`` for the authoritative
-boundary.
+between them. At M11-3 there is still **no** ``IdleDeadline`` global /
+``performance.now()`` / unified ``tick()`` / ``drain()`` / ``run_until_idle()``
+scheduler / ``scheduler.postTask`` / task priorities, and no network / navigation /
+storage / canvas / webgl. (``queueMicrotask`` landed in M11-4, the unified facade in
+M11-29, and the virtual ``performance.now()`` in M11-31.) See
+``docs/m11_3_idle_callbacks.md`` for the authoritative boundary.
 
 M11-4 (queueMicrotask) adds the standard JS global ``queueMicrotask(callback)``. It
 enqueues the callback on the current generation's **existing** V8 microtask queue and
@@ -827,8 +830,9 @@ callback is swallowed by V8's explicit checkpoint, so the page and remaining mic
 stay usable. ``load()`` discards the old generation's pending microtasks; ``run_jobs()``
 after ``dispose()`` raises ``JSContextDisposedError``. The microtask queue remains
 independent of the M2-4 timers, M11-2 animation frames, and M11-3 idle queue, so the
-runtime still has exactly four manual pumps. Still **no** automatic event loop, clock /
-``performance.now()``, scheduler API, or microtask cancellation. See
+runtime still has exactly four manual pumps. At M11-4 there is still **no** automatic
+event loop, clock / ``performance.now()``, scheduler API, or microtask cancellation
+(later milestones add the virtual facade clock and ``performance.now()``). See
 ``docs/m11_4_queue_microtask.md`` for the authoritative boundary.
 
 M11-5 (MutationObserver) adds the standard JS global ``MutationObserver`` with
@@ -929,6 +933,23 @@ M11-30 extends the facade to animation frames and idle callbacks:
 task is followed by a microtask checkpoint. The legacy one-queue pumps remain
 available and are not part of the facade timeline. See
 ``docs/m11_30_frame_idle_facade.md``.
+
+M11-31 exposes the same virtual clock to JS: ``performance.now()`` reports
+``Page.event_loop_time_ms`` and ``performance.timeOrigin`` is the virtual epoch
+``0``. ``requestAnimationFrame`` callbacks receive the current virtual
+timestamp as their only argument. There is still no wall clock;
+``Date`` remains V8's real clock, and ``performance.mark`` / ``measure`` /
+timing entries are absent. See ``docs/m11_31_32_perf_validation_batch.md``.
+
+M11-32 adds a bounded constraint-validation surface. Controls (input / button /
+select / textarea) expose ``willValidate``, ``validity``,
+``validationMessage``, ``checkValidity()``, ``reportValidity()`` and
+``setCustomValidity()``; forms expose form-level ``checkValidity()`` /
+``reportValidity()``. Supported constraints are ``required``,
+``minlength`` / ``maxlength``, email/URL ``typeMismatch``, and custom errors;
+invalid controls receive a target-only, non-bubbling ``invalid`` event.
+Pattern/min/max/step, radio-group semantics, native UI, and a ``ValidityState``
+global remain out of scope. See ``docs/m11_31_32_perf_validation_batch.md``.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
