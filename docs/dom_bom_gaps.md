@@ -63,7 +63,7 @@ performance clock + minimal form validation verified `2026-10-29`)
 
 | Missing | Status |
 |---|---|
-| `crypto` (`getRandomValues`, SubtleCrypto) | **absent** |
+| `crypto` (`getRandomValues`, SubtleCrypto) | **partially implemented** — M11-33 adds OS-backed `getRandomValues()` / `randomUUID()`; `crypto.subtle` (digest, AES, RSA, ECDH/ECDSA, HMAC, KDF) is absent |
 | `Worker` / `SharedWorker` / `ServiceWorker` | **absent** |
 | `navigator.clipboard`, `geolocation`, `Notification`, `Permissions` | **absent** |
 | `navigator.connection` / `userAgentData` | **absent** |
