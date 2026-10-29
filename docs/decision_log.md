@@ -273,11 +273,32 @@ Verified on real V8 at commit `a88b69d` (feature commit `faf5e28`): Linux
 The full suite collects 1542 items (1511 previous + 31 tests). See
 `docs/m11_31_32_report.md`.
 
+### 21. M11-33 added OS-backed Crypto random APIs
+
+Decided/verified `2026-10-29`.
+
+M11-33 adds a read-only `crypto` global with `getRandomValues()` and
+`randomUUID()`. `getRandomValues` accepts all integer TypedArrays, fills the
+view's byte range, returns the same view, enforces the 65536-byte quota with a
+`RangeError` (no `DOMException` in this runtime), and rejects
+non-integer/missing/detached inputs with `TypeError`. `randomUUID()` returns a
+lower-case RFC 4122 v4 UUID. `watch_apis` records both calls.
+
+Randomness is the runtime's **one deliberate non-deterministic surface**: the
+platform CSPRNG (advapi32 `SystemFunction036` on Windows, `getrandom` with a
+`/dev/urandom` fallback on Linux) and no seed/replay mode. `crypto.subtle`,
+`CryptoKey`, hash/AES/RSA/ECDH/HMAC/KDF/digest algorithms, deterministic
+seeding, and a Python Crypto API remain out of scope.
+
+Verified on real V8 at commit `c9b2fb5`: Linux `40834145493`, Windows
+`40834153439`, each wheel lane `1553 passed, 2 skipped`. The full suite collects
+1555 items (1542 previous + 13 tests). See `docs/m11_33_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-33`?
+### A. Which concrete compatibility slice becomes `M11-34`?
 
 Settled and implemented so far:
 
@@ -387,8 +408,15 @@ direction alone.
   M11-32 adds the bounded constraint-validation surface. Boundary:
   `docs/m11_31_32_perf_validation_batch.md`. Verified on real V8 (Linux
   `40831677507`, Windows `40831682182`, commit `a88b69d`, each wheel lane
-  `1540 passed, 2 skipped`); see `docs/m11_31_32_report.md`. The next slice
-  (`M11-33`) should again be chosen from the ranked backlog or gap inventory.
+  `1540 passed, 2 skipped`); see `docs/m11_31_32_report.md`.
+
+- `M11-33` — **OS-backed Crypto random** — selected/frozen on `2026-10-29`:
+  `crypto.getRandomValues()` / `randomUUID()` over the platform CSPRNG, with the
+  runtime's single deliberate non-deterministic surface. Boundary:
+  `docs/m11_33_crypto_random.md`. Verified on real V8 (Linux `40834145493`,
+  Windows `40834153439`, commit `c9b2fb5`, each wheel lane
+  `1553 passed, 2 skipped`); see `docs/m11_33_report.md`. The next slice
+  (`M11-34`) should again be chosen from the ranked backlog or gap inventory.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

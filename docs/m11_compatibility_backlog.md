@@ -164,8 +164,16 @@ clock as `performance.now()` / `timeOrigin` and passes virtual timestamps to rAF
 callbacks; M11-32 adds the bounded constraint-validation surface. Boundary:
 `docs/m11_31_32_perf_validation_batch.md`. Delivered and verified on real V8:
 Linux `40831677507`, Windows `40831682182`, commit `a88b69d`, each wheel lane
-`1540 passed, 2 skipped`; report `docs/m11_31_32_report.md`. The next slice
-(`M11-33`) should again be chosen from this backlog or the gap inventory.
+`1540 passed, 2 skipped`; report `docs/m11_31_32_report.md`.
+
+`M11-33` — **OS-backed Crypto random** — was selected/frozen on `2026-10-29`:
+`crypto.getRandomValues()` and `crypto.randomUUID()` over the platform CSPRNG,
+the runtime's single deliberate non-deterministic surface. Boundary:
+`docs/m11_33_crypto_random.md`. Delivered and verified on real V8: Linux
+`40834145493`, Windows `40834153439`, commit `c9b2fb5`, each wheel lane
+`1553 passed, 2 skipped`; report `docs/m11_33_report.md`. `crypto.subtle` and
+algorithm implementations remain deferred; the next slice (`M11-34`) should
+again be chosen from this backlog or the gap inventory.
 
 Browser-surface gaps that are not (yet) ranked here are inventoried in
 `docs/dom_bom_gaps.md`.

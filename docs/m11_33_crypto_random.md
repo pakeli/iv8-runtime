@@ -1,7 +1,6 @@
 # M11-33 — OS-backed `crypto.getRandomValues` / `crypto.randomUUID`
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-29`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-29`)**
 
 M11-33 adds the smallest high-value Crypto surface: a `crypto` global with
 `getRandomValues()` and `randomUUID()`. It deliberately does **not** add
@@ -78,5 +77,12 @@ presence after `load()`.
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `c9b2fb5`:
+
+- Linux `release-linux` run `40834145493` — cp311–cp314, each
+  `1553 passed, 2 skipped`;
+- Windows `release-windows` run `40834153439` — Python 3.11–3.14, each
+  `1553 passed, 2 skipped`.
+
+`test/test_m11_33_crypto_random.py` ran in every lane (13 items); the full suite
+collects 1555 items. See `docs/m11_33_report.md`.

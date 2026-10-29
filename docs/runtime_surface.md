@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-29` · Latest verified milestone: **M11-31 / M11-32 batch**
+Last reviewed: `2026-10-29` · Latest verified milestone: **M11-33**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -164,6 +164,11 @@ Installed per generation by `install_page`:
   `performance.timeOrigin` is the virtual epoch `0`; both are read-only. There
   is no real clock; `Date` remains V8's wall clock. `performance.mark` /
   `measure` / timelines / timing entries are absent;
+- **Crypto random** (M11-33) — read-only `crypto.getRandomValues(typedArray)`
+  (integer TypedArrays, same-view return, view byte range, 65536-byte quota) and
+  `crypto.randomUUID()` (v4). Bytes come from the platform CSPRNG and are the
+  runtime's single deliberate non-deterministic surface. `crypto.subtle`,
+  `CryptoKey`, digest, AES, RSA, ECDH/ECDSA, HMAC, and KDFs are absent;
 - **microtasks** — `queueMicrotask(callback)` (M11-4), drained only by
   `Page.run_jobs()` (the same queue `Promise` reactions use). A non-callable
   argument throws a JS `TypeError`; callbacks run FIFO, may enqueue further
@@ -302,7 +307,8 @@ general attribute-reflection properties (only the M11-18/M11-21 form-control
 subset), and a `<script>` inserted into the tree stays **inert**.
 `form.submit()` / `requestSubmit()` are callable no-ops. Form validation is the
 bounded M11-32 subset above, not the full HTML constraint-validation algorithm.
-Consult the milestone summary before assuming any wider behavior.
+Crypto is the bounded M11-33 random subset; `crypto.subtle` is absent. Consult
+the milestone summary before assuming any wider behavior.
 
 ## 4. Standing exclusions
 
@@ -334,7 +340,8 @@ JS as `performance.now()` and passes it to rAF callbacks. It is still only
 driven by explicit Python calls: there is no background loop, no **real** clock,
 and no vsync. The legacy one-queue pumps remain available and independent.
 `IdleDeadline.timeRemaining()` remains a constant and `options.timeout` never
-fires; `scheduler.postTask` is still absent.
+fires; `scheduler.postTask` is still absent. Crypto random (M11-33) is the one
+intentional non-deterministic surface; it does not affect the virtual clock.
 
 ## 5. Milestone map
 
@@ -385,6 +392,7 @@ fires; `scheduler.postTask` is still absent.
 | M11-30 | rAF/idle integration into the event-loop facade (16ms virtual frames, idle rounds) — verified 2026-10-29 | `docs/m11_30_frame_idle_facade.md`, `docs/m11_30_report.md` |
 | M11-31 | virtual `performance.now()` / `timeOrigin` + rAF timestamps — verified 2026-10-29 | `docs/m11_31_32_perf_validation_batch.md`, `docs/m11_31_32_report.md` |
 | M11-32 | minimal form constraint validation (`willValidate` / `validity` / `checkValidity()` / `setCustomValidity()`, `invalid` events) — verified 2026-10-29 | `docs/m11_31_32_perf_validation_batch.md`, `docs/m11_31_32_report.md` |
+| M11-33 | OS-backed `crypto.getRandomValues()` / `randomUUID()` (platform CSPRNG) — verified 2026-10-29 | `docs/m11_33_crypto_random.md`, `docs/m11_33_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

@@ -951,6 +951,14 @@ invalid controls receive a target-only, non-bubbling ``invalid`` event.
 Pattern/min/max/step, radio-group semantics, native UI, and a ``ValidityState``
 global remain out of scope. See ``docs/m11_31_32_perf_validation_batch.md``.
 
+M11-33 adds a small OS-backed Crypto surface: ``crypto.getRandomValues()``
+(fills integer TypedArrays in place, returns the same view, 65536-byte quota)
+and ``crypto.randomUUID()`` (RFC 4122 v4). Randomness comes from the platform
+CSPRNG and is the runtime's single deliberate non-deterministic surface; there
+is no seed or replay mode. ``crypto.subtle``, ``CryptoKey``, digest/AES/RSA/
+ECDH/HMAC/KDF algorithms, and a Python Crypto API remain out of scope. See
+``docs/m11_33_crypto_random.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

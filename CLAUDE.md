@@ -26,10 +26,10 @@ git log --oneline --decorate -n 20
 
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
-- As of `2026-10-29`, the latest verified milestone is the **M11-31 / M11-32
-  batch** (virtual performance clock + minimal form validation), green on real
-  V8 Linux + Windows (commit `a88b69d`, merged to `master` on the fork; upstream
-  sync out of scope). The M11 line is compatibility-first.
+- As of `2026-10-29`, the latest verified milestone is **M11-33** (OS-backed
+  `crypto.getRandomValues` / `randomUUID`), green on real V8 Linux + Windows
+  (commit `c9b2fb5`, merged to `master` on the fork; upstream sync out of
+  scope). The M11 line is compatibility-first.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -79,7 +79,7 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-32`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-33`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
     Storage, Blob/File/FileReader, event cancellation,
     `classList`/`toggleAttribute`, event capture + listener options, element
@@ -88,12 +88,11 @@ Answer roughly as follows:
     reflection, query/form/document completeness, host metadata/console
     extensions, the deterministic event-loop facade over timers, microtasks,
     animation frames, and idle callbacks, the virtual performance clock with
-    rAF timestamps, and minimal form validation (verified on real V8 Linux +
-    Windows; latest verification `2026-10-29`);
-  - latest implemented and verified feature: the M11-31 / M11-32 batch
-    (`performance.now()` / `timeOrigin`, rAF timestamps, and
-    `willValidate` / `validity` / `checkValidity()` / `reportValidity()` /
-    `setCustomValidity()`).
+    rAF timestamps, minimal form validation, and OS-backed Crypto random
+    (verified on real V8 Linux + Windows; latest verification `2026-10-29`);
+  - latest implemented and verified feature: M11-33
+    (`crypto.getRandomValues()` / `crypto.randomUUID()`, the runtime's single
+    deliberate non-deterministic surface).
 
 ## Handoff Discipline
 

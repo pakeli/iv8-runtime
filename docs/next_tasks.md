@@ -588,6 +588,41 @@ test. Report: `docs/m11_31_32_report.md`.
 Choose `M11-33` from `docs/m11_compatibility_backlog.md` or another
 gap-inventory slice with an explicit boundary.
 
+## Priority 3p: M11-33 OS-backed Crypto random — DONE (`2026-10-29`)
+
+### What landed
+
+- Read-only `crypto` global with `getRandomValues()` and `randomUUID()`.
+- `getRandomValues` accepts all integer TypedArrays, fills the view's byte
+  range, returns the same view, enforces the 65536-byte quota with `RangeError`,
+  and rejects non-integer/absent/detached inputs with `TypeError`.
+- `randomUUID` returns a lower-case RFC 4122 v4 UUID.
+- Randomness comes from the platform CSPRNG (advapi32 `SystemFunction036` on
+  Windows, `getrandom`/`/dev/urandom` on Linux); it is the runtime's single
+  deliberate non-deterministic surface. `crypto.subtle` is deferred.
+
+Boundary: `docs/m11_33_crypto_random.md`. Tests:
+`test/test_m11_33_crypto_random.py` (13 items). Full suite collects 1555 items;
+each wheel lane: **`1553 passed, 2 skipped`**.
+
+### Verification — passed
+
+Commit `c9b2fb5` (branch `m11-33-crypto-random`):
+
+- Linux `release-linux` run `40834145493` — cp311–cp314, each
+  `1553 passed, 2 skipped`;
+- Windows `release-windows` run `40834153439` — Python 3.11–3.14, each
+  `1553 passed, 2 skipped`.
+
+The new test file ran in every lane. Both runs were green on the first attempt.
+Report: `docs/m11_33_report.md`.
+
+### Next
+
+Choose `M11-34` — candidates include selector-engine expansion, `innerHTML`,
+Crypto `subtle.digest`, event-surface completion, or another gap-inventory
+slice with an explicit boundary.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal

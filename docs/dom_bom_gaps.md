@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-29` · Baseline: **M11-31 / M11-32 batch** (virtual
-performance clock + minimal form validation verified `2026-10-29`)
+Last reviewed: `2026-10-29` · Baseline: **M11-33** (OS-backed Crypto random
+verified `2026-10-29`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-32. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-33. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -255,8 +255,9 @@ nested environment + `get_defaults()`; M11-18 delivered form-control attribute
 reflection; M11-19..M11-23 delivered query, form, select, and document-metadata
 completeness; M11-24..M11-28 delivered navigator/screen/window metadata and the
 console method cluster; M11-29 delivered the deterministic timer/microtask
-event-loop facade, M11-30 integrated rAF/idle into it, and M11-31/M11-32 added
-the virtual performance clock and minimal form validation. Remaining candidates
+event-loop facade, M11-30 integrated rAF/idle into it, M11-31/M11-32 added the
+virtual performance clock and minimal form validation, and M11-33 added
+OS-backed `crypto.getRandomValues()` / `randomUUID()`. Remaining candidates
 (mapping to `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |

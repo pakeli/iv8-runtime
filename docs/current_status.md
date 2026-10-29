@@ -7,11 +7,10 @@ Last reviewed: `2026-10-29`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-29`, the latest implemented and verified milestone is the
-**M11-31 / M11-32 batch** (virtual performance clock + minimal form validation).
-Real-V8 CI is green on both platforms — Linux run `40831677507`, Windows run
-`40831682182`, both on commit `a88b69d`, each wheel lane reporting
-`1540 passed, 2 skipped`:
+As of `2026-10-29`, the latest implemented and verified milestone is **M11-33**
+(OS-backed `crypto.getRandomValues` / `randomUUID`). Real-V8 CI is green on both
+platforms — Linux run `40834145493`, Windows run `40834153439`, both on commit
+`c9b2fb5`, each wheel lane reporting `1553 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -61,6 +60,9 @@ Real-V8 CI is green on both platforms — Linux run `40831677507`, Windows run
 - `M11-32`: minimal form validation — `willValidate` / `validity` /
   `validationMessage` / `checkValidity()` / `reportValidity()` /
   `setCustomValidity()`, form aggregation, and `invalid` events
+- `M11-33`: OS-backed Crypto random — `crypto.getRandomValues()` and
+  `crypto.randomUUID()`; the platform CSPRNG is the runtime's single deliberate
+  non-deterministic surface
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -81,10 +83,12 @@ the fork's `master`. M11-30 (rAF/idle facade integration) was verified on
 `m11-30-frame-idle-facade` (final commit `7dde955`) and merged to the fork's
 `master`. M11-31 / M11-32 (virtual performance clock + form validation) were
 verified as one batch on `m11-31-32-perf-validation-batch` (final commit
-`a88b69d`) and merged to the fork's `master`. Upstream
+`a88b69d`) and merged to the fork's `master`. M11-33 (OS-backed crypto random)
+was verified on `m11-33-crypto-random` (commit `c9b2fb5`) and merged to the
+fork's `master`. Upstream
 `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
-report documents (`docs/m11_6_report.md` … `docs/m11_32_report.md`).
+report documents (`docs/m11_6_report.md` … `docs/m11_33_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -254,6 +258,10 @@ Implemented and present at `HEAD`:
   `setCustomValidity()`, `required` / length / email-URL constraints, form
   aggregation, and `invalid` events. Verified `2026-10-29`; see
   `docs/m11_31_32_perf_validation_batch.md`.
+- `M11-33` OS-backed Crypto random — `crypto.getRandomValues()` fills integer
+  TypedArrays, `crypto.randomUUID()` returns a v4 UUID, and the platform CSPRNG
+  is the deliberate non-deterministic exception. No `crypto.subtle` yet.
+  Verified `2026-10-29`; see `docs/m11_33_crypto_random.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -290,6 +298,8 @@ Recent implementation sequence from Git history:
 - `M11-30`: rAF/idle integration into the facade (verified `2026-10-29`)
 - `M11-31`: virtual performance clock + rAF timestamps (verified `2026-10-29`)
 - `M11-32`: minimal form validation API (verified `2026-10-29`)
+- `M11-33`: OS-backed Crypto random (`getRandomValues` / `randomUUID`;
+  verified `2026-10-29`)
 
 ## 4. Release / Distribution Status
 
@@ -384,7 +394,10 @@ The repository is executing its post-M10 direction:
   **landed and verified on real V8 (Linux + Windows)** on `2026-10-29` as one
   batch; see `docs/m11_31_32_perf_validation_batch.md` and
   `docs/m11_31_32_report.md`;
-- the next execution handoff is to choose `M11-33` from the ranked
+- `M11-33` (OS-backed `crypto.getRandomValues` / `randomUUID`) is **landed and
+  verified on real V8 (Linux + Windows)** on `2026-10-29`; see
+  `docs/m11_33_crypto_random.md` and `docs/m11_33_report.md`;
+- the next execution handoff is to choose `M11-34` from the ranked
   compatibility backlog (`docs/m11_compatibility_backlog.md`) or another
   gap-inventory slice with an explicit boundary.
 
@@ -392,8 +405,8 @@ The repository is executing its post-M10 direction:
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-33`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-32` are settled, landed, and verified; the ranked
+- Which concrete compatibility slice should become `M11-34`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-33` are settled, landed, and verified; the ranked
   compatibility matrix at `docs/m11_compatibility_backlog.md` should drive the
   next choice, with `docs/dom_bom_gaps.md` as the fallback inventory.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
@@ -410,9 +423,8 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with the `M11-31` / `M11-32` batch (virtual
-> performance clock + form validation) landed and verified on real V8 (Linux +
-> Windows) on `2026-10-29`.
+> compatibility-first `M11` line — with `M11-33` (OS-backed Crypto random)
+> landed and verified on real V8 (Linux + Windows) on `2026-10-29`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 
