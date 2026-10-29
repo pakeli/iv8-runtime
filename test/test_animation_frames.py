@@ -37,10 +37,13 @@ def test_no_new_module_level_surface():
 
 
 def test_non_goals_absent_from_page():
-    # M11-2 adds ONE pump. No real clock, auto loop, or frame-timing surface.
-    for forbidden in ("run_event_loop", "run_until_idle", "start", "tick",
-                      "set_frame_rate", "run_frames", "now"):
+    # M11-2 adds ONE pump. M11-29 adds the timer/microtask facade; rAF is still
+    # not driven by it. No real clock, auto loop, or frame-timing surface.
+    for forbidden in ("run_event_loop", "start", "set_frame_rate",
+                      "run_frames", "now"):
         assert not hasattr(iv8.Page, forbidden)
+    assert callable(getattr(iv8.Page, "tick", None))
+    assert callable(getattr(iv8.Page, "run_until_idle", None))
 
 
 # --- JS globals exist -------------------------------------------------------------

@@ -44,10 +44,12 @@ def test_no_new_module_level_surface():
 
 
 def test_non_goals_absent_from_page():
-    # M11-3 adds ONE pump. No unified scheduler, clock, or task-queue surface.
-    for forbidden in ("run_event_loop", "run_until_idle", "tick", "drain",
-                      "post_task", "now", "run_all"):
+    # M11-3 adds ONE pump. M11-29 adds the timer/microtask facade; idle callbacks
+    # are still not driven by it. No real clock or task-queue surface.
+    for forbidden in ("run_event_loop", "drain", "post_task", "now", "run_all"):
         assert not hasattr(iv8.Page, forbidden)
+    assert callable(getattr(iv8.Page, "tick", None))
+    assert callable(getattr(iv8.Page, "run_until_idle", None))
 
 
 # --- JS globals exist -------------------------------------------------------------
