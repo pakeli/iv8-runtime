@@ -324,7 +324,9 @@ bool ContextState::advance(std::int64_t ms, std::uint32_t max_steps) {
             continue;
         }
 
-        const std::int64_t next_timer = next_timer_due(target, true);
+        const std::int64_t next_timer_id = next_timer_due(target, true);
+        const std::int64_t next_timer =
+            next_timer_id >= 0 ? timers_.at(next_timer_id).due_ms : -1;
         std::int64_t next_frame = next_frame_due();
         if (next_frame > target) {
             next_frame = -1;
@@ -390,7 +392,9 @@ bool ContextState::run_until_idle(std::uint32_t max_steps) {
             continue;
         }
 
-        const std::int64_t next_timer = next_timer_due(0, false);
+        const std::int64_t next_timer_id = next_timer_due(0, false);
+        const std::int64_t next_timer =
+            next_timer_id >= 0 ? timers_.at(next_timer_id).due_ms : -1;
         const std::int64_t next_frame = next_frame_due();
         if (next_timer < 0 && next_frame < 0) {
             drain_microtasks_locked(isolate);
