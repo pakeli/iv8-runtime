@@ -1,11 +1,11 @@
 """M4-B-3 acceptance tests: element.matches(selector) — single-node selector match.
 
-matches(selector) tests THIS element against the same minimal selector subset as
-the query surface (#id / .class / tagname). Match -> true, else false; a complex /
-unsupported / empty selector -> false, no syntax error. It looks only at the
-element's own tag/id/class (live, reflects setAttribute/removeAttribute) and is
-independent of tree position, so it works on a detached element. JS-side only; no
-new Python surface, no closest / webkitMatchesSelector / msMatchesSelector.
+matches(selector) tests THIS element against the M11-34 selector subset: selector
+lists, compound selectors, combinators, attribute selectors, and `*`. Match ->
+true, else false; an unsupported / malformed / empty selector -> false, no syntax
+error. Simple selectors still work on a detached element; combinators evaluate
+against the live parent/sibling links. Pseudo-classes remain M11-35. JS-side only;
+no new Python surface, no closest / webkitMatchesSelector / msMatchesSelector.
 """
 
 import pytest
@@ -103,28 +103,31 @@ def test_class_match_live():
         ) == "true,true,false,true/false,false"
 
 
-# --- complex selectors return false, no throw -----------------------------------
+# --- complex selectors (M11-34) --------------------------------------------------
 
 @on_only
-def test_complex_selectors_false():
-    html = "<html><body><div id='d' class='x'></div></body></html>"
+def test_complex_selectors_supported_except_pseudo():
+    html = ("<html><body><div id='p'>"
+            "<div id='d' class='x'></div></div></body></html>")
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         assert page.eval(
             """
             (() => {
               const el = document.getElementById('d');
-              return [el.matches('div span'),   // descendant combinator
-                      el.matches('div.x'),       // compound
-                      el.matches('[id]'),        // attribute selector
-                      el.matches('*'),           // universal
-                      el.matches('div, span'),   // comma group
-                      el.matches(':first-child'),// pseudo
-                      el.matches('')             // empty
+              return [el.matches('div div'),      // descendant combinator
+                      el.matches('div.x'),        // compound
+                      el.matches('#p > div'),     // child combinator
+                      el.matches('[id]'),         // attribute selector
+                      el.matches('*'),            // universal
+                      el.matches('div, span'),    // selector list
+                      el.matches('div > span'),   // does not match
+                      el.matches(':first-child'), // pseudo-class: M11-35
+                      el.matches('')              // empty
                      ].join(',');
             })();
             """
-        ) == "false,false,false,false,false,false,false"
+        ) == "true,true,true,true,true,true,false,false,false"
 
 
 # --- detached element, independent of isConnected -------------------------------

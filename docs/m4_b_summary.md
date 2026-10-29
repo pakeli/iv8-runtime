@@ -1,5 +1,11 @@
 # M4-B Summary — approved extended-DOM-behaviour boundary
 
+> **Scope note (`2026-10-29`).** M11-34 expands the selector subset used by
+> `matches` / `closest` below to selector lists, compound selectors, combinators,
+> attribute selectors, and `*`. The statements here remain the historical M4-B
+> boundary; see `docs/m11_34_selector_engine.md` for the current selector
+> contract.
+
 This is the closing (collar) document for the **M4-B** line (phases M4-B-1 …
 M4-B-13), consolidating the approved public boundary. It supersedes, for reference,
 the per-phase notes (`docs/m4_b_1_*.md` … `docs/m4_b_13_*.md`), which remain as

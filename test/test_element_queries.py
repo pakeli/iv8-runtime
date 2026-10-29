@@ -2,9 +2,10 @@
 
 element.querySelector(selector) / querySelectorAll(selector) /
 getElementsByTagName(tag) query the element's CURRENT subtree — the element itself
-plus its descendants (so the root may match). Same minimal selector subset
-(#id / .class / tagname; complex -> stable null/[]) and tag rule (case-insensitive;
-"*" = all in subtree) as the document-level queries; plain JS Array returns (no
+plus its descendants (so the root may match). Same M11-34 selector subset as the
+document-level queries (lists, combinators, compound, attribute selectors, `*`;
+unsupported/malformed -> stable null/[]) and the case-insensitive tag rule ("*" =
+all in subtree) for getElementsByTagName; plain JS Array returns (no
 NodeList/HTMLCollection/item/namedItem/identity). Live-tree based. Document-level
 queries unchanged; script nodes are queryable but stay inert. JS-side only; no new
 Python surface.
@@ -82,11 +83,11 @@ def test_element_query_selector():
                       root.querySelector('span').id,        // b
                       root.querySelector('#outside') === null,   // outside subtree
                       root.querySelector('#missing') === null,
-                      root.querySelector('div span') === null,   // complex -> null
-                      root.querySelector('*') === null].join(',');
+                      root.querySelector('div span').id,    // b
+                      root.querySelector('*').id].join(','); // root (self first)
             })();
             """
-        ) == "a,b,true,true,true,true"
+        ) == "a,b,true,true,b,root"
 
 
 # --- element.querySelectorAll ----------------------------------------------------
@@ -109,7 +110,7 @@ def test_element_query_selector_all():
         ) == 0
         assert page.eval(
             "document.getElementById('root').querySelectorAll('div,span').length"
-        ) == 0   # complex -> stable empty
+        ) == 2   # root div + span b, in subtree order
 
 
 # --- element.getElementsByTagName ------------------------------------------------

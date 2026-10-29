@@ -1,5 +1,10 @@
 # M4-A Summary — approved converged-DOM boundary
 
+> **Scope note (`2026-10-29`).** M11-34 expands the selector subset described
+> below to selector lists, compound selectors, combinators, attribute selectors,
+> and `*`. The statements here remain the historical M4-A boundary; see
+> `docs/m11_34_selector_engine.md` for the current selector contract.
+
 This is the closing (collar) document for the **M4-A** line (phases M4-A-1 …
 M4-A-7), consolidating the approved public boundary. It supersedes, for reference,
 the per-phase notes (`docs/m4_a_1_*.md` … `docs/m4_a_7_*.md`), which remain as

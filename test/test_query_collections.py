@@ -4,9 +4,10 @@ document gains three JS-side members: document.head (first <head> element in the
 current tree, or null), document.querySelectorAll(selector) and
 document.getElementsByTagName(tag). The two queries return a plain JS Array of
 element host objects, collected from the CURRENT tree in document order.
-querySelectorAll supports the same minimal subset as querySelector
-(#id / .class / tagname); getElementsByTagName is ASCII case-insensitive and
-accepts "*". No NodeList/HTMLCollection/item/namedItem, no identity guarantee.
+querySelectorAll supports the same M11-34 selector subset as querySelector
+(selector lists, combinators, compound and attribute selectors, `*`);
+getElementsByTagName is ASCII case-insensitive and accepts "*". No
+NodeList/HTMLCollection/item/namedItem, no identity guarantee.
 JS-side only; no new Python surface; querySelector / document.scripts /
 currentScript / getElementById / body / documentElement unchanged.
 """
@@ -101,16 +102,26 @@ def test_query_selector_all_by_tag_document_order():
 
 
 @on_only
-def test_query_selector_all_complex_selector_is_stable_empty():
-    # Complex selectors are NOT supported (minimal subset only). They are treated
-    # as a plain tag-name token that matches nothing -> stable empty array.
+def test_query_selector_all_complex_selectors():
+    # M11-34: combinators, selector lists, and the universal selector work.
     html = "<html><body><div class='a'><span class='b'></span></div></body></html>"
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
-        assert page.eval("document.querySelectorAll('div span').length") == 0
-        assert page.eval("document.querySelectorAll('.a .b').length") == 0
-        assert page.eval("document.querySelectorAll('div,span').length") == 0
-        assert page.eval("document.querySelectorAll('*').length") == 0
+        assert page.eval(
+            "document.querySelectorAll('div span').map(e => e.tagName).join(',')"
+        ) == "SPAN"
+        assert page.eval(
+            "document.querySelectorAll('.a .b').map(e => e.tagName).join(',')"
+        ) == "SPAN"
+        assert page.eval(
+            "document.querySelectorAll('div,span').map(e => e.tagName).join(',')"
+        ) == "DIV,SPAN"
+        assert page.eval("document.querySelectorAll('*').length") == 4
+        # Same element set as getElementsByTagName('*').
+        assert page.eval(
+            "document.querySelectorAll('*').length === "
+            "document.getElementsByTagName('*').length"
+        ) is True
 
 
 # --- getElementsByTagName --------------------------------------------------------

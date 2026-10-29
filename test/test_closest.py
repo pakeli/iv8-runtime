@@ -2,10 +2,11 @@
 
 closest(selector) starts at the element itself and walks parentElement upward,
 returning the first element that matches(selector) (self-first), or null. It reuses
-the same minimal selector subset (#id / .class / tagname); a complex / unsupported
-/ empty selector returns null (no syntax error). It walks the live parent chain, so
-it follows tree edits and works in a detached subtree independent of isConnected.
-JS-side only; no new Python surface, no webkitClosest / document.closest.
+the M11-34 selector subset (lists, combinators, compound, attribute selectors, `*`);
+an unsupported / malformed / empty selector returns null (no syntax error). It
+walks the live parent chain, so it follows tree edits and works in a detached
+subtree independent of isConnected. JS-side only; no new Python surface, no
+webkitClosest / document.closest.
 
 Element wrapper identity is not guaranteed (fresh JS object per access), so the
 returned node is checked by `.id`.
@@ -94,10 +95,10 @@ def test_no_match_null():
             "document.getElementById('c').closest('#missing') === null") is True
 
 
-# --- complex selectors -> null, no throw ----------------------------------------
+# --- complex selectors (M11-34) --------------------------------------------------
 
 @on_only
-def test_complex_selectors_null():
+def test_complex_selectors_supported():
     html = ("<html><body><div id='a' class='box'>"
             "<span id='c'></span></div></body></html>")
     with iv8.Page() as page:
@@ -106,15 +107,15 @@ def test_complex_selectors_null():
             """
             (() => {
               const c = document.getElementById('c');
-              return [c.closest('div span') === null,   // combinator
-                      c.closest('div.box') === null,      // compound
-                      c.closest('[id]') === null,         // attribute
-                      c.closest('*') === null,            // universal
-                      c.closest('a, b') === null,         // comma group
-                      c.closest('') === null].join(',');  // empty
+              return [c.closest('div span').id,   // c (self matches full selector)
+                      c.closest('div.box').id,      // a
+                      c.closest('[id]').id,         // c
+                      c.closest('*').id,            // c
+                      c.closest('a, b') === null,   // no tag a/b ancestor
+                      c.closest('') === null].join(',');
             })();
             """
-        ) == "true,true,true,true,true,true"
+        ) == "c,c,c,c,true,true"
 
 
 # --- detached subtree, independent of isConnected -------------------------------

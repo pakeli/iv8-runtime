@@ -1467,40 +1467,478 @@ std::string validation_message_of(const DomNode* node,
     return std::string();
 }
 
-// Minimal selector -> node predicate, shared by document- and element-level
-// querySelector / querySelectorAll. Supports exactly `#id` / `.class` / `tagname`;
-// an empty selector, an empty #/. token, or any complex selector (combinator /
-// attribute / pseudo / comma / `*` / …) yields a predicate matching NOTHING
-// (stable empty / null). A complex selector falls into the tag-name branch and
-// matches no real tag.
+// --- M11-34 selector engine --------------------------------------------------
+//
+// A small CSS Selectors subset shared by querySelector(All), matches(), and
+// closest(): selector lists, compound selectors, descendant / child / adjacent-
+// sibling / general-sibling combinators, attribute selectors, and `*`. Pseudo-
+// classes/pseudo-elements, CSS escapes, namespaces, and case-insensitivity
+// flags are intentionally unsupported; an unparseable selector matches nothing
+// (stable empty / null / false, matching the historical behavior).
+struct SelectorAttributeTest {
+    enum class Op {
+        Exists,
+        Equals,
+        Includes,
+        DashMatch,
+        Prefix,
+        Suffix,
+        Substring,
+    };
+    std::string name;
+    Op op = Op::Exists;
+    std::string value;
+};
+
+struct SelectorCompound {
+    std::string tag;  // empty = universal / no type selector
+    std::vector<std::string> ids;
+    std::vector<std::string> classes;
+    std::vector<SelectorAttributeTest> attributes;
+};
+
+struct SelectorComplex {
+    std::vector<SelectorCompound> compounds;
+    // combinators[i] joins compounds[i] and compounds[i + 1]:
+    // ' ' descendant, '>' child, '+' adjacent sibling, '~' general sibling.
+    std::vector<char> combinators;
+};
+
+struct SelectorList {
+    std::vector<SelectorComplex> selectors;
+};
+
+bool selector_name_char(char c) {
+    const unsigned char u = static_cast<unsigned char>(c);
+    return std::isalnum(u) || c == '-' || c == '_';
+}
+
+bool selector_attribute_name_char(char c) {
+    return selector_name_char(c) || c == ':';
+}
+
+class SelectorParser {
+public:
+    explicit SelectorParser(const std::string& text) : text_(text) {}
+
+    bool parse(SelectorList* out) {
+        skip_ws();
+        if (at_end()) {
+            return false;
+        }
+        while (true) {
+            SelectorComplex complex;
+            if (!parse_complex(&complex)) {
+                return false;
+            }
+            out->selectors.push_back(std::move(complex));
+            skip_ws();
+            if (at_end()) {
+                return true;
+            }
+            if (peek() != ',') {
+                return false;
+            }
+            ++pos_;
+            skip_ws();
+            if (at_end()) {
+                return false;  // trailing comma
+            }
+        }
+    }
+
+private:
+    bool at_end() const { return pos_ >= text_.size(); }
+
+    char peek() const {
+        return at_end() ? '\0' : text_[pos_];
+    }
+
+    void skip_ws() {
+        while (!at_end() &&
+               std::isspace(static_cast<unsigned char>(peek()))) {
+            ++pos_;
+        }
+    }
+
+    std::string read_name(bool attribute_name) {
+        const std::size_t start = pos_;
+        while (!at_end()) {
+            const char c = peek();
+            const bool ok = attribute_name ? selector_attribute_name_char(c)
+                                           : selector_name_char(c);
+            if (!ok) {
+                break;
+            }
+            ++pos_;
+        }
+        return text_.substr(start, pos_ - start);
+    }
+
+    bool parse_complex(SelectorComplex* out) {
+        SelectorCompound first;
+        if (!parse_compound(&first)) {
+            return false;
+        }
+        out->compounds.push_back(std::move(first));
+        while (true) {
+            const std::size_t before_ws = pos_;
+            skip_ws();
+            const bool had_ws = pos_ != before_ws;
+            if (at_end() || peek() == ',') {
+                return true;
+            }
+            char combinator = '\0';
+            const char c = peek();
+            if (c == '>' || c == '+' || c == '~') {
+                combinator = c;
+                ++pos_;
+                skip_ws();
+                if (at_end()) {
+                    return false;
+                }
+            } else if (had_ws) {
+                combinator = ' ';
+            } else {
+                return false;
+            }
+            SelectorCompound next;
+            if (!parse_compound(&next)) {
+                return false;
+            }
+            out->combinators.push_back(combinator);
+            out->compounds.push_back(std::move(next));
+        }
+    }
+
+    bool parse_compound(SelectorCompound* out) {
+        bool any = false;
+        if (peek() == '*') {
+            ++pos_;
+            any = true;
+        } else if (!at_end() && selector_name_char(peek())) {
+            const std::string name = read_name(/*attribute_name=*/false);
+            if (name.empty()) {
+                return false;
+            }
+            out->tag = ascii_lower(name);
+            any = true;
+        }
+        while (!at_end()) {
+            const char c = peek();
+            if (c == '#') {
+                ++pos_;
+                const std::string id = read_name(/*attribute_name=*/false);
+                if (id.empty()) {
+                    return false;
+                }
+                out->ids.push_back(id);
+                any = true;
+            } else if (c == '.') {
+                ++pos_;
+                const std::string cls = read_name(/*attribute_name=*/false);
+                if (cls.empty()) {
+                    return false;
+                }
+                out->classes.push_back(cls);
+                any = true;
+            } else if (c == '[') {
+                SelectorAttributeTest attribute;
+                if (!parse_attribute(&attribute)) {
+                    return false;
+                }
+                out->attributes.push_back(std::move(attribute));
+                any = true;
+            } else if (c == ':') {
+                // Pseudo-classes / pseudo-elements are the M11-35 slice.
+                return false;
+            } else {
+                break;
+            }
+        }
+        return any;
+    }
+
+    bool parse_attribute(SelectorAttributeTest* out) {
+        if (peek() != '[') {
+            return false;
+        }
+        ++pos_;
+        skip_ws();
+        const std::string name = read_name(/*attribute_name=*/true);
+        if (name.empty()) {
+            return false;
+        }
+        out->name = ascii_lower(name);
+        skip_ws();
+        if (at_end()) {
+            return false;
+        }
+        if (peek() == ']') {
+            ++pos_;
+            out->op = SelectorAttributeTest::Op::Exists;
+            return true;
+        }
+        const char first = peek();
+        if (first == '=') {
+            out->op = SelectorAttributeTest::Op::Equals;
+            ++pos_;
+        } else if (first == '~' || first == '|' || first == '^' ||
+                   first == '$' || first == '*') {
+            if (pos_ + 1 >= text_.size() || text_[pos_ + 1] != '=') {
+                return false;
+            }
+            switch (first) {
+                case '~':
+                    out->op = SelectorAttributeTest::Op::Includes;
+                    break;
+                case '|':
+                    out->op = SelectorAttributeTest::Op::DashMatch;
+                    break;
+                case '^':
+                    out->op = SelectorAttributeTest::Op::Prefix;
+                    break;
+                case '$':
+                    out->op = SelectorAttributeTest::Op::Suffix;
+                    break;
+                default:
+                    out->op = SelectorAttributeTest::Op::Substring;
+                    break;
+            }
+            pos_ += 2;
+        } else {
+            return false;
+        }
+        skip_ws();
+        if (!read_attribute_value(&out->value)) {
+            return false;
+        }
+        skip_ws();
+        if (at_end() || peek() != ']') {
+            // The optional case-sensitivity flag (i/s) is not supported.
+            return false;
+        }
+        ++pos_;
+        return true;
+    }
+
+    bool read_attribute_value(std::string* out) {
+        if (at_end()) {
+            return false;
+        }
+        const char quote = peek();
+        if (quote == '"' || quote == '\'') {
+            ++pos_;
+            while (!at_end()) {
+                const char c = peek();
+                if (c == quote) {
+                    ++pos_;
+                    return true;
+                }
+                if (c == '\\') {
+                    return false;  // no CSS escapes
+                }
+                out->push_back(c);
+                ++pos_;
+            }
+            return false;  // unterminated quote
+        }
+        const std::size_t start = pos_;
+        while (!at_end()) {
+            const char c = peek();
+            if (std::isspace(static_cast<unsigned char>(c)) || c == ']') {
+                break;
+            }
+            if (c == '\\') {
+                return false;  // no CSS escapes
+            }
+            ++pos_;
+        }
+        if (pos_ == start) {
+            return false;
+        }
+        *out = text_.substr(start, pos_ - start);
+        return true;
+    }
+
+    const std::string& text_;
+    std::size_t pos_ = 0;
+};
+
+bool selector_attribute_value(const DomNode* node, const std::string& name,
+                              std::string* out) {
+    if (name == "id") {
+        if (!node->has_id) {
+            return false;
+        }
+        *out = node->id;
+        return true;
+    }
+    if (name == "class") {
+        if (!node->has_class) {
+            return false;
+        }
+        *out = node->class_name;
+        return true;
+    }
+    const auto it = node->attributes.find(name);
+    if (it == node->attributes.end()) {
+        return false;
+    }
+    *out = it->second;
+    return true;
+}
+
+bool selector_match_attribute(const DomNode* node,
+                              const SelectorAttributeTest& test) {
+    std::string value;
+    if (!selector_attribute_value(node, test.name, &value)) {
+        return false;
+    }
+    switch (test.op) {
+        case SelectorAttributeTest::Op::Exists:
+            return true;
+        case SelectorAttributeTest::Op::Equals:
+            return value == test.value;
+        case SelectorAttributeTest::Op::Includes: {
+            if (test.value.empty()) {
+                return false;
+            }
+            for (char c : test.value) {
+                if (std::isspace(static_cast<unsigned char>(c))) {
+                    return false;
+                }
+            }
+            for (const std::string& token : split_class_tokens(value)) {
+                if (token == test.value) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        case SelectorAttributeTest::Op::DashMatch:
+            return value == test.value ||
+                   (value.size() > test.value.size() &&
+                    value.compare(0, test.value.size(), test.value) == 0 &&
+                    value[test.value.size()] == '-');
+        case SelectorAttributeTest::Op::Prefix:
+            return !test.value.empty() &&
+                   value.size() >= test.value.size() &&
+                   value.compare(0, test.value.size(), test.value) == 0;
+        case SelectorAttributeTest::Op::Suffix:
+            return !test.value.empty() &&
+                   value.size() >= test.value.size() &&
+                   value.compare(value.size() - test.value.size(),
+                                 test.value.size(), test.value) == 0;
+        case SelectorAttributeTest::Op::Substring:
+            return !test.value.empty() &&
+                   value.find(test.value) != std::string::npos;
+    }
+    return false;
+}
+
+bool selector_match_compound(const DomNode* node,
+                             const SelectorCompound& selector) {
+    if (!selector.tag.empty() && node->tag != selector.tag) {
+        return false;
+    }
+    for (const std::string& id : selector.ids) {
+        if (!node->has_id || node->id != id) {
+            return false;
+        }
+    }
+    for (const std::string& cls : selector.classes) {
+        if (std::find(node->classes.begin(), node->classes.end(), cls) ==
+            node->classes.end()) {
+            return false;
+        }
+    }
+    for (const SelectorAttributeTest& attribute : selector.attributes) {
+        if (!selector_match_attribute(node, attribute)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+const DomNode* selector_previous_sibling(const DomNode* node) {
+    if (node->parent == nullptr) {
+        return nullptr;
+    }
+    const std::vector<DomNode*>& siblings = node->parent->children;
+    for (std::size_t i = 1; i < siblings.size(); i++) {
+        if (siblings[i] == node) {
+            return siblings[i - 1];
+        }
+    }
+    return nullptr;
+}
+
+bool selector_match_complex_at(const DomNode* node,
+                               const SelectorComplex& selector,
+                               std::size_t index) {
+    if (index >= selector.compounds.size() ||
+        !selector_match_compound(node, selector.compounds[index])) {
+        return false;
+    }
+    if (index == 0) {
+        return true;
+    }
+    const char combinator = selector.combinators[index - 1];
+    switch (combinator) {
+        case '>':
+            return node->parent != nullptr &&
+                   selector_match_complex_at(node->parent, selector, index - 1);
+        case ' ':
+            for (const DomNode* parent = node->parent; parent != nullptr;
+                 parent = parent->parent) {
+                if (selector_match_complex_at(parent, selector, index - 1)) {
+                    return true;
+                }
+            }
+            return false;
+        case '+': {
+            const DomNode* previous = selector_previous_sibling(node);
+            return previous != nullptr &&
+                   selector_match_complex_at(previous, selector, index - 1);
+        }
+        case '~':
+            for (const DomNode* previous = selector_previous_sibling(node);
+                 previous != nullptr;
+                 previous = selector_previous_sibling(previous)) {
+                if (selector_match_complex_at(previous, selector, index - 1)) {
+                    return true;
+                }
+            }
+            return false;
+        default:
+            return false;
+    }
+}
+
+bool selector_match_list(const DomNode* node, const SelectorList& list) {
+    for (const SelectorComplex& selector : list.selectors) {
+        if (!selector.compounds.empty() &&
+            selector_match_complex_at(node, selector,
+                                      selector.compounds.size() - 1)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Selector -> node predicate, shared by document- and element-level
+// querySelector / querySelectorAll and by matches() / closest(). The whole
+// expression is parsed once; an unsupported/malformed selector matches nothing.
 std::function<bool(const DomNode*)> selector_predicate(const std::string& raw) {
-    std::size_t a = 0;
-    std::size_t b = raw.size();
-    while (a < b && std::isspace(static_cast<unsigned char>(raw[a]))) a++;
-    while (b > a && std::isspace(static_cast<unsigned char>(raw[b - 1]))) b--;
-    const std::string sel = raw.substr(a, b - a);
-    if (sel.empty()) {
+    SelectorList list;
+    SelectorParser parser(raw);
+    if (!parser.parse(&list) || list.selectors.empty()) {
         return [](const DomNode*) { return false; };
     }
-    if (sel[0] == '#') {
-        const std::string id = sel.substr(1);
-        if (id.empty()) {
-            return [](const DomNode*) { return false; };
-        }
-        return [id](const DomNode* n) { return n->id == id; };
-    }
-    if (sel[0] == '.') {
-        const std::string cls = sel.substr(1);
-        if (cls.empty()) {
-            return [](const DomNode*) { return false; };
-        }
-        return [cls](const DomNode* n) {
-            return std::find(n->classes.begin(), n->classes.end(), cls) !=
-                   n->classes.end();
-        };
-    }
-    const std::string tag = ascii_lower(sel);
-    return [tag](const DomNode* n) { return n->tag == tag; };
+    return [list](const DomNode* node) {
+        return selector_match_list(node, list);
+    };
 }
 
 // getElementsByTagName predicate: ASCII case-insensitive tag; "*" = every element.

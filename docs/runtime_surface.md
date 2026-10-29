@@ -236,6 +236,12 @@ Installed per generation by `install_page`:
   `getElementsByClassName` at document and element level (the element form is
   descendants-only), plus `document.getElementsByName`. Both return live plain
   arrays in document order;
+- **selector engine** (M11-34) — document/element `querySelector[All]`,
+  `matches()`, and `closest()` share selector lists, compound selectors,
+  descendant / child / adjacent-sibling / general-sibling combinators, attribute
+  selectors, and `*`. Names are case-insensitive, values case-sensitive; the
+  element-scoped queries include the root itself. Pseudo-classes/elements,
+  escapes, namespaces, and `i`/`s` flags are M11-35+ / unsupported;
 - **document metadata** (M11-23) — read-only `characterSet` / `contentType` /
   `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
   `activeElement`, plus `hasFocus()` (always `false`). No focus, visibility, or
@@ -301,8 +307,10 @@ Installed per generation by `install_page`:
 
 Deliberate shape of this DOM: it is **element-only** (no text / comment / fragment
 nodes), collections are plain JS `Array`s (not `HTMLCollection` / `NodeList`, no
-`item()` / `namedItem()`, no identity guarantee), selectors support exactly one of
-`#id` / `.class` / `tagname`, there are no specialized `HTML*Element` classes or
+`item()` / `namedItem()`, no identity guarantee), selectors support the M11-34
+subset (lists, compound selectors, combinators, attribute selectors, `*`) but not
+pseudo-classes/elements, escapes, namespaces, or `i`/`s` flags, there are no
+specialized `HTML*Element` classes or
 general attribute-reflection properties (only the M11-18/M11-21 form-control
 subset), and a `<script>` inserted into the tree stays **inert**.
 `form.submit()` / `requestSubmit()` are callable no-ops. Form validation is the

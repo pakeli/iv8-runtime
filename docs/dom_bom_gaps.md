@@ -121,8 +121,8 @@ M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
 
 | Missing | Status |
 |---|---|
-| Combinators (descendant/child/sibling), attribute selectors, pseudo-classes/elements, selector lists | **absent** — only a single `#id` / `.class` / `tag` is supported |
-| Complex selectors in `matches` / `closest` (currently `false` / `null`) | **absent** |
+| Combinators (descendant/child/sibling), attribute selectors, selector lists | **partially implemented** — M11-34 adds compound selectors, all four combinators, attribute operators, selector lists, and `*`; pseudo-classes/elements, escapes, namespaces, and `i`/`s` flags remain absent |
+| Complex selectors in `matches` / `closest` (currently `false` / `null`) | **implemented** — M11-34 uses the same selector engine as the query APIs; pseudo-classes remain M11-35 |
 | `document.all` | **absent** |
 
 Implemented for contrast: M11-19 added multi-token `getElementsByClassName`
