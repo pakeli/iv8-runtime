@@ -175,13 +175,13 @@ def test_no_navigation_network_formdata_surface():
               const f = document.getElementById('f');
               f.requestSubmit();
               // (form metadata M7-3..7 present; M11-18 adds the encoding alias;
-              // FormData / validation methods remain out)
+              // M11-32 adds form validation methods; FormData remains out)
               return [typeof globalThis.FormData,          // undefined (not introduced)
                       typeof f.encoding,                   // string (M11-18 alias)
-                      typeof f.checkValidity].join(',');   // undefined
+                      typeof f.checkValidity].join(',');   // function (M11-32)
             })();
             """
-        ) == "undefined,string,undefined"
+        ) == "undefined,string,function"
 
 
 # --- result matches form.submit() (both no-op undefined) ------------------------

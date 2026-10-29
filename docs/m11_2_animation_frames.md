@@ -1,5 +1,11 @@
 # M11-2 — `requestAnimationFrame` / `cancelAnimationFrame` (manual frame pump)
 
+> **Scope note (`2026-10-29`).** M11-31 supersedes the "no timestamp argument" line
+> below: the callback now receives the current virtual timestamp, and a virtual
+> `performance.now()` exists. The legacy pump still does not advance the clock, and
+> there is still no real-time clock. The rest of this document remains the M11-2
+> boundary.
+
 M11-2 is the second implementation slice under the compatibility-first M11 line. It
 adds the two animation-frame globals plus one Python pump, following the M2-4 timer
 precedent exactly: the JS API exists and behaves normally, but **nothing runs until

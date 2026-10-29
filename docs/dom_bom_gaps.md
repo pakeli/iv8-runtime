@@ -43,8 +43,8 @@ verified `2026-10-29`)
 
 | Missing | Status |
 |---|---|
-| `performance.now()` and the Performance API (`mark` / `measure` / timelines) | **absent** — there is no clock |
-| `requestAnimationFrame` callback timestamp argument | **absent** — manual frames are counted, not timed |
+| Full Performance API (`mark` / `measure` / timelines / entries / timing) | **partially implemented** — M11-31 adds virtual `performance.now()` / `timeOrigin`; marks, measures, timelines, and resource/navigation timing are absent |
+| `requestAnimationFrame` callback timestamp argument | **implemented** — M11-31 passes the current virtual timestamp |
 | `requestIdleCallback` `options.timeout` firing semantics | **deferred** — validated but never fires |
 | `scheduler.postTask`, microtask cancellation | **absent** |
 | Full event-loop facade (rAF/idle + real sleep/clock) | **partially implemented** — M11-29/M11-30 add virtual `tick` / `advance` / `run_until_idle` for timers, microtasks, rAF, and idle; real sleep/clock remain absent |
@@ -172,7 +172,7 @@ cancellation (`cancelable` / `defaultPrevented` / `preventDefault` /
 
 | Missing | Status |
 |---|---|
-| Validation API (`checkValidity`, `reportValidity`, `validity`, `willValidate`, `setCustomValidity`) | **absent** |
+| Validation API (`checkValidity`, `reportValidity`, `validity`, `willValidate`, `setCustomValidity`) | **partially implemented** — M11-32 adds `required`, `minlength` / `maxlength`, email/URL `typeMismatch`, custom validity, form aggregation, and minimal `invalid` events; `pattern`, `min` / `max` / `step`, radio-group semantics, and native UI remain absent |
 | Automatic `submit` / `reset` / `input` / `change` events and default submit action | **excluded** |
 | `requestSubmit(submitter)` argument and `event.submitter` | **absent** |
 | `FormData` and real form encoding | **absent** |

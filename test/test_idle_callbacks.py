@@ -73,12 +73,12 @@ def test_request_returns_a_numeric_handle():
 
 @on_only
 def test_non_goal_globals_absent():
-    # No unified scheduler / clock leaked in alongside the idle globals.
-    # queueMicrotask is no longer listed here: it landed separately in M11-4.
+    # No unified scheduler leaked in alongside the idle globals. performance
+    # landed in M11-31; queueMicrotask landed in M11-4.
     with iv8.Page() as page:
-        for name in ("performance", "scheduler", "requestPostAnimationFrame",
-                     "IdleDeadline"):
+        for name in ("scheduler", "requestPostAnimationFrame", "IdleDeadline"):
             assert page.eval(f"typeof globalThis.{name}") == "undefined", name
+        assert page.eval("typeof globalThis.performance") == "object"
 
 
 # --- nothing runs without a pump --------------------------------------------------

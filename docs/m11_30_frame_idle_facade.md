@@ -51,7 +51,9 @@ allowed but intentionally not a single coherent timeline.
 ## Non-goals
 
 - No real display refresh, vsync, paint, layout, or rendering.
-- No `performance.now()` / real clock / background thread / automatic loop.
+- No **real** clock / background thread / automatic loop. (M11-31 later adds a
+  virtual `performance.now()` tied to this facade clock and rAF timestamp
+  arguments.)
 - No `IdleDeadline` deadline-based timeout semantics; `didTimeout` stays false
   and `timeRemaining()` stays the fixed budget.
 - No new JS-visible global, no new exception type.

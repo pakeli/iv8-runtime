@@ -369,15 +369,21 @@ def test_no_argument_call_is_ignored():
 
 
 @on_only
-def test_callback_receives_no_timestamp_argument():
-    # This runtime has no clock, so the minimal model passes no argument.
+def test_callback_receives_virtual_timestamp_argument():
+    # M11-31: the legacy pump passes the current virtual clock (unchanged here);
+    # there is still no real clock.
     with iv8.Page() as page:
         page.eval("""
             globalThis.argc = -1;
-            requestAnimationFrame(function () { argc = arguments.length });
+            globalThis.stamp = -1;
+            requestAnimationFrame(function (t) {
+                argc = arguments.length;
+                stamp = t;
+            });
         """)
         page.run_animation_frame()
-        assert page.eval("argc") == 0
+        assert page.eval("argc") == 1
+        assert page.eval("stamp") == 0
 
 
 # --- load() interaction -----------------------------------------------------------

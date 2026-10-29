@@ -1,5 +1,9 @@
 # M11-3 — `requestIdleCallback` / `cancelIdleCallback` (manual idle pump)
 
+> **Scope note (`2026-10-29`).** M11-31 adds a virtual `performance.now()` tied to
+> the event-loop facade. The idle deadline remains the fixed deterministic budget
+> described here; there is still no real clock and no timeout firing semantics.
+
 M11-3 is the third implementation slice under the compatibility-first M11 line. It
 mirrors the M11-2 frame pump exactly one level up: the JS API exists and behaves
 normally, but **nothing runs until Python asks for it**.

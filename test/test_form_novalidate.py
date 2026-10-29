@@ -4,10 +4,12 @@ form.noValidate (read-write BOOLEAN, exposed only on <form>) is seeded once at
 parse/create from the PRESENCE of the `novalidate` boolean attribute (<form novalidate>
 -> True; absent / createElement -> False). Writing stores Boolean(value)
 (truthy/falsey). It is decoupled from the attribute in both directions, is independent
-of form.method / action / enctype / target, and is switch state only: no validation
-runs, it triggers no submission behaviour (submit() / requestSubmit() stay no-ops), and
-form.reset() does not touch it. JS-side only; no checkValidity() / reportValidity() /
-willValidate / encoding alias, no .noValidate on any other element.
+of form.method / action / enctype / target, and is switch state only: explicit
+validation is separate (M11-32 adds checkValidity() / reportValidity(), which still
+run when noValidate is true), it triggers no submission behaviour (submit() /
+requestSubmit() stay no-ops), and form.reset() does not touch it. JS-side only; the
+form itself still has no willValidate / validity; M11-18 adds the encoding alias;
+no .noValidate on any other element.
 
 Assertions use .noValidate / .method / ... / getAttribute / hasAttribute / typeof.
 """
@@ -43,8 +45,11 @@ def test_novalidate_only_on_form():
         for eid in ("in", "bt", "dv"):
             assert page.eval(
                 f"typeof document.getElementById('{eid}').noValidate") == "undefined"
-        # validation surface stays frozen; M11-18 adds the encoding alias.
-        for m in ("checkValidity", "reportValidity", "willValidate"):
+        # M11-32 adds form-level checkValidity()/reportValidity(); the form itself
+        # still has no willValidate/validity. M11-18 adds the encoding alias.
+        for m in ("checkValidity", "reportValidity"):
+            assert page.eval(f"typeof document.getElementById('f').{m}") == "function"
+        for m in ("willValidate", "validity"):
             assert page.eval(f"typeof document.getElementById('f').{m}") == "undefined"
         assert page.eval("typeof document.getElementById('f').encoding") == "string"
 

@@ -59,8 +59,10 @@ swallowed so the page remains usable.
   pumps in M11-29. They are not run by `tick` / `advance` / `run_until_idle`.
   **Superseded by M11-30**, which integrates both at fixed virtual frame
   boundaries.
-- No real clock, `performance.now()`, real sleeping, background execution,
-  Promise/timer cancellation, fetch/XHR, workers, or automatic loop.
+- No **real** clock, real sleeping, background execution, Promise/timer
+  cancellation, fetch/XHR, workers, or automatic loop. (M11-31 later adds a
+  *virtual* `performance.now()` tied to this facade clock and rAF timestamp
+  arguments; it does not add a wall clock.)
 - No new JS-visible global; no new top-level Python object or exception.
 - The virtual clock is per generation; `load()` resets it and clears pending
   timers as before.

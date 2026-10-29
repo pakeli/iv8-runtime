@@ -711,8 +711,13 @@ struct DomNode {
     // Seeded ONCE at parse/create from the PRESENCE of the `novalidate` boolean
     // attribute (present -> true; absent / createElement('form') -> false), then
     // decoupled from the attribute. Only meaningful for <form>; form.reset() does NOT
-    // touch it. Switch state only — no validation system is implemented.
+    // touch it. M11-32: explicit checkValidity()/reportValidity() still validate even
+    // when this switch is true.
     bool no_validate = false;
+    // M11-32 constraint-validation runtime slot for input/button/select/textarea:
+    // the message installed by setCustomValidity(). Empty means no custom error.
+    // Decoupled from attributes; form.reset() does NOT clear it.
+    std::string custom_validity;
     // M6-1 form.reset() baseline: the value/selected/checked snapshot captured at
     // parse/create (after the M5-5 select normalization), FIXED thereafter (it does
     // not follow later attribute/textContent edits). reset() restores value /
@@ -1113,6 +1118,280 @@ inline std::vector<DomNode*> collect_options(DomNode* root) {
     collect_matching(root, [](const DomNode* n) { return n->tag == "option"; },
                      out);
     return out;
+}
+
+// --- M11-32 minimal constraint validation ------------------------------------
+//
+// Supported control set: input / button / select / textarea (the same four
+// form.elements returns). Supported constraints: required, input type=email /
+// url typeMismatch, input/textarea minlength/maxlength, and customError from
+// setCustomValidity(). The remaining ValidityState flags are exposed but always
+// false (pattern/min/max/step/date/number semantics are deferred).
+bool is_form_control(const DomNode* node) {
+    return node->tag == "input" || node->tag == "button" ||
+           node->tag == "select" || node->tag == "textarea";
+}
+
+bool has_attribute(const DomNode* node, const char* name) {
+    return node->attributes.find(name) != node->attributes.end();
+}
+
+std::string attribute_value_or_empty(const DomNode* node, const char* name) {
+    const auto it = node->attributes.find(name);
+    return it != node->attributes.end() ? it->second : std::string();
+}
+
+std::string control_type_of(const DomNode* node) {
+    if (node->tag == "input") {
+        return normalize_input_type(attribute_value_or_empty(node, "type"));
+    }
+    if (node->tag == "button") {
+        return normalize_button_type(attribute_value_or_empty(node, "type"));
+    }
+    return std::string();
+}
+
+bool is_text_like_input_type(const std::string& type) {
+    return type == "text" || type == "search" || type == "tel" ||
+           type == "url" || type == "email" || type == "password";
+}
+
+bool control_will_validate(const DomNode* node) {
+    if (!is_form_control(node) || has_attribute(node, "disabled")) {
+        return false;
+    }
+    if (node->tag == "input") {
+        const std::string type = control_type_of(node);
+        if (type == "hidden" || type == "reset" || type == "button" ||
+            type == "image") {
+            return false;
+        }
+        if (has_attribute(node, "readonly")) {
+            return false;
+        }
+    } else if (node->tag == "textarea") {
+        if (has_attribute(node, "readonly")) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string control_value_of(DomNode* node) {
+    if (node->tag == "select") {
+        for (DomNode* option : collect_options(node)) {
+            if (option->selected) {
+                return option_value_of(option);
+            }
+        }
+        return std::string();
+    }
+    return node->value;
+}
+
+// Parse a non-negative integer attribute; absent or malformed -> -1 (ignored).
+int parse_non_negative_attribute(const DomNode* node, const char* name) {
+    const auto it = node->attributes.find(name);
+    if (it == node->attributes.end() || it->second.empty()) {
+        return -1;
+    }
+    long long value = 0;
+    for (char c : it->second) {
+        if (c < '0' || c > '9') {
+            return -1;
+        }
+        value = value * 10 + (c - '0');
+        if (value > 2147483647LL) {
+            return 2147483647;
+        }
+    }
+    return static_cast<int>(value);
+}
+
+// Value length in UTF-16 code units (the unit browsers use for minlength /
+// maxlength). Invalid UTF-8 bytes count as one unit each.
+std::size_t utf16_length(const std::string& text) {
+    std::size_t units = 0;
+    std::size_t i = 0;
+    while (i < text.size()) {
+        const unsigned char c = static_cast<unsigned char>(text[i]);
+        std::uint32_t code_point = 0;
+        std::size_t length = 1;
+        if (c < 0x80) {
+            code_point = c;
+        } else if ((c & 0xE0) == 0xC0) {
+            code_point = c & 0x1F;
+            length = 2;
+        } else if ((c & 0xF0) == 0xE0) {
+            code_point = c & 0x0F;
+            length = 3;
+        } else if ((c & 0xF8) == 0xF0) {
+            code_point = c & 0x07;
+            length = 4;
+        } else {
+            units += 1;
+            i += 1;
+            continue;
+        }
+        if (i + length > text.size()) {
+            units += 1;
+            break;
+        }
+        bool valid = true;
+        for (std::size_t k = 1; k < length; k++) {
+            const unsigned char continuation =
+                static_cast<unsigned char>(text[i + k]);
+            if ((continuation & 0xC0) != 0x80) {
+                valid = false;
+                break;
+            }
+            code_point = (code_point << 6) | (continuation & 0x3F);
+        }
+        if (!valid) {
+            units += 1;
+            i += 1;
+            continue;
+        }
+        units += (code_point > 0xFFFF) ? 2 : 1;
+        i += length;
+    }
+    return units;
+}
+
+bool looks_like_email(const std::string& text) {
+    std::size_t at = std::string::npos;
+    for (std::size_t i = 0; i < text.size(); i++) {
+        const unsigned char c = static_cast<unsigned char>(text[i]);
+        if (c == '@') {
+            if (at != std::string::npos) {
+                return false;  // more than one @
+            }
+            at = i;
+        } else if (std::isspace(c) || c < 0x20) {
+            return false;
+        }
+    }
+    return at != std::string::npos && at > 0 && at + 1 < text.size();
+}
+
+bool looks_like_absolute_url(const std::string& text) {
+    if (text.empty() || !std::isalpha(static_cast<unsigned char>(text[0]))) {
+        return false;
+    }
+    std::size_t i = 1;
+    while (i < text.size()) {
+        const unsigned char c = static_cast<unsigned char>(text[i]);
+        if (!std::isalnum(c) && c != '+' && c != '-' && c != '.') {
+            break;
+        }
+        i++;
+    }
+    if (i >= text.size() || text[i] != ':') {
+        return false;
+    }
+    for (char c : text) {
+        const unsigned char u = static_cast<unsigned char>(c);
+        if (std::isspace(u) || u < 0x20) {
+            return false;
+        }
+    }
+    const std::string scheme = ascii_lower(text.substr(0, i));
+    if (scheme == "http" || scheme == "https") {
+        const std::size_t host_start = i + 3;  // past "://"
+        if (text.compare(i + 1, 2, "//") != 0 ||
+            host_start >= text.size() || text[host_start] == '/' ||
+            text[host_start] == '?' || text[host_start] == '#') {
+            return false;
+        }
+    }
+    return true;
+}
+
+struct ValidityInfo {
+    bool value_missing = false;
+    bool type_mismatch = false;
+    bool pattern_mismatch = false;
+    bool too_long = false;
+    bool too_short = false;
+    bool range_underflow = false;
+    bool range_overflow = false;
+    bool step_mismatch = false;
+    bool bad_input = false;
+    bool custom_error = false;
+    int min_length = -1;
+    int max_length = -1;
+
+    bool valid() const {
+        return !(value_missing || type_mismatch || pattern_mismatch ||
+                 too_long || too_short || range_underflow || range_overflow ||
+                 step_mismatch || bad_input || custom_error);
+    }
+};
+
+ValidityInfo compute_validity(DomNode* node) {
+    ValidityInfo info;
+    if (!control_will_validate(node)) {
+        return info;  // barred controls are always valid
+    }
+    const std::string value = control_value_of(node);
+    const std::string type = control_type_of(node);
+    if (has_attribute(node, "required") && node->tag != "button") {
+        const bool checked_control = type == "checkbox" || type == "radio";
+        if (checked_control ? !node->checked : value.empty()) {
+            info.value_missing = true;
+        }
+    }
+    if (node->tag == "input" && !value.empty()) {
+        if (type == "email" && !looks_like_email(value)) {
+            info.type_mismatch = true;
+        } else if (type == "url" && !looks_like_absolute_url(value)) {
+            info.type_mismatch = true;
+        }
+    }
+    const bool length_checked =
+        node->tag == "textarea" ||
+        (node->tag == "input" && is_text_like_input_type(type));
+    if (length_checked) {
+        const std::size_t length = utf16_length(value);
+        info.min_length = parse_non_negative_attribute(node, "minlength");
+        info.max_length = parse_non_negative_attribute(node, "maxlength");
+        if (info.min_length >= 0 && !value.empty() &&
+            length < static_cast<std::size_t>(info.min_length)) {
+            info.too_short = true;
+        }
+        if (info.max_length >= 0 &&
+            length > static_cast<std::size_t>(info.max_length)) {
+            info.too_long = true;
+        }
+    }
+    info.custom_error = !node->custom_validity.empty();
+    return info;
+}
+
+std::string validation_message_of(const DomNode* node,
+                                  const ValidityInfo& info) {
+    if (info.custom_error) {
+        return node->custom_validity;
+    }
+    if (info.value_missing) {
+        return "Please fill out this field.";
+    }
+    if (info.type_mismatch) {
+        return control_type_of(node) == "email"
+                   ? "Please enter a valid email address."
+                   : "Please enter a URL.";
+    }
+    if (info.too_short) {
+        return "Please lengthen this text to " +
+               std::to_string(info.min_length) +
+               " characters or more.";
+    }
+    if (info.too_long) {
+        return "Please shorten this text to " +
+               std::to_string(info.max_length) +
+               " characters or fewer.";
+    }
+    return std::string();
 }
 
 // Minimal selector -> node predicate, shared by document- and element-level
@@ -1835,6 +2114,10 @@ public:
         if (node_->tag == "input" || node_->tag == "button" ||
             node_->tag == "select" || node_->tag == "textarea") {
             names.push_back("form");
+            // M11-32: minimal constraint-validation read surface.
+            names.push_back("willValidate");
+            names.push_back("validity");
+            names.push_back("validationMessage");
         }
         // M5-3/4/5/6: `value` is exposed on <input> / <textarea> / <button>
         // (writable text slot), <select> (writable, derived from selected option)
@@ -1926,6 +2209,15 @@ public:
             names.push_back("reset");
             names.push_back("submit");
             names.push_back("requestSubmit");
+            // M11-32: form-level constraint-validation entry points.
+            names.push_back("checkValidity");
+            names.push_back("reportValidity");
+        }
+        if (is_form_control(node_)) {
+            // M11-32: control-level constraint-validation entry points.
+            names.push_back("checkValidity");
+            names.push_back("reportValidity");
+            names.push_back("setCustomValidity");
         }
         if (node_->tag == "select") {
             // M11-22: option lookup helpers (the options collection stays an Array).
@@ -2006,6 +2298,16 @@ public:
         v8::Isolate* isolate, v8::Local<v8::Context> context,
         const std::string& name,
         const v8::FunctionCallbackInfo<v8::Value>& args) override;
+
+    // M11-32: validate this control (or this form's controls), dispatching a
+    // minimal non-bubbling `invalid` event at each invalid control. Both the
+    // control and form forms of checkValidity()/reportValidity() return the
+    // boolean result; there is no UI or alert.
+    bool validate_control(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                          v8::Local<v8::Object> receiver);
+    bool validate_form(v8::Isolate* isolate, v8::Local<v8::Context> context);
+    void fire_invalid_event(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                            v8::Local<v8::Object> receiver);
 
     // M4-A-7: bubble a dispatched event along the current tree (defined out-of-line
     // below DocumentHost, which owns the bubbling walk).
@@ -2424,23 +2726,28 @@ public:
         return true;
     }
 
+    // M11-32: ensure the ElementHost for a node (the same cached host used by
+    // wrap_element), so form-level validation can dispatch invalid events through
+    // that control's listeners even if JS never wrapped it.
+    ElementHost* ensure_element_host(DomNode* node) {
+        const auto it = wrappers_.find(node);
+        if (it != wrappers_.end()) {
+            return it->second;
+        }
+        auto element = std::make_unique<ElementHost>(node, this);
+        ElementHost* host = element.get();
+        elements_.push_back(std::move(element));
+        wrappers_.emplace(node, host);
+        return host;
+    }
+
     // Wrap a node as a JS element host object (JS null for nullptr). Public so
     // ElementHost can wrap parents/children. Wrappers are cached + owned here.
     v8::Local<v8::Value> wrap_element(v8::Isolate* isolate,
                                       v8::Local<v8::Context> context,
                                       DomNode* node) {
         if (node == nullptr) return v8::Null(isolate);
-        ElementHost* host = nullptr;
-        const auto it = wrappers_.find(node);
-        if (it != wrappers_.end()) {
-            host = it->second;
-        } else {
-            auto element = std::make_unique<ElementHost>(node, this);
-            host = element.get();
-            elements_.push_back(std::move(element));
-            wrappers_.emplace(node, host);
-        }
-        return make_host_object(isolate, context, host);
+        return make_host_object(isolate, context, ensure_element_host(node));
     }
 
     // Build a plain JS Array of element host objects for `nodes` (same wrapping as
@@ -3571,6 +3878,42 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
             isolate, node_->attributes.find("required") !=
                          node_->attributes.end());
     }
+    // M11-32: control-level constraint-validation read surface. `validity` is a
+    // fresh plain object recomputed on each access (not a live ValidityState);
+    // all flags are read-only. Unsupported constraints stay false.
+    if (is_form_control(node_)) {
+        if (name == "willValidate") {
+            return v8::Boolean::New(isolate, control_will_validate(node_));
+        }
+        if (name == "validationMessage") {
+            const ValidityInfo info = compute_validity(node_);
+            return v8_string(isolate, validation_message_of(node_, info));
+        }
+        if (name == "validity") {
+            const ValidityInfo info = compute_validity(node_);
+            v8::Local<v8::Object> validity = v8::Object::New(isolate);
+            const auto define_flag = [&](const char* key, bool on) {
+                (void)validity->DefineOwnProperty(
+                    context,
+                    v8::String::NewFromUtf8(isolate, key).ToLocalChecked(),
+                    v8::Boolean::New(isolate, on),
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                       v8::DontDelete));
+            };
+            define_flag("valueMissing", info.value_missing);
+            define_flag("typeMismatch", info.type_mismatch);
+            define_flag("patternMismatch", info.pattern_mismatch);
+            define_flag("tooLong", info.too_long);
+            define_flag("tooShort", info.too_short);
+            define_flag("rangeUnderflow", info.range_underflow);
+            define_flag("rangeOverflow", info.range_overflow);
+            define_flag("stepMismatch", info.step_mismatch);
+            define_flag("badInput", info.bad_input);
+            define_flag("customError", info.custom_error);
+            define_flag("valid", info.valid());
+            return validity;
+        }
+    }
     if (name == "label" && node_->tag == "option") {
         const auto it = node_->attributes.find("label");
         return v8_string(isolate,
@@ -4127,6 +4470,63 @@ void watch_record(v8::Isolate* isolate, const std::string& receiver,
     registry->maybe_record(receiver + "." + method);
 }
 
+// M11-32: fire the minimal `invalid` event at a control. It is a target-only,
+// non-bubbling event with the standard read fields; it is a plain object (like
+// the M3-4 lifecycle events), not a full Event instance, so preventDefault /
+// stopPropagation are not installed on it. Return values are unaffected.
+void ElementHost::fire_invalid_event(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     v8::Local<v8::Object> receiver) {
+    v8::Local<v8::Object> event = v8::Object::New(isolate);
+    (void)event->Set(context, v8_string(isolate, "type"),
+                     v8_string(isolate, "invalid"));
+    (void)event->Set(context, v8_string(isolate, "bubbles"),
+                     v8::Boolean::New(isolate, false));
+    (void)event->Set(context, v8_string(isolate, "cancelable"),
+                     v8::Boolean::New(isolate, true));
+    (void)event->Set(context, v8_string(isolate, "defaultPrevented"),
+                     v8::Boolean::New(isolate, false));
+    (void)event->Set(context, v8_string(isolate, "eventPhase"),
+                     v8::Integer::New(isolate, 0));
+    (void)event->Set(context, v8_string(isolate, "target"), receiver);
+    (void)event->Set(context, v8_string(isolate, "currentTarget"),
+                     v8::Null(isolate));
+    fire_target_at(isolate, context, event, receiver);
+    finish_dispatch(isolate, context, event);
+}
+
+bool ElementHost::validate_control(v8::Isolate* isolate,
+                                   v8::Local<v8::Context> context,
+                                   v8::Local<v8::Object> receiver) {
+    const ValidityInfo info = compute_validity(node_);
+    if (info.valid()) {
+        return true;
+    }
+    fire_invalid_event(isolate, context, receiver);
+    return false;
+}
+
+bool ElementHost::validate_form(v8::Isolate* isolate,
+                                v8::Local<v8::Context> context) {
+    std::vector<DomNode*> controls;
+    collect_matching(node_,
+                     [](const DomNode* n) { return is_form_control(n); },
+                     controls);
+    bool valid = true;
+    for (DomNode* control : controls) {
+        if (!control_will_validate(control)) {
+            continue;  // barred controls are skipped and never receive invalid
+        }
+        ElementHost* host = document_->ensure_element_host(control);
+        v8::Local<v8::Object> receiver =
+            document_->wrap_element(isolate, context, control).As<v8::Object>();
+        if (!host->validate_control(isolate, context, receiver)) {
+            valid = false;
+        }
+    }
+    return valid;
+}
+
 v8::Local<v8::Value> ElementHost::call_method(
     v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
     const v8::FunctionCallbackInfo<v8::Value>& args) {
@@ -4137,6 +4537,36 @@ v8::Local<v8::Value> ElementHost::call_method(
     v8::Local<v8::Value> event_result;
     if (handle_event_method(isolate, context, name, args, event_result)) {
         return event_result;
+    }
+    // M11-32: checkValidity()/reportValidity() on a form aggregates its controls;
+    // on a control they validate just that control. reportValidity has no UI in
+    // this headless runtime, so it is identical to checkValidity.
+    if (name == "checkValidity" || name == "reportValidity") {
+        if (node_->tag == "form") {
+            return v8::Boolean::New(isolate, validate_form(isolate, context));
+        }
+        if (is_form_control(node_)) {
+            return v8::Boolean::New(
+                isolate, validate_control(isolate, context, args.This()));
+        }
+        return v8::Undefined(isolate);
+    }
+    // M11-32: setCustomValidity(message) — String coercion; empty clears the
+    // custom error. The message is a runtime slot (no attribute write).
+    if (name == "setCustomValidity" && is_form_control(node_)) {
+        std::string message;
+        if (args.Length() > 0) {
+            v8::Local<v8::String> str;
+            if (args[0]->ToString(context).ToLocal(&str)) {
+                v8::String::Utf8Value utf8(isolate, str);
+                if (*utf8 != nullptr) {
+                    message.assign(*utf8,
+                                   static_cast<std::size_t>(utf8.length()));
+                }
+            }
+        }
+        node_->custom_validity = message;
+        return v8::Undefined(isolate);
     }
     const auto arg_string = [&](int index) -> std::string {
         if (index >= args.Length()) return std::string();
@@ -4738,9 +5168,10 @@ void queue_microtask_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // (or during a frame pump), i.e. under the context operation guard.
 //
 // requestAnimationFrame(callback) -> handle (a Number). The callback queue is FIFO
-// and independent of the timer registry. Deliberately minimal: the callback
-// receives NO timestamp argument (there is no clock in this runtime), and nothing
-// fires until Page.run_animation_frame() is called.
+// and independent of the timer registry. M11-31 passes the current virtual
+// timestamp as the callback's only argument; legacy frames do not advance that
+// clock. Nothing fires until Page.run_animation_frame() (or the M11-30 facade)
+// runs the queue.
 void request_animation_frame_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "window", "requestAnimationFrame");  // M9-2
@@ -4862,6 +5293,22 @@ void clear_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     const std::int64_t id =
         static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
     state->clear_timer(id);
+}
+
+// --- M11-31 virtual performance clock.
+//
+// performance.now() reports the M11-29/M11-30 facade's virtual clock. This is not
+// a wall clock: it starts at 0, advances only through tick()/advance()/
+// run_until_idle() (including timer/frame jumps), and resets with each load()
+// generation. The legacy pumps do not advance it. Date remains V8's real clock;
+// only this runtime-owned clock is virtual.
+void performance_now_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "performance", "now");  // M9-2 style
+    ContextState* state = state_from_isolate(info.GetIsolate());
+    const double ms = state == nullptr
+                          ? 0.0
+                          : static_cast<double>(state->event_loop_time_ms());
+    info.GetReturnValue().Set(ms);
 }
 
 void install_global_function(v8::Isolate* isolate, v8::Local<v8::Context> context,
@@ -7098,6 +7545,31 @@ void PageState::install_page(const std::string& base_url,
             install_global_function(isolate, context, global,
                                     "cancelIdleCallback",
                                     &cancel_idle_callback_callback);
+            // M11-31 virtual performance clock: performance.now() reads the
+            // facade clock; timeOrigin is the virtual epoch (0). Read-only, no
+            // marks/measures/timelines and no real clock.
+            {
+                v8::Local<v8::Object> performance = v8::Object::New(isolate);
+                v8::Local<v8::Function> now_fn =
+                    v8::FunctionTemplate::New(isolate, &performance_now_callback)
+                        ->GetFunction(context)
+                        .ToLocalChecked();
+                (void)performance->DefineOwnProperty(
+                    context, v8::String::NewFromUtf8Literal(isolate, "now"),
+                    now_fn,
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                       v8::DontDelete));
+                (void)performance->DefineOwnProperty(
+                    context, v8::String::NewFromUtf8Literal(isolate, "timeOrigin"),
+                    v8::Number::New(isolate, 0.0),
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                       v8::DontDelete));
+                (void)global->DefineOwnProperty(
+                    context, v8::String::NewFromUtf8Literal(isolate, "performance"),
+                    performance,
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                       v8::DontDelete));
+            }
             // M11-1 window.devicePixelRatio / innerWidth / innerHeight. window is
             // the intrinsic global object, so these are read-only data properties on
             // the global rather than host-object accessors. Values come from the

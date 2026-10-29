@@ -77,9 +77,10 @@ def test_frozen_items_absent():
             "</form></body></html>")
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
-        # form: no validation surface (form.submit() M7-1, form.requestSubmit() M7-2)
+        # M11-32 adds form-level validation methods; form.submit()/requestSubmit()
+        # (M7-1/M7-2) remain the submission entry points.
         for m in ("checkValidity", "reportValidity"):
-            assert page.eval(f"typeof document.getElementById('f').{m}") == "undefined"
+            assert page.eval(f"typeof document.getElementById('f').{m}") == "function"
         # button / option do NOT get defaultValue; option has no defaultValue
         assert page.eval("typeof document.getElementById('bt').defaultValue") == "undefined"
         assert page.eval("typeof document.getElementById('op').defaultValue") == "undefined"
@@ -87,9 +88,10 @@ def test_frozen_items_absent():
         assert page.eval("document.getElementById('se').options.length") == 1
         assert page.eval("document.getElementById('se').selectedIndex") == -1
         assert page.eval("document.getElementById('se').multiple") is False
-        # input: no validity / indeterminate
-        for m in ("validity", "indeterminate", "checkValidity"):
-            assert page.eval(f"typeof document.getElementById('in').{m}") == "undefined"
+        # M11-32 adds the validation surface; `indeterminate` is still absent.
+        assert page.eval("typeof document.getElementById('in').validity") == "object"
+        assert page.eval("typeof document.getElementById('in').checkValidity") == "function"
+        assert page.eval("typeof document.getElementById('in').indeterminate") == "undefined"
         # default* are READ-ONLY (assignment is a no-op)
         assert page.eval(
             """

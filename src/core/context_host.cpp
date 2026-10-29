@@ -487,7 +487,12 @@ void ContextState::fire_animation_frame_locked(
         {
             py::gil_scoped_release release_gil;
             v8::Local<v8::Value> recv = context->Global();
-            (void)callback->Call(context, recv, 0, nullptr);
+            // M11-31: the callback receives the current virtual timestamp, the
+            // same value performance.now() reports while it runs. Legacy pumps
+            // do not advance the clock, so they pass the unchanged current time.
+            v8::Local<v8::Value> argv[1] = {
+                v8::Number::New(isolate, static_cast<double>(virtual_now_ms_))};
+            (void)callback->Call(context, recv, 1, argv);
         }
         if (try_catch.HasCaught()) {
             try_catch.Reset();  // swallow: page/context stays usable
