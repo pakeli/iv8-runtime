@@ -57,6 +57,8 @@ swallowed so the page remains usable.
 
 - `requestAnimationFrame` / `requestIdleCallback` remain independent manual
   pumps in M11-29. They are not run by `tick` / `advance` / `run_until_idle`.
+  **Superseded by M11-30**, which integrates both at fixed virtual frame
+  boundaries.
 - No real clock, `performance.now()`, real sleeping, background execution,
   Promise/timer cancellation, fetch/XHR, workers, or automatic loop.
 - No new JS-visible global; no new top-level Python object or exception.

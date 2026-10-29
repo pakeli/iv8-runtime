@@ -225,13 +225,29 @@ private:
     // M11-29 virtual clock, reset with the generation.
     std::int64_t virtual_now_ms_ = 0;
 
-    // M11-29 helpers. `bounded` selects timers with due_ms <= limit; the
+    // M11-30 virtual frame clock. The interval is deliberately fixed: this
+    // runtime has no display refresh or vsync.
+    static constexpr std::int64_t kFrameIntervalMs = 16;
+    std::int64_t next_frame_due_ms_ = kFrameIntervalMs;
+
+    // M11-29/M11-30 helpers. `bounded` selects timers with due_ms <= limit; the
     // unbounded form returns the globally earliest timer. Returns -1 when none.
     std::int64_t next_timer_due(std::int64_t limit, bool bounded) const;
+    // Effective next frame boundary, or -1 when no frame callbacks are queued.
+    std::int64_t next_frame_due() const;
     // Fire one timer under the already-held operation guard/scopes; repeating
     // timers are rescheduled before the callback, one-shots are removed first.
     void fire_timer_locked(v8::Isolate* isolate, v8::Local<v8::Context> context,
                            std::int64_t id);
+    // Fire one animation-frame snapshot / idle round under the already-held
+    // guard/scopes. Each callback is followed by a microtask checkpoint by the
+    // caller.
+    void fire_animation_frame_locked(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     bool drain_between);
+    void fire_idle_round_locked(v8::Isolate* isolate,
+                                v8::Local<v8::Context> context,
+                                bool drain_between);
     // Perform a microtask checkpoint under the already-held guard/scopes.
     void drain_microtasks_locked(v8::Isolate* isolate);
 

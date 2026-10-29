@@ -285,7 +285,9 @@ def test_legacy_pumps_stay_independent_of_virtual_time():
 
 
 @on_only
-def test_raf_and_idle_remain_separate():
+def test_legacy_raf_and_idle_pumps_still_work():
+    # M11-30 integrates rAF/idle into the facade; the legacy one-queue pumps
+    # remain available and do not advance the facade's virtual clock.
     with iv8.Page() as page:
         _load(page)
         page.eval("""
@@ -294,13 +296,11 @@ def test_raf_and_idle_remain_separate():
             requestAnimationFrame(() => raf++);
             requestIdleCallback(() => idle++);
         """)
-        assert page.advance(1000) is True
-        assert page.eval("raf") == 0
-        assert page.eval("idle") == 0
         page.run_animation_frame()
         page.run_idle_callbacks()
         assert page.eval("raf") == 1
         assert page.eval("idle") == 1
+        assert page.event_loop_time_ms == 0
 
 
 # --- validation / disposal ------------------------------------------------------

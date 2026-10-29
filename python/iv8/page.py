@@ -463,22 +463,24 @@ class Page:
         return self._native.event_loop_time_ms
 
     def tick(self) -> bool:
-        """Run one M11-29 event-loop turn (timers + microtasks only).
+        """Run one virtual event-loop turn (timers + microtasks + rAF/idle).
 
-        Drains pending microtasks, runs at most one timer whose virtual due time
-        is already reached, then drains microtasks again. Does not advance the
-        virtual clock. Returns ``True`` if a timer ran. Animation-frame and idle
-        callbacks remain independent pumps in this phase.
+        Drains pending microtasks, then runs at most one current-time task:
+        the earliest due timer, otherwise a due animation frame, otherwise one
+        idle round. A microtask checkpoint follows the task. Does not advance the
+        virtual clock. Returns ``True`` if a task ran.
         """
         return self._native.tick()
 
     def advance(self, ms: int, *, max_steps: int = 10_000) -> bool:
-        """Advance the M11-29 virtual clock by ``ms`` and run due work.
+        """Advance the virtual clock by ``ms`` and run due work.
 
         Timers due within the window run in ``(due_ms, registration order)``
-        order, with a microtask checkpoint after each callback. Timers scheduled
-        by a callback are eligible if they are also due inside the window. The
-        clock is set to the target when the window completes.
+        order; animation frames run at 16ms virtual boundaries; idle callbacks
+        run when no timer/frame is currently due. Every task is followed by a
+        microtask checkpoint. Work scheduled by a callback is eligible if it is
+        also due inside the window. The clock is set to the target when the
+        window completes.
 
         Returns ``True`` when the full window was processed, or ``False`` when
         ``max_steps`` stopped it first (the clock then stays at the last
@@ -497,13 +499,14 @@ class Page:
         return self._native.advance(ms, max_steps)
 
     def run_until_idle(self, *, max_steps: int = 1_000) -> bool:
-        """Run timers and microtasks until no timer remains.
+        """Run timers, animation frames, idle callbacks, and microtasks until idle.
 
-        Each turn runs the earliest timer, advancing the virtual clock to its due
-        time, then drains microtasks. Returns ``True`` only when no timers remain;
-        an interval normally returns ``False`` at ``max_steps``. This phase does
-        not run ``requestAnimationFrame`` / ``requestIdleCallback`` callbacks.
-        Raises ``JSContextDisposedError`` after ``dispose()``.
+        Each turn runs the earliest current task, advancing the virtual clock to
+        timer/frame due times; idle callbacks run one round when no timer/frame
+        is currently due. Returns ``True`` only when no timers, frame callbacks,
+        or idle callbacks remain; an interval or self-rescheduling rAF/idle
+        normally returns ``False`` at ``max_steps``. Raises
+        ``JSContextDisposedError`` after ``dispose()``.
         """
         if (isinstance(max_steps, bool) or not isinstance(max_steps, int) or
                 max_steps <= 0 or max_steps > 4_294_967_295):
@@ -514,9 +517,10 @@ class Page:
         """Manually pump **one** animation frame: run the ``requestAnimationFrame``
         callbacks queued for the current frame, in registration order.
 
-        This is the only way animation-frame callbacks ever run — there is no real
-        clock, no background thread, and no automatic event loop. Nothing happens
-        until this is called, and one call advances exactly one frame.
+        This remains the one-queue manual pump. The M11-30 event-loop facade also
+        runs animation-frame callbacks at fixed 16ms virtual boundaries; there is
+        still no real clock, background thread, or automatic loop. One call here
+        advances exactly one legacy frame and does not move the facade clock.
 
         Frame boundary: the callbacks queued when the call begins are the frame. A
         callback that calls ``requestAnimationFrame()`` again schedules into the
@@ -542,9 +546,10 @@ class Page:
         """Manually pump **one** idle round: run the ``requestIdleCallback``
         callbacks queued for the current round, in registration order.
 
-        This is the only way idle callbacks ever run — there is no real clock, no
-        background thread, and no automatic event loop. Nothing happens until this is
-        called, and one call advances exactly one round.
+        This remains the one-queue manual pump. The M11-30 event-loop facade can
+        also run idle rounds when no timer/frame is currently due; there is still
+        no real clock, background thread, or automatic loop. One call here advances
+        exactly one legacy round and does not move the facade clock.
 
         Round boundary: the callbacks queued when the call begins are the round. A
         callback that calls ``requestIdleCallback()`` again schedules into the

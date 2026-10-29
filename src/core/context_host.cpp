@@ -262,17 +262,27 @@ bool ContextState::tick() {
     v8::Context::Scope context_scope(context);
 
     drain_microtasks_locked(isolate);
-    const std::int64_t id = next_timer_due(virtual_now_ms_, true);
-    if (id < 0) {
-        return false;
+    const std::int64_t timer = next_timer_due(virtual_now_ms_, true);
+    const std::int64_t frame = next_frame_due();
+    const bool frame_due = frame >= 0 && frame <= virtual_now_ms_;
+    if (timer >= 0 || frame_due) {
+        const bool timer_first =
+            timer >= 0 &&
+            (!frame_due || timers_.at(timer).due_ms <= frame);
+        if (timer_first) {
+            fire_timer_locked(isolate, context, timer);
+        } else {
+            fire_animation_frame_locked(isolate, context, /*drain_between=*/true);
+        }
+        drain_microtasks_locked(isolate);
+        return true;
     }
-    const std::int64_t due = timers_.at(id).due_ms;
-    if (due > virtual_now_ms_) {
-        virtual_now_ms_ = due;
+    if (!idle_callbacks_.empty()) {
+        fire_idle_round_locked(isolate, context, /*drain_between=*/true);
+        drain_microtasks_locked(isolate);
+        return true;
     }
-    fire_timer_locked(isolate, context, id);
-    drain_microtasks_locked(isolate);
-    return true;
+    return false;
 }
 
 bool ContextState::advance(std::int64_t ms, std::uint32_t max_steps) {
@@ -290,25 +300,56 @@ bool ContextState::advance(std::int64_t ms, std::uint32_t max_steps) {
 
     std::uint32_t steps = 0;
     while (steps < max_steps) {
-        const std::int64_t id = next_timer_due(target, true);
-        if (id < 0) {
+        const std::int64_t timer = next_timer_due(virtual_now_ms_, true);
+        const std::int64_t frame = next_frame_due();
+        const bool frame_due = frame >= 0 && frame <= virtual_now_ms_;
+        if (timer >= 0 || frame_due) {
+            const bool timer_first =
+                timer >= 0 &&
+                (!frame_due || timers_.at(timer).due_ms <= frame);
+            if (timer_first) {
+                fire_timer_locked(isolate, context, timer);
+            } else {
+                fire_animation_frame_locked(isolate, context,
+                                            /*drain_between=*/true);
+            }
+            drain_microtasks_locked(isolate);
+            ++steps;
+            continue;
+        }
+        if (!idle_callbacks_.empty()) {
+            fire_idle_round_locked(isolate, context, /*drain_between=*/true);
+            drain_microtasks_locked(isolate);
+            ++steps;
+            continue;
+        }
+
+        const std::int64_t next_timer = next_timer_due(target, true);
+        std::int64_t next_frame = next_frame_due();
+        if (next_frame > target) {
+            next_frame = -1;
+        }
+        if (next_timer < 0 && next_frame < 0) {
             virtual_now_ms_ = target;
             drain_microtasks_locked(isolate);
             return true;
         }
-        const std::int64_t due = timers_.at(id).due_ms;
-        if (due > virtual_now_ms_) {
-            virtual_now_ms_ = due;
+        std::int64_t next = next_timer;
+        if (next < 0 || (next_frame >= 0 && next_frame < next)) {
+            next = next_frame;
         }
-        fire_timer_locked(isolate, context, id);
-        drain_microtasks_locked(isolate);
-        ++steps;
+        if (next > virtual_now_ms_) {
+            virtual_now_ms_ = next;
+        }
     }
     // The cap may have stopped exactly after the last due task.
-    if (next_timer_due(target, true) < 0) {
-        virtual_now_ms_ = target;
-        drain_microtasks_locked(isolate);
-        return true;
+    if (next_timer_due(target, true) < 0 && idle_callbacks_.empty()) {
+        std::int64_t frame = next_frame_due();
+        if (frame < 0 || frame > target) {
+            virtual_now_ms_ = target;
+            drain_microtasks_locked(isolate);
+            return true;
+        }
     }
     return false;
 }
@@ -325,30 +366,72 @@ bool ContextState::run_until_idle(std::uint32_t max_steps) {
     drain_microtasks_locked(isolate);
     std::uint32_t steps = 0;
     while (steps < max_steps) {
-        const std::int64_t id = next_timer_due(0, false);
-        if (id < 0) {
+        const std::int64_t timer = next_timer_due(virtual_now_ms_, true);
+        const std::int64_t frame = next_frame_due();
+        const bool frame_due = frame >= 0 && frame <= virtual_now_ms_;
+        if (timer >= 0 || frame_due) {
+            const bool timer_first =
+                timer >= 0 &&
+                (!frame_due || timers_.at(timer).due_ms <= frame);
+            if (timer_first) {
+                fire_timer_locked(isolate, context, timer);
+            } else {
+                fire_animation_frame_locked(isolate, context,
+                                            /*drain_between=*/true);
+            }
+            drain_microtasks_locked(isolate);
+            ++steps;
+            continue;
+        }
+        if (!idle_callbacks_.empty()) {
+            fire_idle_round_locked(isolate, context, /*drain_between=*/true);
+            drain_microtasks_locked(isolate);
+            ++steps;
+            continue;
+        }
+
+        const std::int64_t next_timer = next_timer_due(0, false);
+        const std::int64_t next_frame = next_frame_due();
+        if (next_timer < 0 && next_frame < 0) {
             drain_microtasks_locked(isolate);
             return true;
         }
-        const std::int64_t due = timers_.at(id).due_ms;
-        if (due > virtual_now_ms_) {
-            virtual_now_ms_ = due;
+        std::int64_t next = next_timer;
+        if (next < 0 || (next_frame >= 0 && next_frame < next)) {
+            next = next_frame;
         }
-        fire_timer_locked(isolate, context, id);
-        drain_microtasks_locked(isolate);
-        ++steps;
+        if (next > virtual_now_ms_) {
+            virtual_now_ms_ = next;
+        }
     }
-    // The cap may have stopped exactly after the last timer.
-    if (next_timer_due(0, false) < 0) {
+    // The cap may have stopped exactly after the last task.
+    if (next_timer_due(0, false) < 0 && next_frame_due() < 0 &&
+        idle_callbacks_.empty()) {
         drain_microtasks_locked(isolate);
         return true;
     }
     return false;
 }
 
+std::int64_t ContextState::next_frame_due() const {
+    if (animation_frames_.empty()) {
+        return -1;
+    }
+    // If a legacy pump or a long jump left the boundary in the past, run the
+    // pending frame at the current virtual time instead of fabricating a frame
+    // in the past.
+    return std::max(next_frame_due_ms_, virtual_now_ms_);
+}
+
 std::int64_t ContextState::register_animation_frame(
     v8::Local<v8::Function> callback) {
     const std::int64_t handle = next_animation_frame_handle_++;
+    if (animation_frames_.empty()) {
+        // The first callback scheduled in a quiet period targets the next
+        // virtual frame boundary.
+        next_frame_due_ms_ =
+            saturating_add_ms(virtual_now_ms_, kFrameIntervalMs);
+    }
     AnimationFrameEntry entry;
     entry.handle = handle;
     entry.callback.Reset(isolate_host_->isolate(), callback);
@@ -367,25 +450,16 @@ void ContextState::cancel_animation_frame(std::int64_t handle) {
     // Unknown / already-run / already-cancelled handle: no-op (no error).
 }
 
-void ContextState::run_animation_frame() {
-    OperationScope guard(*this);
-    v8::Isolate* isolate = isolate_host_->isolate();
-    v8::Locker locker(isolate);
-    v8::Isolate::Scope isolate_scope(isolate);
-    v8::HandleScope handle_scope(isolate);
-    v8::Local<v8::Context> context = context_.Get(isolate);
-    v8::Context::Scope context_scope(context);
-
+void ContextState::fire_animation_frame_locked(
+    v8::Isolate* isolate, v8::Local<v8::Context> context, bool drain_between) {
+    if (animation_frames_.empty()) {
+        return;
+    }
+    const std::int64_t frame_due_before = next_frame_due_ms_;
     // Snapshot the HANDLES queued for this frame, in registration order. The
     // entries stay in animation_frames_ so cancel_animation_frame() (which scans
     // the live queue) keeps working mid-frame; each handle is removed from the
     // queue just before it runs.
-    //
-    // Only handles in this snapshot run: a callback that calls
-    // requestAnimationFrame() again appends to animation_frames_ but is NOT in the
-    // snapshot, so it belongs to the NEXT frame. That is what bounds the pump — an
-    // unconditionally self-rescheduling callback advances exactly one frame per
-    // run_animation_frame() call instead of spinning forever.
     std::vector<std::int64_t> frame;
     frame.reserve(animation_frames_.size());
     for (const AnimationFrameEntry& entry : animation_frames_) {
@@ -414,7 +488,26 @@ void ContextState::run_animation_frame() {
         if (try_catch.HasCaught()) {
             try_catch.Reset();  // swallow: page/context stays usable
         }
+        if (drain_between) {
+            drain_microtasks_locked(isolate);
+        }
     }
+    // A callback may already have registered the next frame (which sets
+    // next_frame_due_ms_ to now + 16); do not add another interval on top of it.
+    next_frame_due_ms_ = std::max(
+        saturating_add_ms(frame_due_before, kFrameIntervalMs),
+        saturating_add_ms(virtual_now_ms_, kFrameIntervalMs));
+}
+
+void ContextState::run_animation_frame() {
+    OperationScope guard(*this);
+    v8::Isolate* isolate = isolate_host_->isolate();
+    v8::Locker locker(isolate);
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = context_.Get(isolate);
+    v8::Context::Scope context_scope(context);
+    fire_animation_frame_locked(isolate, context, /*drain_between=*/false);
 }
 
 namespace {
@@ -456,15 +549,8 @@ void ContextState::cancel_idle_callback(std::int64_t handle) {
     // Unknown / already-run / already-cancelled handle: no-op (no error).
 }
 
-void ContextState::run_idle_callbacks() {
-    OperationScope guard(*this);
-    v8::Isolate* isolate = isolate_host_->isolate();
-    v8::Locker locker(isolate);
-    v8::Isolate::Scope isolate_scope(isolate);
-    v8::HandleScope handle_scope(isolate);
-    v8::Local<v8::Context> context = context_.Get(isolate);
-    v8::Context::Scope context_scope(context);
-
+void ContextState::fire_idle_round_locked(
+    v8::Isolate* isolate, v8::Local<v8::Context> context, bool drain_between) {
     // Snapshot THIS round's handles, in registration order. Entries stay in
     // idle_callbacks_ so cancel_idle_callback() (which scans the live queue) keeps
     // working mid-round; each handle is removed just before it runs. Only handles in
@@ -515,7 +601,21 @@ void ContextState::run_idle_callbacks() {
         if (try_catch.HasCaught()) {
             try_catch.Reset();  // swallow: page/context stays usable
         }
+        if (drain_between) {
+            drain_microtasks_locked(isolate);
+        }
     }
+}
+
+void ContextState::run_idle_callbacks() {
+    OperationScope guard(*this);
+    v8::Isolate* isolate = isolate_host_->isolate();
+    v8::Locker locker(isolate);
+    v8::Isolate::Scope isolate_scope(isolate);
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = context_.Get(isolate);
+    v8::Context::Scope context_scope(context);
+    fire_idle_round_locked(isolate, context, /*drain_between=*/false);
 }
 
 void ContextState::run_jobs() {
