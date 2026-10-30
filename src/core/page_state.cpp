@@ -6578,11 +6578,6 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
   defineReadonly(viewport, 'removeEventListener', noop);
   defineReadonly(viewport, 'dispatchEvent', function () { return false; });
   defineReadonly(globalThis, 'visualViewport', viewport);
-  defineReadonly(globalThis, 'origin',
-                 String(globalThis.location && globalThis.location.origin));
-  defineReadonly(globalThis, 'crossOriginIsolated', false);
-  defineReadonly(globalThis, 'closed', false);
-  defineReadonly(globalThis, 'frameElement', null);
 
   // M11-45: modern Chromium exposes empty plugin/mime-type lists; Java is off.
   defineReadonly(globalThis.navigator, 'plugins', Object.freeze([]));
@@ -9107,6 +9102,8 @@ void window_name_getter(v8::Local<v8::Name>,
     v8::Isolate* isolate = info.GetIsolate();
     auto* page = static_cast<PageState*>(
         info.Data().As<v8::External>()->Value(kWindowNameTag));
+    access_trace_record(isolate, page, "window", "window", "name",
+                        AccessOperation::kGet);
     info.GetReturnValue().Set(v8_string(isolate, page->window_name()));
 }
 
@@ -9114,13 +9111,15 @@ void window_name_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
                         const v8::PropertyCallbackInfo<void>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kWindowNameTag));
+    access_trace_record(isolate, page, "window", "window", "name",
+                        AccessOperation::kSet);
     v8::Local<v8::String> str;
     if (!value->ToString(context).ToLocal(&str)) {
         return;  // coercion threw; leave the stored name unchanged
     }
     v8::String::Utf8Value utf8(isolate, str);
-    auto* page = static_cast<PageState*>(
-        info.Data().As<v8::External>()->Value(kWindowNameTag));
     page->set_window_name(
         *utf8 != nullptr
             ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
@@ -9143,6 +9142,68 @@ bool is_secure_context_url(const std::string& base_url) {
                host == "::1" || host == "[::1]";
     }
     return false;
+}
+
+// Host-access trace, step 5: the value source for the generic window metadata
+// accessors. Values are computed from fixed Page state; no JS object is touched.
+v8::Local<v8::Value> PageState::window_metadata_value(
+    v8::Isolate* isolate, const std::string& name) const {
+    if (name == "devicePixelRatio") {
+        return v8::Number::New(isolate, environment_.device_pixel_ratio);
+    }
+    if (name == "innerWidth") {
+        return v8::Integer::New(isolate, environment_.inner_width);
+    }
+    if (name == "innerHeight") {
+        return v8::Integer::New(isolate, environment_.inner_height);
+    }
+    if (name == "outerWidth") {
+        return v8::Integer::New(isolate, environment_.outer_width);
+    }
+    if (name == "outerHeight") {
+        return v8::Integer::New(isolate, environment_.outer_height);
+    }
+    if (name == "screenX" || name == "screenLeft") {
+        return v8::Integer::New(isolate, environment_.screen_x);
+    }
+    if (name == "screenY" || name == "screenTop") {
+        return v8::Integer::New(isolate, environment_.screen_y);
+    }
+    if (name == "length") {
+        return v8::Integer::New(isolate, 0);
+    }
+    if (name == "isSecureContext") {
+        return v8::Boolean::New(isolate,
+                               is_secure_context_url(bootstrap_.base_url));
+    }
+    if (name == "origin") {
+        return v8_string(isolate, decompose_url(bootstrap_.base_url).origin);
+    }
+    if (name == "crossOriginIsolated" || name == "closed") {
+        return v8::False(isolate);
+    }
+    if (name == "frameElement") {
+        return v8::Null(isolate);
+    }
+    return v8::Undefined(isolate);
+}
+
+constexpr v8::ExternalPointerTypeTag kWindowTraceTag =
+    v8::kExternalPointerTypeTagDefault;
+
+void window_metadata_getter(v8::Local<v8::Name> property,
+                            const v8::PropertyCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kWindowTraceTag));
+    v8::String::Utf8Value utf8(isolate, property);
+    if (*utf8 == nullptr) {
+        return;
+    }
+    const std::string name(*utf8, static_cast<std::size_t>(utf8.length()));
+    access_trace_record(isolate, page, "window", "window", name.c_str(),
+                        AccessOperation::kGet);
+    info.GetReturnValue().Set(page->window_metadata_value(isolate, name));
 }
 
 void PageState::install_page(const std::string& base_url,
@@ -9383,35 +9444,38 @@ void PageState::install_page(const std::string& base_url,
                         v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
                         value);
                 };
-                define_readonly(
-                    "devicePixelRatio",
-                    v8::Number::New(isolate, environment_.device_pixel_ratio));
-                define_readonly("innerWidth",
-                                v8::Integer::New(isolate, environment_.inner_width));
-                define_readonly(
-                    "innerHeight",
-                    v8::Integer::New(isolate, environment_.inner_height));
+                // Host-access trace step 5: these were read-only data properties;
+                // they are now read-only native accessors so their reads can be
+                // observed. Values and assignment behavior are unchanged.
+                const auto define_traced_readonly = [&](const char* name) {
+                    (void)global->SetNativeDataProperty(
+                        context,
+                        v8::String::NewFromUtf8(isolate, name)
+                            .ToLocalChecked(),
+                        &window_metadata_getter, nullptr,
+                        v8::External::New(isolate, this, kWindowTraceTag),
+                        static_cast<v8::PropertyAttribute>(
+                            v8::ReadOnly | v8::DontDelete));
+                };
+                define_traced_readonly("devicePixelRatio");
+                define_traced_readonly("innerWidth");
+                define_traced_readonly("innerHeight");
                 // M11-26: reported window geometry (read-only; no layout engine).
-                define_readonly("outerWidth",
-                                v8::Integer::New(isolate, environment_.outer_width));
-                define_readonly(
-                    "outerHeight",
-                    v8::Integer::New(isolate, environment_.outer_height));
-                define_readonly("screenX",
-                                v8::Integer::New(isolate, environment_.screen_x));
-                define_readonly("screenY",
-                                v8::Integer::New(isolate, environment_.screen_y));
+                define_traced_readonly("outerWidth");
+                define_traced_readonly("outerHeight");
+                define_traced_readonly("screenX");
+                define_traced_readonly("screenY");
                 // M11-35: no child browsing contexts -> length 0; screenLeft/Top
                 // alias the reported screen coordinates.
-                define_readonly("length", v8::Integer::New(isolate, 0));
-                define_readonly("screenLeft",
-                                v8::Integer::New(isolate, environment_.screen_x));
-                define_readonly("screenTop",
-                                v8::Integer::New(isolate, environment_.screen_y));
-                define_readonly(
-                    "isSecureContext",
-                    v8::Boolean::New(isolate,
-                                     is_secure_context_url(base_url)));
+                define_traced_readonly("length");
+                define_traced_readonly("screenLeft");
+                define_traced_readonly("screenTop");
+                define_traced_readonly("isSecureContext");
+                // M11-41 window flags, now sourced through the same accessor.
+                define_traced_readonly("origin");
+                define_traced_readonly("crossOriginIsolated");
+                define_traced_readonly("closed");
+                define_traced_readonly("frameElement");
                 // M11-39: this runtime has exactly one top-level browsing
                 // context. parent/top/frames alias the window itself; there is
                 // no opener and no child frame collection. parent and frames are

@@ -150,6 +150,12 @@ public:
     std::string window_name() const { return window_name_; }
     void set_window_name(const std::string& name) { window_name_ = name; }
 
+    // Host-access trace, step 5: value source for the generic window metadata
+    // accessors. Only known names are installed by install_page; unknown names
+    // return undefined. No JS property read is performed here.
+    v8::Local<v8::Value> window_metadata_value(v8::Isolate* isolate,
+                                               const std::string& name) const;
+
     // M3-4: dispatch the load-lifecycle events for a just-completed load —
     // DOMContentLoaded on document, then load on window (fixed order). Called by
     // Page.load's success path AFTER the host-provided scripts run; a failed load
