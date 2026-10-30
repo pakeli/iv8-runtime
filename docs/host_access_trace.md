@@ -1,16 +1,17 @@
 # Host Access Trace
 
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
-BOM callback calls + window metadata reads green on real V8 Linux + Windows
-(`2026-10-30`)**
+BOM callback calls + window/nested metadata reads green on real V8 Linux +
+Windows (`2026-10-30`)**
 
 This document freezes steps 1–4 and the first groups of step 5 of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
 string-key missing-property probes, call/get coverage for independent native BOM
-callbacks (performance, crypto, Storage), and intrinsic window metadata reads.
-It is a second-layer monitoring feature. It does not change the M1 `JSContext`
-contract, the existing `watch_apis` / Reflect / Object.keys channels, or DOM/BOM
-values/assignment behavior.
+callbacks (performance, crypto, Storage), intrinsic window metadata reads, and
+nested `navigator.connection` / `screen.orientation` / `performance.timeOrigin`
+reads. It is a second-layer monitoring feature. It does not change the M1
+`JSContext` contract, the existing `watch_apis` / Reflect / Object.keys channels,
+or DOM/BOM values/assignment behavior.
 
 ## 1. Entry-point contract
 
@@ -43,12 +44,15 @@ setter does not retroactively remove the event.
 | `navigator.someMissingProperty` | records `get_probe` with `resolution: "missing"` for a HostObject string key |
 | `performance.now()` / `crypto.randomUUID()` | records `call` |
 | `localStorage.getItem()` / `sessionStorage.setItem()` / `localStorage.length` | records `call`; `length` records `get` |
-| `performance.timeOrigin` / plain property reads on native BOM objects | not covered in step 5a/5b |
+| `performance.timeOrigin` | records `get` |
+| `navigator.connection.effectiveType` / `screen.orientation.type` | records `get`; nested reads also show their parent getter |
+| other plain property reads on native BOM objects | not covered yet |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
 | `window.innerWidth` / `outerWidth` / `innerHeight` | records `get` from the window metadata accessor |
 | `window.name` | records `get` and `set` |
 | `window.origin` / `isSecureContext` / `crossOriginIsolated` / `closed` / `frameElement` | records `get`; read-only behavior unchanged |
 | `window.parent` / `top` / `frames` / `opener` | not covered by this accessor group |
+| `visualViewport` / `matchMedia(...)` results / `navigator.storage` / `permissions` | not covered yet |
 | `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered in this slice; step 6 |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
@@ -81,8 +85,8 @@ listed as not covered.
 - IDs are scoped to a generation. A new `load()` generation clears the backing
   map; IDs are never reused.
 - `object_type` is the native category: `host_probe`, `console`, `navigator`,
-  `screen`, `location`, `document`, `element`, `performance`, `crypto`,
-  `storage`, `window`, or the fallback `host_object`.
+  `screen`, `location`, `document`, `element`, `connection`, `orientation`,
+  `performance`, `crypto`, `storage`, `window`, or the fallback `host_object`.
 - `label` is a display hint. Global hosts use their global name; elements use
   their native HTML tag only. Labels must not be built by reading JS `id`,
   text, attributes, or other properties.
@@ -205,6 +209,22 @@ change is intentional for these traceable fields; `parent` / `top` / `frames` /
 `opener` keep their prior descriptors and remain untraced in this group. Missing
 global-property probes and value/argument/return capture are not included.
 
+## 4.4 Nested metadata objects (step 5c)
+
+`navigator.connection` and `screen.orientation` are nested HostObjects. Each
+access returns a wrapper over a stable Page-owned backing, so:
+- their property reads record `get` with `object_type: "connection"` /
+  `"orientation"` and labels `navigator.connection` / `screen.orientation`;
+- absent nested string keys produce `get_probe`/`missing` events;
+- repeated access through the parent records the parent getter each time, then
+  the nested property event (e.g. `navigator.connection.effectiveType` emits a
+  `navigator.connection` get followed by a `connection.effectiveType` get);
+- the nested object ID is stable across fresh wrappers.
+
+`performance.timeOrigin` is a traced accessor on the otherwise plain
+`performance` object. Other performance/crypto/Storage property reads and
+`visualViewport` / `matchMedia` results remain for later step-5 groups.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -233,8 +253,11 @@ old channel.
 
 ## 7. Not covered in this first slice
 
-- Window `parent` / `top` / `frames` / `opener`, `visualViewport` object
-  properties, and other intrinsic/global data properties not listed in §4.3.
+- Window `parent` / `top` / `frames` / `opener` and other intrinsic/global data
+  properties not listed in §4.3.
+- `visualViewport` / `matchMedia(...)` result objects, `navigator.storage` /
+  `navigator.permissions` / `plugins` / `mimeTypes`, and nested BOM objects not
+  listed in §4.4.
 - Property reads on `performance`, `crypto`, and Storage (their independent
   native method calls are covered in step 5a); `navigator.storage`,
   `navigator.permissions`, `navigator.plugins` / `mimeTypes`, `matchMedia`
@@ -254,26 +277,32 @@ old channel.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The remaining step-5 groups expand plain BOM object properties and the remaining
-window/nested objects; step 6 adds method-reference reads, `in`, delete,
-enumeration, descriptors, and value/argument/return summaries. Neither is implied
-by this slice.
+The remaining step-5 groups expand `visualViewport`, `matchMedia` results,
+`navigator.storage` / `permissions` / `plugins` / `mimeTypes`, and other plain
+property reads; step 6 adds method-reference reads, `in`, delete, enumeration,
+descriptors, and value/argument/return summaries. None is implied by this slice.
 
 ## 8. Verification
 
-Verified on real V8 at commit `e19f54d` (branch `host-access-window`):
+Verified on real V8 at commit `924effd` (branch `host-access-nested`):
 
-- Linux `release-linux` run `41020686185` — cp311 / cp312 / cp313 / cp314,
-  each `1664 passed, 2 skipped`;
-- Windows `release-windows` run `41020689881` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1664 passed, 2 skipped`.
+- Linux `release-linux` run `41022649736` — cp311 / cp312 / cp313 / cp314,
+  each `1667 passed, 2 skipped`;
+- Windows `release-windows` run `41022653765` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1667 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
 `test/test_access_trace_probes.py` (10 items),
-`test/test_access_trace_bom_calls.py` (4 items), and
-`test/test_access_trace_window.py` (4 items) ran in every lane. The full suite
-collects 1666 items; 1664 pass and 2 are skipped.
+`test/test_access_trace_bom_calls.py` (4 items),
+`test/test_access_trace_window.py` (4 items), and
+`test/test_access_trace_nested.py` (3 items) ran in every lane. The full suite
+collects 1669 items; 1667 pass and 2 are skipped.
+
+The initial nested attempt (`9567761`) had two expectations that assumed one
+event per nested access; the actual sequence includes the parent getter on each
+property access, and `performance.timeOrigin` is now traced. `924effd` corrected
+only the test expectations; the runtime behavior was intended.
 
 The initial probe attempt (`76baaa2`) showed that V8 invokes the named getter
 for query-only operations and some existing-property paths. `8995b89` added the
@@ -298,6 +327,8 @@ Coverage in this slice:
 - window metadata accessors record `get` for the §4.3 fields and `get`/`set`
   for `window.name`; read-only assignment, strict-mode errors, and values are
   unchanged (the geometry/flag data properties are now accessors);
+- nested connection/orientation properties and `performance.timeOrigin` record
+  reads, including repeated parent getter accesses and nested missing probes;
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;

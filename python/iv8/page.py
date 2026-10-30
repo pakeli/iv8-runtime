@@ -989,17 +989,21 @@ class Page:
         This is a structured, Page-level trace independent of :meth:`watch_apis`
         and the Reflect/Object.keys channels. It records operations that enter the
         generic HostObject property getter/setter or method trampoline; it is not
-        a V8-wide property hook. It covers ``console``, ``document``, ``element``,
-        ``host_object``, ``host_probe``, ``location``, ``navigator``, and
-        ``screen``. Missing string-key reads on those hosts produce
-        ``get_probe``/``resolution: "missing"`` events. The first step-5 groups
-        also record ``performance`` / ``crypto`` native method calls, Storage
-        method calls and its ``length`` getter, and traced window metadata
-        accessors (``innerWidth`` / geometry / flags plus ``window.name``).
-        ``parent`` / ``top`` / ``frames`` / ``opener``, plain BOM property reads,
-        returned plain objects/arrays, non-HostObject missing probes, ``in``,
-        delete, enumeration, descriptors, method-reference reads, and
-        user-created plain objects are not covered yet.
+        a V8-wide property hook. It covers ``connection``, ``console``,
+        ``crypto``, ``document``, ``element``, ``host_object``, ``host_probe``,
+        ``location``, ``navigator``, ``orientation``, ``performance``,
+        ``screen``, ``storage``, and ``window``. Missing string-key reads on the
+        HostObject hosts produce ``get_probe``/``resolution: "missing"`` events.
+        The step-5 groups also record ``performance`` / ``crypto`` native method
+        calls, Storage method calls and its ``length`` getter, traced window
+        metadata accessors (``innerWidth`` / geometry / flags plus
+        ``window.name``), and reads of the nested ``navigator.connection`` /
+        ``screen.orientation`` HostObjects plus ``performance.timeOrigin``.
+        ``parent`` / ``top`` / ``frames`` / ``opener``, the remaining plain BOM
+        property reads and nested objects, returned plain objects/arrays,
+        non-HostObject missing probes, ``in``, delete, enumeration, descriptors,
+        method-reference reads, and user-created plain objects are not covered
+        yet.
 
         ``max_events`` is the retained-event capacity (earliest N retained; later
         events increment ``dropped_events``). It must be a positive ``int``; a

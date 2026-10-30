@@ -469,6 +469,26 @@ Verified on real V8 at commit `e19f54d`: Linux `41020686185`, Windows
 1666 items (1662 previous + 4 window tests). See
 `docs/host_access_trace.md`.
 
+### 30. Host access trace nested metadata (step 5c)
+
+Decided/verified `2026-10-30`.
+
+`navigator.connection` and `screen.orientation` are now nested HostObjects, so
+their property reads, missing string-key probes, and backing object identity use
+the normal access-trace channel. Each nested property read also records the
+parent getter (e.g. `navigator.connection` before `connection.effectiveType`).
+`performance.timeOrigin` is now a traced read-only accessor on the otherwise
+plain performance object. Values and read-only behavior are unchanged.
+
+The first attempt (`9567761`) had two test expectations that assumed one event
+per nested access; `924effd` corrected them to include repeated parent getters
+and the new timeOrigin event. The runtime behavior was intended.
+
+Verified on real V8 at commit `924effd`: Linux `41022649736`, Windows
+`41022653765`, each wheel lane `1667 passed, 2 skipped`. The full suite collects
+1669 items (1666 previous + 3 nested tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

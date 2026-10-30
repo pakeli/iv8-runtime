@@ -925,10 +925,45 @@ Final commit `e19f54d` (branch `host-access-window`):
 
 ### Next
 
-Continue step 5 with plain property reads on `performance` / Storage and nested
-BOM objects; descriptor/Proxy tradeoffs must be validated per group.
-Value/argument/return summaries remain step 6. The M11-46 selector follow-up
-remains deferred.
+The nested metadata/timeOrigin group was completed as Priority 3y below.
+Remaining step-5 groups: `visualViewport`, `matchMedia` results, navigator
+storage/permissions/plugins, and other plain property reads. Value/argument/
+return summaries remain step 6. The M11-46 selector follow-up remains deferred.
+
+## Priority 3y: Host access trace nested metadata — DONE (`2026-10-30`)
+
+### What landed
+
+- `navigator.connection` and `screen.orientation` are now nested HostObjects, so
+  their property reads and missing string-key probes use the normal trace
+  channel; repeated parent getters are visible before each nested read.
+- `performance.timeOrigin` is a traced accessor.
+- Nested object identity is stable across fresh wrappers; values and read-only
+  behavior are unchanged.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_nested.py` (3 items). Full suite collects 1669 items;
+each wheel lane: **`1667 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `924effd` (feature commit `9567761`; branch `host-access-nested`):
+
+- Linux `release-linux` run `41022649736` — cp311–cp314, each
+  `1667 passed, 2 skipped`;
+- Windows `release-windows` run `41022653765` — Python 3.11–3.14, each
+  `1667 passed, 2 skipped`.
+
+The first attempt (`9567761`) had two test expectations that assumed one event
+per nested access; `924effd` corrected them to include repeated parent getters
+and the new timeOrigin event. The runtime behavior was intended.
+
+### Next
+
+Continue step 5 with `visualViewport`, `matchMedia` result objects,
+`navigator.storage` / `permissions` / `plugins` / `mimeTypes`, and other plain
+property reads. Value/argument/return summaries remain step 6. The M11-46
+selector follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

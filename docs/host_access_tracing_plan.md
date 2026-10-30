@@ -2,7 +2,7 @@
 
 日期：2026-10-30
 
-状态：**步骤 1–4、步骤 5 的 performance/crypto/Storage 方法调用组，以及 window metadata 读取组已实现并在真实 V8 Linux + Windows 上验证（`2026-10-30`，commit `e19f54d`）；步骤 5 其余组和步骤 6–7 尚未实现。** 基于 `ee68790`（M11-41..45）开始。本文不分配新的已批准里程碑编号，也不改变现有 API 合同。当前边界和验证记录见 `docs/host_access_trace.md`。
+状态：**步骤 1–4、步骤 5 的 performance/crypto/Storage 方法调用组、window metadata 读取组，以及 nested connection/orientation + performance.timeOrigin 组已实现并在真实 V8 Linux + Windows 上验证（`2026-10-30`，commit `924effd`）；步骤 5 其余组和步骤 6–7 尚未实现。** 基于 `ee68790`（M11-41..45）开始。本文不分配新的已批准里程碑编号，也不改变现有 API 合同。当前边界和验证记录见 `docs/host_access_trace.md`。
 
 ## 1. 目标与执行顺序
 
