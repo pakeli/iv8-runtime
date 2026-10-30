@@ -5,7 +5,7 @@ name: release-macos
 # release-windows.yml: the pinned V8 monolith is built once and cached, then a
 # per-Python wheel matrix builds, installs, and tests the wheel.
 #
-# macOS x64 (macos-13) and universal2 are intentionally not built here; the
+# macOS x64 (Intel) and universal2 are intentionally not built here; the
 # required macOS gate is arm64 (docs/dependency_strategy.md §11 EC-3).
 
 on:
