@@ -68,7 +68,7 @@ def test_visual_viewport_and_window_flags_are_read_only():
                       window.origin,
                       window.closed,
                       window.crossOriginIsolated,
-                      window.frameElement].join('|');
+                      String(window.frameElement)].join('|');
             })();
             """
         ) == ("object|800|https://m11-41.test|false|false|null")
