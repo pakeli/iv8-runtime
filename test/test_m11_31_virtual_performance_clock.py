@@ -188,10 +188,13 @@ def test_watch_apis_records_performance_now():
 
 
 @on_only
-def test_performance_api_beyond_now_is_absent():
+def test_performance_timeline_surface_and_real_timing_gaps():
     with iv8.Page() as page:
         _load(page)
-        for name in ("mark", "measure", "getEntries", "timing", "navigation"):
+        for name in ("mark", "measure", "getEntries", "getEntriesByName",
+                     "getEntriesByType", "clearMarks", "clearMeasures"):
+            assert page.eval(f"typeof performance.{name}") == "function", name
+        for name in ("timing", "navigation"):
             assert page.eval(f"typeof performance.{name}") == "undefined", name
         # Date is still V8's real clock, not the virtual facade clock.
         assert page.eval("typeof Date.now()") == "number"

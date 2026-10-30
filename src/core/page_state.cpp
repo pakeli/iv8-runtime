@@ -38,6 +38,20 @@ namespace py = pybind11;
 
 namespace iv8 {
 
+// M11-37: per-generation performance timeline records. Defined in iv8 scope
+// because PageState owns the store through the opaque forward declaration in
+// page_state.h.
+struct PerformanceEntryRecord {
+    std::string name;
+    std::string entry_type;
+    std::int64_t start_time = 0;
+    std::int64_t duration = 0;
+};
+
+struct PerformanceStore {
+    std::vector<PerformanceEntryRecord> entries;
+};
+
 namespace {
 
 // M9-2 forward declarations (definitions lower in this TU): the isolate->owning-
@@ -5872,13 +5886,91 @@ void clear_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     state->clear_timer(id);
 }
 
-// --- M11-31 virtual performance clock.
+// --- M11-36 deterministic dialogs ------------------------------------------
+//
+// There is no windowing system or Python callback bridge in this runtime. The
+// dialog globals are deterministic stubs: alert/print do nothing, confirm
+// returns false, and prompt returns null. They never block and never mutate
+// page state.
+void alert_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "alert");
+}
+
+void confirm_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "confirm");
+    info.GetReturnValue().Set(v8::False(info.GetIsolate()));
+}
+
+void prompt_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "prompt");
+    info.GetReturnValue().Set(v8::Null(info.GetIsolate()));
+}
+
+void print_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "print");
+}
+
+// --- M11-31/M11-37 virtual performance timeline ------------------------------
 //
 // performance.now() reports the M11-29/M11-30 facade's virtual clock. This is not
 // a wall clock: it starts at 0, advances only through tick()/advance()/
 // run_until_idle() (including timer/frame jumps), and resets with each load()
 // generation. The legacy pumps do not advance it. Date remains V8's real clock;
 // only this runtime-owned clock is virtual.
+//
+// M11-37 adds a minimal performance entry timeline: mark()/measure()/getEntries*
+// and clearMarks()/clearMeasures(). Entries are plain read-only objects stored
+// per generation; there is no PerformanceObserver, resource timing, navigation
+// timing, or real timeline.
+constexpr v8::ExternalPointerTypeTag kPerformanceTag =
+    v8::kExternalPointerTypeTagDefault;
+
+PerformanceStore* performance_store_from(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    return static_cast<PerformanceStore*>(
+        info.Data().As<v8::External>()->Value(kPerformanceTag));
+}
+
+std::string performance_arg_string(
+    const v8::FunctionCallbackInfo<v8::Value>& info, int index) {
+    if (index >= info.Length()) {
+        return std::string();
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::String> str;
+    if (!info[index]->ToString(isolate->GetCurrentContext()).ToLocal(&str)) {
+        return std::string();
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    return *utf8 != nullptr
+               ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+               : std::string();
+}
+
+v8::Local<v8::Value> make_performance_entry(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const PerformanceEntryRecord& entry) {
+    v8::Local<v8::Object> object = v8::Object::New(isolate);
+    const auto define = [&](const char* key, v8::Local<v8::Value> value) {
+        (void)object->DefineOwnProperty(
+            context,
+            v8::String::NewFromUtf8(isolate, key).ToLocalChecked(), value,
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+    };
+    define("name", v8_string(isolate, entry.name));
+    define("entryType", v8_string(isolate, entry.entry_type));
+    define("startTime",
+           v8::Number::New(isolate, static_cast<double>(entry.start_time)));
+    define("duration",
+           v8::Number::New(isolate, static_cast<double>(entry.duration)));
+    return object;
+}
+
+std::int64_t performance_clock_ms(v8::Isolate* isolate) {
+    ContextState* state = state_from_isolate(isolate);
+    return state != nullptr ? state->event_loop_time_ms() : 0;
+}
+
 void performance_now_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "now");  // M9-2 style
     ContextState* state = state_from_isolate(info.GetIsolate());
@@ -5887,6 +5979,467 @@ void performance_now_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                           : static_cast<double>(state->event_loop_time_ms());
     info.GetReturnValue().Set(ms);
 }
+
+const PerformanceEntryRecord* performance_find_mark(
+    const PerformanceStore* store, const std::string& name) {
+    for (auto it = store->entries.rbegin(); it != store->entries.rend(); ++it) {
+        if (it->entry_type == "mark" && it->name == name) {
+            return &*it;
+        }
+    }
+    return nullptr;
+}
+
+v8::Local<v8::Array> performance_entries_array(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const PerformanceStore* store, const std::string& type,
+    const std::string& name) {
+    std::size_t count = 0;
+    for (const PerformanceEntryRecord& entry : store->entries) {
+        if ((type.empty() || entry.entry_type == type) &&
+            (name.empty() || entry.name == name)) {
+            count++;
+        }
+    }
+    v8::Local<v8::Array> array =
+        v8::Array::New(isolate, static_cast<int>(count));
+    std::uint32_t index = 0;
+    for (const PerformanceEntryRecord& entry : store->entries) {
+        if ((type.empty() || entry.entry_type == type) &&
+            (name.empty() || entry.name == name)) {
+            (void)array->Set(context, index++,
+                             make_performance_entry(isolate, context, entry));
+        }
+    }
+    return array;
+}
+
+void performance_mark_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "performance", "mark");
+    PerformanceStore* store = performance_store_from(info);
+    if (store == nullptr) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    PerformanceEntryRecord entry;
+    entry.name = performance_arg_string(info, 0);
+    entry.entry_type = "mark";
+    entry.start_time = performance_clock_ms(isolate);
+    store->entries.push_back(entry);
+    info.GetReturnValue().Set(
+        make_performance_entry(isolate, context, store->entries.back()));
+}
+
+void performance_measure_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "performance", "measure");
+    PerformanceStore* store = performance_store_from(info);
+    if (store == nullptr) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    PerformanceEntryRecord entry;
+    entry.name = performance_arg_string(info, 0);
+    entry.entry_type = "measure";
+    entry.start_time = 0;
+    entry.duration = 0;
+    std::int64_t end_time = performance_clock_ms(isolate);
+    if (info.Length() > 1 && !info[1]->IsUndefined()) {
+        const std::string start_mark = performance_arg_string(info, 1);
+        const PerformanceEntryRecord* mark =
+            performance_find_mark(store, start_mark);
+        if (mark == nullptr) {
+            isolate->ThrowException(v8::Exception::Error(
+                v8::String::NewFromUtf8(
+                    isolate,
+                    ("measure: unknown start mark: " + start_mark).c_str())
+                    .ToLocalChecked()));
+            return;
+        }
+        entry.start_time = mark->start_time;
+    }
+    if (info.Length() > 2 && !info[2]->IsUndefined()) {
+        const std::string end_mark = performance_arg_string(info, 2);
+        const PerformanceEntryRecord* mark =
+            performance_find_mark(store, end_mark);
+        if (mark == nullptr) {
+            isolate->ThrowException(v8::Exception::Error(
+                v8::String::NewFromUtf8(
+                    isolate,
+                    ("measure: unknown end mark: " + end_mark).c_str())
+                    .ToLocalChecked()));
+            return;
+        }
+        end_time = mark->start_time;
+    }
+    entry.duration = end_time - entry.start_time;
+    store->entries.push_back(entry);
+    info.GetReturnValue().Set(
+        make_performance_entry(isolate, context, store->entries.back()));
+}
+
+void performance_get_entries_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "performance", "getEntries");
+    PerformanceStore* store = performance_store_from(info);
+    if (store == nullptr) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    info.GetReturnValue().Set(performance_entries_array(
+        isolate, isolate->GetCurrentContext(), store, std::string(),
+        std::string()));
+}
+
+void performance_get_entries_by_name_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "performance", "getEntriesByName");
+    PerformanceStore* store = performance_store_from(info);
+    if (store == nullptr) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    info.GetReturnValue().Set(performance_entries_array(
+        isolate, isolate->GetCurrentContext(), store, std::string(),
+        performance_arg_string(info, 0)));
+}
+
+void performance_get_entries_by_type_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "performance", "getEntriesByType");
+    PerformanceStore* store = performance_store_from(info);
+    if (store == nullptr) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    info.GetReturnValue().Set(performance_entries_array(
+        isolate, isolate->GetCurrentContext(), store,
+        performance_arg_string(info, 0), std::string()));
+}
+
+void performance_clear_entries(PerformanceStore* store, const std::string& type,
+                               bool has_name, const std::string& name) {
+    store->entries.erase(
+        std::remove_if(store->entries.begin(), store->entries.end(),
+                       [&](const PerformanceEntryRecord& entry) {
+                           return entry.entry_type == type &&
+                                  (!has_name || entry.name == name);
+                       }),
+        store->entries.end());
+}
+
+void performance_clear_marks_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "performance", "clearMarks");
+    PerformanceStore* store = performance_store_from(info);
+    if (store == nullptr) {
+        return;
+    }
+    performance_clear_entries(store, "mark", info.Length() > 0,
+                              performance_arg_string(info, 0));
+}
+
+void performance_clear_measures_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "performance", "clearMeasures");
+    PerformanceStore* store = performance_store_from(info);
+    if (store == nullptr) {
+        return;
+    }
+    performance_clear_entries(store, "measure", info.Length() > 0,
+                              performance_arg_string(info, 0));
+}
+
+// --- M11-38 structuredClone -------------------------------------------------
+//
+// A bounded structured clone: primitives, arrays/plain objects, Date, Map, Set,
+// ArrayBuffer, TypedArrays, and DataView, with cycle/identity preservation.
+// Functions, symbols, promises, host objects, RegExp/Error and other exotic
+// objects are not supported and throw a JS TypeError (the project has no
+// DOMException DataCloneError). Transfer lists are not supported.
+v8::MaybeLocal<v8::Value> structured_clone_value(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Value> value, v8::Local<v8::Map> seen, int depth) {
+    if (depth > 512) {
+        isolate->ThrowException(v8::Exception::RangeError(
+            v8::String::NewFromUtf8Literal(
+                isolate, "structuredClone: nesting is too deep")));
+        return {};
+    }
+    if (value->IsSymbol() || value->IsFunction() || value->IsPromise() ||
+        value->IsWeakMap() || value->IsWeakSet() || value->IsRegExp() ||
+        value->IsNativeError() || value->IsSharedArrayBuffer() ||
+        value->IsProxy()) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(
+                isolate, "structuredClone: value cannot be cloned")));
+        return {};
+    }
+    if (!value->IsObject()) {
+        return value;  // primitives (including BigInt) are returned as-is
+    }
+    if (value->SameValue(context->Global())) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(
+                isolate, "structuredClone: the global object cannot be cloned")));
+        return {};
+    }
+    if (host_object_backing(value) != nullptr) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(
+                isolate, "structuredClone: host objects cannot be cloned")));
+        return {};
+    }
+    v8::Local<v8::Value> existing;
+    if (seen->Get(context, value).ToLocal(&existing) && !existing->IsUndefined()) {
+        return existing;
+    }
+    const auto remember = [&](v8::Local<v8::Value> clone) {
+        if (seen->Set(context, value, clone).IsEmpty()) {
+            return false;
+        }
+        return true;
+    };
+
+    if (value->IsDate()) {
+        v8::Local<v8::Value> clone;
+        if (!v8::Date::New(context, value.As<v8::Date>()->ValueOf())
+                 .ToLocal(&clone)) {
+            return {};
+        }
+        if (!remember(clone)) {
+            return {};
+        }
+        return clone;
+    }
+    if (value->IsArrayBuffer()) {
+        v8::Local<v8::ArrayBuffer> source = value.As<v8::ArrayBuffer>();
+        if (source->WasDetached()) {
+            isolate->ThrowException(v8::Exception::TypeError(
+                v8::String::NewFromUtf8Literal(
+                    isolate, "structuredClone: detached buffer")));
+            return {};
+        }
+        const std::size_t length = source->ByteLength();
+        v8::Local<v8::ArrayBuffer> clone = v8::ArrayBuffer::New(isolate, length);
+        if (length > 0) {
+            std::memcpy(clone->Data(), source->Data(), length);
+        }
+        if (!remember(clone)) {
+            return {};
+        }
+        return clone;
+    }
+    if (value->IsTypedArray() || value->IsDataView()) {
+        v8::Local<v8::ArrayBufferView> view = value.As<v8::ArrayBufferView>();
+        if (view->Buffer()->WasDetached()) {
+            isolate->ThrowException(v8::Exception::TypeError(
+                v8::String::NewFromUtf8Literal(
+                    isolate, "structuredClone: detached buffer")));
+            return {};
+        }
+        const std::size_t length = view->ByteLength();
+        v8::Local<v8::ArrayBuffer> buffer = v8::ArrayBuffer::New(isolate, length);
+        if (length > 0) {
+            std::memcpy(buffer->Data(),
+                        static_cast<const std::uint8_t*>(
+                            view->Buffer()->Data()) +
+                            view->ByteOffset(),
+                        length);
+        }
+        v8::Local<v8::Value> clone;
+        if (value->IsDataView()) {
+            clone = v8::DataView::New(buffer, 0, length);
+        } else {
+            v8::Local<v8::TypedArray> typed = value.As<v8::TypedArray>();
+            const std::size_t count = typed->Length();
+            if (value->IsUint8Array()) {
+                clone = v8::Uint8Array::New(buffer, 0, count);
+            } else if (value->IsUint8ClampedArray()) {
+                clone = v8::Uint8ClampedArray::New(buffer, 0, count);
+            } else if (value->IsInt8Array()) {
+                clone = v8::Int8Array::New(buffer, 0, count);
+            } else if (value->IsUint16Array()) {
+                clone = v8::Uint16Array::New(buffer, 0, count);
+            } else if (value->IsInt16Array()) {
+                clone = v8::Int16Array::New(buffer, 0, count);
+            } else if (value->IsUint32Array()) {
+                clone = v8::Uint32Array::New(buffer, 0, count);
+            } else if (value->IsInt32Array()) {
+                clone = v8::Int32Array::New(buffer, 0, count);
+            } else if (value->IsFloat16Array()) {
+                clone = v8::Float16Array::New(buffer, 0, count);
+            } else if (value->IsFloat32Array()) {
+                clone = v8::Float32Array::New(buffer, 0, count);
+            } else if (value->IsFloat64Array()) {
+                clone = v8::Float64Array::New(buffer, 0, count);
+            } else if (value->IsBigInt64Array()) {
+                clone = v8::BigInt64Array::New(buffer, 0, count);
+            } else if (value->IsBigUint64Array()) {
+                clone = v8::BigUint64Array::New(buffer, 0, count);
+            } else {
+                isolate->ThrowException(v8::Exception::TypeError(
+                    v8::String::NewFromUtf8Literal(
+                        isolate, "structuredClone: unsupported typed array")));
+                return {};
+            }
+        }
+        if (!remember(clone)) {
+            return {};
+        }
+        return clone;
+    }
+    if (value->IsMap()) {
+        v8::Local<v8::Map> source = value.As<v8::Map>();
+        v8::Local<v8::Map> clone = v8::Map::New(isolate);
+        if (!remember(clone)) {
+            return {};
+        }
+        v8::Local<v8::Array> pairs = source->AsArray();
+        for (std::uint32_t i = 0; i < pairs->Length(); i += 2) {
+            v8::Local<v8::Value> key;
+            v8::Local<v8::Value> item;
+            if (!pairs->Get(context, i).ToLocal(&key) ||
+                !pairs->Get(context, i + 1).ToLocal(&item)) {
+                return {};
+            }
+            v8::Local<v8::Value> key_clone;
+            v8::Local<v8::Value> item_clone;
+            if (!structured_clone_value(isolate, context, key, seen, depth + 1)
+                     .ToLocal(&key_clone) ||
+                !structured_clone_value(isolate, context, item, seen, depth + 1)
+                     .ToLocal(&item_clone)) {
+                return {};
+            }
+            if (clone->Set(context, key_clone, item_clone).IsEmpty()) {
+                return {};
+            }
+        }
+        return clone;
+    }
+    if (value->IsSet()) {
+        v8::Local<v8::Set> source = value.As<v8::Set>();
+        v8::Local<v8::Set> clone = v8::Set::New(isolate);
+        if (!remember(clone)) {
+            return {};
+        }
+        v8::Local<v8::Array> items = source->AsArray();
+        for (std::uint32_t i = 0; i < items->Length(); i++) {
+            v8::Local<v8::Value> item;
+            if (!items->Get(context, i).ToLocal(&item)) {
+                return {};
+            }
+            v8::Local<v8::Value> item_clone;
+            if (!structured_clone_value(isolate, context, item, seen, depth + 1)
+                     .ToLocal(&item_clone)) {
+                return {};
+            }
+            if (clone->Add(context, item_clone).IsEmpty()) {
+                return {};
+            }
+        }
+        return clone;
+    }
+    v8::Local<v8::Object> source = value.As<v8::Object>();
+    v8::Local<v8::Object> clone;
+    if (value->IsArray()) {
+        clone = v8::Array::New(isolate, value.As<v8::Array>()->Length());
+    } else {
+        clone = v8::Object::New(isolate);
+    }
+    if (!remember(clone)) {
+        return {};
+    }
+    v8::Local<v8::Array> keys;
+    if (!source
+             ->GetOwnPropertyNames(
+                 context, v8::PropertyFilter::ONLY_ENUMERABLE,
+                 v8::KeyConversionMode::kKeepNumbers)
+             .ToLocal(&keys)) {
+        return {};
+    }
+    for (std::uint32_t i = 0; i < keys->Length(); i++) {
+        v8::Local<v8::Value> key;
+        v8::Local<v8::Value> item;
+        if (!keys->Get(context, i).ToLocal(&key) ||
+            !source->Get(context, key).ToLocal(&item)) {
+            return {};
+        }
+        v8::Local<v8::Value> item_clone;
+        if (!structured_clone_value(isolate, context, item, seen, depth + 1)
+                 .ToLocal(&item_clone)) {
+            return {};
+        }
+        if (clone->Set(context, key, item_clone).IsEmpty()) {
+            return {};
+        }
+    }
+    return clone;
+}
+
+void structured_clone_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    if (info.Length() < 1) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(
+                isolate, "structuredClone: value is required")));
+        return;
+    }
+    v8::Local<v8::Map> seen = v8::Map::New(isolate);
+    v8::Local<v8::Value> clone;
+    if (!structured_clone_value(isolate, context, info[0], seen, 0)
+             .ToLocal(&clone)) {
+        return;
+    }
+    info.GetReturnValue().Set(clone);
+}
+
+// --- M11-40 scheduler.postTask ------------------------------------------------
+//
+// A small Promise-based wrapper over the existing timer queue. There is no
+// priority queue, AbortSignal, or automatic loop: the task runs on the next
+// run_timers()/facade turn, and the Promise settles through the normal
+// microtask checkpoint.
+constexpr char kSchedulerBootstrap[] = R"JS(
+(function () {
+  'use strict';
+  function postTask(callback, options) {
+    if (typeof callback !== 'function') {
+      throw new TypeError('scheduler.postTask: callback must be a function');
+    }
+    options = options || {};
+    var delay = 0;
+    if (options.delay !== undefined) {
+      delay = Number(options.delay);
+      if (!isFinite(delay) || delay < 0) {
+        throw new TypeError(
+          'scheduler.postTask: delay must be a non-negative finite number');
+      }
+    }
+    return new Promise(function (resolve, reject) {
+      setTimeout(function () {
+        try {
+          resolve(callback());
+        } catch (error) {
+          reject(error);
+        }
+      }, delay);
+    });
+  }
+  var scheduler = Object.create(null);
+  Object.defineProperty(scheduler, 'postTask', {
+    value: postTask, writable: false, enumerable: true, configurable: false
+  });
+  Object.defineProperty(globalThis, 'scheduler', {
+    value: scheduler, writable: false, enumerable: true, configurable: false
+  });
+})();
+)JS";
 
 // --- M11-33 crypto.getRandomValues / crypto.randomUUID -----------------------
 //
@@ -8170,6 +8723,8 @@ void PageState::install_page(const std::string& base_url,
     bootstrap_ = PageBootstrap{html, base_url};
 
     state_ = std::make_shared<ContextState>();
+    // M11-37: the performance timeline is per-generation.
+    performance_store_ = std::make_unique<PerformanceStore>();
     // M9-4/M9-5/M10-1: a fresh generation has pristine (unwrapped) Reflect.get /
     // .has / .ownKeys.
     reflect_hook_installed_ = false;
@@ -8270,25 +8825,68 @@ void PageState::install_page(const std::string& base_url,
             install_global_function(isolate, context, global,
                                     "cancelIdleCallback",
                                     &cancel_idle_callback_callback);
-            // M11-31 virtual performance clock: performance.now() reads the
-            // facade clock; timeOrigin is the virtual epoch (0). Read-only, no
-            // marks/measures/timelines and no real clock.
+            // M11-36 deterministic dialog stubs (no UI, no blocking).
+            install_global_function(isolate, context, global, "alert",
+                                    &alert_callback);
+            install_global_function(isolate, context, global, "confirm",
+                                    &confirm_callback);
+            install_global_function(isolate, context, global, "prompt",
+                                    &prompt_callback);
+            install_global_function(isolate, context, global, "print",
+                                    &print_callback);
+            // M11-38 bounded structured clone.
+            install_global_function(isolate, context, global, "structuredClone",
+                                    &structured_clone_callback);
+            // M11-31/M11-37 virtual performance clock and entry timeline:
+            // performance.now() reads the facade clock; timeOrigin is the virtual
+            // epoch (0); mark/measure/getEntries*/clear* use virtual timestamps.
+            // There is no PerformanceObserver, resource/navigation timing, or
+            // real clock.
             {
                 v8::Local<v8::Object> performance = v8::Object::New(isolate);
+                const auto define_performance_readonly =
+                    [&](const char* name, v8::Local<v8::Value> value) {
+                        (void)performance->DefineOwnProperty(
+                            context,
+                            v8::String::NewFromUtf8(isolate, name)
+                                .ToLocalChecked(),
+                            value,
+                            static_cast<v8::PropertyAttribute>(
+                                v8::ReadOnly | v8::DontDelete));
+                    };
                 v8::Local<v8::Function> now_fn =
                     v8::FunctionTemplate::New(isolate, &performance_now_callback)
                         ->GetFunction(context)
                         .ToLocalChecked();
-                (void)performance->DefineOwnProperty(
-                    context, v8::String::NewFromUtf8Literal(isolate, "now"),
-                    now_fn,
-                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete));
-                (void)performance->DefineOwnProperty(
-                    context, v8::String::NewFromUtf8Literal(isolate, "timeOrigin"),
-                    v8::Number::New(isolate, 0.0),
-                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete));
+                define_performance_readonly("now", now_fn);
+                define_performance_readonly("timeOrigin",
+                                            v8::Number::New(isolate, 0.0));
+                v8::Local<v8::External> performance_data =
+                    v8::External::New(isolate, performance_store_.get(),
+                                      kPerformanceTag);
+                const auto add_performance_method =
+                    [&](const char* name, v8::FunctionCallback callback) {
+                        v8::Local<v8::Function> fn =
+                            v8::FunctionTemplate::New(isolate, callback,
+                                                      performance_data)
+                                ->GetFunction(context)
+                                .ToLocalChecked();
+                        define_performance_readonly(name, fn);
+                    };
+                add_performance_method("mark", &performance_mark_callback);
+                add_performance_method("measure", &performance_measure_callback);
+                add_performance_method("getEntries",
+                                       &performance_get_entries_callback);
+                add_performance_method(
+                    "getEntriesByName",
+                    &performance_get_entries_by_name_callback);
+                add_performance_method(
+                    "getEntriesByType",
+                    &performance_get_entries_by_type_callback);
+                add_performance_method("clearMarks",
+                                       &performance_clear_marks_callback);
+                add_performance_method("clearMeasures",
+                                       &performance_clear_measures_callback);
                 (void)global->DefineOwnProperty(
                     context, v8::String::NewFromUtf8Literal(isolate, "performance"),
                     performance,
@@ -8366,6 +8964,31 @@ void PageState::install_page(const std::string& base_url,
                     "isSecureContext",
                     v8::Boolean::New(isolate,
                                      is_secure_context_url(base_url)));
+                // M11-39: this runtime has exactly one top-level browsing
+                // context. parent/top/frames alias the window itself; there is
+                // no opener and no child frame collection.
+                define_readonly("parent", global);
+                define_readonly("top", global);
+                define_readonly("frames", global);
+                define_readonly("opener", v8::Null(isolate));
+            }
+            // M11-40 scheduler.postTask bootstrap. Compiled after setTimeout and
+            // Promise are available; scheduler tasks therefore use the existing
+            // timer queue and explicit pumps.
+            {
+                v8::TryCatch try_catch(isolate);
+                v8::Local<v8::String> source = v8::String::NewFromUtf8(
+                    isolate, kSchedulerBootstrap,
+                    v8::NewStringType::kNormal,
+                    static_cast<int>(sizeof(kSchedulerBootstrap) - 1))
+                    .ToLocalChecked();
+                v8::Local<v8::Script> script;
+                if (v8::Script::Compile(context, source).ToLocal(&script)) {
+                    (void)script->Run(context);
+                }
+                if (try_catch.HasCaught()) {
+                    try_catch.Reset();  // fixed bootstrap; never poison install
+                }
             }
             // M11-7 Web Storage: two independent, per-Page in-memory stores.
             // The backings live in PageState (so they survive load()); each

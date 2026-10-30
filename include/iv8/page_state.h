@@ -71,6 +71,9 @@ struct HostEnvironment {
 };
 
 class ContextState;
+// M11-37 opaque per-generation performance-entry store (defined in
+// page_state.cpp; reset on every install_page).
+struct PerformanceStore;
 // M9-1 opaque holder for the V8 Inspector objects (defined in page_state.cpp so
 // v8-inspector.h stays out of this header). Destroyed via the out-of-line
 // ~PageState / the context teardown hook while the isolate is still alive.
@@ -294,6 +297,8 @@ private:
     // it and must never outlive it. Fixed after construction (no setter).
     HostEnvironment environment_;
     std::shared_ptr<ContextState> state_;
+    // M11-37: performance mark/measure entries for the current generation.
+    std::unique_ptr<PerformanceStore> performance_store_;
     // M11-35: window.name survives load() generations of this Page.
     std::string window_name_;
     // M11-7 Web Storage backings. Insertion-ordered and page-lifetime: they
