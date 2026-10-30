@@ -32,14 +32,14 @@ git log --oneline --decorate -n 20
   M11 line is compatibility-first.
 - A post-M11 monitoring slice is also verified: **host access trace steps 1–4
   plus the step-5 native BOM call, window metadata, nested metadata, static
-  visualViewport, and navigator.storage manager groups**
+  visualViewport, navigator.storage manager, and navigator.permissions groups**
   (`Page.start_access_trace` / `stop_access_trace` / `read_access_trace`, native
   get/set/call, HostObject missing-string-key `get_probe`,
   performance/crypto/Storage callback calls, window metadata accessors,
-  connection/orientation/timeOrigin reads, visualViewport metadata/methods, and
-  navigator.storage parent reads plus manager calls), green on real V8 at commit
-  `f91665f`; the remaining step-5 groups and value/argument/return summaries
-  remain pending.
+  connection/orientation/timeOrigin reads, visualViewport metadata/methods,
+  navigator.storage parent reads plus manager calls, and permissions query plus
+  PermissionStatus accesses), green on real V8 at commit `18e674e`; the
+  remaining step-5 groups and value/argument/return summaries remain pending.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -109,11 +109,12 @@ Answer roughly as follows:
     (BOM viewport/media/device metadata);
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
-    visualViewport, and navigator.storage manager (native HostObject
-    get/set/call, missing-property probes, performance/crypto/Storage calls,
-    window accessors, connection/orientation/timeOrigin, visualViewport
-    metadata/methods, and navigator.storage parent reads plus manager calls;
-    see `docs/host_access_trace.md`).
+    visualViewport, navigator.storage manager, and navigator.permissions
+    (native HostObject get/set/call, missing-property probes,
+    performance/crypto/Storage calls, window accessors,
+    connection/orientation/timeOrigin, visualViewport metadata/methods,
+    navigator.storage parent reads plus manager calls, and permissions
+    query/status accesses; see `docs/host_access_trace.md`).
 
 ## Handoff Discipline
 

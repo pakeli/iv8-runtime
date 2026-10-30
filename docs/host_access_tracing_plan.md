@@ -2,7 +2,7 @@
 
 日期：2026-10-30
 
-状态：**步骤 1–4、步骤 5 的 performance/crypto/Storage 方法调用组、window metadata 读取组、nested connection/orientation + performance.timeOrigin 组、静态 visualViewport 组，以及 navigator.storage 管理器组已实现并在真实 V8 Linux + Windows 上验证（`2026-10-30`，commit `f91665f`）；步骤 5 其余组和步骤 6–7 尚未实现。** 基于 `ee68790`（M11-41..45）开始。本文不分配新的已批准里程碑编号，也不改变现有 API 合同。当前边界和验证记录见 `docs/host_access_trace.md`。
+状态：**步骤 1–4、步骤 5 的 performance/crypto/Storage 方法调用组、window metadata 读取组、nested connection/orientation + performance.timeOrigin 组、静态 visualViewport 组、navigator.storage 管理器组，以及 navigator.permissions + PermissionStatus 组已实现并在真实 V8 Linux + Windows 上验证（`2026-10-30`，commit `18e674e`）；步骤 5 其余组和步骤 6–7 尚未实现。** 基于 `ee68790`（M11-41..45）开始。本文不分配新的已批准里程碑编号，也不改变现有 API 合同。当前边界和验证记录见 `docs/host_access_trace.md`。
 
 ## 1. 目标与执行顺序
 

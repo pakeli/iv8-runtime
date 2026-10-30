@@ -537,6 +537,31 @@ Verified on real V8 at commit `f91665f`: Linux `41027870583`, Windows
 1677 items (1673 previous + 4 storage-manager tests). See
 `docs/host_access_trace.md`.
 
+### 33. Host access trace navigator.permissions (step 5f)
+
+Decided/verified `2026-10-30`.
+
+`navigator.permissions` is exposed by `NavigatorHost` as a cached plain object
+whose `query()` method is a native callback. The parent read is traced, each
+query call is traced, and returned PermissionStatus objects keep their M11-44
+plain shape while exposing `name` / `state` through traced native accessors and
+the no-op event-target methods through traced native callbacks. Status identity
+is grouped by the fixed per-permission descriptor; different permission names
+get different IDs and IDs reset with a new generation.
+
+The exact rejection messages, synchronous descriptor-getter exception, writable
+`onchange`, and fresh status object per query are preserved. `onchange`
+reads/writes, status missing-property probes, and Promise values remain
+untraced.
+
+The first CI attempt failed only on a test expectation (`Array.join` renders
+`null` as an empty field); the final commit `18e674e` corrects the test.
+
+Verified on real V8 at commit `18e674e`: Linux `41031830520`, Windows
+`41031835192`, each wheel lane `1680 passed, 2 skipped`. The full suite collects
+1682 items (1677 previous + 5 permissions tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

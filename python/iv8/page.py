@@ -1002,11 +1002,13 @@ class Page:
         nested ``navigator.connection`` / ``screen.orientation`` HostObjects plus
         ``performance.timeOrigin``, static ``visualViewport`` metadata,
         writable ``onresize``/``onscroll``, no-op event methods, and missing
-        probes, and ``navigator.storage`` parent reads plus manager method
-        calls. The visual viewport conversion keeps its values, global
-        read-only behavior, and method results, but (like other host objects) it
-        now has the host-object template prototype and writable/configurable
-        no-op methods; the storage manager keeps its plain-object shape.
+        probes, ``navigator.storage`` parent reads plus manager method calls,
+        and ``navigator.permissions`` query calls plus PermissionStatus
+        name/state/method accesses. The visual viewport conversion keeps its
+        values, global read-only behavior, and method results, but (like other
+        host objects) it now has the host-object template prototype and
+        writable/configurable no-op methods; the storage and permissions
+        managers and PermissionStatus objects keep their plain-object shapes.
         ``parent`` / ``top`` / ``frames`` / ``opener``, the remaining plain BOM
         property reads and nested objects, returned plain objects/arrays,
         non-HostObject missing probes, ``in``, delete, enumeration, descriptors,

@@ -926,10 +926,10 @@ Final commit `e19f54d` (branch `host-access-window`):
 ### Next
 
 The nested metadata/timeOrigin group was completed as Priority 3y below, the
-static visualViewport group as Priority 3z, and the navigator.storage manager as
-Priority 3aa. Remaining step-5 groups: `matchMedia` results, navigator
-permissions/plugins/mimeTypes, permission-status objects, and other plain
-property reads. Value/argument/return summaries remain step 6. The M11-46
+static visualViewport group as Priority 3z, the navigator.storage manager as
+Priority 3aa, and navigator.permissions/PermissionStatus as Priority 3ab.
+Remaining step-5 groups: `matchMedia` results, navigator plugins/mimeTypes,
+permission-status `onchange`/missing probes, and other plain property reads. Value/argument/return summaries remain step 6. The M11-46
 selector follow-up remains deferred.
 
 ## Priority 3y: Host access trace nested metadata — DONE (`2026-10-30`)
@@ -1041,10 +1041,50 @@ This slice passed on the first CI attempt.
 
 ### Next
 
-Continue step 5 with `matchMedia` result objects, `navigator.permissions` /
-`plugins` / `mimeTypes`, permission-status objects, and other plain property
-reads. Value/argument/return summaries remain step 6. The M11-46 selector
-follow-up remains deferred.
+Continue step 5 with navigator.permissions/PermissionStatus (Priority 3ab
+below), then `matchMedia` result objects, `navigator.plugins` / `mimeTypes`, and
+other plain property reads. Value/argument/return summaries remain step 6. The
+M11-46 selector follow-up remains deferred.
+
+## Priority 3ab: Host access trace navigator.permissions — DONE (`2026-10-30`)
+
+### What landed
+
+- `navigator.permissions` is a cached plain object exposed by `NavigatorHost`;
+  its parent read is traced and `query()` is a traced native callback.
+- Returned PermissionStatus objects stay fresh plain objects with
+  `Object.prototype`, the original data descriptor shapes, writable `onchange`,
+  and the exact M11-44 rejection messages. `name` / `state` reads and the no-op
+  event-target method calls are traced through native accessors/callbacks with
+  `object_type: "permission_status"`.
+- Status identity is grouped by permission name (fixed per-name descriptor), so
+  repeated statuses for one permission share an `object_id`; different
+  permissions do not.
+- `onchange` reads/writes, status missing-property probes, and Promise values
+  remain untraced.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_permissions.py` (5 items). Full suite collects 1682
+items; each wheel lane: **`1680 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `18e674e` (branch `host-access-permissions`):
+
+- Linux `release-linux` run `41031830520` — cp311–cp314, each
+  `1680 passed, 2 skipped`;
+- Windows `release-windows` run `41031835192` — Python 3.11–3.14, each
+  `1680 passed, 2 skipped`.
+
+The first CI attempt failed only because a descriptor assertion used
+`Array.join`, which stringifies `null` as an empty field; the test was corrected.
+
+### Next
+
+Continue step 5 with `matchMedia` result objects, `navigator.plugins` /
+`mimeTypes`, permission-status `onchange`/missing probes, and other plain
+property reads. Value/argument/return summaries remain step 6. The M11-46
+selector follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

@@ -8,7 +8,10 @@ offsets, scale, method results, and read-only/writable behavior are unchanged;
 the instance prototype and some method/handler descriptors intentionally follow
 host-object conventions. Step 5e replaces the `navigator.storage` methods with
 native callbacks for tracing while keeping its plain-object shape, identity,
-descriptors, and results unchanged. See `docs/host_access_trace.md` §4.5–§4.6.
+descriptors, and results unchanged. Step 5f does the same for
+`navigator.permissions.query()` and adds traced status name/state/method
+accesses without changing the PermissionStatus shape. See
+`docs/host_access_trace.md` §4.5–§4.7.
 
 This batch fills the remaining deterministic BOM metadata that can be served
 without layout, network, OS permission UI, background events, or a real storage
