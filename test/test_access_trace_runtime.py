@@ -110,15 +110,12 @@ def test_native_method_calls_and_throwing_call_enter():
 
         page.start_access_trace()
         with pytest.raises(iv8.JSError):
-            page.eval(
-                "document.body.setAttribute('x', {toString() {"
-                "throw new Error('boom'); }});",
-                name="probe.js")
+            page.eval("document.body.appendChild(1);", name="probe.js")
         calls = [
             event for event in page.read_access_trace()["events"]
             if event["operation"] == "call"
         ]
-        assert [event["member"] for event in calls] == ["setAttribute"]
+        assert [event["member"] for event in calls] == ["appendChild"]
 
 
 @on_only
