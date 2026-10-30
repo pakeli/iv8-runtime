@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-10-27`
+Last reviewed: `2026-10-30`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -337,11 +337,37 @@ Verified on real V8 at commit `aa23c57`: Linux `40990275470`, Windows
 1601 items (1567 previous + 12 new tests + 22 environment parametrizations). See
 `docs/m11_35_report.md`.
 
+### 24. M11-36..M11-40 completed the deterministic BOM stubs
+
+Decided/verified `2026-10-30`.
+
+The batch adds deterministic `alert` / `confirm` / `prompt` / `print` stubs, a
+virtual `performance` mark/measure timeline with entry queries and clears,
+bounded `structuredClone` (including cycles, boxed primitives, and shared
+cloned view buffers), single-context `window.parent` / `top` / `frames` /
+`opener` metadata, and Promise-based `scheduler.postTask` over the existing
+timer queue. `navigator.userAgentData` is intentionally not implemented; a
+caller that wants a Chromium identity supplies one through
+`Page(environment=...)`. `parent` and `frames` are replaceable, `top` remains
+unforgeable/read-only, and `opener` is writable, matching browser
+browsing-context metadata without adding child contexts.
+
+The first verification attempt (`84a8850`) exposed three test-level collisions
+and one stale expectation: `let frames` and `var parent` collided with the newly
+installed globals, and a `structuredClone` assertion had the wrong formatting.
+`512117c` corrected the semantics, refreshed the affected historical tests, and
+tightened structuredClone view identity/offset handling.
+
+Verified on real V8 at commit `512117c`: Linux `40997424174`, Windows
+`40997427191`, each wheel lane `1617 passed, 2 skipped`. The full suite collects
+1619 items (1601 previous + 18 new tests). See
+`docs/m11_36_40_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-36`?
+### A. Which concrete compatibility slice becomes `M11-41`?
 
 Settled and implemented so far:
 
@@ -472,8 +498,17 @@ direction alone.
   and navigator touch/PDF/DNT/connection metadata; the environment grows to 36
   keys. Boundary: `docs/m11_35_bom_metadata.md`. Verified on real V8 (Linux
   `40990275470`, Windows `40990279247`, commit `aa23c57`, each wheel lane
-  `1599 passed, 2 skipped`); see `docs/m11_35_report.md`. The next slice
-  (`M11-36`) can resume selector pseudo-classes or take another BOM/gap item.
+  `1599 passed, 2 skipped`); see `docs/m11_35_report.md`.
+
+- `M11-36` through `M11-40` — **BOM completion batch** — selected/frozen on
+  `2026-10-30`: deterministic dialogs, performance entry timeline,
+  `structuredClone`, single-context window metadata, and
+  `scheduler.postTask`. Boundary:
+  `docs/m11_36_40_bom_completion.md`. Verified on real V8 (Linux
+  `40997424174`, Windows `40997427191`, commit `512117c`, each wheel lane
+  `1617 passed, 2 skipped`); see `docs/m11_36_40_report.md`. The next slice
+  (`M11-41`) can resume selector pseudo-classes or take another gap item;
+  UA-CH remains deliberately deferred.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

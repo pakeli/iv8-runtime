@@ -73,8 +73,9 @@ connectionSaveData=false  screenAvailLeft=0          screenAvailTop=0
 - `matchMedia`, scroll, layout, rendering, or screen-orientation events;
 - a Python-side BOM API; everything remains JS-side through `Page.eval`.
 
-The selector pseudo-class slice planned earlier is deferred; M11-36 and later
-can pick it up after this BOM batch.
+The selector pseudo-class slice planned earlier is deferred; M11-36..M11-40
+subsequently completed the remaining deterministic BOM stubs, and
+pseudo-classes remain a later selector slice.
 
 ## Tests
 

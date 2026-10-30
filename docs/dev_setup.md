@@ -111,7 +111,7 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; implementation is through M11-35
-> (deterministic BOM metadata completion), verified on real V8 (Linux + Windows)
-> on `2026-10-30` and merged to `master` on the fork (`pakeli/iv8-runtime`);
-> upstream sync is out of scope. See `docs/m11_35_report.md`.
+> `HEAD` is not an M1-only repository; implementation is through M11-36..M11-40
+> (BOM completion batch), verified on real V8 (Linux + Windows) on `2026-10-30`
+> and merged to `master` on the fork (`pakeli/iv8-runtime`); upstream sync is out
+> of scope. See `docs/m11_36_40_report.md`.

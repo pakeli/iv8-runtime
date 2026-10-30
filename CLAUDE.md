@@ -26,9 +26,9 @@ git log --oneline --decorate -n 20
 
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
-- As of `2026-10-30`, the latest verified milestone is **M11-35** (deterministic
-  BOM metadata completion), green on real V8 Linux + Windows (commit `aa23c57`,
-  merged to `master` on the fork; upstream sync out of scope). The M11 line is
+- As of `2026-10-30`, the latest verified milestone is **M11-36..M11-40** (BOM
+  completion batch), green on real V8 Linux + Windows (commit `512117c`, merged
+  to `master` on the fork; upstream sync out of scope). The M11 line is
   compatibility-first.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
@@ -79,7 +79,7 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-35`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-40`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
     Storage, Blob/File/FileReader, event cancellation,
     `classList`/`toggleAttribute`, event capture + listener options, element
@@ -89,10 +89,12 @@ Answer roughly as follows:
     extensions, the deterministic event-loop facade over timers, microtasks,
     animation frames, and idle callbacks, the virtual performance clock with
     rAF timestamps, minimal form validation, OS-backed Crypto random, the CSS
-    selector engine, and deterministic BOM metadata (verified on real V8 Linux
-    + Windows; latest verification `2026-10-30`);
-  - latest implemented and verified feature: M11-35 (window/screen/navigator
-    metadata, 36-key environment).
+    selector engine, deterministic BOM metadata, and the BOM completion batch
+    (deterministic dialogs, performance entry timeline, `structuredClone`,
+    single-context window metadata, `scheduler.postTask`) — verified on real V8
+    Linux + Windows; latest verification `2026-10-30`;
+  - latest implemented and verified feature: M11-36..M11-40 (BOM completion
+    batch).
 
 ## Handoff Discipline
 

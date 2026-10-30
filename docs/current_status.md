@@ -7,10 +7,12 @@ Last reviewed: `2026-10-30`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-30`, the latest implemented and verified milestone is **M11-35**
-(deterministic BOM metadata completion). Real-V8 CI is green on both platforms —
-Linux run `40990275470`, Windows run `40990279247`, both on commit `aa23c57`,
-each wheel lane reporting `1599 passed, 2 skipped`:
+As of `2026-10-30`, the latest implemented and verified milestone is
+**M11-36..M11-40** (BOM completion batch: dialogs, performance timeline,
+`structuredClone`, single-context window metadata, and `scheduler.postTask`).
+Real-V8 CI is green on both platforms — Linux run `40997424174`, Windows run
+`40997427191`, both on commit `512117c`, each wheel lane reporting
+`1617 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -68,6 +70,11 @@ each wheel lane reporting `1599 passed, 2 skipped`:
 - `M11-35`: deterministic BOM metadata — `window.name` / `length` /
   `screenLeft` / `screenTop` / `isSecureContext`, `screen.availLeft` /
   `availTop` / `orientation`, and navigator touch/PDF/DNT/connection metadata
+- `M11-36`..`M11-40`: BOM completion batch — deterministic dialogs,
+  `performance.mark` / `measure` / entry queries / clears, bounded
+  `structuredClone`, replaceable single-context `window.parent` / `frames` /
+  writable `opener` / read-only `top`, and `scheduler.postTask` over the timer
+  queue
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -94,7 +101,9 @@ fork's `master`. M11-34 (CSS selector engine) was verified on
 `m11-34-selector-engine` (final commit `49f8582`) and merged to the fork's
 `master`. M11-35 (BOM metadata completion) was verified on
 `m11-35-bom-metadata` (commit `aa23c57`) and merged to the fork's `master`.
-Upstream `investforever/iv8-runtime` remains at M11-3;
+M11-36 through M11-40 (BOM completion batch) were verified on
+`m11-36-40-bom-completion` (final commit `512117c`) and merged to the fork's
+`master`. Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_35_report.md`).
 
@@ -279,6 +288,11 @@ Implemented and present at `HEAD`:
   `availTop` / `orientation`; navigator `maxTouchPoints` /
   `pdfViewerEnabled` / `doNotTrack` / `connection`. The environment grows to 36
   keys. Verified `2026-10-30`; see `docs/m11_35_bom_metadata.md`.
+- `M11-36`..`M11-40` BOM completion — deterministic dialogs;
+  `performance.mark` / `measure` / entry queries / clears; bounded
+  `structuredClone`; single-context `window.parent` / `top` / `frames` /
+  `opener`; and `scheduler.postTask`. Verified `2026-10-30`; see
+  `docs/m11_36_40_bom_completion.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -319,6 +333,9 @@ Recent implementation sequence from Git history:
   verified `2026-10-29`)
 - `M11-34`: CSS selector engine expansion (verified `2026-10-29`)
 - `M11-35`: deterministic BOM metadata completion (verified `2026-10-30`)
+- `M11-36` through `M11-40`: BOM completion batch — dialogs, performance
+  timeline, structuredClone, single-context window metadata, and
+  scheduler.postTask (verified `2026-10-30`)
 
 ## 4. Release / Distribution Status
 
@@ -422,20 +439,23 @@ The repository is executing its post-M10 direction:
 - `M11-35` (deterministic BOM metadata completion) is **landed and verified on
   real V8 (Linux + Windows)** on `2026-10-30`; see
   `docs/m11_35_bom_metadata.md` and `docs/m11_35_report.md`;
-- the next execution handoff is to choose `M11-36` — selector pseudo-classes are
-  still the planned selector follow-up; remaining BOM gaps such as dialogs,
-  performance marks, and `structuredClone` are also candidates from
+- `M11-36` through `M11-40` (BOM completion batch) are **landed and verified on
+  real V8 (Linux + Windows)** on `2026-10-30`; see
+  `docs/m11_36_40_bom_completion.md` and `docs/m11_36_40_report.md`;
+- the next execution handoff is to choose `M11-41` — selector pseudo-classes
+  remain the planned selector follow-up; `navigator.userAgentData` is
+  deliberately deferred, and the remaining BOM/DOM gaps are inventoried in
   `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-36`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-35` are settled, landed, and verified; selector
-  pseudo-classes remain the planned selector follow-up, while remaining BOM
-  gaps (dialogs, performance marks, `structuredClone`) are alternate candidates
-  from `docs/dom_bom_gaps.md`.)
+- Which concrete compatibility slice should become `M11-41`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-40` are settled, landed, and verified; selector
+  pseudo-classes remain the planned selector follow-up, while UA-CH is
+  deliberately deferred and the remaining candidates come from
+  `docs/dom_bom_gaps.md`.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -450,8 +470,8 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with `M11-35` (deterministic BOM metadata
-> completion) landed and verified on real V8 (Linux + Windows) on `2026-10-30`.
+> compatibility-first `M11` line — with the M11-36..M11-40 BOM completion batch
+> landed and verified on real V8 (Linux + Windows) on `2026-10-30`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

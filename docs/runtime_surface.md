@@ -1,8 +1,9 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-30` · Latest verified milestone: **M11-35**
-(event capture phase + listener options), verified on real V8 (Linux + Windows)
-on `2026-10-28`.
+Last reviewed: `2026-10-30` · Latest verified milestone: **M11-36..M11-40**
+(BOM completion batch: dialogs, performance timeline, `structuredClone`,
+single-context window metadata, and `scheduler.postTask`), verified on real V8
+(Linux + Windows) on `2026-10-30`.
 
 ## 0. What this document is
 
@@ -165,19 +166,41 @@ Installed per generation by `install_page`:
   read-only `window.length` (0), `screenLeft` / `screenTop`, and
   `isSecureContext` derived from the base URL. `screen.orientation` is a
   read-only `{type, angle}` derived from width/height with no events or lock; no
-  scroll / `matchMedia` and these dimensions feed no layout engine;
+  scroll / `matchMedia` and these dimensions feed no layout engine. M11-39 adds
+  the single-context browsing metadata: replaceable `window.parent` / `frames`,
+  unforgeable read-only `window.top`, and writable `window.opener` (initially
+  `null`), with no child frames, popups, or `postMessage`;
+- **dialogs** (M11-36) — deterministic no-op `alert()` / `confirm()` /
+  `prompt()` / `print()` globals returning `undefined` / `false` / `null` /
+  `undefined`; no UI, blocking, Python callback, or page mutation. Calls are
+  watchable;
 - **timers** — `setTimeout` / `clearTimeout` / `setInterval` / `clearInterval`
   (manual-pump only);
 - **virtual performance clock** (M11-31) — `performance.now()` reports the
   M11-29/M11-30 facade clock (`Page.event_loop_time_ms`), and
   `performance.timeOrigin` is the virtual epoch `0`; both are read-only. There
-  is no real clock; `Date` remains V8's wall clock. `performance.mark` /
-  `measure` / timelines / timing entries are absent;
+  is no real clock; `Date` remains V8's wall clock;
+- **performance timeline** (M11-37) — `performance.mark()` / `measure()` /
+  `getEntries()` / `getEntriesByName()` / `getEntriesByType()` /
+  `clearMarks()` / `clearMeasures()` return plain read-only entries over virtual
+  timestamps; entries reset per `load()`. No `PerformanceObserver`, resource /
+  navigation timing, or `performance.timeline`;
 - **Crypto random** (M11-33) — read-only `crypto.getRandomValues(typedArray)`
   (integer TypedArrays, same-view return, view byte range, 65536-byte quota) and
   `crypto.randomUUID()` (v4). Bytes come from the platform CSPRNG and are the
   runtime's single deliberate non-deterministic surface. `crypto.subtle`,
   `CryptoKey`, digest, AES, RSA, ECDH/ECDSA, HMAC, and KDFs are absent;
+- **structuredClone** (M11-38) — cycle/identity-preserving clones of
+  primitives (including BigInt), plain objects, arrays, boxed
+  Boolean/Number/String/BigInt objects, `Date`, `Map`, `Set`, `ArrayBuffer`,
+  TypedArrays, and `DataView`; views keep their byte offset and share the
+  cloned backing buffer. Functions, symbols, promises, weak collections,
+  RegExp/Error objects, shared buffers, proxies, DOM/host objects, and the
+  global object throw a JS `TypeError`; transfer lists are absent;
+- **scheduler.postTask** (M11-40) — Promise-based `scheduler.postTask()`
+  scheduled on the existing timer queue, supporting `options.delay`; tasks run
+  only under the explicit timer/facade pumps. Priority queues, `AbortSignal`,
+  and automatic execution are absent;
 - **microtasks** — `queueMicrotask(callback)` (M11-4), drained only by
   `Page.run_jobs()` (the same queue `Promise` reactions use). A non-callable
   argument throws a JS `TypeError`; callbacks run FIFO, may enqueue further
@@ -358,8 +381,10 @@ JS as `performance.now()` and passes it to rAF callbacks. It is still only
 driven by explicit Python calls: there is no background loop, no **real** clock,
 and no vsync. The legacy one-queue pumps remain available and independent.
 `IdleDeadline.timeRemaining()` remains a constant and `options.timeout` never
-fires; `scheduler.postTask` is still absent. Crypto random (M11-33) is the one
-intentional non-deterministic surface; it does not affect the virtual clock.
+fires. M11-40 adds `scheduler.postTask` as a Promise wrapper over that same
+explicit timer queue; it does not add an automatic loop. Crypto random (M11-33)
+is the one intentional non-deterministic surface; it does not affect the virtual
+clock.
 
 ## 5. Milestone map
 
@@ -413,6 +438,7 @@ intentional non-deterministic surface; it does not affect the virtual clock.
 | M11-33 | OS-backed `crypto.getRandomValues()` / `randomUUID()` (platform CSPRNG) — verified 2026-10-29 | `docs/m11_33_crypto_random.md`, `docs/m11_33_report.md` |
 | M11-34 | CSS selector engine expansion (lists, compound/attribute selectors, combinators, `*`) — verified 2026-10-29 | `docs/m11_34_selector_engine.md`, `docs/m11_34_report.md` |
 | M11-35 | deterministic BOM metadata completion (window/screen/navigator; 36-key environment) — verified 2026-10-30 | `docs/m11_35_bom_metadata.md`, `docs/m11_35_report.md` |
+| M11-36..M11-40 | BOM completion batch (dialogs, performance timeline, structuredClone, single-context window metadata, scheduler.postTask) — verified 2026-10-30 | `docs/m11_36_40_bom_completion.md`, `docs/m11_36_40_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

@@ -975,9 +975,21 @@ across ``load()``), ``window.length``, ``screenLeft`` / ``screenTop``,
 ``navigator.maxTouchPoints`` / ``pdfViewerEnabled`` / ``doNotTrack`` /
 ``connection``. ``Page(environment=...)`` grows from 27 to 36 flat keys with
 nested ``navigator`` / ``screen`` equivalents; all values remain deterministic
-constants. Navigation, networking, rendering, dialogs, performance marks,
-structuredClone, and a Python BOM API remain out of scope. See
-``docs/m11_35_bom_metadata.md``.
+constants. Navigation, networking, rendering, and a Python BOM API remain out
+of scope. See ``docs/m11_35_bom_metadata.md``.
+
+M11-36 through M11-40 complete the remaining deterministic BOM stubs:
+``alert`` / ``confirm`` / ``prompt`` / ``print`` return fixed values without
+UI or blocking; ``performance.mark`` / ``measure`` / entry queries and clears
+use the virtual clock; ``structuredClone`` clones supported JS values with
+cycle/identity preservation; single-context ``window.parent`` / ``top`` /
+``frames`` / ``opener`` metadata is exposed with replaceable parent/frames,
+unforgeable top, and writable opener; and ``scheduler.postTask`` returns a
+Promise over the existing timer queue. ``navigator.userAgentData`` remains
+deliberately unimplemented; callers can supply a Chromium identity through
+``Page(environment=...)``. Transfer lists, real timing, priority/AbortSignal,
+and a host callback bridge remain out of scope. See
+``docs/m11_36_40_bom_completion.md``.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are

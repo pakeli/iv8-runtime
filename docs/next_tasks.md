@@ -1,6 +1,6 @@
 # Next Tasks
 
-Last reviewed: `2026-10-28`
+Last reviewed: `2026-10-30`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
@@ -693,9 +693,52 @@ Report: `docs/m11_35_report.md`.
 
 ### Next
 
-Choose `M11-36` — selector pseudo-classes remain the planned selector
-follow-up; remaining BOM gaps (dialogs, performance marks, `structuredClone`,
-`navigator.userAgentData`) are alternate candidates.
+M11-36 was used for the BOM completion batch (below); selector pseudo-classes
+remain the planned selector follow-up.
+
+## Priority 3s: M11-36..M11-40 BOM completion batch — DONE (`2026-10-30`)
+
+### What landed
+
+- Deterministic dialogs: `alert()` / `confirm()` / `prompt()` / `print()`
+  stubs with fixed returns and watch-API visibility.
+- Performance timeline: `performance.mark()` / `measure()` /
+  `getEntries()` / `getEntriesByName()` / `getEntriesByType()` /
+  `clearMarks()` / `clearMeasures()` over virtual time.
+- Bounded `structuredClone()` with cycle/identity preservation, boxed
+  primitives, shared cloned view buffers, and explicit rejection of unsupported
+  values.
+- Single-context `window.parent` / `top` / `frames` / `opener` metadata:
+  replaceable `parent` / `frames`, unforgeable `top`, writable `opener`.
+- `scheduler.postTask(callback, options?)` over the existing timer queue with
+  `delay`, Promise settlement, and explicit pumps.
+
+Boundary: `docs/m11_36_40_bom_completion.md`. Tests:
+`test/test_m11_36_40_bom_completion.py` (18 items). Full suite collects 1619
+items; each wheel lane: **`1617 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `512117c` (feature commit `84a8850`, branch
+`m11-36-40-bom-completion`):
+
+- Linux `release-linux` run `40997424174` — cp311–cp314, each
+  `1617 passed, 2 skipped`;
+- Windows `release-windows` run `40997427191` — Python 3.11–3.14, each
+  `1617 passed, 2 skipped`.
+
+The first attempt (`84a8850`) failed three tests: a `let frames` collision with
+the global `frames`, a wrong structuredClone expectation, and a `var parent`
+collision with the global `parent`. `512117c` corrected the browsing-context
+semantics (`parent`/`frames` replaceable, `opener` writable, `top` read-only),
+refreshed the affected tests, and tightened structuredClone. Report:
+`docs/m11_36_40_report.md`.
+
+### Next
+
+Choose `M11-41` — selector pseudo-classes remain the planned selector
+follow-up; `navigator.userAgentData` is deliberately deferred in this version.
+Remaining candidates are inventoried in `docs/dom_bom_gaps.md`.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

@@ -1,6 +1,6 @@
 # M11 Compatibility Backlog
 
-Last reviewed: `2026-10-28`
+Last reviewed: `2026-10-30`
 
 ## 1. Purpose
 
@@ -187,5 +187,14 @@ avail/orientation, and navigator touch/PDF/DNT/connection metadata; the flat
 environment grows to 36 keys. Boundary: `docs/m11_35_bom_metadata.md`. Delivered
 and verified on real V8: Linux `40990275470`, Windows `40990279247`, commit
 `aa23c57`, each wheel lane `1599 passed, 2 skipped`; report
-`docs/m11_35_report.md`. Selector pseudo-classes remain a later follow-up;
-other gaps are inventoried in `docs/dom_bom_gaps.md`.
+`docs/m11_35_report.md`.
+
+`M11-36` through `M11-40` — **BOM completion batch** — selected/frozen on
+`2026-10-30`: deterministic dialogs, the performance entry timeline, bounded
+`structuredClone`, single-context `window.parent` / `top` / `frames` /
+`opener`, and `scheduler.postTask` over the timer queue. Boundary:
+`docs/m11_36_40_bom_completion.md`. Delivered and verified on real V8: Linux
+`40997424174`, Windows `40997427191`, commit `512117c`, each wheel lane
+`1617 passed, 2 skipped`; report `docs/m11_36_40_report.md`. Selector
+pseudo-classes remain a later follow-up; `navigator.userAgentData` is
+deliberately deferred; other gaps are inventoried in `docs/dom_bom_gaps.md`.

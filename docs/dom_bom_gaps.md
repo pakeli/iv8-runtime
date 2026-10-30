@@ -1,10 +1,11 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-30` · Baseline: **M11-35** (deterministic BOM metadata
-verified `2026-10-30`)
+Last reviewed: `2026-10-30` · Baseline: **M11-36..M11-40** (BOM completion
+batch verified `2026-10-30`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-35. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-36..M11-40. It is not a contract and not a
+> roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -27,7 +28,8 @@ verified `2026-10-30`)
 | `XMLHttpRequest`, `WebSocket`, `EventSource`, `navigator.sendBeacon` | **excluded** |
 | `location.assign` / `replace` / `reload`; URL-driven navigation | **excluded** |
 | `history` (`pushState` / `replaceState` / `back` / `forward` / `go`), `hashchange` / `popstate` | **excluded** |
-| `window.open` / `close`, `frames` / `parent` / `top` / `opener`, `postMessage` | **excluded** |
+| `window.open` / `close`, `postMessage` | **excluded** |
+| `frames` / `parent` / `top` / `opener` as real browsing contexts | **implemented as single-context aliases** — M11-39 (`parent` / `frames` replaceable, `top` unforgeable read-only, `opener` writable, no child contexts) |
 | `beforeunload` / `unload` / `pageshow` / `pagehide` lifecycle events | **excluded** |
 
 ### 1.2 Storage and persistence
@@ -43,10 +45,11 @@ verified `2026-10-30`)
 
 | Missing | Status |
 |---|---|
-| Full Performance API (`mark` / `measure` / timelines / entries / timing) | **partially implemented** — M11-31 adds virtual `performance.now()` / `timeOrigin`; marks, measures, timelines, and resource/navigation timing are absent |
+| Full Performance API (`mark` / `measure` / timelines / entries / timing) | **partially implemented** — M11-31 adds virtual `performance.now()` / `timeOrigin`; M11-37 adds `mark` / `measure` / entry queries / clears. `PerformanceObserver`, resource/navigation timing, `performance.timing` / `navigation`, and a real clock remain absent |
 | `requestAnimationFrame` callback timestamp argument | **implemented** — M11-31 passes the current virtual timestamp |
 | `requestIdleCallback` `options.timeout` firing semantics | **deferred** — validated but never fires |
-| `scheduler.postTask`, microtask cancellation | **absent** |
+| `scheduler.postTask` | **implemented** — M11-40 Promise wrapper over the timer queue with `delay`; no priority queue, `AbortSignal`, or automatic loop |
+| Microtask cancellation | **absent** |
 | Full event-loop facade (rAF/idle + real sleep/clock) | **partially implemented** — M11-29/M11-30 add virtual `tick` / `advance` / `run_until_idle` for timers, microtasks, rAF, and idle; real sleep/clock remain absent |
 | Automatic event loop / background timers | **excluded** — explicit Python pumps/facade only; no background execution |
 
@@ -54,7 +57,7 @@ verified `2026-10-30`)
 
 | Missing | Status |
 |---|---|
-| `alert` / `confirm` / `prompt`, `window.print` | **absent** |
+| `alert` / `confirm` / `prompt`, `window.print` | **implemented as deterministic stubs** — M11-36 returns fixed values and never blocks or renders UI; no Python callback bridge |
 | Fullscreen API, `visualViewport` | **absent** — M11-35 adds a read-only derived `screen.orientation` with no events/lock |
 | Scroll APIs (`scroll` / `scrollTo` / `scrollBy` / `scrollX` / `scrollY`) | **absent** — no layout |
 | `matchMedia` | **absent** — no CSS/media-query engine |
@@ -68,7 +71,7 @@ verified `2026-10-30`)
 | `navigator.clipboard`, `geolocation`, `Notification`, `Permissions` | **absent** |
 | `navigator.userAgentData` (UA-CH) | **absent** — M11-35 adds `navigator.connection` metadata only |
 | `navigator.permissions` / clipboard / geolocation | **absent** — M11-35 adds `maxTouchPoints`, `pdfViewerEnabled`, and `doNotTrack` |
-| `structuredClone` and other transfer/serialization APIs | **absent** |
+| `structuredClone` and other transfer/serialization APIs | **partially implemented** — M11-38 clones primitives/objects/arrays/boxed primitives/`Date`/`Map`/`Set`/buffers/views with cycles and identity; transfer lists, RegExp/Error, shared buffers, and other exotic objects are rejected |
 
 ### 1.6 Screen and window metadata
 
@@ -76,6 +79,7 @@ verified `2026-10-30`)
 |---|---|
 | `screen.orientation` / `availLeft` / `availTop` | **implemented** — M11-35 (orientation is a read-only derived `{type, angle}`, no events/lock) |
 | `window.name` / `length` | **implemented** — M11-35 (`name` mutable/Page-persistent; `length` is always 0) |
+| `window.parent` / `top` / `frames` / `opener` | **implemented** — M11-39 single-context aliases (`parent` / `frames` replaceable, `top` unforgeable read-only, `opener` writable; no child frames or popups) |
 
 Implemented for contrast: `screen.width` / `height` / `availWidth` /
 `availHeight` / `colorDepth` / `pixelDepth`, and `window.devicePixelRatio` /
@@ -258,8 +262,11 @@ console method cluster; M11-29 delivered the deterministic timer/microtask
 event-loop facade, M11-30 integrated rAF/idle into it, M11-31/M11-32 added the
 virtual performance clock and minimal form validation, M11-33 added OS-backed
 `crypto.getRandomValues()` / `randomUUID()`, M11-34 expanded the CSS selector
-engine, and M11-35 completed the deterministic window/screen/navigator metadata.
-Remaining candidates (mapping to `docs/m11_compatibility_backlog.md`):
+engine, M11-35 completed the deterministic window/screen/navigator metadata, and
+M11-36..M11-40 completed deterministic dialogs, the performance entry timeline,
+bounded `structuredClone`, single-context window metadata, and
+`scheduler.postTask`. Remaining candidates (mapping to
+`docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|

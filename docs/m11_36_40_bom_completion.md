@@ -1,7 +1,6 @@
 # M11-36..M11-40 — BOM completion batch
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-30`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-30`)**
 
 This batch finishes the deterministic BOM surfaces that do not need a real
 window, network, layout engine, or host callback bridge. `navigator.userAgentData`
@@ -62,7 +61,10 @@ This runtime has exactly one top-level browsing context:
   `[Replaceable]`; page scripts may assign it
 - `window.opener === null` — writable `any`; page scripts may assign it
 
-There are no child frames, popups, or `postMessage` delivery.
+There are no child frames, popups, or `postMessage` delivery. Because
+`parent` / `frames` are replaceable and `opener` is writable (configurable
+global properties), page scripts can declare their own `var parent` or
+`let frames` bindings; `let top` remains a restricted declaration.
 
 ## M11-40 — scheduler.postTask
 
@@ -99,5 +101,13 @@ now expects the performance timeline methods.
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `512117c`:
+
+- Linux `release-linux` run `40997424174` — cp311 / cp312 / cp313 / cp314,
+  each `1617 passed, 2 skipped`;
+- Windows `release-windows` run `40997427191` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1617 passed, 2 skipped`.
+
+`test/test_m11_36_40_bom_completion.py` ran in every lane (18 items). The full
+suite collects 1619 items; 1617 pass and 2 are skipped. See
+`docs/m11_36_40_report.md`.
