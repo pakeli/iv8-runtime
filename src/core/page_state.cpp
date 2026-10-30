@@ -6169,10 +6169,10 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
                 isolate, "structuredClone: nesting is too deep")));
         return {};
     }
-    if (value->IsSymbol() || value->IsFunction() || value->IsPromise() ||
-        value->IsWeakMap() || value->IsWeakSet() || value->IsRegExp() ||
-        value->IsNativeError() || value->IsSharedArrayBuffer() ||
-        value->IsProxy()) {
+    if (value->IsSymbol() || value->IsSymbolObject() ||
+        value->IsFunction() || value->IsPromise() || value->IsWeakMap() ||
+        value->IsWeakSet() || value->IsRegExp() || value->IsNativeError() ||
+        value->IsSharedArrayBuffer() || value->IsProxy()) {
         isolate->ThrowException(v8::Exception::TypeError(
             v8::String::NewFromUtf8Literal(
                 isolate, "structuredClone: value cannot be cloned")));
@@ -6215,6 +6215,44 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
         }
         return clone;
     }
+    if (value->IsBooleanObject()) {
+        v8::Local<v8::Value> clone = v8::BooleanObject::New(
+            isolate, value.As<v8::BooleanObject>()->ValueOf());
+        if (!remember(clone)) {
+            return {};
+        }
+        return clone;
+    }
+    if (value->IsNumberObject()) {
+        v8::Local<v8::Value> clone = v8::NumberObject::New(
+            isolate, value.As<v8::NumberObject>()->ValueOf());
+        if (!remember(clone)) {
+            return {};
+        }
+        return clone;
+    }
+    if (value->IsStringObject()) {
+        v8::Local<v8::Value> clone = v8::StringObject::New(
+            isolate, value.As<v8::StringObject>()->ValueOf());
+        if (!remember(clone)) {
+            return {};
+        }
+        return clone;
+    }
+    if (value->IsBigIntObject()) {
+        // v8::BigIntObject::New only accepts int64_t; boxing the original
+        // primitive preserves the full BigInt value.
+        v8::Local<v8::Value> primitive =
+            value.As<v8::BigIntObject>()->ValueOf();
+        v8::Local<v8::Object> clone;
+        if (!primitive->ToObject(context).ToLocal(&clone)) {
+            return {};
+        }
+        if (!remember(clone)) {
+            return {};
+        }
+        return clone;
+    }
     if (value->IsArrayBuffer()) {
         v8::Local<v8::ArrayBuffer> source = value.As<v8::ArrayBuffer>();
         if (source->WasDetached()) {
@@ -6235,51 +6273,48 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
     }
     if (value->IsTypedArray() || value->IsDataView()) {
         v8::Local<v8::ArrayBufferView> view = value.As<v8::ArrayBufferView>();
-        if (view->Buffer()->WasDetached()) {
-            isolate->ThrowException(v8::Exception::TypeError(
-                v8::String::NewFromUtf8Literal(
-                    isolate, "structuredClone: detached buffer")));
+        // Clone the whole backing buffer through `seen` so multiple views (and
+        // a direct reference to the buffer) share one cloned buffer, and keep
+        // the original byte offset/length of the view.
+        v8::Local<v8::Value> buffer_value;
+        if (!structured_clone_value(isolate, context, view->Buffer(), seen,
+                                    depth + 1)
+                 .ToLocal(&buffer_value)) {
             return {};
         }
-        const std::size_t length = view->ByteLength();
-        v8::Local<v8::ArrayBuffer> buffer = v8::ArrayBuffer::New(isolate, length);
-        if (length > 0) {
-            std::memcpy(buffer->Data(),
-                        static_cast<const std::uint8_t*>(
-                            view->Buffer()->Data()) +
-                            view->ByteOffset(),
-                        length);
-        }
+        v8::Local<v8::ArrayBuffer> buffer = buffer_value.As<v8::ArrayBuffer>();
+        const std::size_t byte_offset = view->ByteOffset();
+        const std::size_t byte_length = view->ByteLength();
         v8::Local<v8::Value> clone;
         if (value->IsDataView()) {
-            clone = v8::DataView::New(buffer, 0, length);
+            clone = v8::DataView::New(buffer, byte_offset, byte_length);
         } else {
             v8::Local<v8::TypedArray> typed = value.As<v8::TypedArray>();
             const std::size_t count = typed->Length();
             if (value->IsUint8Array()) {
-                clone = v8::Uint8Array::New(buffer, 0, count);
+                clone = v8::Uint8Array::New(buffer, byte_offset, count);
             } else if (value->IsUint8ClampedArray()) {
-                clone = v8::Uint8ClampedArray::New(buffer, 0, count);
+                clone = v8::Uint8ClampedArray::New(buffer, byte_offset, count);
             } else if (value->IsInt8Array()) {
-                clone = v8::Int8Array::New(buffer, 0, count);
+                clone = v8::Int8Array::New(buffer, byte_offset, count);
             } else if (value->IsUint16Array()) {
-                clone = v8::Uint16Array::New(buffer, 0, count);
+                clone = v8::Uint16Array::New(buffer, byte_offset, count);
             } else if (value->IsInt16Array()) {
-                clone = v8::Int16Array::New(buffer, 0, count);
+                clone = v8::Int16Array::New(buffer, byte_offset, count);
             } else if (value->IsUint32Array()) {
-                clone = v8::Uint32Array::New(buffer, 0, count);
+                clone = v8::Uint32Array::New(buffer, byte_offset, count);
             } else if (value->IsInt32Array()) {
-                clone = v8::Int32Array::New(buffer, 0, count);
+                clone = v8::Int32Array::New(buffer, byte_offset, count);
             } else if (value->IsFloat16Array()) {
-                clone = v8::Float16Array::New(buffer, 0, count);
+                clone = v8::Float16Array::New(buffer, byte_offset, count);
             } else if (value->IsFloat32Array()) {
-                clone = v8::Float32Array::New(buffer, 0, count);
+                clone = v8::Float32Array::New(buffer, byte_offset, count);
             } else if (value->IsFloat64Array()) {
-                clone = v8::Float64Array::New(buffer, 0, count);
+                clone = v8::Float64Array::New(buffer, byte_offset, count);
             } else if (value->IsBigInt64Array()) {
-                clone = v8::BigInt64Array::New(buffer, 0, count);
+                clone = v8::BigInt64Array::New(buffer, byte_offset, count);
             } else if (value->IsBigUint64Array()) {
-                clone = v8::BigUint64Array::New(buffer, 0, count);
+                clone = v8::BigUint64Array::New(buffer, byte_offset, count);
             } else {
                 isolate->ThrowException(v8::Exception::TypeError(
                     v8::String::NewFromUtf8Literal(
@@ -8923,8 +8958,9 @@ void PageState::install_page(const std::string& base_url,
             // so these are read-only data properties on the global rather than host
             // accessors. Values come from the Page-level environment_ and are
             // re-applied on every generation. M11-35 adds window.length,
-            // screenLeft/screenTop aliases, and isSecureContext. Read-only
-            // (ReadOnly|DontDelete); no scroll / resize / matchMedia surface.
+            // screenLeft/screenTop aliases, and isSecureContext. Geometry and
+            // capabilities are read-only (ReadOnly|DontDelete); no scroll /
+            // resize / matchMedia surface.
             {
                 const auto define_readonly = [&](const char* name,
                                                  v8::Local<v8::Value> value) {
@@ -8934,6 +8970,17 @@ void PageState::install_page(const std::string& base_url,
                         value,
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
                                                            v8::DontDelete));
+                };
+                // [Replaceable]/writable browsing-context aliases. Unlike the
+                // read-only metadata above, page scripts may replace these with
+                // ordinary assignments (browsers expose parent/frames as
+                // [Replaceable] and opener as a writable any).
+                const auto define_replaceable = [&](const char* name,
+                                                    v8::Local<v8::Value> value) {
+                    (void)global->Set(
+                        context,
+                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
+                        value);
                 };
                 define_readonly(
                     "devicePixelRatio",
@@ -8966,11 +9013,12 @@ void PageState::install_page(const std::string& base_url,
                                      is_secure_context_url(base_url)));
                 // M11-39: this runtime has exactly one top-level browsing
                 // context. parent/top/frames alias the window itself; there is
-                // no opener and no child frame collection.
-                define_readonly("parent", global);
+                // no opener and no child frame collection. parent and frames are
+                // replaceable; top is the [LegacyUnforgeable] read-only alias.
+                define_replaceable("parent", global);
                 define_readonly("top", global);
-                define_readonly("frames", global);
-                define_readonly("opener", v8::Null(isolate));
+                define_replaceable("frames", global);
+                define_replaceable("opener", v8::Null(isolate));
             }
             // M11-40 scheduler.postTask bootstrap. Compiled after setTimeout and
             // Promise are available; scheduler tasks therefore use the existing

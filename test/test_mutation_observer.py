@@ -717,13 +717,13 @@ def test_detached_subtree_is_observable():
     with iv8.Page() as page:
         _setup(page)
         page.eval("""
-            var parent = document.createElement('div');
-            parent.setAttribute('id', 'det');
+            var detached = document.createElement('div');
+            detached.setAttribute('id', 'det');
             var child = document.createElement('span');
             child.setAttribute('id', 'c1');
-            parent.appendChild(child);
-            obs.observe(parent, {childList: true});
-            parent.removeChild(child);
+            detached.appendChild(child);
+            obs.observe(detached, {childList: true});
+            detached.removeChild(child);
         """)
         page.run_jobs()
         record = _records(page)[0]

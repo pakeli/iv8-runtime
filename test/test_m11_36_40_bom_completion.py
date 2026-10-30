@@ -146,7 +146,7 @@ def test_structured_clone_primitives_objects_arrays_and_identity():
                       structuredClone(null) === null].join('|');
             })();
             """
-        ) == "1,2,3|9,2,3,4|undefined|true"
+        ) == "1|2,3|9|2,3,4|undefined|true"
 
 
 @on_only
@@ -197,12 +197,58 @@ def test_structured_clone_date_map_set_and_buffers():
 
 
 @on_only
+def test_structured_clone_views_share_the_cloned_buffer_and_keep_offsets():
+    with iv8.Page() as page:
+        _load(page)
+        assert page.eval(
+            """
+            (() => {
+              const buf = new ArrayBuffer(8);
+              const view = new Uint8Array(buf, 1, 3);
+              view.set([4, 5, 6]);
+              const copy = structuredClone({buf, view,
+                                            view2: new Uint8Array(buf, 2, 2)});
+              return [copy.view.buffer === copy.buf,
+                      copy.view2.buffer === copy.buf,
+                      copy.view.byteOffset, copy.view.length,
+                      Array.from(copy.view).join(','),
+                      Array.from(copy.view2).join(','),
+                      new Uint8Array(buf)[1]].join('|');
+            })();
+            """
+        ) == "true|true|1|3|4,5,6|5,6|4"
+
+
+@on_only
+def test_structured_clone_boxed_primitives():
+    with iv8.Page() as page:
+        _load(page)
+        assert page.eval(
+            """
+            (() => {
+              const n = new Number(5);
+              const b = new Boolean(true);
+              const s = new String('x');
+              const big = Object(12345678901234567890n);
+              const c = structuredClone({n, b, s, big, again: n});
+              return [c.n instanceof Number, c.n.valueOf(),
+                      c.b instanceof Boolean, c.b.valueOf(),
+                      c.s instanceof String, c.s.valueOf(),
+                      c.big instanceof Object, c.big.valueOf() === 12345678901234567890n,
+                      c.n !== n, c.again === c.n].join('|');
+            })();
+            """
+        ) == "true|5|true|true|true|x|true|true|true|true"
+
+
+@on_only
 def test_structured_clone_rejects_unsupported_and_host_values():
     with iv8.Page() as page:
         _load(page)
         bad = (
             "structuredClone(function () {})",
             "structuredClone(Symbol('x'))",
+            "structuredClone(Object(Symbol('x')))",
             "structuredClone(Promise.resolve())",
             "structuredClone(document.body)",
             "structuredClone(window)",
@@ -225,9 +271,23 @@ def test_window_has_a_single_top_level_context():
         assert page.eval("window.frames === window") is True
         assert page.eval("window.frames.length") == 0
         assert page.eval("window.opener === null") is True
-        assert page.eval("(window.parent = null, window.parent === window)") is True
+        # parent/frames are [Replaceable]; opener is writable; top is
+        # [LegacyUnforgeable] and ignores assignment.
+        assert page.eval("(window.parent = null, window.parent === null)") is True
         assert page.eval("(window.top = null, window.top === window)") is True
-        assert page.eval("(window.opener = {}, window.opener === null)") is True
+        assert page.eval("(window.frames = {}, window.frames !== window)") is True
+        assert page.eval("(window.opener = {}, window.opener !== null)") is True
+
+
+@on_only
+def test_window_context_globals_allow_script_declarations():
+    with iv8.Page() as page:
+        _load(page)
+        assert page.eval("var parent = 1; parent") == 1
+        assert page.eval("let frames = 2; frames") == 2
+        # top is unforgeable, so a lexical declaration remains illegal.
+        with pytest.raises(iv8.JSError):
+            page.eval("let top = 3;")
 
 
 # --- M11-40 scheduler.postTask -------------------------------------------------

@@ -40,24 +40,29 @@ resource/navigation timing, real clock, or `performance.timeline`.
 
 Global `structuredClone(value)` with cycle/identity preservation for:
 
-- primitives (including BigInt), plain objects, arrays, `Date`, `Map`, `Set`,
-  `ArrayBuffer`, TypedArrays, and `DataView`.
+- primitives (including BigInt), plain objects, arrays, boxed
+  Boolean/Number/String/BigInt objects, `Date`, `Map`, `Set`, `ArrayBuffer`,
+  TypedArrays, and `DataView`;
+- TypedArray/DataView clones keep their byte offset and share the cloned
+  backing buffer when the source views share a buffer.
 
-Functions, symbols, promises, weak collections, RegExp/Error objects, shared
-buffers, proxies, DOM/host objects, and the global object throw a JS `TypeError`
-(this runtime has no `DOMException`). Transfer lists and exotic objects are not
-supported.
+Functions, symbols (including symbol wrappers), promises, weak collections,
+RegExp/Error objects, shared buffers, proxies, DOM/host objects, and the global
+object throw a JS `TypeError` (this runtime has no `DOMException`). Transfer
+lists and other exotic objects are not supported.
 
 ## M11-39 — single-context BOM metadata
 
 This runtime has exactly one top-level browsing context:
 
-- `window.parent === window`
-- `window.top === window`
-- `window.frames === window` (and `window.frames.length === 0`)
-- `window.opener === null`
+- `window.parent === window` — `[Replaceable]`; page scripts may assign it
+- `window.top === window` — `[LegacyUnforgeable]`, read-only; assignment is
+  ignored
+- `window.frames === window` (and `window.frames.length === 0`) —
+  `[Replaceable]`; page scripts may assign it
+- `window.opener === null` — writable `any`; page scripts may assign it
 
-All are read-only. There are no child frames, popups, or `postMessage` delivery.
+There are no child frames, popups, or `postMessage` delivery.
 
 ## M11-40 — scheduler.postTask
 

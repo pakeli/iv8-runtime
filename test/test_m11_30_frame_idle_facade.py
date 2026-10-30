@@ -145,15 +145,15 @@ def test_self_rescheduling_raf_hits_cap():
     with iv8.Page() as page:
         _load(page)
         page.eval("""
-            let frames = 0;
+            let frameCount = 0;
             function again() {
-                frames++;
+                frameCount++;
                 requestAnimationFrame(again);
             }
             requestAnimationFrame(again);
         """)
         assert page.run_until_idle(max_steps=3) is False
-        assert page.eval("frames") == 3
+        assert page.eval("frameCount") == 3
         assert page.event_loop_time_ms == 48
 
 
