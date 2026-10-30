@@ -87,6 +87,13 @@ v8_enable_i18n_support = false
 v8_enable_temporal_support = false
 use_custom_libcxx = false
 v8_enable_sandbox = false
+# Do not let V8 hijack the process allocator: on macOS the allocator shim
+# defines operator new/delete with visibility attributes that conflict with the
+# system libc++ headers when use_custom_libcxx=false. V8 then uses the system
+# allocator; PartitionAlloc remains available for the sandbox heap. This mirrors
+# the Windows release args.
+use_allocator_shim = false
+use_partition_alloc_as_malloc = false
 symbol_level = 1
 mac_deployment_target = "$DEPLOYMENT_TARGET"
 EOF
