@@ -102,14 +102,15 @@ def test_native_bom_calls_across_generation_keep_configuration():
 
 
 @on_only
-def test_property_reads_on_plain_bom_objects_remain_out_of_scope():
+def test_time_origin_and_storage_length_reads():
     with iv8.Page() as page:
         _load(page)
         page.start_access_trace()
         page.eval("performance.timeOrigin; localStorage.length;",
                   name="probe.js")
         events = _events(page)
-        # Only localStorage.length has a native getter hook in this group;
-        # performance.timeOrigin is still a plain data property.
         assert [(event["object_type"], event["member"], event["operation"])
-                for event in events] == [("storage", "length", "get")]
+                for event in events] == [
+            ("performance", "timeOrigin", "get"),
+            ("storage", "length", "get"),
+        ]

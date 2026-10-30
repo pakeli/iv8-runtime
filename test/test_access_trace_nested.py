@@ -42,11 +42,15 @@ def test_nested_connection_orientation_and_time_origin_reads():
         assert observed == [
             ("navigator", "navigator", "connection", "get"),
             ("connection", "navigator.connection", "effectiveType", "get"),
+            ("navigator", "navigator", "connection", "get"),
             ("connection", "navigator.connection", "rtt", "get"),
+            ("navigator", "navigator", "connection", "get"),
             ("connection", "navigator.connection", "downlink", "get"),
+            ("navigator", "navigator", "connection", "get"),
             ("connection", "navigator.connection", "saveData", "get"),
             ("screen", "screen", "orientation", "get"),
             ("orientation", "screen.orientation", "type", "get"),
+            ("screen", "screen", "orientation", "get"),
             ("orientation", "screen.orientation", "angle", "get"),
             ("performance", "performance", "timeOrigin", "get"),
         ]
