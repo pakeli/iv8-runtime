@@ -20,6 +20,7 @@ enum class AccessOperation {
     kGet,
     kSet,
     kCall,
+    kGetProbe,
 };
 
 struct AccessEvent {
@@ -29,8 +30,9 @@ struct AccessEvent {
     std::string object_type;
     std::string label;
     std::string member;
-    std::string operation;  // "get" | "set" | "call"
-    std::string phase;      // "enter"
+    std::string operation;   // "get" | "set" | "call" | "get_probe"
+    std::string phase;       // "enter"
+    std::string resolution;  // non-empty only for get_probe
     std::string resource_name;
     std::string source_kind;
 };
@@ -78,7 +80,8 @@ public:
     // allocation/other failures increment the dropped counter when possible.
     void record(const void* identity, std::string_view object_type,
                 std::string_view label, std::string_view member,
-                AccessOperation operation) noexcept;
+                AccessOperation operation,
+                std::string_view resolution = {}) noexcept;
 
     // Copy the current report data. If `clear` is true, events and
     // dropped_events are cleared after the copy; sequence/configuration/

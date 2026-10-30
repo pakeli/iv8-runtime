@@ -8987,6 +8987,9 @@ py::dict PageState::read_access_trace(bool clear) {
         record["member"] = event.member;
         record["operation"] = event.operation;
         record["phase"] = event.phase;
+        if (!event.resolution.empty()) {
+            record["resolution"] = event.resolution;
+        }
         record["resource_name"] = event.resource_name;
         record["source_kind"] = event.source_kind;
         events.append(record);
@@ -9018,6 +9021,7 @@ py::dict PageState::read_access_trace(bool clear) {
     operations.append("get");
     operations.append("set");
     operations.append("call");
+    operations.append("get_probe");
     coverage["operations"] = operations;
     coverage["phase"] = "enter";
     py::list not_covered;

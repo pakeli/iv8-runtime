@@ -17,6 +17,8 @@ const char* operation_name(AccessOperation operation) {
             return "set";
         case AccessOperation::kCall:
             return "call";
+        case AccessOperation::kGetProbe:
+            return "get_probe";
     }
     return "unknown";
 }
@@ -64,7 +66,8 @@ void AccessTrace::begin_generation(std::uint64_t generation) noexcept {
 
 void AccessTrace::record(const void* identity, std::string_view object_type,
                          std::string_view label, std::string_view member,
-                         AccessOperation operation) noexcept {
+                         AccessOperation operation,
+                         std::string_view resolution) noexcept {
     if (identity == nullptr || !enabled_.load(std::memory_order_acquire)) {
         return;
     }
@@ -108,6 +111,7 @@ void AccessTrace::record(const void* identity, std::string_view object_type,
         event.member = std::string(member);
         event.operation = operation_name(operation);
         event.phase = "enter";
+        event.resolution = resolution;
         event.resource_name = current_resource_;
         event.source_kind = current_source_kind_;
         events_.push_back(std::move(event));
@@ -185,7 +189,7 @@ const std::vector<std::string>& AccessTrace::not_covered() {
         "arrays and plain values returned by host APIs",
         "user-created plain JS objects",
         "method-reference reads",
-        "missing-property probes/in/delete/enumeration/descriptors",
+        "non-HostObject missing-property probes/in/delete/enumeration/descriptors",
         "read-only write attempts",
         "arguments/returns/stacks",
     };

@@ -990,10 +990,11 @@ class Page:
         generic HostObject property getter/setter or method trampoline; it is not
         a V8-wide property hook. The first slice covers ``console``, ``document``,
         ``element``, ``host_object``, ``host_probe``, ``location``, ``navigator``,
-        and ``screen``. Intrinsic ``window`` data properties, JS-created BOM
-        objects, returned plain objects/arrays, missing-property probes, ``in``,
-        delete, enumeration, descriptors, method-reference reads, and user-created
-        plain objects are not covered yet.
+        and ``screen``. Missing string-key reads on those hosts produce
+        ``get_probe``/``resolution: "missing"`` events. Intrinsic ``window`` data
+        properties, JS-created BOM objects, returned plain objects/arrays,
+        non-HostObject missing probes, ``in``, delete, enumeration, descriptors,
+        method-reference reads, and user-created plain objects are not covered yet.
 
         ``max_events`` is the retained-event capacity (earliest N retained; later
         events increment ``dropped_events``). It must be a positive ``int``; a
@@ -1043,9 +1044,11 @@ class Page:
         ``dropped_events``, ``filter_object_types``, and a ``coverage`` dictionary
         describing this slice's explicit scope. Each event contains ``seq``,
         ``generation``, ``object_id``, ``object_type``, ``label``, ``member``,
-        ``operation`` (``get``/``set``/``call``), ``phase`` (``enter``),
-        ``resource_name``, and ``source_kind`` (``eval``/``html_script``/
-        ``internal``/``unknown``).
+        ``operation`` (``get``/``set``/``call``/``get_probe``), ``phase``
+        (``enter``), ``resource_name``, and ``source_kind`` (``eval``/
+        ``html_script``/``internal``/``unknown``). ``get_probe`` events also
+        carry ``resolution`` (currently ``"missing"`` for absent HostObject
+        string-key reads).
 
         ``clear=True`` clears events and ``dropped_events`` but preserves the
         sequence, configuration, generation, and object-ID mappings. Reading never

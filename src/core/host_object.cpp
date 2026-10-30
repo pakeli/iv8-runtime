@@ -46,6 +46,32 @@ void trace_access(v8::Isolate* isolate, HostObject* host,
                   operation);
 }
 
+// Named-property interceptor for absent string keys. kNonMasking keeps the
+// interceptor out of the path for existing own/prototype properties; returning
+// kNo hands the lookup back to V8, so the script still sees undefined and all
+// descriptors/prototype/`in` behavior is unchanged.
+v8::Intercepted named_property_getter(
+    v8::Local<v8::Name> property,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    AccessTrace* trace = access_trace_from_isolate(isolate);
+    if (trace == nullptr || !trace->enabled() || !property->IsString()) {
+        return v8::Intercepted::kNo;
+    }
+    HostObject* host = backing_of(info.Holder());
+    if (host == nullptr) {
+        return v8::Intercepted::kNo;
+    }
+    v8::String::Utf8Value utf8(isolate, property);
+    if (*utf8 == nullptr) {
+        return v8::Intercepted::kNo;
+    }
+    const std::string key(*utf8, static_cast<std::size_t>(utf8.length()));
+    trace->record(host, host->trace_object_type(), host->trace_label(), key,
+                  AccessOperation::kGetProbe, "missing");
+    return v8::Intercepted::kNo;
+}
+
 // One generic accessor for every native property: dispatches by the property
 // name to the backing object's get_property().
 void property_getter(v8::Local<v8::Name> property,
@@ -99,6 +125,16 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
                                        HostObject* host) {
     v8::Local<v8::ObjectTemplate> tmpl = v8::ObjectTemplate::New(isolate);
     tmpl->SetInternalFieldCount(1);  // slot 0 = HostObject* (aligned pointer)
+
+    // Observe absent string-key reads without masking own/prototype properties.
+    // The callback only records when tracing is enabled and otherwise takes the
+    // same normal lookup path as an object without an interceptor.
+    const auto handler_flags = static_cast<v8::PropertyHandlerFlags>(
+        static_cast<int>(v8::PropertyHandlerFlags::kNonMasking) |
+        static_cast<int>(v8::PropertyHandlerFlags::kOnlyInterceptStrings));
+    tmpl->SetHandler(v8::NamedPropertyHandlerConfiguration(
+        &named_property_getter, nullptr, nullptr, nullptr, nullptr,
+        v8::Local<v8::Value>(), handler_flags));
 
     // Data properties are getter-computed. Read-only ones use ReadOnly|DontDelete
     // (a JS write is a no-op in sloppy mode / TypeError in strict). Writable ones
