@@ -1004,7 +1004,7 @@ UI, network, Python API, or new environment key is added. See
 
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
-manager, and navigator.permissions groups add
+manager, navigator.permissions, and matchMedia-result groups add
 ``Page.start_access_trace(max_events=10000, object_types=None)`` /
 ``Page.stop_access_trace()`` / ``Page.read_access_trace(clear=True)``. It records
 native ``HostObject`` property get/set and method-call entries,
@@ -1013,13 +1013,13 @@ performance/crypto/Storage native callback calls plus Storage ``length`` reads,
 window metadata accessor gets plus ``window.name`` get/set, nested
 connection/orientation/``performance.timeOrigin`` reads, static
 ``visualViewport`` metadata, writable handler, no-op method, and missing-probe
-events, ``navigator.storage`` parent reads plus manager method calls, and
-``navigator.permissions`` parent/query/status accesses, with sequence,
-generation, stable native object ID, object type/label, member, operation,
-resource name, and source kind. The visual viewport conversion keeps values and
-read/write results but, like other host objects, uses the template prototype and
-makes its no-op methods writable/configurable; the storage/permissions managers
-and PermissionStatus objects keep their plain-object shapes. See the boundary
+events, ``navigator.storage`` parent reads plus manager method calls,
+``navigator.permissions`` parent/query/status accesses, and matchMedia result
+reads/method calls, with sequence, generation, stable native object ID, object
+type/label, member, operation, resource name, and source kind. Visual viewport
+and matchMedia results use the host-object template prototype and
+writable/configurable no-op methods; the storage/permissions managers and
+PermissionStatus objects keep their plain-object shapes. See the boundary
 document for exact descriptor changes. It is a separate,
 default-off monitoring channel; it does not change the five existing watch
 channels, add a JS-visible API, or cover ``parent``/``top``/``frames``/``opener``,

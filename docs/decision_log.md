@@ -562,6 +562,29 @@ Verified on real V8 at commit `18e674e`: Linux `41031830520`, Windows
 1682 items (1677 previous + 5 permissions tests). See
 `docs/host_access_trace.md`.
 
+### 34. Host access trace matchMedia results (step 5g)
+
+Decided/verified `2026-10-30`.
+
+`matchMedia` remains a JS function (so its non-native `toString` is unchanged)
+and keeps the bounded JS query evaluator. A temporary native factory is captured
+by the bootstrap in its closure and deleted from the global immediately. Each
+result is a fresh `MediaQueryListHost` wrapper over a Page-owned backing cached
+by (media string, matches); repeated queries share the backing identity, and
+different queries do not. `media`/`matches` reads, the five no-op listener
+methods, and missing probes are traced. `onchange` stays a plain per-wrapper own
+property and is untraced.
+
+Documented tradeoffs: HostObject template prototype, writable/configurable no-op
+methods, descriptor reads that evaluate the media/matches getters, UTF-16 query
+storage for exact text, and one backing per unique query/matches until the next
+`load()`.
+
+Verified on real V8 at commit `7d35a30`: Linux `41032945394`, Windows
+`41032950281`, each wheel lane `1683 passed, 2 skipped`. The full suite collects
+1685 items (1682 previous + 3 matchMedia tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

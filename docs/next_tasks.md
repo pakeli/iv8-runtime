@@ -927,9 +927,9 @@ Final commit `e19f54d` (branch `host-access-window`):
 
 The nested metadata/timeOrigin group was completed as Priority 3y below, the
 static visualViewport group as Priority 3z, the navigator.storage manager as
-Priority 3aa, and navigator.permissions/PermissionStatus as Priority 3ab.
-Remaining step-5 groups: `matchMedia` results, navigator plugins/mimeTypes,
-permission-status `onchange`/missing probes, and other plain property reads. Value/argument/return summaries remain step 6. The M11-46
+Priority 3aa, navigator.permissions/PermissionStatus as Priority 3ab, and
+matchMedia results as Priority 3ac. Remaining step-5 group: navigator
+plugins/mimeTypes plus the remaining plain/onchange reads. Value/argument/return summaries remain step 6. The M11-46
 selector follow-up remains deferred.
 
 ## Priority 3y: Host access trace nested metadata — DONE (`2026-10-30`)
@@ -1081,9 +1081,49 @@ The first CI attempt failed only because a descriptor assertion used
 
 ### Next
 
-Continue step 5 with `matchMedia` result objects, `navigator.plugins` /
-`mimeTypes`, permission-status `onchange`/missing probes, and other plain
-property reads. Value/argument/return summaries remain step 6. The M11-46
+Continue step 5 with matchMedia result objects (Priority 3ac below), then
+`navigator.plugins` / `mimeTypes` and the remaining plain/onchange reads.
+Value/argument/return summaries remain step 6. The M11-46 selector follow-up
+remains deferred.
+
+## Priority 3ac: Host access trace matchMedia results — DONE (`2026-10-30`)
+
+### What landed
+
+- `matchMedia` stays a JS function (non-native `toString` unchanged) and keeps
+  the bounded JS evaluator. It captures a temporary native factory that is
+  deleted from the global immediately.
+- Each result is a fresh `MediaQueryListHost` wrapper over a Page-owned backing
+  cached by (media string, matches):
+  - `matchMedia()` calls record `media_query_list` `call` events (same query ->
+    same backing ID);
+  - `media` / `matches` record `get`, the five no-op listener methods record
+    `call`, and missing string keys record `get_probe`;
+  - `onchange` stays a plain per-wrapper own property and is untraced;
+  - query text is stored as UTF-16 to preserve exact input.
+- HostObject descriptor differences are documented: template prototype,
+  writable/configurable no-op methods, and descriptor reads evaluating the
+  media/matches getters. Backings live until the next `load()`.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_match_media.py` (3 items). Full suite collects 1685
+items; each wheel lane: **`1683 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `7d35a30` (branch `host-access-match-media`):
+
+- Linux `release-linux` run `41032945394` — cp311–cp314, each
+  `1683 passed, 2 skipped`;
+- Windows `release-windows` run `41032950281` — Python 3.11–3.14, each
+  `1683 passed, 2 skipped`.
+
+This slice passed on its first CI attempt.
+
+### Next
+
+Continue step 5 with `navigator.plugins` / `mimeTypes` and the remaining
+plain/onchange reads. Value/argument/return summaries remain step 6. The M11-46
 selector follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)

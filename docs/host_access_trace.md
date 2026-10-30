@@ -2,8 +2,8 @@
 
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
 BOM callback calls + window/nested metadata + static visualViewport + navigator
-storage/permissions manager reads/calls green on real V8 Linux + Windows
-(`2026-10-30`)**
+storage/permissions managers + matchMedia results green on real V8 Linux +
+Windows (`2026-10-30`)**
 
 This document freezes steps 1–4 and the first groups of step 5 of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
@@ -11,9 +11,9 @@ string-key missing-property probes, call/get coverage for independent native BOM
 callbacks (performance, crypto, Storage), intrinsic window metadata reads,
 nested `navigator.connection` / `screen.orientation` / `performance.timeOrigin`
 reads, the static `visualViewport` HostObject, the `navigator.storage`
-manager's parent read plus method calls, and `navigator.permissions` parent
-reads plus query calls and returned PermissionStatus accesses. It is a
-second-layer monitoring feature. It does not change the M1 `JSContext` contract,
+manager's parent read plus method calls, `navigator.permissions` parent reads
+plus query calls and returned PermissionStatus accesses, and matchMedia result
+objects. It is a second-layer monitoring feature. It does not change the M1 `JSContext` contract,
 the existing `watch_apis` / Reflect / Object.keys channels, or DOM/BOM
 values/assignment behavior.
 
@@ -59,13 +59,15 @@ setter does not retroactively remove the event.
 | `navigator.permissions.query({name})` | records a navigator `get` for `permissions` plus a `permissions` `call` |
 | `status.name` / `status.state` / `status.addEventListener()` / `dispatchEvent()` | records `get`/`call` with `object_type: "permission_status"` |
 | permission-status `onchange` reads/writes and missing-property probes | not covered; those stay plain properties |
+| `matchMedia(query)` / `m.media` / `m.matches` / `m.addEventListener()` | records a `media_query_list` `call` plus `get`/`call` entries |
+| `m.onchange` reads/writes | not covered; it stays a per-wrapper plain property |
 | other plain property reads on native BOM objects | not covered yet |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
 | `window.innerWidth` / `outerWidth` / `innerHeight` | records `get` from the window metadata accessor |
 | `window.name` | records `get` and `set` |
 | `window.origin` / `isSecureContext` / `crossOriginIsolated` / `closed` / `frameElement` | records `get`; read-only behavior unchanged |
 | `window.parent` / `top` / `frames` / `opener` | not covered by this accessor group |
-| `matchMedia(...)` result objects / `navigator.plugins` / `mimeTypes` | not covered yet |
+| `navigator.plugins` / `mimeTypes` | not covered yet |
 | `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered in this slice; step 6 |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
@@ -81,6 +83,7 @@ setter does not retroactively remove the event.
 | `visualViewport` | `VisualViewportHost` | Installed as a read-only global; metadata properties plus no-op event-target methods. |
 | `navigator.storage` | plain cached object + native callbacks | Returned by `NavigatorHost::get_property("storage")`; the parent read is `navigator`, method calls carry `storage_manager` identity. |
 | `navigator.permissions` | plain cached object + native callback | Returned by `NavigatorHost::get_property("permissions")`; `query()` records `permissions` identity, returned statuses use fixed per-name identity. |
+| matchMedia results | `MediaQueryListHost` | Fresh JS wrapper per call over a Page-owned backing cached by query/matches; the JS `matchMedia` function still evaluates the query. |
 | `location` | `LocationHost` | Installed as a global; `toString()` is its only method. |
 | `document` | `DocumentHost` | Installed as a global; property getters and methods. |
 | element wrappers | `ElementHost` | Lazily created and cached per backing `DomNode`; not a global. Fresh JS wrappers can represent the same native backing. |
@@ -102,9 +105,9 @@ listed as not covered.
   map; IDs are never reused.
 - `object_type` is the native category: `host_probe`, `console`, `navigator`,
   `screen`, `location`, `document`, `element`, `connection`, `orientation`,
-  `performance`, `permission_status`, `permissions`, `crypto`, `storage`,
-  `storage_manager`, `visual_viewport`, `window`, or the fallback
-  `host_object`.
+  `performance`, `permission_status`, `permissions`, `media_query_list`,
+  `crypto`, `storage`, `storage_manager`, `visual_viewport`, `window`, or the
+  fallback `host_object`.
 - `label` is a display hint. Global hosts use their global name; elements use
   their native HTML tag only. Labels must not be built by reading JS `id`,
   text, attributes, or other properties.
@@ -326,6 +329,35 @@ with a new generation like other identities. Not covered: `onchange` reads and
 writes, missing-property probes on a status (it is a plain object), and the
 Promise value itself.
 
+## 4.8 matchMedia result objects (step 5g)
+
+`matchMedia(query)` remains a JS function (so its non-native `toString`
+behavior is unchanged) and still evaluates the bounded query in JS. It calls a
+temporary native factory captured in its closure; the factory is deleted from
+the global immediately, leaving no JS-visible surface. Each result is a fresh JS
+wrapper over a Page-owned backing cached by (media string, matches):
+
+- every `matchMedia()` call records a `call` with `object_type:
+  "media_query_list"`, label `"matchMedia"`, and member `matchMedia`; repeated
+  calls with the same query share the backing `object_id`, different queries do
+  not;
+- `media` / `matches` reads record `get`; `addListener` / `removeListener` /
+  `addEventListener` / `removeEventListener` / `dispatchEvent` calls record
+  `call`; absent string keys produce `get_probe` / `"missing"`;
+- `onchange` stays a plain per-wrapper own property (`null` initially, writable),
+  independent between wrappers over the same backing; its reads/writes are not
+  traced;
+- values, no-op listener behavior, `dispatchEvent() === false`, read-only media/
+  matches writes, and the non-native `matchMedia.toString()` result are
+  unchanged.
+
+Because results are HostObjects, their instance prototype is the host-object
+template prototype, the no-op methods are writable/configurable, and descriptor
+reads for `media`/`matches` evaluate the native getters (an extra `get`).
+Media strings are stored as UTF-16 so the exact query text (including lone
+surrogates) is preserved. Backings live until the next `load()`; each unique
+query/matches pair allocates one small backing per generation.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -359,8 +391,8 @@ old channel.
 
 - Window `parent` / `top` / `frames` / `opener` and other intrinsic/global data
   properties not listed in §4.3.
-- `matchMedia(...)` result objects, `navigator.plugins` / `mimeTypes`, and
-  nested BOM objects not listed in §4.4–§4.7.
+- `navigator.plugins` / `mimeTypes`, MediaQueryList `onchange`/missing probes,
+  and nested BOM objects not listed in §4.4–§4.8.
 - Method-reference/property reads on `performance`, `crypto`, and Storage (their
   independent native method calls and the covered getters are described in step
   5a/5e); `navigator.plugins` / `mimeTypes`, `matchMedia` results, and nested
@@ -379,20 +411,20 @@ old channel.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The remaining step-5 groups expand `matchMedia` results, `navigator.plugins` /
-`mimeTypes`, and other plain property reads; step 6 adds method-reference reads,
-`in`, delete, enumeration, descriptors, and value/argument/return summaries.
-None is implied by this slice.
+The remaining step-5 groups expand `navigator.plugins` / `mimeTypes` and other
+plain property reads; step 6 adds method-reference reads, `in`, delete,
+enumeration, descriptors, and value/argument/return summaries. None is implied
+by this slice.
 
 ## 8. Verification
 
-Verified on real V8 at commit `18e674e` (branch
-`host-access-permissions`):
+Verified on real V8 at commit `7d35a30` (branch
+`host-access-match-media`):
 
-- Linux `release-linux` run `41031830520` — cp311 / cp312 / cp313 / cp314,
-  each `1680 passed, 2 skipped`;
-- Windows `release-windows` run `41031835192` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1680 passed, 2 skipped`.
+- Linux `release-linux` run `41032945394` — cp311 / cp312 / cp313 / cp314,
+  each `1683 passed, 2 skipped`;
+- Windows `release-windows` run `41032950281` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1683 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
@@ -401,14 +433,15 @@ Verified on real V8 at commit `18e674e` (branch
 `test/test_access_trace_window.py` (4 items),
 `test/test_access_trace_nested.py` (3 items),
 `test/test_access_trace_visual_viewport.py` (4 items),
-`test/test_access_trace_storage_manager.py` (4 items), and
-`test/test_access_trace_permissions.py` (5 items) ran in every lane. The full
-suite collects 1682 items; 1680 pass and 2 are skipped.
+`test/test_access_trace_storage_manager.py` (4 items),
+`test/test_access_trace_permissions.py` (5 items), and
+`test/test_access_trace_match_media.py` (3 items) ran in every lane. The full
+suite collects 1685 items; 1683 pass and 2 are skipped.
 
+The matchMedia and storage-manager slices passed on their first CI attempts.
 The permissions slice needed a second CI run only because `Array.join`
 stringifies `null` as an empty field in the descriptor assertion; the final
-commit `18e674e` corrects the test expectation. The storage-manager slice passed
-on its first CI attempt. Earlier groups recorded their test-expectation
+commit `18e674e` corrects the test expectation. Earlier groups recorded their test-expectation
 corrections in this document; the visual viewport attempt needed a second run
 for descriptor/getter and `Array.join` semantics, and the nested attempt needed
 a second run for repeated parent getters.
@@ -446,6 +479,9 @@ Coverage in this slice:
 - `navigator.permissions` parent reads, query calls, status name/state gets,
   status method calls, per-name identity grouping, and all rejection messages
   are covered while keeping the plain-object shapes;
+- `matchMedia` result calls/gets/method calls/missing probes, query-keyed
+  identity, per-wrapper onchange independence, and the documented HostObject
+  differences are covered;
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
@@ -454,7 +490,7 @@ Coverage in this slice:
 - capacity, dropped-event counts, object-type filters, read-and-clear, stop,
   multiple Pages, and disposal behavior are covered by tests.
 
-The remaining step-5 blind spots (`matchMedia` results, navigator
-plugins/mimeTypes, permission-status `onchange`/missing probes, and other plain
-BOM property reads) and step 6 (remaining operations and values) remain
+The remaining step-5 blind spots (navigator plugins/mimeTypes,
+MediaQueryList/PermissionStatus `onchange`/missing probes, and other plain BOM
+property reads) and step 6 (remaining operations and values) remain
 intentionally out of scope.

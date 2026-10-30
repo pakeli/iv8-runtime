@@ -1003,12 +1003,12 @@ class Page:
         ``performance.timeOrigin``, static ``visualViewport`` metadata,
         writable ``onresize``/``onscroll``, no-op event methods, and missing
         probes, ``navigator.storage`` parent reads plus manager method calls,
-        and ``navigator.permissions`` query calls plus PermissionStatus
-        name/state/method accesses. The visual viewport conversion keeps its
-        values, global read-only behavior, and method results, but (like other
-        host objects) it now has the host-object template prototype and
-        writable/configurable no-op methods; the storage and permissions
-        managers and PermissionStatus objects keep their plain-object shapes.
+        ``navigator.permissions`` query calls plus PermissionStatus
+        name/state/method accesses, and matchMedia result calls/gets/method
+        calls. The visual viewport and matchMedia results are host objects, so
+        they use the template prototype and writable/configurable no-op
+        methods; the storage/permissions managers and PermissionStatus objects
+        keep their plain-object shapes.
         ``parent`` / ``top`` / ``frames`` / ``opener``, the remaining plain BOM
         property reads and nested objects, returned plain objects/arrays,
         non-HostObject missing probes, ``in``, delete, enumeration, descriptors,

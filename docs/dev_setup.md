@@ -116,6 +116,6 @@ If you only remember one thing:
 > `2026-10-30` and merged to `master` on the fork (`pakeli/iv8-runtime`); upstream
 > sync is out of scope. The post-M11 host access trace steps 1–4 plus the
 > step-5 native BOM call, window metadata, nested metadata, static
-> visualViewport, navigator.storage manager, and navigator.permissions groups
-> are also verified (commit `18e674e`); see `docs/m11_41_45_report.md` and
-> `docs/host_access_trace.md`.
+> visualViewport, navigator.storage manager, navigator.permissions, and
+> matchMedia-result groups are also verified (commit `7d35a30`); see
+> `docs/m11_41_45_report.md` and `docs/host_access_trace.md`.

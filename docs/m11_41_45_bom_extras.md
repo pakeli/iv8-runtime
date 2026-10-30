@@ -10,8 +10,10 @@ host-object conventions. Step 5e replaces the `navigator.storage` methods with
 native callbacks for tracing while keeping its plain-object shape, identity,
 descriptors, and results unchanged. Step 5f does the same for
 `navigator.permissions.query()` and adds traced status name/state/method
-accesses without changing the PermissionStatus shape. See
-`docs/host_access_trace.md` §4.5–§4.7.
+accesses without changing the PermissionStatus shape. Step 5g backs returned
+MediaQueryList objects with cached HostObjects while keeping values, query
+evaluation, `onchange`, and non-native `matchMedia.toString()` behavior
+unchanged. See `docs/host_access_trace.md` §4.5–§4.8.
 
 This batch fills the remaining deterministic BOM metadata that can be served
 without layout, network, OS permission UI, background events, or a real storage
