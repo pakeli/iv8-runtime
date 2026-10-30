@@ -26,6 +26,10 @@ git log --oneline --decorate -n 20
 
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
+- Release lanes: Linux x64, Windows x64, and macOS arm64 (`macos-15` via
+  `tools/build_v8_macos.sh` + `.github/workflows/release-macos.yml`) all build
+  and test V8-linked wheels. macOS wheels are tagged `macosx_11_0_arm64`;
+  Intel/x64 and universal2 are not built.
 - As of `2026-10-30`, the latest verified milestone is **M11-41..M11-45** (BOM
   viewport/media/device metadata), green on real V8 Linux + Windows (commit
   `61abc3b`, merged to `master` on the fork; upstream sync out of scope). The

@@ -76,14 +76,33 @@ python -m pytest test/test_watch_object_keys.py -v
 
 ### macOS
 
-- CI mentions macOS lanes, but current repo context does not indicate it is the
-  primary release target.
+- Apple Silicon (**arm64**) is the supported macOS release target; Intel/x64 and
+  universal2 wheels are not built.
+- Build the pinned V8 monolith first (requires Xcode Command Line Tools):
+
+  ```bash
+  tools/build_v8_macos.sh                 # arm64 on Apple Silicon
+  V8_TARGET_CPU=x64 tools/build_v8_macos.sh   # optional Intel build
+  ```
+
+- Then build a V8-linked wheel:
+
+  ```bash
+  MACOSX_DEPLOYMENT_TARGET=11.0   CMAKE_ARGS="-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0"   python -m pip wheel . --no-deps -w dist
+  ```
+
+  The wheel is tagged `macosx_11_0_arm64` on Apple Silicon.
+- Release CI: `.github/workflows/release-macos.yml` runs on `macos-15`
+  (arm64), builds/caches the V8 monolith, and tests cp311–cp314.
+- The general CI macOS lanes are V8-free skeleton shape guards, not release
+  lanes.
 
 ## 5. CI / Release Entry Points
 
 - general CI: `.github/workflows/ci.yml`
 - Linux release wheels: `.github/workflows/release-linux.yml`
-- Windows release lane exists: `.github/workflows/release-windows.yml`
+- Windows release lane: `.github/workflows/release-windows.yml`
+- macOS arm64 release lane: `.github/workflows/release-macos.yml`
 
 ## 6. How To Resume Safely After Context Loss
 

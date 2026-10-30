@@ -509,7 +509,9 @@ narrative in prose and is kept in sync with these summaries.
 - Linux x86-64 is the real release target; the repository records a green Linux wheel
   workflow for cp311–cp314. See `docs/phase9_release_strategy.md`.
 - Windows builds with real V8 as well, but is **not** the primary release baseline.
-  macOS is skeleton-only. Promoting Windows is an open decision
+  macOS arm64 now also has a V8-linked release lane (`tools/build_v8_macos.sh` +
+  `release-macos.yml`, `macos-15`, `macosx_11_0_arm64`); Intel/x64 and universal2
+  are not built. Promoting Windows/macOS remains an open decision
   (`docs/decision_log.md` §C).
 - The package exports the same public **shape** in a V8-free skeleton build, where
   `JSContext()` / `JSValue()` / `Page()` raise `RuntimeError`. Check `iv8._v8_linked`

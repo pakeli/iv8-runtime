@@ -230,9 +230,15 @@ the V8 pin; none of the three may drift silently. CI caches the built monolith p
   universal2 wheel is a Phase 9 option (build both, `lipo` together) but not required for
   M1 bring-up.
 - Toolchain: V8's bundled clang; link against the platform libc++ (`use_custom_libcxx=false`).
-- Set and record a minimum `macos_deployment_target` (proposed: 11.0) so wheel tags are
+- Set and record a minimum `macos_deployment_target` (chosen: **11.0**) so wheel tags are
   stable.
 - Output: `obj/libv8_monolith.a`.
+- Implemented in `tools/build_v8_macos.sh` (arm64 by default) with
+  `.github/workflows/release-macos.yml`. macOS also disables the allocator shim
+  (`use_allocator_shim=false`, `use_partition_alloc_as_malloc=false`): with the
+  platform libc++ the shim's `operator new/delete` visibility declarations
+  conflict with the SDK headers. The CMake `APPLE` branch links Foundation and
+  CoreFoundation.
 
 ### 5.4 Windows
 
@@ -606,6 +612,13 @@ coverage and is marked `continue-on-error` (non-blocking); the required macOS ga
 
 **Later (not blocking Phase 2):** add V8-linking lanes (consume the EC-2 monolith), a Linux
 debug/ASan lane (`test_plan.md` §15), and release wheels via `cibuildwheel` (§7).
+
+**Update 2026-10-30 — macOS V8-linked release wheels:** `release-macos` now builds and
+tests cp311–cp314 V8-linked arm64 wheels on `macos-15` (Apple Silicon), tagged
+`macosx_11_0_arm64`; see run `41043433081`, each lane `1690 passed, 2 skipped`.
+The `macos-14`/`macos-13` runner images referenced in the 2026-07 evidence are being
+retired; the release lane uses the current `macos-15` arm64 image. Intel/x64 and
+universal2 remain unbuilt.
 
 ### Gate
 

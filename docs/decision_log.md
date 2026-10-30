@@ -616,6 +616,24 @@ Verified on real V8 at commit `b936307`: Linux `41035577072`, Windows
 completes all planned step-5 object groups; remaining plain-property/returned-
 collection gaps are documented non-goals. See `docs/host_access_trace.md`.
 
+### 37. macOS arm64 V8-linked release wheels
+
+Decided/verified `2026-10-30`.
+
+macOS release support mirrors Linux/Windows: `tools/build_v8_macos.sh` builds the
+pinned V8 monolith (arm64 by default) and `release-macos.yml` caches it, builds
+cp311–cp314 wheels on `macos-15` (Apple Silicon), installs and tests each wheel,
+and publishes on tags. macOS uses the platform libc++ with the allocator shim
+disabled (SDK visibility conflict), keeps the V8 sandbox off, and sets
+`mac_deployment_target=11.0`. CMake links Foundation/CoreFoundation for the
+static monolith. Intel/x64 and universal2 remain unbuilt.
+
+The first build (`41040030305`) failed in `allocator_shim_apple.cc`; disabling
+`use_allocator_shim` / `use_partition_alloc_as_malloc` fixed it. Verified in run
+`41043433081`: wheels
+`iv8-0.0.1-cp3xx-cp3xx-macosx_11_0_arm64.whl`, V8 `15.0.245.19`, each lane
+`1690 passed, 2 skipped` (full suite 1692).
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

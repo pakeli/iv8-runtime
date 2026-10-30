@@ -412,10 +412,16 @@ Recent implementation sequence from Git history:
 Current known status from repository docs:
 
 - Linux release strategy was chosen in `docs/phase9_release_strategy.md`.
-- The repository records a green Linux wheel workflow result for cp311–cp314.
-- Linux is the real release target.
-- Windows and macOS exist in CI/build planning, but should still be treated as
-  non-primary release targets unless explicitly updated.
+- Linux is the real release target; the repository records green Linux wheel
+  results for cp311–cp314.
+- Windows and macOS arm64 now have verified V8-linked release lanes as well:
+  `release-windows.yml` and `release-macos.yml` (macos-15 arm64,
+  `macosx_11_0_arm64` wheels). They remain non-primary release targets unless
+  explicitly promoted.
+- macOS arm64 verification (`2026-10-30`): Linux-independent run `41043433081`
+  built the pinned V8 monolith on `macos-15` and produced cp311–cp314
+  `macosx_11_0_arm64` wheels; every lane reported `1690 passed, 2 skipped`.
+  Intel/x64 and universal2 macOS wheels are not built.
 
 ## 5. Documentation Layering (reconciled)
 

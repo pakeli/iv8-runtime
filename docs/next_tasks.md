@@ -1187,6 +1187,36 @@ All planned step-5 object groups are complete. Move to step 6: method-reference
 reads, `in`, delete, enumeration, descriptor queries, and value/argument/return
 summaries. The M11-46 selector follow-up remains deferred.
 
+## Priority 3af: macOS arm64 V8-linked release wheels — DONE (`2026-10-30`)
+
+### What landed
+
+- `tools/build_v8_macos.sh` builds the pinned V8 monolith on macOS (arm64 by
+  default, `V8_TARGET_CPU=x64` optional) and stages `data/v8` for CMake.
+- `.github/workflows/release-macos.yml` mirrors the Linux/Windows release
+  pattern: build/cached V8 monolith on `macos-15` (Apple Silicon), cp311–cp314
+  wheel matrix, clean install, full pytest, artifact upload, tag publishing.
+- macOS V8 args use the platform libc++ (`use_custom_libcxx=false`), disable the
+  allocator shim/PA-as-malloc (SDK libc++ visibility conflict), keep the V8
+  sandbox off, and set `mac_deployment_target=11.0`. CMake links Foundation and
+  CoreFoundation for the static monolith.
+- Intel/x64 and universal2 macOS wheels are intentionally not built.
+
+### Verification — passed
+
+Run `41043433081` (branch `macos-release`):
+
+- `macos-15` arm64 V8 monolith build + cache succeeded;
+- cp311/cp312/cp313/cp314 wheels built as
+  `iv8-0.0.1-cp3xx-cp3xx-macosx_11_0_arm64.whl`, all importing V8
+  `15.0.245.19`;
+- each wheel lane: **`1690 passed, 2 skipped`** (full suite collects 1692).
+
+The first build attempt (`41040030305`) failed in V8's
+`allocator_shim_apple.cc` because the platform libc++ visibility attributes
+conflict with the shim; `use_allocator_shim=false` +
+`use_partition_alloc_as_malloc=false` fixed it.
+
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
 ### Goal
