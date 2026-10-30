@@ -3,8 +3,9 @@
 # Only EXPLICIT, in-repo paths are accepted — no system/fuzzy V8 discovery.
 # Configuration FAILS (never silently falls back) if the artifact is missing.
 # The artifact is produced per platform: tools/build_v8_linux.sh /
-# build_v8_manylinux.sh (Linux) or tools/build_v8_windows.bat (Windows), cached
-# under data/v8/ (git-ignored).
+# build_v8_manylinux.sh (Linux), tools/build_v8_macos.sh (macOS), or
+# tools/fetch_v8_windows.bat + build_v8_windows.bat (Windows), cached under
+# data/v8/ (git-ignored).
 
 function(iv8_link_v8_monolith target)
   set(v8_root "${CMAKE_SOURCE_DIR}/data/v8")
@@ -84,10 +85,10 @@ function(iv8_link_v8_monolith target)
   endif()
 
   # IV8_WITH_V8 gates the EngineRuntime code paths. The remaining defines are
-  # ABI-affecting and MUST match how the monolith was built. Both platforms build
-  # with pointer compression ON. Windows uses V8's official config (sandbox ON);
-  # Linux disables the sandbox (use_custom_libcxx=false is incompatible with the
-  # hardened libc++ the sandbox requires), so V8_ENABLE_SANDBOX is Windows-only.
+  # ABI-affecting and MUST match how the monolith was built. Linux/macOS build
+  # with pointer compression ON and the sandbox OFF (use_custom_libcxx=false is
+  # incompatible with the hardened libc++ the sandbox requires); Windows uses
+  # V8's official config (sandbox ON), so V8_ENABLE_SANDBOX is Windows-only.
   target_compile_definitions(${target} PRIVATE
     IV8_WITH_V8
     V8_COMPRESS_POINTERS
@@ -111,6 +112,14 @@ function(iv8_link_v8_monolith target)
     # it the extension fails to load with "undefined symbol: __atomic_*".
     if(UNIX AND NOT APPLE)
       target_link_libraries(${target} PRIVATE atomic)
+    endif()
+    # V8's macOS base/platform code references Foundation/CoreFoundation
+    # symbols. The monolith is built with the platform libc++
+    # (use_custom_libcxx=false), so no custom C++ runtime is staged.
+    if(APPLE)
+      target_link_libraries(${target} PRIVATE
+        "-framework Foundation"
+        "-framework CoreFoundation")
     endif()
   endif()
 endfunction()

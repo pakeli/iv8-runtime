@@ -1,0 +1,113 @@
+name: release-macos
+
+# Phase 9 / D: build macOS arm64 wheels (cp311-cp314) with V8 linked, on
+# GitHub's macos-14 (Apple Silicon) runner. Mirrors release-linux.yml /
+# release-windows.yml: the pinned V8 monolith is built once and cached, then a
+# per-Python wheel matrix builds, installs, and tests the wheel.
+#
+# macOS x64 (macos-13) and universal2 are intentionally not built here; the
+# required macOS gate is arm64 (docs/dependency_strategy.md §11 EC-3).
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+# Serialize runs so two jobs never race the V8 monolith cache (see
+# release-linux.yml / release-windows.yml).
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-v8:
+    runs-on: macos-14
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ensure ninja is available
+        run: python -m pip install ninja
+      - name: Restore V8 monolith cache (with retries)
+        id: v8cache
+        uses: ./.github/actions/restore-v8-cache
+        with:
+          path: data/v8
+          key: v8-macos-arm64-${{ hashFiles('tools/build_v8_macos.sh', 'cmake/v8_pin.cmake') }}
+      - name: Build V8 monolith (only if truly absent)
+        id: v8build
+        if: steps.v8cache.outputs.cache-hit != 'true'
+        env:
+          V8_TARGET_CPU: arm64
+          MACOSX_DEPLOYMENT_TARGET: '11.0'
+        run: bash tools/build_v8_macos.sh
+      - name: Save V8 monolith cache (only after a real build)
+        if: steps.v8build.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: data/v8
+          key: v8-macos-arm64-${{ hashFiles('tools/build_v8_macos.sh', 'cmake/v8_pin.cmake') }}
+
+  wheels:
+    needs: build-v8
+    runs-on: macos-14
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12', '3.13', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore V8 monolith cache (with retries)
+        id: v8cache
+        uses: ./.github/actions/restore-v8-cache
+        with:
+          path: data/v8
+          key: v8-macos-arm64-${{ hashFiles('tools/build_v8_macos.sh', 'cmake/v8_pin.cmake') }}
+      - name: Fail if V8 cache is absent after retries
+        if: steps.v8cache.outputs.cache-hit != 'true'
+        run: |
+          echo "::error::V8 monolith cache missing after retries (build-v8 should have populated it)."
+          exit 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build + install + test wheel
+        env:
+          MACOSX_DEPLOYMENT_TARGET: '11.0'
+          CMAKE_ARGS: '-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0'
+        run: |
+          python -m pip install --upgrade pip "pytest>=7"
+          python -m pip wheel . --no-deps -w dist
+          whl="$(ls dist/*.whl | head -1)"
+          python -m pip install "$whl"
+          cd "$RUNNER_TEMP"
+          python -c "import iv8; assert iv8._v8_linked, 'V8 not linked'; print('macos-arm64', iv8._v8_runtime_version)"
+          python -m pytest "$GITHUB_WORKSPACE/test"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iv8-macos-arm64-wheel-cp${{ matrix.python }}
+          path: dist/*.whl
+          if-no-files-found: error
+
+  publish:
+    needs: wheels
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all macOS wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: iv8-macos-arm64-wheel-*
+          path: dist
+          merge-multiple: true
+      - name: Attach to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.whl

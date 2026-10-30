@@ -19,8 +19,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/v8_pin.cmake)
 
 # --- IV8_LINK_V8: whether to link the pinned V8 monolith --------------------
 # Default: ON on non-Windows when the pinned monolith artifact is present under
-# data/v8 (produced by tools/build_v8_linux.sh); OFF otherwise (Windows, or when
-# no artifact has been built). No fuzzy/system V8 discovery is ever performed.
+# data/v8 (produced by the platform's tools/build_v8_* script); OFF otherwise
+# (Windows, or when no artifact has been built). No fuzzy/system V8 discovery is
+# ever performed.
 if(WIN32)
   set(_iv8_v8_lib "${CMAKE_CURRENT_SOURCE_DIR}/data/v8/lib/v8_monolith.lib")
 else()
