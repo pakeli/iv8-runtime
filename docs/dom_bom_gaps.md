@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-30` · Baseline: **M11-36..M11-40** (BOM completion
-batch verified `2026-10-30`)
+Last reviewed: `2026-10-30` · Baseline: **M11-41..M11-45** (BOM
+viewport/media/device metadata verified `2026-10-30`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-36..M11-40. It is not a contract and not a
+> are **not implemented** as of M11-41..M11-45. It is not a contract and not a
 > roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
@@ -38,7 +38,8 @@ batch verified `2026-10-30`)
 |---|---|
 | `storage` events and cross-page/cross-tab notification | **absent** — M11-7 provides per-Page in-memory stores only |
 | `document.cookie` | **excluded** |
-| IndexedDB, Cache API, `navigator.storage` / `StorageManager` | **absent** |
+| IndexedDB, Cache API | **absent** |
+| `navigator.storage` / `StorageManager` | **partially implemented** — M11-43 adds static Promise-based `estimate()` (`usage: 0`, fixed 10 GiB quota), `persisted()`, and `persist()` (both `false`); no quota accounting, persistence, buckets, filesystem, or `getDirectory()` |
 | Persistence across `Page` instances or processes | **excluded** — entries survive `load()` within one Page only |
 
 ### 1.3 Time, scheduling, event loop
@@ -58,9 +59,10 @@ batch verified `2026-10-30`)
 | Missing | Status |
 |---|---|
 | `alert` / `confirm` / `prompt`, `window.print` | **implemented as deterministic stubs** — M11-36 returns fixed values and never blocks or renders UI; no Python callback bridge |
-| Fullscreen API, `visualViewport` | **absent** — M11-35 adds a read-only derived `screen.orientation` with no events/lock |
+| Fullscreen API | **absent** |
+| `visualViewport` | **implemented as static metadata** — M11-41 derives width/height from the reported viewport with zero offsets, scale 1, no-op listeners, and no scroll/zoom/resize events |
 | Scroll APIs (`scroll` / `scrollTo` / `scrollBy` / `scrollX` / `scrollY`) | **absent** — no layout |
-| `matchMedia` | **absent** — no CSS/media-query engine |
+| `matchMedia` | **partially implemented** — M11-42 adds a bounded static evaluator for media types, comma lists, `not`/`only`/`and`, width/height, orientation, and fixed desktop capabilities; no dynamic viewport changes or `change` events |
 
 ### 1.5 Device and platform APIs
 
@@ -68,9 +70,9 @@ batch verified `2026-10-30`)
 |---|---|
 | `crypto` (`getRandomValues`, SubtleCrypto) | **partially implemented** — M11-33 adds OS-backed `getRandomValues()` / `randomUUID()`; `crypto.subtle` (digest, AES, RSA, ECDH/ECDSA, HMAC, KDF) is absent |
 | `Worker` / `SharedWorker` / `ServiceWorker` | **absent** |
-| `navigator.clipboard`, `geolocation`, `Notification`, `Permissions` | **absent** |
+| `navigator.clipboard`, `geolocation`, `Notification` | **absent** |
+| `navigator.permissions` | **partially implemented** — M11-44 adds static `query({name})` statuses (`state: "prompt"` for a bounded known-name set, unknown names reject with `TypeError`); no prompt UI, device access, or change events |
 | `navigator.userAgentData` (UA-CH) | **absent** — M11-35 adds `navigator.connection` metadata only |
-| `navigator.permissions` / clipboard / geolocation | **absent** — M11-35 adds `maxTouchPoints`, `pdfViewerEnabled`, and `doNotTrack` |
 | `structuredClone` and other transfer/serialization APIs | **partially implemented** — M11-38 clones primitives/objects/arrays/boxed primitives/`Date`/`Map`/`Set`/buffers/views with cycles and identity; transfer lists, RegExp/Error, shared buffers, and other exotic objects are rejected |
 
 ### 1.6 Screen and window metadata
@@ -80,6 +82,8 @@ batch verified `2026-10-30`)
 | `screen.orientation` / `availLeft` / `availTop` | **implemented** — M11-35 (orientation is a read-only derived `{type, angle}`, no events/lock) |
 | `window.name` / `length` | **implemented** — M11-35 (`name` mutable/Page-persistent; `length` is always 0) |
 | `window.parent` / `top` / `frames` / `opener` | **implemented** — M11-39 single-context aliases (`parent` / `frames` replaceable, `top` unforgeable read-only, `opener` writable; no child frames or popups) |
+| `window.visualViewport` / `origin` / `crossOriginIsolated` / `closed` / `frameElement` | **implemented** — M11-41 static read-only metadata; visualViewport has no scroll/zoom/resize events |
+| `navigator.plugins` / `mimeTypes` / `javaEnabled()` | **implemented as empty metadata** — M11-45 frozen empty arrays and `javaEnabled() === false`; no plugin objects or Java support |
 
 Implemented for contrast: `screen.width` / `height` / `availWidth` /
 `availHeight` / `colorDepth` / `pixelDepth`, and `window.devicePixelRatio` /
@@ -216,7 +220,8 @@ Implemented for contrast: inline and classic external `<script>` execution,
 
 | Missing | Status |
 |---|---|
-| CSSOM, `getComputedStyle`, style sheets, `matchMedia` | **absent** |
+| CSSOM, `getComputedStyle`, style sheets | **absent** |
+| `matchMedia` | **partially implemented** — M11-42 provides a static bounded evaluator, not a CSS/media-query engine |
 | Layout / geometry / scrolling / hit testing (`elementFromPoint`) | **absent** — no layout engine |
 | Canvas / WebGL / SVG rendering | **absent** (backlog rank 9) |
 | Image and media rendering (`HTMLImageElement`, `HTMLVideoElement`, …) | **absent** |
@@ -227,7 +232,7 @@ Implemented for contrast: inline and classic external `<script>` execution,
 |---|---|
 | `document.cookie` | **excluded** |
 | `document.createRange` / `createTreeWalker` / `createNodeIterator` / `createEvent` | **absent** |
-| `document.all` / `plugins` | **absent** |
+| `document.all` / `document.plugins` | **absent** — M11-45 adds empty `navigator.plugins` / `mimeTypes` only |
 | Browsing contexts, frames, `<iframe>` behavior | **absent** |
 
 Implemented for contrast: M11-23 added read-only `characterSet` / `contentType`
@@ -265,7 +270,8 @@ virtual performance clock and minimal form validation, M11-33 added OS-backed
 engine, M11-35 completed the deterministic window/screen/navigator metadata, and
 M11-36..M11-40 completed deterministic dialogs, the performance entry timeline,
 bounded `structuredClone`, single-context window metadata, and
-`scheduler.postTask`. Remaining candidates (mapping to
+`scheduler.postTask`; M11-41..M11-45 completed the static viewport/media/device
+metadata (including bounded `matchMedia`). Remaining candidates (mapping to
 `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |

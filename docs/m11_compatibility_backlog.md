@@ -195,6 +195,14 @@ and verified on real V8: Linux `40990275470`, Windows `40990279247`, commit
 `opener`, and `scheduler.postTask` over the timer queue. Boundary:
 `docs/m11_36_40_bom_completion.md`. Delivered and verified on real V8: Linux
 `40997424174`, Windows `40997427191`, commit `512117c`, each wheel lane
-`1617 passed, 2 skipped`; report `docs/m11_36_40_report.md`. Selector
+`1617 passed, 2 skipped`; report `docs/m11_36_40_report.md`.
+
+`M11-41` through `M11-45` — **BOM viewport/media/device metadata** —
+selected/frozen on `2026-10-30`: static `visualViewport` + window flags, bounded
+`matchMedia`, deterministic `navigator.storage` / `navigator.permissions`, and
+empty legacy navigator metadata. Boundary:
+`docs/m11_41_45_bom_extras.md`. Delivered and verified on real V8: Linux
+`41000182750`, Windows `41000186396`, commit `61abc3b`, each wheel lane
+`1626 passed, 2 skipped`; report `docs/m11_41_45_report.md`. Selector
 pseudo-classes remain a later follow-up; `navigator.userAgentData` is
 deliberately deferred; other gaps are inventoried in `docs/dom_bom_gaps.md`.

@@ -1,9 +1,9 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-30` · Latest verified milestone: **M11-36..M11-40**
-(BOM completion batch: dialogs, performance timeline, `structuredClone`,
-single-context window metadata, and `scheduler.postTask`), verified on real V8
-(Linux + Windows) on `2026-10-30`.
+Last reviewed: `2026-10-30` · Latest verified milestone: **M11-41..M11-45**
+(BOM viewport/media/device metadata: `visualViewport`, `matchMedia`,
+`navigator.storage`, `navigator.permissions`, and legacy navigator metadata),
+verified on real V8 (Linux + Windows) on `2026-10-30`.
 
 ## 0. What this document is
 
@@ -166,10 +166,19 @@ Installed per generation by `install_page`:
   read-only `window.length` (0), `screenLeft` / `screenTop`, and
   `isSecureContext` derived from the base URL. `screen.orientation` is a
   read-only `{type, angle}` derived from width/height with no events or lock; no
-  scroll / `matchMedia` and these dimensions feed no layout engine. M11-39 adds
+  scroll and these dimensions feed no layout engine. M11-39 adds
   the single-context browsing metadata: replaceable `window.parent` / `frames`,
   unforgeable read-only `window.top`, and writable `window.opener` (initially
   `null`), with no child frames, popups, or `postMessage`;
+- **visual viewport + window flags** (M11-41) — read-only
+  `visualViewport` (`width` / `height` from `innerWidth` / `innerHeight`,
+  zero offsets, `scale=1`) with no-op listeners and no scroll/zoom/resize
+  events; read-only `window.origin`, `crossOriginIsolated` (`false`),
+  `closed` (`false`), and `frameElement` (`null`);
+- **matchMedia** (M11-42) — a static MediaQueryList-shaped result for a bounded
+  query language (media types, comma lists, `not` / `only` / `and`,
+  width/height, orientation, and fixed desktop capabilities). Listener methods
+  are no-ops; there are no dynamic viewport changes or `change` events;
 - **dialogs** (M11-36) — deterministic no-op `alert()` / `confirm()` /
   `prompt()` / `print()` globals returning `undefined` / `false` / `null` /
   `undefined`; no UI, blocking, Python callback, or page mutation. Calls are
@@ -201,6 +210,15 @@ Installed per generation by `install_page`:
   scheduled on the existing timer queue, supporting `options.delay`; tasks run
   only under the explicit timer/facade pumps. Priority queues, `AbortSignal`,
   and automatic execution are absent;
+- **navigator storage/permissions** (M11-43, M11-44) — read-only
+  `navigator.storage` with Promise-based `estimate()` (`usage: 0`,
+  `quota: 10737418240`), `persisted()` / `persist()` (`false`), and
+  `navigator.permissions.query({name})` returning a static
+  `state: "prompt"` status for a bounded name set. No quota accounting,
+  persistence, prompt UI, device access, or change events;
+- **legacy navigator metadata** (M11-45) — frozen empty `navigator.plugins` /
+  `mimeTypes` arrays and `navigator.javaEnabled()` returning `false`; no
+  plugin enumeration or Java applet support;
 - **microtasks** — `queueMicrotask(callback)` (M11-4), drained only by
   `Page.run_jobs()` (the same queue `Promise` reactions use). A non-callable
   argument throws a JS `TypeError`; callbacks run FIFO, may enqueue further
@@ -360,8 +378,9 @@ or geometry. `iv8` also exports no browser symbol at module level —
 `test/test_scope_exclusions.py` guards this.
 
 Nuance since M11-1: the page reports configurable `screen` / `window` **dimension
-values**, but there is still no layout engine, no `matchMedia`, and nothing consumes
-those numbers — they are reported values only. M11-1 also makes the `navigator`
+values**, but there is still no layout engine and nothing consumes those numbers
+— they are reported values only. M11-42 adds a bounded `matchMedia` evaluator
+over those reported dimensions; it is not a CSS/media-query engine. M11-1 also makes the `navigator`
 identity values configurable, which is a *deterministic baseline* facility, not
 fingerprint simulation or randomization: a page reports exactly what the caller
 configured, and there is no UA-CH / canvas / webgl surface to spoof.
@@ -439,6 +458,7 @@ clock.
 | M11-34 | CSS selector engine expansion (lists, compound/attribute selectors, combinators, `*`) — verified 2026-10-29 | `docs/m11_34_selector_engine.md`, `docs/m11_34_report.md` |
 | M11-35 | deterministic BOM metadata completion (window/screen/navigator; 36-key environment) — verified 2026-10-30 | `docs/m11_35_bom_metadata.md`, `docs/m11_35_report.md` |
 | M11-36..M11-40 | BOM completion batch (dialogs, performance timeline, structuredClone, single-context window metadata, scheduler.postTask) — verified 2026-10-30 | `docs/m11_36_40_bom_completion.md`, `docs/m11_36_40_report.md` |
+| M11-41..M11-45 | BOM viewport/media/device metadata (visualViewport, matchMedia, navigator.storage/permissions, legacy navigator metadata) — verified 2026-10-30 | `docs/m11_41_45_bom_extras.md`, `docs/m11_41_45_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

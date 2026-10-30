@@ -363,11 +363,32 @@ Verified on real V8 at commit `512117c`: Linux `40997424174`, Windows
 1619 items (1601 previous + 18 new tests). See
 `docs/m11_36_40_report.md`.
 
+### 25. M11-41..M11-45 completed deterministic BOM viewport/media/device metadata
+
+Decided/verified `2026-10-30`.
+
+The batch adds a static `window.visualViewport` and window flags
+(`origin` / `crossOriginIsolated` / `closed` / `frameElement`), a bounded
+`matchMedia()` evaluator with no dynamic events, deterministic Promise-based
+`navigator.storage` (`estimate` / `persisted` / `persist`), a bounded
+`navigator.permissions.query()` that reports `"prompt"` for known permission
+names, and empty legacy `navigator.plugins` / `mimeTypes` plus
+`javaEnabled() === false`. No layout, real storage, OS permissions, network, or
+new Python/environment surface is added. `navigator.userAgentData` remains
+deliberately deferred.
+
+The first verification attempt (`f3cebcb`) failed one test assertion because a
+JS `null` joined into a string as an empty field instead of `"null"`; `61abc3b`
+fixed only the test. Verified on real V8 at commit `61abc3b`: Linux
+`41000182750`, Windows `41000186396`, each wheel lane `1626 passed, 2 skipped`.
+The full suite collects 1628 items (1619 previous + 9 new tests). See
+`docs/m11_41_45_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-41`?
+### A. Which concrete compatibility slice becomes `M11-46`?
 
 Settled and implemented so far:
 
@@ -506,8 +527,16 @@ direction alone.
   `scheduler.postTask`. Boundary:
   `docs/m11_36_40_bom_completion.md`. Verified on real V8 (Linux
   `40997424174`, Windows `40997427191`, commit `512117c`, each wheel lane
-  `1617 passed, 2 skipped`); see `docs/m11_36_40_report.md`. The next slice
-  (`M11-41`) can resume selector pseudo-classes or take another gap item;
+  `1617 passed, 2 skipped`); see `docs/m11_36_40_report.md`.
+
+- `M11-41` through `M11-45` — **BOM viewport/media/device metadata** —
+  selected/frozen on `2026-10-30`: static `visualViewport` + window flags,
+  bounded `matchMedia`, deterministic `navigator.storage` /
+  `navigator.permissions`, and empty legacy navigator metadata. Boundary:
+  `docs/m11_41_45_bom_extras.md`. Verified on real V8 (Linux `41000182750`,
+  Windows `41000186396`, commit `61abc3b`, each wheel lane
+  `1626 passed, 2 skipped`); see `docs/m11_41_45_report.md`. The next slice
+  (`M11-46`) can resume selector pseudo-classes or take another gap item;
   UA-CH remains deliberately deferred.
 
 A related question this slice raises: the runtime still has **four** independent

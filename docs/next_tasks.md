@@ -693,8 +693,9 @@ Report: `docs/m11_35_report.md`.
 
 ### Next
 
-M11-36 was used for the BOM completion batch (below); selector pseudo-classes
-remain the planned selector follow-up.
+M11-36..M11-40 completed the BOM completion batch (below); the following
+M11-41..M11-45 batch completed the remaining deterministic viewport/media/device
+metadata. Selector pseudo-classes remain the planned selector follow-up.
 
 ## Priority 3s: M11-36..M11-40 BOM completion batch — DONE (`2026-10-30`)
 
@@ -736,7 +737,45 @@ refreshed the affected tests, and tightened structuredClone. Report:
 
 ### Next
 
-Choose `M11-41` — selector pseudo-classes remain the planned selector
+M11-41..M11-45 completed the next BOM metadata batch (below); selector
+pseudo-classes remain the planned selector follow-up.
+
+## Priority 3t: M11-41..M11-45 BOM viewport/media/device metadata — DONE (`2026-10-30`)
+
+### What landed
+
+- Static `window.visualViewport` derived from `innerWidth` / `innerHeight`, plus
+  `window.origin`, `crossOriginIsolated`, `closed`, and `frameElement`.
+- Bounded `window.matchMedia()` with static MediaQueryList-shaped results and
+  no-op listeners; no dynamic viewport events.
+- Deterministic Promise-based `navigator.storage.estimate()` /
+  `persisted()` / `persist()`.
+- `navigator.permissions.query()` with a bounded known-name set, static
+  `"prompt"` statuses, and `TypeError` rejection for unknown names.
+- Frozen empty `navigator.plugins` / `mimeTypes` and
+  `navigator.javaEnabled() === false`.
+
+Boundary: `docs/m11_41_45_bom_extras.md`. Tests:
+`test/test_m11_41_45_bom_extras.py` (9 items). Full suite collects 1628 items;
+each wheel lane: **`1626 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `61abc3b` (feature commit `f3cebcb`, branch
+`m11-41-45-bom-extras`):
+
+- Linux `release-linux` run `41000182750` — cp311–cp314, each
+  `1626 passed, 2 skipped`;
+- Windows `release-windows` run `41000186396` — Python 3.11–3.14, each
+  `1626 passed, 2 skipped`.
+
+The first attempt (`f3cebcb`) failed one new assertion because a JS `null`
+frameElement joined to an empty field rather than `"null"`; `61abc3b` fixed the
+test. Report: `docs/m11_41_45_report.md`.
+
+### Next
+
+Choose `M11-46` — selector pseudo-classes remain the planned selector
 follow-up; `navigator.userAgentData` is deliberately deferred in this version.
 Remaining candidates are inventoried in `docs/dom_bom_gaps.md`.
 

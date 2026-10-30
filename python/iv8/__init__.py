@@ -991,6 +991,17 @@ deliberately unimplemented; callers can supply a Chromium identity through
 and a host callback bridge remain out of scope. See
 ``docs/m11_36_40_bom_completion.md``.
 
+M11-41 through M11-45 add the remaining deterministic BOM viewport/media/device
+metadata: a static ``visualViewport`` derived from the reported viewport plus
+``window.origin`` / ``crossOriginIsolated`` / ``closed`` / ``frameElement``; a
+bounded synchronous ``matchMedia`` evaluator with no dynamic change events;
+Promise-based ``navigator.storage`` (fixed estimate, false persistence) and
+``navigator.permissions`` (static prompt statuses for a bounded name set); and
+frozen empty ``navigator.plugins`` / ``mimeTypes`` with
+``navigator.javaEnabled() === false``. No layout, real storage, OS permission
+UI, network, Python API, or new environment key is added. See
+``docs/m11_41_45_bom_extras.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

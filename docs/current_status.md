@@ -8,11 +8,11 @@ Last reviewed: `2026-10-30`
 implementation in `master` has progressed well beyond the original M1 boundary.
 
 As of `2026-10-30`, the latest implemented and verified milestone is
-**M11-36..M11-40** (BOM completion batch: dialogs, performance timeline,
-`structuredClone`, single-context window metadata, and `scheduler.postTask`).
-Real-V8 CI is green on both platforms — Linux run `40997424174`, Windows run
-`40997427191`, both on commit `512117c`, each wheel lane reporting
-`1617 passed, 2 skipped`:
+**M11-41..M11-45** (BOM viewport / media / device metadata: `visualViewport`,
+`matchMedia`, `navigator.storage`, `navigator.permissions`, and legacy navigator
+metadata). Real-V8 CI is green on both platforms — Linux run `41000182750`,
+Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
+`1626 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -75,6 +75,10 @@ Real-V8 CI is green on both platforms — Linux run `40997424174`, Windows run
   `structuredClone`, replaceable single-context `window.parent` / `frames` /
   writable `opener` / read-only `top`, and `scheduler.postTask` over the timer
   queue
+- `M11-41`..`M11-45`: BOM viewport/media/device metadata — static
+  `visualViewport` + window flags, bounded `matchMedia`, deterministic
+  `navigator.storage` and `navigator.permissions`, and empty legacy
+  `navigator.plugins` / `mimeTypes` / `javaEnabled`
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -103,9 +107,11 @@ fork's `master`. M11-34 (CSS selector engine) was verified on
 `m11-35-bom-metadata` (commit `aa23c57`) and merged to the fork's `master`.
 M11-36 through M11-40 (BOM completion batch) were verified on
 `m11-36-40-bom-completion` (final commit `512117c`) and merged to the fork's
-`master`. Upstream `investforever/iv8-runtime` remains at M11-3;
+`master`. M11-41 through M11-45 (BOM viewport/media/device metadata) were
+verified on `m11-41-45-bom-extras` (final commit `61abc3b`) and merged to the
+fork's `master`. Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
-report documents (`docs/m11_6_report.md` … `docs/m11_36_40_report.md`).
+report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -293,6 +299,11 @@ Implemented and present at `HEAD`:
   `structuredClone`; single-context `window.parent` / `top` / `frames` /
   `opener`; and `scheduler.postTask`. Verified `2026-10-30`; see
   `docs/m11_36_40_bom_completion.md`.
+- `M11-41`..`M11-45` BOM viewport/media/device metadata — `visualViewport`
+  and window flags; bounded `matchMedia`; deterministic `navigator.storage` /
+  `navigator.permissions`; empty `navigator.plugins` / `mimeTypes` and
+  `javaEnabled()`. Verified `2026-10-30`; see
+  `docs/m11_41_45_bom_extras.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -336,6 +347,9 @@ Recent implementation sequence from Git history:
 - `M11-36` through `M11-40`: BOM completion batch — dialogs, performance
   timeline, structuredClone, single-context window metadata, and
   scheduler.postTask (verified `2026-10-30`)
+- `M11-41` through `M11-45`: BOM viewport/media/device metadata — visualViewport,
+  matchMedia, navigator.storage/permissions, and legacy navigator metadata
+  (verified `2026-10-30`)
 
 ## 4. Release / Distribution Status
 
@@ -442,7 +456,10 @@ The repository is executing its post-M10 direction:
 - `M11-36` through `M11-40` (BOM completion batch) are **landed and verified on
   real V8 (Linux + Windows)** on `2026-10-30`; see
   `docs/m11_36_40_bom_completion.md` and `docs/m11_36_40_report.md`;
-- the next execution handoff is to choose `M11-41` — selector pseudo-classes
+- `M11-41` through `M11-45` (BOM viewport/media/device metadata) are **landed
+  and verified on real V8 (Linux + Windows)** on `2026-10-30`; see
+  `docs/m11_41_45_bom_extras.md` and `docs/m11_41_45_report.md`;
+- the next execution handoff is to choose `M11-46` — selector pseudo-classes
   remain the planned selector follow-up; `navigator.userAgentData` is
   deliberately deferred, and the remaining BOM/DOM gaps are inventoried in
   `docs/dom_bom_gaps.md`.
@@ -451,8 +468,8 @@ The repository is executing its post-M10 direction:
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-41`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-40` are settled, landed, and verified; selector
+- Which concrete compatibility slice should become `M11-46`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-45` are settled, landed, and verified; selector
   pseudo-classes remain the planned selector follow-up, while UA-CH is
   deliberately deferred and the remaining candidates come from
   `docs/dom_bom_gaps.md`.)
@@ -470,8 +487,9 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with the M11-36..M11-40 BOM completion batch
-> landed and verified on real V8 (Linux + Windows) on `2026-10-30`.
+> compatibility-first `M11` line — with the M11-41..M11-45 BOM
+> viewport/media/device metadata batch landed and verified on real V8
+> (Linux + Windows) on `2026-10-30`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

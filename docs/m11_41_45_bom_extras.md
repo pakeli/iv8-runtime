@@ -1,7 +1,6 @@
 # M11-41..M11-45 — BOM viewport / media / device metadata
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-30`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-30`)**
 
 This batch fills the remaining deterministic BOM metadata that can be served
 without layout, network, OS permission UI, background events, or a real storage
@@ -98,5 +97,13 @@ behavior.
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `61abc3b`:
+
+- Linux `release-linux` run `41000182750` — cp311 / cp312 / cp313 / cp314,
+  each `1626 passed, 2 skipped`;
+- Windows `release-windows` run `41000186396` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1626 passed, 2 skipped`.
+
+`test/test_m11_41_45_bom_extras.py` ran in every lane (9 items). The full suite
+collects 1628 items; 1626 pass and 2 are skipped. See
+`docs/m11_41_45_report.md`.

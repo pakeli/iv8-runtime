@@ -74,8 +74,9 @@ connectionSaveData=false  screenAvailLeft=0          screenAvailTop=0
 - a Python-side BOM API; everything remains JS-side through `Page.eval`.
 
 The selector pseudo-class slice planned earlier is deferred; M11-36..M11-40
-subsequently completed the remaining deterministic BOM stubs, and
-pseudo-classes remain a later selector slice.
+and M11-41..M11-45 subsequently completed the remaining deterministic BOM
+stubs and viewport/media/device metadata, and pseudo-classes remain a later
+selector slice.
 
 ## Tests
 
