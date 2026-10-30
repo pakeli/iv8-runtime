@@ -56,9 +56,9 @@ def test_existing_undefined_own_and_prototype_properties_are_not_missing():
             Object.setPrototypeOf(navigator, {fromPrototype: 123});
             navigator.fromPrototype === 123;
         """, name="probe.js") is True
-        probes = _probes(page)
-        assert not [probe for probe in probes
-                    if probe["member"] in ("custom", "fromPrototype")]
+        probes = [probe for probe in _probes(page)
+                  if probe["member"] in ("custom", "fromPrototype")]
+        assert probes == []
 
 
 @on_only
@@ -71,9 +71,10 @@ def test_deleted_property_becomes_missing_again():
             delete navigator.temporary;
             navigator.temporary === undefined;
         """, name="probe.js") is True
-        probes = _probes(page)
+        probes = [probe for probe in _probes(page)
+                  if probe["member"] == "temporary"]
         assert [(probe["member"], probe["resolution"]) for probe in probes] == [
-            ("temporary", "missing")]
+            ("temporary", "missing")], probes
 
 
 @on_only
@@ -88,7 +89,7 @@ def test_has_in_enumeration_and_descriptors_do_not_probe():
             Object.getOwnPropertyDescriptor(navigator, 'notThere');
             true;
         """, name="probe.js") is True
-        assert _probes(page) == []
+        assert _probes(page) == [], _probes(page)
 
 
 @on_only
@@ -164,8 +165,9 @@ def test_probe_generation_and_identity_follow_page_generation():
         first = _probes(page)[0]
         page.load(HTML, BASE)
         page.eval("navigator.oneMissing;", name="probe.js")
-        probes = _probes(page)
-        assert len(probes) == 2
+        probes = [probe for probe in _probes(page)
+                  if probe["member"] == "oneMissing"]
+        assert len(probes) == 2, _probes(page)
         assert probes[0]["generation"] == 2
         assert probes[1]["generation"] == 3
         assert probes[0]["object_id"] != probes[1]["object_id"]

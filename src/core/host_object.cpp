@@ -46,6 +46,45 @@ void trace_access(v8::Isolate* isolate, HostObject* host,
                   operation);
 }
 
+// Keep existence/attribute queries on the normal lookup path. Without a query
+// handler V8 may use the getter interceptor for `in`, hasOwnProperty, and
+// descriptor operations; a no-op query prevents those from being mistaken for
+// ordinary property reads.
+v8::Intercepted named_property_query(
+    v8::Local<v8::Name>,
+    const v8::PropertyCallbackInfo<v8::Integer>&) {
+    return v8::Intercepted::kNo;
+}
+
+// Walk real own-property descriptors without invoking getters or interceptors.
+// A Proxy or a host-object prototype is conservatively treated as present: we
+// suppress a probe rather than report a false missing property.
+bool property_is_present(v8::Local<v8::Object> holder,
+                         v8::Local<v8::Context> context,
+                         v8::Local<v8::Name> property) {
+    v8::Local<v8::Object> current = holder;
+    for (int depth = 0; depth < 1000; depth++) {
+        if (current.IsEmpty() || current->IsProxy()) {
+            return true;
+        }
+        if (current->HasRealNamedProperty(context, property).FromMaybe(true)) {
+            return true;
+        }
+        v8::Local<v8::Value> prototype = current->GetPrototype();
+        if (prototype->IsNullOrUndefined()) {
+            return false;
+        }
+        if (!prototype->IsObject()) {
+            return false;
+        }
+        current = prototype.As<v8::Object>();
+        if (host_object_backing(current) != nullptr) {
+            return true;
+        }
+    }
+    return true;  // cyclic/unexpected chain: do not assert missing
+}
+
 // Named-property interceptor for absent string keys. kNonMasking keeps the
 // interceptor out of the path for existing own/prototype properties; returning
 // kNo hands the lookup back to V8, so the script still sees undefined and all
@@ -60,6 +99,13 @@ v8::Intercepted named_property_getter(
     }
     HostObject* host = backing_of(info.Holder());
     if (host == nullptr) {
+        return v8::Intercepted::kNo;
+    }
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    // kNonMasking should make this branch unnecessary, but keep the guard so a
+    // V8 callback-order change cannot turn an existing property into a missing
+    // probe. This is a real-property check, not a Get: it does not run getters.
+    if (property_is_present(info.Holder(), context, property)) {
         return v8::Intercepted::kNo;
     }
     v8::String::Utf8Value utf8(isolate, property);
@@ -133,8 +179,8 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
         static_cast<int>(v8::PropertyHandlerFlags::kNonMasking) |
         static_cast<int>(v8::PropertyHandlerFlags::kOnlyInterceptStrings));
     tmpl->SetHandler(v8::NamedPropertyHandlerConfiguration(
-        &named_property_getter, nullptr, nullptr, nullptr, nullptr,
-        v8::Local<v8::Value>(), handler_flags));
+        &named_property_getter, nullptr, &named_property_query, nullptr,
+        nullptr, v8::Local<v8::Value>(), handler_flags));
 
     // Data properties are getter-computed. Read-only ones use ReadOnly|DontDelete
     // (a JS write is a no-op in sloppy mode / TypeError in strict). Writable ones
