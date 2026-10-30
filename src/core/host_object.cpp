@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <string>
 
+#include "iv8/access_trace.h"
+
 namespace iv8 {
 
 namespace {
@@ -30,6 +32,20 @@ HostObject* backing_of(v8::Local<v8::Object> self) {
         self->GetAlignedPointerFromInternalField(0, kHostObjectTag));
 }
 
+// Record a native host entry before dispatch when the Page-level access trace is
+// enabled. The fast path is one isolate-data lookup plus an atomic check; labels
+// and type strings are built only while tracing. This is intentionally separate
+// from the old watch_apis path.
+void trace_access(v8::Isolate* isolate, HostObject* host,
+                  const std::string& member, AccessOperation operation) {
+    AccessTrace* trace = access_trace_from_isolate(isolate);
+    if (trace == nullptr || !trace->enabled()) {
+        return;
+    }
+    trace->record(host, host->trace_object_type(), host->trace_label(), member,
+                  operation);
+}
+
 // One generic accessor for every native property: dispatches by the property
 // name to the backing object's get_property().
 void property_getter(v8::Local<v8::Name> property,
@@ -42,6 +58,7 @@ void property_getter(v8::Local<v8::Name> property,
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::String::Utf8Value name(isolate, property);
     const std::string key(*name != nullptr ? *name : "");
+    trace_access(isolate, host, key, AccessOperation::kGet);
     info.GetReturnValue().Set(host->get_property(isolate, context, key));
 }
 
@@ -56,6 +73,7 @@ void property_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::String::Utf8Value name(isolate, property);
     const std::string key(*name != nullptr ? *name : "");
+    trace_access(isolate, host, key, AccessOperation::kSet);
     host->set_property(isolate, context, key, value);
 }
 
@@ -70,6 +88,7 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::String::Utf8Value name(isolate, info.Data());
     const std::string key(*name != nullptr ? *name : "");
+    trace_access(isolate, host, key, AccessOperation::kCall);
     info.GetReturnValue().Set(host->call_method(isolate, context, key, info));
 }
 
