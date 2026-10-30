@@ -890,10 +890,45 @@ Commit `ac80ee8` (branch `host-access-bom-calls`):
 
 ### Next
 
+The intrinsic window metadata group was completed as Priority 3x below.
+Remaining step-5 groups: plain property reads on performance/Storage and nested
+BOM objects. Value/argument/return summaries remain step 6. The M11-46 selector
+follow-up remains deferred.
+
+## Priority 3x: Host access trace window metadata reads — DONE (`2026-10-30`)
+
+### What landed
+
+- Read-only window metadata globals are now native accessors recording
+  `get`: `devicePixelRatio`, `innerWidth`, `innerHeight`, `outerWidth`,
+  `outerHeight`, `screenX`, `screenY`, `screenLeft`, `screenTop`, `length`,
+  `isSecureContext`, `origin`, `crossOriginIsolated`, `closed`, and
+  `frameElement`.
+- `window.name` records `get` and `set` through its existing accessor.
+- Values, read-only assignment behavior, strict-mode errors, and
+  `parent`/`top`/`frames`/`opener` behavior are unchanged. The geometry/flag
+  data properties are now accessors (descriptor change documented as
+  intentional); `parent`/`top`/`frames`/`opener` remain untraced in this group.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_window.py` (4 items). Full suite collects 1666 items;
+each wheel lane: **`1664 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `e19f54d` (branch `host-access-window`):
+
+- Linux `release-linux` run `41020686185` — cp311–cp314, each
+  `1664 passed, 2 skipped`;
+- Windows `release-windows` run `41020689881` — Python 3.11–3.14, each
+  `1664 passed, 2 skipped`.
+
+### Next
+
 Continue step 5 with plain property reads on `performance` / Storage and nested
-BOM objects, then intrinsic window metadata; descriptor/Proxy tradeoffs must be
-validated per group. Value/argument/return summaries remain step 6. The M11-46
-selector follow-up remains deferred.
+BOM objects; descriptor/Proxy tradeoffs must be validated per group.
+Value/argument/return summaries remain step 6. The M11-46 selector follow-up
+remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

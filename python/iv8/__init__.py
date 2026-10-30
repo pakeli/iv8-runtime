@@ -1002,16 +1002,18 @@ frozen empty ``navigator.plugins`` / ``mimeTypes`` with
 UI, network, Python API, or new environment key is added. See
 ``docs/m11_41_45_bom_extras.md``.
 
-The post-M11 host access trace steps 1–4 plus the step-5 native BOM call group
-add ``Page.start_access_trace(max_events=10000, object_types=None)`` /
+The post-M11 host access trace steps 1–4 plus the step-5 native BOM call and
+window metadata groups add
+``Page.start_access_trace(max_events=10000, object_types=None)`` /
 ``Page.stop_access_trace()`` / ``Page.read_access_trace(clear=True)``. It records
 native ``HostObject`` property get/set and method-call entries,
-``get_probe``/``resolution: "missing"`` for absent HostObject string keys, and
+``get_probe``/``resolution: "missing"`` for absent HostObject string keys,
 performance/crypto/Storage native callback calls plus Storage ``length`` reads,
-with sequence, generation, stable native object ID, object type/label, member,
-operation, resource name, and source kind. It is a separate, default-off
-monitoring channel; it does not change the five existing watch channels, add a
-JS-visible API, or cover intrinsic ``window`` fields, plain BOM property reads,
+and window metadata accessor gets plus ``window.name`` get/set, with sequence,
+generation, stable native object ID, object type/label, member, operation,
+resource name, and source kind. It is a separate, default-off monitoring channel;
+it does not change the five existing watch channels, add a JS-visible API, or
+cover ``parent``/``top``/``frames``/``opener``, plain BOM property reads,
 user-created objects, method-reference reads, ``in``, delete, enumeration,
 descriptors, numeric/Symbol probes, or values/arguments/returns yet. See
 ``docs/host_access_trace.md``.

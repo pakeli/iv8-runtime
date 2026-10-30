@@ -450,6 +450,25 @@ Verified on real V8 at commit `ac80ee8`: Linux `41019395760`, Windows
 1662 items (1658 previous + 4 BOM-call tests). See
 `docs/host_access_trace.md`.
 
+### 29. Host access trace intrinsic window metadata (step 5b)
+
+Decided/verified `2026-10-30`.
+
+Read-only window metadata is now exposed through native accessors that record
+`get` events with `object_type: "window"` and label `"window"`:
+`devicePixelRatio`, `innerWidth`, `innerHeight`, `outerWidth`, `outerHeight`,
+`screenX`, `screenY`, `screenLeft`, `screenTop`, `length`, `isSecureContext`,
+`origin`, `crossOriginIsolated`, `closed`, and `frameElement`. `window.name`
+records `get`/`set` through its existing accessor. Values, read-only assignment
+behavior, and strict-mode errors are unchanged. The data-to-accessor descriptor
+change is intentional for these fields; `parent` / `top` / `frames` / `opener`
+keep their prior descriptors and remain untraced in this group.
+
+Verified on real V8 at commit `e19f54d`: Linux `41020686185`, Windows
+`41020689881`, each wheel lane `1664 passed, 2 skipped`. The full suite collects
+1666 items (1662 previous + 4 window tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

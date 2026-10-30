@@ -79,11 +79,12 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   `visualViewport` + window flags, bounded `matchMedia`, deterministic
   `navigator.storage` and `navigator.permissions`, and empty legacy
   `navigator.plugins` / `mimeTypes` / `javaEnabled`
-- Post-M11 host access trace (steps 1–4 + step-5 BOM calls):
+- Post-M11 host access trace (steps 1–4 + step-5 BOM calls/window metadata):
   `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
   recording native HostObject get/set/call entries, missing string-key
-  `get_probe` events, and performance/crypto/Storage callback calls with
-  generation, object identity, resource, and source attribution
+  `get_probe` events, performance/crypto/Storage callback calls, and intrinsic
+  window metadata reads with generation, object identity, resource, and source
+  attribution
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -119,8 +120,11 @@ fork's `master`. The post-M11 host access trace steps 1–4 were verified on
 Windows run `41017987566`, each wheel lane `1656 passed, 2 skipped`. The first
 step-5 group (performance/crypto/Storage native calls) was verified on
 `host-access-bom-calls` (commit `ac80ee8`) with Linux run `41019395760` and
-Windows run `41019399775`, each wheel lane `1660 passed, 2 skipped`.
-Upstream `investforever/iv8-runtime` remains at M11-3;
+Windows run `41019399775`, each wheel lane `1660 passed, 2 skipped`. The
+intrinsic window metadata group was verified on `host-access-window` (commit
+`e19f54d`) with Linux run `41020686185` and Windows run `41020689881`, each
+wheel lane `1664 passed, 2 skipped`. Upstream `investforever/iv8-runtime`
+remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
 `docs/host_access_trace.md`.
@@ -373,9 +377,10 @@ Recent implementation sequence from Git history:
 - `M11-41` through `M11-45`: BOM viewport/media/device metadata — visualViewport,
   matchMedia, navigator.storage/permissions, and legacy navigator metadata
   (verified `2026-10-30`)
-- Post-M11 host access trace (steps 1–4 + step-5 BOM calls): native HostObject
-  get/set/call, missing string-key probe, and performance/crypto/Storage call
-  API (verified `2026-10-30`)
+- Post-M11 host access trace (steps 1–4 + step-5 BOM calls/window metadata):
+  native HostObject get/set/call, missing string-key probe,
+  performance/crypto/Storage calls, and window metadata accessors (verified
+  `2026-10-30`)
 
 ## 4. Release / Distribution Status
 
@@ -492,10 +497,12 @@ The repository is executing its post-M10 direction:
 - the first step-5 group (performance/crypto/Storage native method calls and
   Storage `length`) is **landed and verified on real V8 (Linux + Windows)** on
   `2026-10-30`;
+- the intrinsic window metadata group is **landed and verified on real V8
+  (Linux + Windows)** on `2026-10-30`;
 - the next execution handoff is the remaining step-5 groups (plain BOM property
-  reads and intrinsic window metadata). The M11 selector follow-up (`M11-46`
-  candidate) and `navigator.userAgentData` remain deferred priorities; remaining
-  BOM/DOM gaps are inventoried in `docs/dom_bom_gaps.md`.
+  reads and nested BOM objects). The M11 selector follow-up (`M11-46` candidate)
+  and `navigator.userAgentData` remain deferred priorities; remaining BOM/DOM
+  gaps are inventoried in `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
@@ -507,8 +514,8 @@ These are the questions a new coding session should resolve before major new wor
   selector follow-up, while UA-CH is deliberately deferred and the remaining
   candidates come from `docs/dom_bom_gaps.md`.)
 - Which descriptor/Proxy compromises are acceptable for the remaining step-5
-  groups: `window.innerWidth`, plain property reads on `performance` / Storage,
-  and nested navigator objects? (Gate in `docs/host_access_tracing_plan.md` §7.)
+  groups: plain property reads on `performance` / Storage and nested navigator
+  objects? (Gate in `docs/host_access_tracing_plan.md` §7.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -523,9 +530,9 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime, the M9–M10 monitoring extensions, and the M11 compatibility
-> line through M11-41..M11-45, and has landed the first four steps plus the
-> native-BOM-call group of a post-M11 host access trace — all verified on real
-> V8 (Linux + Windows) on `2026-10-30`.
+> line through M11-41..M11-45, and has landed steps 1–4 plus the native-BOM-call
+> and window-metadata groups of a post-M11 host access trace — all verified on
+> real V8 (Linux + Windows) on `2026-10-30`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

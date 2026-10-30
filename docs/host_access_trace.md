@@ -1,14 +1,16 @@
 # Host Access Trace
 
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
-BOM callback calls green on real V8 Linux + Windows (`2026-10-30`)**
+BOM callback calls + window metadata reads green on real V8 Linux + Windows
+(`2026-10-30`)**
 
-This document freezes steps 1–4 and the first group of step 5 of
+This document freezes steps 1–4 and the first groups of step 5 of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
-string-key missing-property probes, and call/get coverage for independent native
-BOM callbacks (performance, crypto, Storage). It is a second-layer monitoring
-feature. It does not change the M1 `JSContext` contract, the existing
-`watch_apis` / Reflect / Object.keys channels, or any DOM/BOM behavior.
+string-key missing-property probes, call/get coverage for independent native BOM
+callbacks (performance, crypto, Storage), and intrinsic window metadata reads.
+It is a second-layer monitoring feature. It does not change the M1 `JSContext`
+contract, the existing `watch_apis` / Reflect / Object.keys channels, or DOM/BOM
+values/assignment behavior.
 
 ## 1. Entry-point contract
 
@@ -41,9 +43,12 @@ setter does not retroactively remove the event.
 | `navigator.someMissingProperty` | records `get_probe` with `resolution: "missing"` for a HostObject string key |
 | `performance.now()` / `crypto.randomUUID()` | records `call` |
 | `localStorage.getItem()` / `sessionStorage.setItem()` / `localStorage.length` | records `call`; `length` records `get` |
-| `performance.timeOrigin` / plain property reads on native BOM objects | not covered in step 5a |
+| `performance.timeOrigin` / plain property reads on native BOM objects | not covered in step 5a/5b |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
-| `window.innerWidth` | not covered in this slice; later step-5 group |
+| `window.innerWidth` / `outerWidth` / `innerHeight` | records `get` from the window metadata accessor |
+| `window.name` | records `get` and `set` |
+| `window.origin` / `isSecureContext` / `crossOriginIsolated` / `closed` / `frameElement` | records `get`; read-only behavior unchanged |
+| `window.parent` / `top` / `frames` / `opener` | not covered by this accessor group |
 | `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered in this slice; step 6 |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
@@ -77,7 +82,7 @@ listed as not covered.
   map; IDs are never reused.
 - `object_type` is the native category: `host_probe`, `console`, `navigator`,
   `screen`, `location`, `document`, `element`, `performance`, `crypto`,
-  `storage`, or the fallback `host_object`.
+  `storage`, `window`, or the fallback `host_object`.
 - `label` is a display hint. Global hosts use their global name; elements use
   their native HTML tag only. Labels must not be built by reading JS `id`,
   text, attributes, or other properties.
@@ -184,6 +189,22 @@ method is recorded when its native callback is entered, before implementation.
 Property reads on `performance`, `crypto`, or Storage — except the Storage
 `length` getter — remain unimplemented.
 
+## 4.3 Intrinsic window metadata (step 5b)
+
+The following global properties are now read-only native accessors that record a
+`get` with `object_type: "window"`, `label: "window"`, and `member` equal to the
+property name:
+
+`devicePixelRatio`, `innerWidth`, `innerHeight`, `outerWidth`, `outerHeight`,
+`screenX`, `screenY`, `screenLeft`, `screenTop`, `length`, `isSecureContext`,
+`origin`, `crossOriginIsolated`, `closed`, and `frameElement`.
+
+`window.name` records `get` and `set` through its existing accessor. Values and
+read-only assignment behavior are unchanged. The data-property-to-accessor
+change is intentional for these traceable fields; `parent` / `top` / `frames` /
+`opener` keep their prior descriptors and remain untraced in this group. Missing
+global-property probes and value/argument/return capture are not included.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -212,8 +233,8 @@ old channel.
 
 ## 7. Not covered in this first slice
 
-- Intrinsic `window`/global data properties (`innerWidth`, `outerWidth`,
-  `name`, `parent`, `visualViewport`, etc.).
+- Window `parent` / `top` / `frames` / `opener`, `visualViewport` object
+  properties, and other intrinsic/global data properties not listed in §4.3.
 - Property reads on `performance`, `crypto`, and Storage (their independent
   native method calls are covered in step 5a); `navigator.storage`,
   `navigator.permissions`, `navigator.plugins` / `mimeTypes`, `matchMedia`
@@ -233,25 +254,26 @@ old channel.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The remaining step-5 groups expand plain BOM object properties and intrinsic
-window metadata; step 6 adds method-reference reads, `in`, delete, enumeration,
-descriptors, and value/argument/return summaries. Neither is implied by this
-slice.
+The remaining step-5 groups expand plain BOM object properties and the remaining
+window/nested objects; step 6 adds method-reference reads, `in`, delete,
+enumeration, descriptors, and value/argument/return summaries. Neither is implied
+by this slice.
 
 ## 8. Verification
 
-Verified on real V8 at commit `ac80ee8` (branch `host-access-bom-calls`):
+Verified on real V8 at commit `e19f54d` (branch `host-access-window`):
 
-- Linux `release-linux` run `41019395760` — cp311 / cp312 / cp313 / cp314,
-  each `1660 passed, 2 skipped`;
-- Windows `release-windows` run `41019399775` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1660 passed, 2 skipped`.
+- Linux `release-linux` run `41020686185` — cp311 / cp312 / cp313 / cp314,
+  each `1664 passed, 2 skipped`;
+- Windows `release-windows` run `41020689881` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1664 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
-`test/test_access_trace_probes.py` (10 items), and
-`test/test_access_trace_bom_calls.py` (4 items) ran in every lane. The full suite
-collects 1662 items; 1660 pass and 2 are skipped.
+`test/test_access_trace_probes.py` (10 items),
+`test/test_access_trace_bom_calls.py` (4 items), and
+`test/test_access_trace_window.py` (4 items) ran in every lane. The full suite
+collects 1666 items; 1664 pass and 2 are skipped.
 
 The initial probe attempt (`76baaa2`) showed that V8 invokes the named getter
 for query-only operations and some existing-property paths. `8995b89` added the
@@ -273,6 +295,9 @@ Coverage in this slice:
 - independent native BOM callbacks record performance/crypto/Storage calls and
   the Storage `length` getter; properties on those plain objects remain
   untraced in this group;
+- window metadata accessors record `get` for the §4.3 fields and `get`/`set`
+  for `window.name`; read-only assignment, strict-mode errors, and values are
+  unchanged (the geometry/flag data properties are now accessors);
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
