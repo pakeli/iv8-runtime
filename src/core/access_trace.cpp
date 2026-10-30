@@ -178,16 +178,16 @@ const std::vector<std::string>& AccessTrace::supported_object_types() {
     static const std::vector<std::string> types = {
         "connection", "console", "crypto", "document", "element",
         "host_object", "host_probe", "location", "navigator", "orientation",
-        "performance", "screen", "storage", "window",
+        "performance", "screen", "storage", "visual_viewport", "window",
     };
     return types;
 }
 
 const std::vector<std::string>& AccessTrace::not_covered() {
     static const std::vector<std::string> gaps = {
-        "performance/crypto/Storage property reads (their native method calls are covered)",
+        "remaining performance/crypto/Storage property reads (their native method calls and performance.timeOrigin are covered)",
         "window/global data properties",
-        "visualViewport/matchMedia/navigator subobjects",
+        "matchMedia results and navigator storage/permissions/plugins/mimeTypes",
         "arrays and plain values returned by host APIs",
         "user-created plain JS objects",
         "method-reference reads",

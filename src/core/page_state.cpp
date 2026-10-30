@@ -714,6 +714,91 @@ private:
     ScreenOrientationHost orientation_;
 };
 
+// Step 5d: the static M11-41 visual viewport. It is a HostObject so its property
+// reads and no-op event-target methods enter the normal access-trace channel.
+// Values still come from the Page environment and never change within a
+// generation; onresize/onscroll store whatever the script assigns, but no events
+// are dispatched. The global property remains read-only.
+class VisualViewportHost : public HostObject {
+public:
+    explicit VisualViewportHost(const HostEnvironment* environment)
+        : environment_(environment) {}
+
+    std::string global_name() const override { return std::string(); }
+    std::string trace_object_type() const override { return "visual_viewport"; }
+    std::string trace_label() const override { return "visualViewport"; }
+
+    std::vector<std::string> property_names() const override {
+        return {"width",    "height",   "offsetLeft", "offsetTop",
+                "pageLeft", "pageTop",  "scale",      "onresize",
+                "onscroll"};
+    }
+
+    std::vector<std::string> writable_property_names() const override {
+        return {"onresize", "onscroll"};
+    }
+
+    std::vector<std::string> method_names() const override {
+        return {"addEventListener", "removeEventListener", "dispatchEvent"};
+    }
+
+    void release_v8_handles() noexcept override {
+        onresize_.Reset();
+        onscroll_.Reset();
+    }
+
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context>,
+                                      const std::string& name) override {
+        if (name == "width") {
+            return v8::Integer::New(isolate, environment_->inner_width);
+        }
+        if (name == "height") {
+            return v8::Integer::New(isolate, environment_->inner_height);
+        }
+        if (name == "offsetLeft" || name == "offsetTop" || name == "pageLeft" ||
+            name == "pageTop") {
+            return v8::Integer::New(isolate, 0);
+        }
+        if (name == "scale") {
+            return v8::Number::New(isolate, 1.0);
+        }
+        if (name == "onresize") {
+            return onresize_.IsEmpty() ? v8::Null(isolate)
+                                       : onresize_.Get(isolate);
+        }
+        if (name == "onscroll") {
+            return onscroll_.IsEmpty() ? v8::Null(isolate)
+                                       : onscroll_.Get(isolate);
+        }
+        return v8::Undefined(isolate);
+    }
+
+    void set_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+                      const std::string& name,
+                      v8::Local<v8::Value> value) override {
+        if (name == "onresize") {
+            onresize_.Reset(isolate, value);
+        } else if (name == "onscroll") {
+            onscroll_.Reset(isolate, value);
+        }
+    }
+
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>&) override {
+        if (name == "dispatchEvent") {
+            return v8::Boolean::New(isolate, false);
+        }
+        return v8::Undefined(isolate);
+    }
+
+private:
+    const HostEnvironment* environment_;
+    v8::Global<v8::Value> onresize_;
+    v8::Global<v8::Value> onscroll_;
+};
+
 // The static components of a decomposed URL (WHATWG-style names). Only the
 // pieces M2-3 location exposes.
 struct UrlParts {
@@ -6622,21 +6707,11 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
 
   function noop() {}
 
-  // M11-41: static visual viewport. There is no zoom, scroll, or resize event.
-  var viewport = {};
-  defineReadonly(viewport, 'width', Number(globalThis.innerWidth || 0));
-  defineReadonly(viewport, 'height', Number(globalThis.innerHeight || 0));
-  defineReadonly(viewport, 'offsetLeft', 0);
-  defineReadonly(viewport, 'offsetTop', 0);
-  defineReadonly(viewport, 'pageLeft', 0);
-  defineReadonly(viewport, 'pageTop', 0);
-  defineReadonly(viewport, 'scale', 1);
-  viewport.onresize = null;
-  viewport.onscroll = null;
-  defineReadonly(viewport, 'addEventListener', noop);
-  defineReadonly(viewport, 'removeEventListener', noop);
-  defineReadonly(viewport, 'dispatchEvent', function () { return false; });
-  defineReadonly(globalThis, 'visualViewport', viewport);
+  // The reported viewport is fixed for the generation, so read it once during
+  // the internal bootstrap instead of on every media-query evaluation. These
+  // two reads are visible to the access trace as internal-source events.
+  var viewportWidth = Number(globalThis.innerWidth || 0);
+  var viewportHeight = Number(globalThis.innerHeight || 0);
 
   // M11-45: modern Chromium exposes empty plugin/mime-type lists; Java is off.
   defineReadonly(globalThis.navigator, 'plugins', Object.freeze([]));
@@ -6660,8 +6735,8 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
     var colon = feature.indexOf(':');
     var name = colon < 0 ? feature : feature.slice(0, colon).trim();
     var value = colon < 0 ? '' : feature.slice(colon + 1).trim();
-    var width = Number(globalThis.innerWidth || 0);
-    var height = Number(globalThis.innerHeight || 0);
+    var width = viewportWidth;
+    var height = viewportHeight;
 
     if (name === 'width' || name === 'min-width' || name === 'max-width') {
       var w = lengthPx(value);
@@ -9584,6 +9659,25 @@ void PageState::install_page(const std::string& base_url,
                 if (try_catch.HasCaught()) {
                     try_catch.Reset();  // fixed bootstrap; never poison install
                 }
+            }
+            // Step 5d: the static visual viewport is a HostObject (the bootstrap
+            // above no longer creates it), so get/set/call/probe entries are
+            // observable. Width/height still come from environment_; the global
+            // property stays read-only. Internal descriptor change: inner
+            // metadata fields are now native accessors instead of data
+            // properties; values and write behavior are unchanged.
+            {
+                auto viewport =
+                    std::make_unique<VisualViewportHost>(&environment_);
+                v8::Local<v8::Object> viewport_object =
+                    make_host_object(isolate, context, viewport.get());
+                host_objects_.push_back(std::move(viewport));
+                (void)global->DefineOwnProperty(
+                    context,
+                    v8::String::NewFromUtf8Literal(isolate, "visualViewport"),
+                    viewport_object,
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                       v8::DontDelete));
             }
             // M11-7 Web Storage: two independent, per-Page in-memory stores.
             // The backings live in PageState (so they survive load()); each
