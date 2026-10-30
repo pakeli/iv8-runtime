@@ -6476,6 +6476,247 @@ constexpr char kSchedulerBootstrap[] = R"JS(
 })();
 )JS";
 
+// --- M11-41..M11-45 BOM metadata / device stubs ------------------------------
+//
+// The remaining deterministic BOM surfaces that need no layout, network, OS
+// permission prompt, or background event source: the visual viewport, a small
+// media-query evaluator, deterministic StorageManager/Permissions stubs, and
+// legacy empty plugin metadata. Everything is installed as read-only JS
+// properties; Promises settle through the normal Page.run_jobs() checkpoint.
+constexpr char kBomExtrasBootstrap[] = R"JS(
+(function () {
+  'use strict';
+
+  function defineReadonly(target, name, value) {
+    Object.defineProperty(target, name, {
+      value: value,
+      writable: false,
+      enumerable: true,
+      configurable: false
+    });
+  }
+
+  function noop() {}
+
+  // M11-41: static visual viewport. There is no zoom, scroll, or resize event.
+  var viewport = {};
+  defineReadonly(viewport, 'width', Number(globalThis.innerWidth || 0));
+  defineReadonly(viewport, 'height', Number(globalThis.innerHeight || 0));
+  defineReadonly(viewport, 'offsetLeft', 0);
+  defineReadonly(viewport, 'offsetTop', 0);
+  defineReadonly(viewport, 'pageLeft', 0);
+  defineReadonly(viewport, 'pageTop', 0);
+  defineReadonly(viewport, 'scale', 1);
+  viewport.onresize = null;
+  viewport.onscroll = null;
+  defineReadonly(viewport, 'addEventListener', noop);
+  defineReadonly(viewport, 'removeEventListener', noop);
+  defineReadonly(viewport, 'dispatchEvent', function () { return false; });
+  defineReadonly(globalThis, 'visualViewport', viewport);
+  defineReadonly(globalThis, 'origin',
+                 String(globalThis.location && globalThis.location.origin));
+  defineReadonly(globalThis, 'crossOriginIsolated', false);
+  defineReadonly(globalThis, 'closed', false);
+  defineReadonly(globalThis, 'frameElement', null);
+
+  // M11-45: modern Chromium exposes empty plugin/mime-type lists; Java is off.
+  defineReadonly(globalThis.navigator, 'plugins', Object.freeze([]));
+  defineReadonly(globalThis.navigator, 'mimeTypes', Object.freeze([]));
+  defineReadonly(globalThis.navigator, 'javaEnabled', function () {
+    return false;
+  });
+
+  // M11-42: bounded media-query evaluation. Supported media types are all,
+  // screen, and print; supported features are width/height (exact/min/max in
+  // px), orientation, prefers-color-scheme, prefers-reduced-motion, hover,
+  // pointer, display-mode, update, and scripting. Unsupported queries are
+  // simply false. There are no dynamic viewport changes, so no change events.
+  function lengthPx(value) {
+    var match = /^([0-9]*\.?[0-9]+)px$/i.exec(value.trim());
+    return match === null ? NaN : parseFloat(match[1]);
+  }
+
+  function featureMatches(rawFeature) {
+    var feature = rawFeature.trim().toLowerCase();
+    var colon = feature.indexOf(':');
+    var name = colon < 0 ? feature : feature.slice(0, colon).trim();
+    var value = colon < 0 ? '' : feature.slice(colon + 1).trim();
+    var width = Number(globalThis.innerWidth || 0);
+    var height = Number(globalThis.innerHeight || 0);
+
+    if (name === 'width' || name === 'min-width' || name === 'max-width') {
+      var w = lengthPx(value);
+      if (isNaN(w)) return false;
+      return name === 'width' ? width === w
+           : name === 'min-width' ? width >= w : width <= w;
+    }
+    if (name === 'height' || name === 'min-height' || name === 'max-height') {
+      var h = lengthPx(value);
+      if (isNaN(h)) return false;
+      return name === 'height' ? height === h
+           : name === 'min-height' ? height >= h : height <= h;
+    }
+    if (name === 'orientation') {
+      if (value === 'portrait') return height >= width;
+      if (value === 'landscape') return width > height;
+      return false;
+    }
+    if (name === 'prefers-color-scheme') {
+      return value === 'light';
+    }
+    if (name === 'prefers-reduced-motion') {
+      return value === 'no-preference';
+    }
+    if (name === 'hover' || name === 'any-hover') {
+      return value === 'hover';
+    }
+    if (name === 'pointer' || name === 'any-pointer') {
+      return value === 'fine';
+    }
+    if (name === 'display-mode') {
+      return value === 'browser';
+    }
+    if (name === 'update') {
+      return value === 'fast';
+    }
+    if (name === 'scripting') {
+      return value === 'enabled';
+    }
+    return false;
+  }
+
+  function singleQueryMatches(rawQuery) {
+    var query = rawQuery.trim();
+    if (query === '') return true;
+    var negate = false;
+    if (/^only\s+/i.test(query)) {
+      query = query.replace(/^only\s+/i, '').trim();
+    }
+    if (/^not\s+/i.test(query)) {
+      negate = true;
+      query = query.replace(/^not\s+/i, '').trim();
+    }
+    var parts = query.split(/\s+and\s+/i);
+    var matched = true;
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (part === '') {
+        matched = false;
+        break;
+      }
+      if (part.charAt(0) === '(') {
+        if (part.charAt(part.length - 1) !== ')' ||
+            !featureMatches(part.slice(1, -1))) {
+          matched = false;
+          break;
+        }
+        continue;
+      }
+      var type = part.toLowerCase();
+      if (type === 'all' || type === 'screen') {
+        continue;
+      }
+      matched = false;
+      break;
+    }
+    return negate ? !matched : matched;
+  }
+
+  function mediaMatches(rawQuery) {
+    var queries = String(rawQuery).split(',');
+    for (var i = 0; i < queries.length; i++) {
+      if (singleQueryMatches(queries[i])) return true;
+    }
+    return false;
+  }
+
+  function makeMediaQueryList(rawQuery) {
+    var query = String(rawQuery);
+    var list = {};
+    defineReadonly(list, 'media', query);
+    defineReadonly(list, 'matches', mediaMatches(query));
+    list.onchange = null;
+    defineReadonly(list, 'addListener', noop);
+    defineReadonly(list, 'removeListener', noop);
+    defineReadonly(list, 'addEventListener', noop);
+    defineReadonly(list, 'removeEventListener', noop);
+    defineReadonly(list, 'dispatchEvent', function () { return false; });
+    return list;
+  }
+
+  defineReadonly(globalThis, 'matchMedia', function (query) {
+    return makeMediaQueryList(query);
+  });
+
+  // M11-43: deterministic StorageManager. There is no quota enforcement,
+  // persistence, bucket, or filesystem backing.
+  var storage = {};
+  defineReadonly(storage, 'estimate', function () {
+    return Promise.resolve({usage: 0, quota: 10737418240});
+  });
+  defineReadonly(storage, 'persisted', function () {
+    return Promise.resolve(false);
+  });
+  defineReadonly(storage, 'persist', function () {
+    return Promise.resolve(false);
+  });
+  defineReadonly(globalThis.navigator, 'storage', storage);
+
+  // M11-44: static PermissionStatus query. All known permissions report
+  // "prompt"; there is no prompt UI, actual device access, or change event.
+  var permissionNames = {
+    accelerometer: true,
+    'background-sync': true,
+    camera: true,
+    'clipboard-read': true,
+    'clipboard-write': true,
+    geolocation: true,
+    gyroscope: true,
+    magnetometer: true,
+    microphone: true,
+    midi: true,
+    notifications: true,
+    'persistent-storage': true,
+    push: true,
+    'screen-wake-lock': true,
+    'storage-access': true,
+    'window-management': true
+  };
+
+  function makePermissionStatus(name) {
+    var status = {};
+    defineReadonly(status, 'name', name);
+    defineReadonly(status, 'state', 'prompt');
+    status.onchange = null;
+    defineReadonly(status, 'addEventListener', noop);
+    defineReadonly(status, 'removeEventListener', noop);
+    defineReadonly(status, 'dispatchEvent', function () { return false; });
+    return status;
+  }
+
+  function queryPermission(descriptor) {
+    if (descriptor === null || typeof descriptor !== 'object') {
+      return Promise.reject(
+        new TypeError('permissions.query: descriptor must be an object'));
+    }
+    var name = descriptor.name;
+    if (typeof name !== 'string') {
+      return Promise.reject(
+        new TypeError('permissions.query: name must be a string'));
+    }
+    if (!Object.prototype.hasOwnProperty.call(permissionNames, name)) {
+      return Promise.reject(
+        new TypeError('permissions.query: unknown permission name'));
+    }
+    return Promise.resolve(makePermissionStatus(name));
+  }
+
+  var permissions = {};
+  defineReadonly(permissions, 'query', queryPermission);
+  defineReadonly(globalThis.navigator, 'permissions', permissions);
+})();
+)JS";
+
 // --- M11-33 crypto.getRandomValues / crypto.randomUUID -----------------------
 //
 // A deliberately small Crypto slice: only OS-backed random bytes and UUID v4.
@@ -9029,6 +9270,24 @@ void PageState::install_page(const std::string& base_url,
                     isolate, kSchedulerBootstrap,
                     v8::NewStringType::kNormal,
                     static_cast<int>(sizeof(kSchedulerBootstrap) - 1))
+                    .ToLocalChecked();
+                v8::Local<v8::Script> script;
+                if (v8::Script::Compile(context, source).ToLocal(&script)) {
+                    (void)script->Run(context);
+                }
+                if (try_catch.HasCaught()) {
+                    try_catch.Reset();  // fixed bootstrap; never poison install
+                }
+            }
+            // M11-41..M11-45 BOM metadata/device stubs. Installed after the
+            // window dimensions and navigator so the bootstrap can derive the
+            // static visual viewport and media-query results from them.
+            {
+                v8::TryCatch try_catch(isolate);
+                v8::Local<v8::String> source = v8::String::NewFromUtf8(
+                    isolate, kBomExtrasBootstrap,
+                    v8::NewStringType::kNormal,
+                    static_cast<int>(sizeof(kBomExtrasBootstrap) - 1))
                     .ToLocalChecked();
                 v8::Local<v8::Script> script;
                 if (v8::Script::Compile(context, source).ToLocal(&script)) {
