@@ -179,6 +179,13 @@ algorithm implementations remain deferred.
 four combinators, and attribute selectors shared by query/matches/closest.
 Boundary: `docs/m11_34_selector_engine.md`. Delivered and verified on real V8:
 Linux `40855935052`, Windows `40855940659`, commit `49f8582`, each wheel lane
-`1565 passed, 2 skipped`; report `docs/m11_34_report.md`. Pseudo-classes are
-the planned M11-35 follow-up; other gaps remain inventoried in
-`docs/dom_bom_gaps.md`.
+`1565 passed, 2 skipped`; report `docs/m11_34_report.md`.
+
+`M11-35` — **deterministic BOM metadata completion** — was selected/frozen on
+`2026-10-30`: window name/length/geometry/secure-context metadata, screen
+avail/orientation, and navigator touch/PDF/DNT/connection metadata; the flat
+environment grows to 36 keys. Boundary: `docs/m11_35_bom_metadata.md`. Delivered
+and verified on real V8: Linux `40990275470`, Windows `40990279247`, commit
+`aa23c57`, each wheel lane `1599 passed, 2 skipped`; report
+`docs/m11_35_report.md`. Selector pseudo-classes remain a later follow-up;
+other gaps are inventoried in `docs/dom_bom_gaps.md`.

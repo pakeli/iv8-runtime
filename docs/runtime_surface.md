@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-10-29` · Latest verified milestone: **M11-34**
+Last reviewed: `2026-10-30` · Latest verified milestone: **M11-35**
 (event capture phase + listener options), verified on real V8 (Linux + Windows)
 on `2026-10-28`.
 
@@ -77,7 +77,7 @@ milestone.
 | `event_loop_time_ms` | M11-29, M11-30 | read-only per-generation virtual clock advanced by timer/frame due times; reset by `load()` |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
-| `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27 | optional read-only host-environment baseline; accepts the flat 27-key form or nested `navigator` / `screen` / `window` sections |
+| `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27, M11-35 | optional read-only host-environment baseline; accepts the flat 36-key form or nested `navigator` / `screen` / `window` sections |
 | `get_default_environment()` | M11-1 | static; returns a fresh flat `dict` copy of the default template |
 | `get_defaults()` | M11-17 | static; returns a fresh nested `{navigator, screen, window}` dict |
 
@@ -85,23 +85,27 @@ milestone.
 (M11-1) is the next one. `Page` has no `document` / DOM / event API on the Python
 side — the DOM is JS-side only.
 
-The environment now accepts 27 flat keys. Navigator: `userAgent` / `platform` /
+The environment now accepts 36 flat keys. Navigator: `userAgent` / `platform` /
 `language` / `appName` / `appCodeName` / `product` / `vendor` / `vendorSub` /
-`productSub` (`str`), `webdriver` / `onLine` / `cookieEnabled` (`bool`),
-`languages` (non-empty `list[str]`), and `hardwareConcurrency` (`int`). Screen and
-window: `screenWidth` / `screenHeight` / `availWidth` / `availHeight` /
-`screenColorDepth` / `screenPixelDepth` / `innerWidth` / `innerHeight` /
-`outerWidth` / `outerHeight` / `screenX` / `screenY` (`int`) and
-`devicePixelRatio` (`int` or `float`, stored `float`). Omitted keys inherit the
-defaults, and the original eleven values are unchanged. Validation is strict and
-runs in the Python facade before any native page exists (unknown key or wrong
-type → `TypeError`, nothing partially installed). Values are re-applied to every
-`load()` generation. M11-17 additionally accepts the nested form
-`{"navigator": {...}, "screen": {...}, "window": {...}}` (flattened to the same
-keys; mixing nested and flat keys is rejected) and adds `Page.get_defaults()` for
-the nested shape. See `docs/m11_1_host_environment.md`,
-`docs/m11_12_17_dom_web_batch.md`, and
-`docs/m11_24_28_host_environment_batch.md`.
+`productSub` / `doNotTrack` / `connectionEffectiveType` (`str`),
+`webdriver` / `onLine` / `cookieEnabled` / `pdfViewerEnabled` /
+`connectionSaveData` (`bool`), `languages` (non-empty `list[str]`), and
+`hardwareConcurrency` / `maxTouchPoints` / `connectionRtt` (`int`),
+`connectionDownlink` (`int` or `float`, stored `float`). Screen and window:
+`screenWidth` / `screenHeight` / `availWidth` / `availHeight` /
+`screenAvailLeft` / `screenAvailTop` / `screenColorDepth` / `screenPixelDepth` /
+`innerWidth` / `innerHeight` / `outerWidth` / `outerHeight` / `screenX` /
+`screenY` (`int`) and `devicePixelRatio` (`int` or `float`, stored `float`).
+Omitted keys inherit the defaults, and the original values are unchanged.
+Validation is strict and runs in the Python facade before any native page exists
+(unknown key or wrong type → `TypeError`, nothing partially installed). Values
+are re-applied to every `load()` generation. M11-17 additionally accepts the
+nested form `{"navigator": {...}, "screen": {...}, "window": {...}}` (flattened
+to the same keys; mixing nested and flat keys is rejected) and adds
+`Page.get_defaults()` for the nested shape. See
+`docs/m11_1_host_environment.md`, `docs/m11_12_17_dom_web_batch.md`,
+`docs/m11_24_28_host_environment_batch.md`, and
+`docs/m11_35_bom_metadata.md`.
 
 ### 2.3 `Page` — second-layer monitoring
 
@@ -145,18 +149,23 @@ Installed per generation by `install_page`:
   `count` → Python `logging`, logger `iv8.console`; no clock, stack, formatting,
   or nesting);
 - `navigator` (`userAgent` / `platform` / `language` / `webdriver` plus M11-24
-  `languages` / `onLine` / `cookieEnabled` / `hardwareConcurrency` and M11-27
+  `languages` / `onLine` / `cookieEnabled` / `hardwareConcurrency`, M11-27
   `appName` / `appCodeName` / `product` / `vendor` / `vendorSub` /
-  `productSub`) and `location` (`href` / `origin` / `protocol` / `host` /
+  `productSub`, and M11-35 `maxTouchPoints` / `pdfViewerEnabled` / `doNotTrack` /
+  `connection`) and `location` (`href` / `origin` / `protocol` / `host` /
   `hostname` / `pathname` / `search` / `hash` / `toString()`) — both read-only;
-  the configured navigator values are fixed per page, `location` still derives
-  from the base URL;
+  `navigator.connection` is a fresh read-only `{effectiveType, rtt, downlink,
+  saveData}` object with no events; `location` still derives from the base URL
+  and has no navigation methods;
 - `screen` (`width` / `height` / `availWidth` / `availHeight` plus M11-25
-  `colorDepth` / `pixelDepth`) and the `window` dimensions `devicePixelRatio` /
-  `innerWidth` / `innerHeight` plus M11-26 `outerWidth` / `outerHeight` /
-  `screenX` / `screenY` — read-only, configured via `Page(environment=...)`. No
-  `orientation` / scroll / `matchMedia`, no `window.name`, and these dimensions
-  feed no layout engine;
+  `colorDepth` / `pixelDepth` and M11-35 `availLeft` / `availTop` / `orientation`)
+  and the `window` dimensions `devicePixelRatio` / `innerWidth` / `innerHeight`
+  plus M11-26 `outerWidth` / `outerHeight` / `screenX` / `screenY` — read-only,
+  configured via `Page(environment=...)`; M11-35 adds mutable `window.name`,
+  read-only `window.length` (0), `screenLeft` / `screenTop`, and
+  `isSecureContext` derived from the base URL. `screen.orientation` is a
+  read-only `{type, angle}` derived from width/height with no events or lock; no
+  scroll / `matchMedia` and these dimensions feed no layout engine;
 - **timers** — `setTimeout` / `clearTimeout` / `setInterval` / `clearInterval`
   (manual-pump only);
 - **virtual performance clock** (M11-31) — `performance.now()` reports the
@@ -241,7 +250,8 @@ Installed per generation by `install_page`:
   descendant / child / adjacent-sibling / general-sibling combinators, attribute
   selectors, and `*`. Names are case-insensitive, values case-sensitive; the
   element-scoped queries include the root itself. Pseudo-classes/elements,
-  escapes, namespaces, and `i`/`s` flags are M11-35+ / unsupported;
+  escapes, namespaces, and `i`/`s` flags remain unsupported; pseudo-classes are
+  deferred to a later selector slice;
 - **document metadata** (M11-23) — read-only `characterSet` / `contentType` /
   `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
   `activeElement`, plus `hasFocus()` (always `false`). No focus, visibility, or
@@ -402,6 +412,7 @@ intentional non-deterministic surface; it does not affect the virtual clock.
 | M11-32 | minimal form constraint validation (`willValidate` / `validity` / `checkValidity()` / `setCustomValidity()`, `invalid` events) — verified 2026-10-29 | `docs/m11_31_32_perf_validation_batch.md`, `docs/m11_31_32_report.md` |
 | M11-33 | OS-backed `crypto.getRandomValues()` / `randomUUID()` (platform CSPRNG) — verified 2026-10-29 | `docs/m11_33_crypto_random.md`, `docs/m11_33_report.md` |
 | M11-34 | CSS selector engine expansion (lists, compound/attribute selectors, combinators, `*`) — verified 2026-10-29 | `docs/m11_34_selector_engine.md`, `docs/m11_34_report.md` |
+| M11-35 | deterministic BOM metadata completion (window/screen/navigator; 36-key environment) — verified 2026-10-30 | `docs/m11_35_bom_metadata.md`, `docs/m11_35_report.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

@@ -1,16 +1,16 @@
 # Current Status
 
-Last reviewed: `2026-10-29`
+Last reviewed: `2026-10-30`
 
 ## 1. Summary
 
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-29`, the latest implemented and verified milestone is **M11-34**
-(CSS selector engine expansion). Real-V8 CI is green on both platforms — Linux
-run `40855935052`, Windows run `40855940659`, both on commit `49f8582`, each
-wheel lane reporting `1565 passed, 2 skipped`:
+As of `2026-10-30`, the latest implemented and verified milestone is **M11-35**
+(deterministic BOM metadata completion). Real-V8 CI is green on both platforms —
+Linux run `40990275470`, Windows run `40990279247`, both on commit `aa23c57`,
+each wheel lane reporting `1599 passed, 2 skipped`:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -65,6 +65,9 @@ wheel lane reporting `1565 passed, 2 skipped`:
   non-deterministic surface
 - `M11-34`: CSS selector engine expansion — selector lists, compound and
   attribute selectors, combinators, and `*` shared by query/matches/closest
+- `M11-35`: deterministic BOM metadata — `window.name` / `length` /
+  `screenLeft` / `screenTop` / `isSecureContext`, `screen.availLeft` /
+  `availTop` / `orientation`, and navigator touch/PDF/DNT/connection metadata
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -89,9 +92,11 @@ verified as one batch on `m11-31-32-perf-validation-batch` (final commit
 was verified on `m11-33-crypto-random` (commit `c9b2fb5`) and merged to the
 fork's `master`. M11-34 (CSS selector engine) was verified on
 `m11-34-selector-engine` (final commit `49f8582`) and merged to the fork's
-`master`. Upstream `investforever/iv8-runtime` remains at M11-3;
+`master`. M11-35 (BOM metadata completion) was verified on
+`m11-35-bom-metadata` (commit `aa23c57`) and merged to the fork's `master`.
+Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
-report documents (`docs/m11_6_report.md` … `docs/m11_34_report.md`).
+report documents (`docs/m11_6_report.md` … `docs/m11_35_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
@@ -267,8 +272,13 @@ Implemented and present at `HEAD`:
   Verified `2026-10-29`; see `docs/m11_33_crypto_random.md`.
 - `M11-34` CSS selector engine expansion — selector lists, compound selectors,
   descendant/child/sibling combinators, attribute selectors, and `*`, shared by
-  `querySelector[All]`, `matches()`, and `closest()`. Pseudo-classes are M11-35.
-  Verified `2026-10-29`; see `docs/m11_34_selector_engine.md`.
+  `querySelector[All]`, `matches()`, and `closest()`. Verified `2026-10-29`; see
+  `docs/m11_34_selector_engine.md`.
+- `M11-35` deterministic BOM metadata — `window.name` / `length` /
+  `screenLeft` / `screenTop` / `isSecureContext`; `screen.availLeft` /
+  `availTop` / `orientation`; navigator `maxTouchPoints` /
+  `pdfViewerEnabled` / `doNotTrack` / `connection`. The environment grows to 36
+  keys. Verified `2026-10-30`; see `docs/m11_35_bom_metadata.md`.
 
 ## 3. Latest Known Milestone Sequence
 
@@ -308,6 +318,7 @@ Recent implementation sequence from Git history:
 - `M11-33`: OS-backed Crypto random (`getRandomValues` / `randomUUID`;
   verified `2026-10-29`)
 - `M11-34`: CSS selector engine expansion (verified `2026-10-29`)
+- `M11-35`: deterministic BOM metadata completion (verified `2026-10-30`)
 
 ## 4. Release / Distribution Status
 
@@ -408,19 +419,23 @@ The repository is executing its post-M10 direction:
 - `M11-34` (CSS selector engine expansion) is **landed and verified on real V8
   (Linux + Windows)** on `2026-10-29`; see `docs/m11_34_selector_engine.md` and
   `docs/m11_34_report.md`;
-- the next execution handoff is to choose `M11-35` — the planned follow-up is
-  selector pseudo-classes; otherwise use `docs/m11_compatibility_backlog.md` or
-  another gap-inventory slice with an explicit boundary.
+- `M11-35` (deterministic BOM metadata completion) is **landed and verified on
+  real V8 (Linux + Windows)** on `2026-10-30`; see
+  `docs/m11_35_bom_metadata.md` and `docs/m11_35_report.md`;
+- the next execution handoff is to choose `M11-36` — selector pseudo-classes are
+  still the planned selector follow-up; remaining BOM gaps such as dialogs,
+  performance marks, and `structuredClone` are also candidates from
+  `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-35`? (`docs/decision_log.md`
-  §A — `M11-1` through `M11-34` are settled, landed, and verified; the planned
-  follow-up is selector pseudo-classes, or the ranked compatibility matrix at
-  `docs/m11_compatibility_backlog.md` / `docs/dom_bom_gaps.md` can drive another
-  choice.)
+- Which concrete compatibility slice should become `M11-36`? (`docs/decision_log.md`
+  §A — `M11-1` through `M11-35` are settled, landed, and verified; selector
+  pseudo-classes remain the planned selector follow-up, while remaining BOM
+  gaps (dialogs, performance marks, `structuredClone`) are alternate candidates
+  from `docs/dom_bom_gaps.md`.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -435,8 +450,8 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime and the M9–M10 monitoring extensions, and is executing the
-> compatibility-first `M11` line — with `M11-34` (CSS selector engine expansion)
-> landed and verified on real V8 (Linux + Windows) on `2026-10-29`.
+> compatibility-first `M11` line — with `M11-35` (deterministic BOM metadata
+> completion) landed and verified on real V8 (Linux + Windows) on `2026-10-30`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

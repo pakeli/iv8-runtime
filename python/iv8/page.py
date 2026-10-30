@@ -306,7 +306,9 @@ class Page:
     M11-17 additionally accepts the nested ``navigator`` / ``screen`` / ``window``
     form and adds :meth:`get_defaults` for that shape. Mixing nested and flat keys
     in one mapping is rejected. M11-24..M11-27 extend both forms with navigator
-    metadata/identity, screen depth, and outer window geometry.
+    metadata/identity, screen depth, and outer window geometry; M11-35 adds
+    navigator touch/PDF/DNT/connection metadata and screen avail offsets
+    (36 flat keys total).
     """
 
     @staticmethod

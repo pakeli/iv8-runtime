@@ -1,7 +1,6 @@
 # M11-35 — BOM metadata completion (window / screen / navigator)
 
-Status: **IN PROGRESS — implementation and real-V8 verification pending
-(`2026-10-30`)**
+Status: **VERIFIED — real V8 green on Linux + Windows (`2026-10-30`)**
 
 M11-35 resumes the BOM direction after the selector work: it completes the
 deterministic window/screen/navigator metadata surface that page scripts commonly
@@ -88,5 +87,13 @@ historical `window.name` guard.
 
 ## Verification
 
-Real-V8 Linux + Windows CI will run after implementation. This section will be
-replaced with the run IDs and per-lane pytest summaries once green.
+Verified on real V8 at commit `aa23c57`:
+
+- Linux `release-linux` run `40990275470` — cp311–cp314, each
+  `1599 passed, 2 skipped`;
+- Windows `release-windows` run `40990279247` — Python 3.11–3.14, each
+  `1599 passed, 2 skipped`.
+
+`test/test_m11_35_bom_metadata.py` ran in every lane (12 items); the full suite
+collects 1601 items. Both runs were green on the first attempt. See
+`docs/m11_35_report.md`.

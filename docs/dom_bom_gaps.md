@@ -1,10 +1,10 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-29` · Baseline: **M11-34** (CSS selector engine
-verified `2026-10-29`)
+Last reviewed: `2026-10-30` · Baseline: **M11-35** (deterministic BOM metadata
+verified `2026-10-30`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-34. It is not a contract and not a roadmap.
+> are **not implemented** as of M11-35. It is not a contract and not a roadmap.
 > Where a feature is partially present, only the missing parts are listed.
 > Status labels:
 >
@@ -55,7 +55,7 @@ verified `2026-10-29`)
 | Missing | Status |
 |---|---|
 | `alert` / `confirm` / `prompt`, `window.print` | **absent** |
-| Fullscreen API, `screen.orientation`, `visualViewport` | **absent** |
+| Fullscreen API, `visualViewport` | **absent** — M11-35 adds a read-only derived `screen.orientation` with no events/lock |
 | Scroll APIs (`scroll` / `scrollTo` / `scrollBy` / `scrollX` / `scrollY`) | **absent** — no layout |
 | `matchMedia` | **absent** — no CSS/media-query engine |
 
@@ -66,16 +66,16 @@ verified `2026-10-29`)
 | `crypto` (`getRandomValues`, SubtleCrypto) | **partially implemented** — M11-33 adds OS-backed `getRandomValues()` / `randomUUID()`; `crypto.subtle` (digest, AES, RSA, ECDH/ECDSA, HMAC, KDF) is absent |
 | `Worker` / `SharedWorker` / `ServiceWorker` | **absent** |
 | `navigator.clipboard`, `geolocation`, `Notification`, `Permissions` | **absent** |
-| `navigator.connection` / `userAgentData` | **absent** |
-| `navigator.maxTouchPoints` / permissions / clipboard / geolocation | **absent** |
+| `navigator.userAgentData` (UA-CH) | **absent** — M11-35 adds `navigator.connection` metadata only |
+| `navigator.permissions` / clipboard / geolocation | **absent** — M11-35 adds `maxTouchPoints`, `pdfViewerEnabled`, and `doNotTrack` |
 | `structuredClone` and other transfer/serialization APIs | **absent** |
 
 ### 1.6 Screen and window metadata
 
 | Missing | Status |
 |---|---|
-| `screen.orientation` / `availLeft` / `availTop` | **absent** |
-| `window.name` / `length` | **absent** |
+| `screen.orientation` / `availLeft` / `availTop` | **implemented** — M11-35 (orientation is a read-only derived `{type, angle}`, no events/lock) |
+| `window.name` / `length` | **implemented** — M11-35 (`name` mutable/Page-persistent; `length` is always 0) |
 
 Implemented for contrast: `screen.width` / `height` / `availWidth` /
 `availHeight` / `colorDepth` / `pixelDepth`, and `window.devicePixelRatio` /
@@ -122,7 +122,7 @@ M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
 | Missing | Status |
 |---|---|
 | Combinators (descendant/child/sibling), attribute selectors, selector lists | **partially implemented** — M11-34 adds compound selectors, all four combinators, attribute operators, selector lists, and `*`; pseudo-classes/elements, escapes, namespaces, and `i`/`s` flags remain absent |
-| Complex selectors in `matches` / `closest` (currently `false` / `null`) | **implemented** — M11-34 uses the same selector engine as the query APIs; pseudo-classes remain M11-35 |
+| Complex selectors in `matches` / `closest` (currently `false` / `null`) | **implemented** — M11-34 uses the same selector engine as the query APIs; pseudo-classes remain a later selector slice |
 | `document.all` | **absent** |
 
 Implemented for contrast: M11-19 added multi-token `getElementsByClassName`
@@ -257,9 +257,9 @@ completeness; M11-24..M11-28 delivered navigator/screen/window metadata and the
 console method cluster; M11-29 delivered the deterministic timer/microtask
 event-loop facade, M11-30 integrated rAF/idle into it, M11-31/M11-32 added the
 virtual performance clock and minimal form validation, M11-33 added OS-backed
-`crypto.getRandomValues()` / `randomUUID()`, and M11-34 expanded the CSS
-selector engine. Remaining candidates (mapping to
-`docs/m11_compatibility_backlog.md`):
+`crypto.getRandomValues()` / `randomUUID()`, M11-34 expanded the CSS selector
+engine, and M11-35 completed the deterministic window/screen/navigator metadata.
+Remaining candidates (mapping to `docs/m11_compatibility_backlog.md`):
 
 | Gap area | Backlog rank | Notes |
 |---|---|---|

@@ -1,11 +1,12 @@
-"""M11-1/M11-24..M11-27 acceptance tests: configurable host-environment baseline.
+"""M11-1/M11-24..M11-27/M11-35 acceptance tests: configurable host-environment.
 
 `Page(environment=...)` configures the page's read-only environment surface and
 `Page.get_default_environment()` returns the default template as a plain dict. The
 original eleven keys map onto navigator.userAgent / platform / language / webdriver,
 screen.width / height / availWidth / availHeight, and window.devicePixelRatio /
 innerWidth / innerHeight. M11-24..M11-27 add navigator metadata/identity fields,
-screen color/pixel depth, and outer window geometry.
+screen color/pixel depth, and outer window geometry. M11-35 adds navigator
+touch/PDF/DNT/connection metadata and screen avail offsets (36 flat keys total).
 
 Every value is a fixed constant (never OS/display/locale-derived), the whole surface
 is read-only from JS, values stay identical across repeated `load()` generations, and

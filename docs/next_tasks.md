@@ -635,7 +635,7 @@ slice with an explicit boundary.
 - Attribute selectors (`[a]`, `=`, `~=`, `|=`, `^=`, `$=`, `*=`) with quoted or
   unquoted values; names case-insensitive, values case-sensitive.
 - Malformed/unsupported selectors keep stable empty/null/false behavior;
-  pseudo-classes remain M11-35.
+  pseudo-classes remain a later selector slice.
 
 Boundary: `docs/m11_34_selector_engine.md`. Tests:
 `test/test_m11_34_selector_engine.py` (12 items). Full suite collects 1567
@@ -657,9 +657,45 @@ refreshed `closest('div.box')` expectation; `49f8582` fixed the test. Report:
 
 ### Next
 
-Choose `M11-35` — the planned follow-up is selector pseudo-classes
-(`:first-child`, `:nth-child`, `:not`, form-state pseudo-classes); otherwise
-use another gap-inventory slice with an explicit boundary.
+The planned selector pseudo-class follow-up is deferred; M11-35 was used for
+BOM metadata (see Priority 3r below).
+
+## Priority 3r: M11-35 BOM metadata completion — DONE (`2026-10-30`)
+
+### What landed
+
+- Window: mutable `window.name` (Page-persistent across `load()`),
+  `window.length` (0), `screenLeft` / `screenTop` aliases, and
+  `isSecureContext` derived from the base URL.
+- Screen: `availLeft` / `availTop` and a derived `orientation`
+  (`landscape-primary`/0 or `portrait-primary`/90); no events or lock.
+- Navigator: `maxTouchPoints`, `pdfViewerEnabled`, `doNotTrack`, and a
+  read-only `connection` object (`effectiveType` / `rtt` / `downlink` /
+  `saveData`).
+- `Page(environment=...)` grows from 27 to 36 keys, with flat and nested
+  `navigator` / `screen` forms and strict type validation.
+
+Boundary: `docs/m11_35_bom_metadata.md`. Tests:
+`test/test_m11_35_bom_metadata.py` (12 items). Full suite collects 1601 items;
+each wheel lane: **`1599 passed, 2 skipped`**.
+
+### Verification — passed
+
+Commit `aa23c57` (branch `m11-35-bom-metadata`):
+
+- Linux `release-linux` run `40990275470` — cp311–cp314, each
+  `1599 passed, 2 skipped`;
+- Windows `release-windows` run `40990279247` — Python 3.11–3.14, each
+  `1599 passed, 2 skipped`.
+
+The new test file ran in every lane. Both runs were green on the first attempt.
+Report: `docs/m11_35_report.md`.
+
+### Next
+
+Choose `M11-36` — selector pseudo-classes remain the planned selector
+follow-up; remaining BOM gaps (dialogs, performance marks, `structuredClone`,
+`navigator.userAgentData`) are alternate candidates.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

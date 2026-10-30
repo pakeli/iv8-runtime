@@ -306,7 +306,8 @@ with quoted/unquoted values. Attribute names are case-insensitive and values
 case-sensitive; element-scoped queries keep the subtree-includes-self semantics.
 Malformed/unsupported selectors retain stable empty/null/false behavior.
 Pseudo-classes/elements, escapes, namespaces, and `i`/`s` flags are deferred
-(M11-35 for pseudo-classes).
+(M11-35 was subsequently used for BOM metadata; pseudo-classes remain a later
+selector slice).
 
 The first verification attempt (`a8fe60d`) failed one refreshed
 `closest('div.box')` expectation (the engine correctly returned the ancestor
@@ -317,11 +318,30 @@ Verified on real V8 at commit `49f8582` (feature commit `a8fe60d`): Linux
 The full suite collects 1567 items (1555 previous + 12 tests). See
 `docs/m11_34_report.md`.
 
+### 23. M11-35 completed deterministic BOM metadata
+
+Decided/verified `2026-10-30`.
+
+M11-35 adds the remaining deterministic window/screen/navigator metadata:
+`window.name` (Page-persistent mutable string), `window.length`,
+`screenLeft` / `screenTop`, `isSecureContext` (base-URL-derived),
+`screen.availLeft` / `availTop` / `orientation` (derived from dimensions), and
+`navigator.maxTouchPoints` / `pdfViewerEnabled` / `doNotTrack` / a read-only
+`connection` object. The flat environment grows from 27 to 36 keys, with nested
+`navigator` / `screen` forms and strict type validation. No navigation,
+networking, rendering, dialogs, performance marks, structuredClone, or Python
+BOM API is added.
+
+Verified on real V8 at commit `aa23c57`: Linux `40990275470`, Windows
+`40990279247`, each wheel lane `1599 passed, 2 skipped`. The full suite collects
+1601 items (1567 previous + 12 new tests + 22 environment parametrizations). See
+`docs/m11_35_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-35`?
+### A. Which concrete compatibility slice becomes `M11-36`?
 
 Settled and implemented so far:
 
@@ -445,9 +465,15 @@ direction alone.
   all four combinators, and attribute selectors shared by query/matches/closest.
   Boundary: `docs/m11_34_selector_engine.md`. Verified on real V8 (Linux
   `40855935052`, Windows `40855940659`, commit `49f8582`, each wheel lane
-  `1565 passed, 2 skipped`); see `docs/m11_34_report.md`. The next planned
-  slice (`M11-35`) is selector pseudo-classes; otherwise choose another
-  gap-inventory item with an explicit boundary.
+  `1565 passed, 2 skipped`); see `docs/m11_34_report.md`.
+
+- `M11-35` — **BOM metadata completion** — selected/frozen on `2026-10-30`:
+  window name/length/geometry/secure-context metadata, screen avail/orientation,
+  and navigator touch/PDF/DNT/connection metadata; the environment grows to 36
+  keys. Boundary: `docs/m11_35_bom_metadata.md`. Verified on real V8 (Linux
+  `40990275470`, Windows `40990279247`, commit `aa23c57`, each wheel lane
+  `1599 passed, 2 skipped`); see `docs/m11_35_report.md`. The next slice
+  (`M11-36`) can resume selector pseudo-classes or take another BOM/gap item.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

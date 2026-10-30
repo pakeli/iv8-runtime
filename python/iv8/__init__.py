@@ -969,6 +969,16 @@ stable empty/null/false behavior. Pseudo-classes/elements, escapes, namespaces,
 and ``i``/``s`` flags remain out of scope. See
 ``docs/m11_34_selector_engine.md``.
 
+M11-35 completes deterministic BOM metadata: mutable ``window.name`` (persisted
+across ``load()``), ``window.length``, ``screenLeft`` / ``screenTop``,
+``isSecureContext``, ``screen.availLeft`` / ``availTop`` / ``orientation``, and
+``navigator.maxTouchPoints`` / ``pdfViewerEnabled`` / ``doNotTrack`` /
+``connection``. ``Page(environment=...)`` grows from 27 to 36 flat keys with
+nested ``navigator`` / ``screen`` equivalents; all values remain deterministic
+constants. Navigation, networking, rendering, dialogs, performance marks,
+structuredClone, and a Python BOM API remain out of scope. See
+``docs/m11_35_bom_metadata.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free
