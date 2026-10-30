@@ -115,6 +115,6 @@ If you only remember one thing:
 > (BOM viewport/media/device metadata), verified on real V8 (Linux + Windows) on
 > `2026-10-30` and merged to `master` on the fork (`pakeli/iv8-runtime`); upstream
 > sync is out of scope. The post-M11 host access trace steps 1–4 plus the
-> step-5 native BOM call, window metadata, and nested metadata groups are also
-> verified (commit `924effd`); see `docs/m11_41_45_report.md` and
-> `docs/host_access_trace.md`.
+> step-5 native BOM call, window metadata, nested metadata, and static
+> visualViewport groups are also verified (commit `c87ffbe`); see
+> `docs/m11_41_45_report.md` and `docs/host_access_trace.md`.

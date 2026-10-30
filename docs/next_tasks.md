@@ -925,10 +925,11 @@ Final commit `e19f54d` (branch `host-access-window`):
 
 ### Next
 
-The nested metadata/timeOrigin group was completed as Priority 3y below.
-Remaining step-5 groups: `visualViewport`, `matchMedia` results, navigator
-storage/permissions/plugins, and other plain property reads. Value/argument/
-return summaries remain step 6. The M11-46 selector follow-up remains deferred.
+The nested metadata/timeOrigin group was completed as Priority 3y below, and the
+static visualViewport group as Priority 3z. Remaining step-5 groups:
+`matchMedia` results, navigator storage/permissions/plugins, and other plain
+property reads. Value/argument/return summaries remain step 6. The M11-46
+selector follow-up remains deferred.
 
 ## Priority 3y: Host access trace nested metadata — DONE (`2026-10-30`)
 
@@ -960,10 +961,52 @@ and the new timeOrigin event. The runtime behavior was intended.
 
 ### Next
 
-Continue step 5 with `visualViewport`, `matchMedia` result objects,
-`navigator.storage` / `permissions` / `plugins` / `mimeTypes`, and other plain
-property reads. Value/argument/return summaries remain step 6. The M11-46
-selector follow-up remains deferred.
+Continue step 5 with the static visualViewport group (Priority 3z), then
+`matchMedia` result objects, `navigator.storage` / `permissions` / `plugins` /
+`mimeTypes`, and other plain property reads. Value/argument/return summaries
+remain step 6. The M11-46 selector follow-up remains deferred.
+
+## Priority 3z: Host access trace static visualViewport — DONE (`2026-10-30`)
+
+### What landed
+
+- `visualViewport` is now a `VisualViewportHost` HostObject, so its
+  metadata reads, writable `onresize`/`onscroll`, no-op event-target method
+  calls, and missing string-key probes use the normal trace channel.
+- Width/height still come from the Page environment; offsets/scale and method
+  results are unchanged. The global property remains read-only.
+- Intentional non-value changes are documented: the instance prototype is the
+  host-object template prototype, the no-op methods are writable/configurable,
+  and the writable handler descriptors are non-configurable. Read-only metadata
+  descriptors keep their data shape, though reading a descriptor evaluates the
+  native getter and emits a `get` event.
+- The fixed internal bootstrap still reads `innerWidth`/`innerHeight` once for
+  the static media evaluator, preserving real `internal` source attribution.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_visual_viewport.py` (4 items). Full suite collects 1673
+items; each wheel lane: **`1671 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `c87ffbe` (branch `host-access-visual-viewport`):
+
+- Linux `release-linux` run `41025891916` — cp311–cp314, each
+  `1671 passed, 2 skipped`;
+- Windows `release-windows` run `41025896654` — Python 3.11–3.14, each
+  `1671 passed, 2 skipped`.
+
+The initial attempts corrected test-only assumptions: native data-property
+descriptor reads evaluate the getter (an extra `get`), undefined method results
+do not survive `Array.join`, and host-object descriptors/prototypes differ as
+documented. Runtime values and read/write behavior were intended.
+
+### Next
+
+Continue step 5 with `matchMedia` result objects, `navigator.storage` /
+`permissions` / `plugins` / `mimeTypes`, and other plain property reads.
+Value/argument/return summaries remain step 6. The M11-46 selector follow-up
+remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

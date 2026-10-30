@@ -31,13 +31,13 @@ git log --oneline --decorate -n 20
   `61abc3b`, merged to `master` on the fork; upstream sync out of scope). The
   M11 line is compatibility-first.
 - A post-M11 monitoring slice is also verified: **host access trace steps 1–4
-  plus the step-5 native BOM call, window metadata, and nested metadata groups**
-  (`Page.start_access_trace` / `stop_access_trace` / `read_access_trace`, native
-  get/set/call, HostObject missing-string-key `get_probe`,
-  performance/crypto/Storage callback calls, window metadata accessors, and
-  connection/orientation/timeOrigin reads), green on real V8 at commit
-  `924effd`; the remaining step-5 groups and value/argument/return summaries
-  remain pending.
+  plus the step-5 native BOM call, window metadata, nested metadata, and static
+  visualViewport groups** (`Page.start_access_trace` / `stop_access_trace` /
+  `read_access_trace`, native get/set/call, HostObject missing-string-key
+  `get_probe`, performance/crypto/Storage callback calls, window metadata
+  accessors, connection/orientation/timeOrigin reads, and visualViewport
+  metadata/methods), green on real V8 at commit `c87ffbe`; the remaining step-5
+  groups and value/argument/return summaries remain pending.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -106,10 +106,11 @@ Answer roughly as follows:
   - latest implemented and verified compatibility feature: M11-41..M11-45
     (BOM viewport/media/device metadata);
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
-    step-5 native BOM calls, window metadata, and nested metadata (native
-    HostObject get/set/call, missing-property probes,
-    performance/crypto/Storage calls, window accessors, and
-    connection/orientation/timeOrigin; see `docs/host_access_trace.md`).
+    step-5 native BOM calls, window metadata, nested metadata, and static
+    visualViewport (native HostObject get/set/call, missing-property probes,
+    performance/crypto/Storage calls, window accessors,
+    connection/orientation/timeOrigin, and visualViewport
+    metadata/methods; see `docs/host_access_trace.md`).
 
 ## Handoff Discipline
 

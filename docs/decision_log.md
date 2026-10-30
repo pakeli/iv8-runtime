@@ -489,6 +489,33 @@ Verified on real V8 at commit `924effd`: Linux `41022649736`, Windows
 1669 items (1666 previous + 3 nested tests). See
 `docs/host_access_trace.md`.
 
+### 31. Host access trace static visualViewport (step 5d)
+
+Decided/verified `2026-10-30`.
+
+`visualViewport` is now a `VisualViewportHost` HostObject instead of a plain JS
+object, so metadata reads, writable `onresize`/`onscroll`, no-op event-target
+method calls, and missing string-key probes enter the normal trace channel. The
+global property stays read-only; width/height still come from the Page
+environment and method results are unchanged.
+
+The conversion intentionally changes non-value characteristics, now documented
+and tested: the instance prototype is the host-object template prototype; no-op
+methods are writable/configurable; the writable handler descriptors are
+non-configurable; read-only metadata descriptors keep their data shape but
+descriptor reads evaluate the native getter and therefore emit a `get` event.
+The fixed bootstrap was adjusted to read `innerWidth`/`innerHeight` once for the
+static media evaluator, keeping genuine `internal` source attribution.
+
+The first CI attempts failed only on test expectations (descriptor getter
+invocation, `Array.join` of undefined, host-object descriptors/prototype); the
+final commit `c87ffbe` carries the verified tests and runtime behavior.
+
+Verified on real V8 at commit `c87ffbe`: Linux `41025891916`, Windows
+`41025896654`, each wheel lane `1671 passed, 2 skipped`. The full suite collects
+1673 items (1669 previous + 4 visualViewport tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

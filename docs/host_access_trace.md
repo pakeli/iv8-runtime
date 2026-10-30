@@ -1,17 +1,18 @@
 # Host Access Trace
 
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
-BOM callback calls + window/nested metadata reads green on real V8 Linux +
-Windows (`2026-10-30`)**
+BOM callback calls + window/nested metadata + static visualViewport reads green
+on real V8 Linux + Windows (`2026-10-30`)**
 
 This document freezes steps 1–4 and the first groups of step 5 of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
 string-key missing-property probes, call/get coverage for independent native BOM
-callbacks (performance, crypto, Storage), intrinsic window metadata reads, and
+callbacks (performance, crypto, Storage), intrinsic window metadata reads,
 nested `navigator.connection` / `screen.orientation` / `performance.timeOrigin`
-reads. It is a second-layer monitoring feature. It does not change the M1
-`JSContext` contract, the existing `watch_apis` / Reflect / Object.keys channels,
-or DOM/BOM values/assignment behavior.
+reads, and the static `visualViewport` HostObject. It is a second-layer
+monitoring feature. It does not change the M1 `JSContext` contract, the existing
+`watch_apis` / Reflect / Object.keys channels, or DOM/BOM values/assignment
+behavior.
 
 ## 1. Entry-point contract
 
@@ -46,13 +47,17 @@ setter does not retroactively remove the event.
 | `localStorage.getItem()` / `sessionStorage.setItem()` / `localStorage.length` | records `call`; `length` records `get` |
 | `performance.timeOrigin` | records `get` |
 | `navigator.connection.effectiveType` / `screen.orientation.type` | records `get`; nested reads also show their parent getter |
+| `visualViewport.width` / `height` / offsets / `scale` | records `get` with `object_type: "visual_viewport"` |
+| `visualViewport.addEventListener()` / `removeEventListener()` / `dispatchEvent()` | records `call`; results and no-op behavior unchanged |
+| `visualViewport.onresize = fn` / reads of `onresize` / `onscroll` | records `set` / `get`; the assigned value is returned, no event is dispatched |
+| `visualViewport.someMissingProperty` | records `get_probe` / `resolution: "missing"` |
 | other plain property reads on native BOM objects | not covered yet |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
 | `window.innerWidth` / `outerWidth` / `innerHeight` | records `get` from the window metadata accessor |
 | `window.name` | records `get` and `set` |
 | `window.origin` / `isSecureContext` / `crossOriginIsolated` / `closed` / `frameElement` | records `get`; read-only behavior unchanged |
 | `window.parent` / `top` / `frames` / `opener` | not covered by this accessor group |
-| `visualViewport` / `matchMedia(...)` results / `navigator.storage` / `permissions` | not covered yet |
+| `matchMedia(...)` result objects / `navigator.storage` / `permissions` | not covered yet |
 | `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered in this slice; step 6 |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
@@ -65,6 +70,7 @@ setter does not retroactively remove the event.
 | `console` | `ConsoleHost` | Installed as a global. |
 | `navigator` | `NavigatorHost` | Installed as a global; properties only. |
 | `screen` | `ScreenHost` | Installed as a global; properties only. |
+| `visualViewport` | `VisualViewportHost` | Installed as a read-only global; metadata properties plus no-op event-target methods. |
 | `location` | `LocationHost` | Installed as a global; `toString()` is its only method. |
 | `document` | `DocumentHost` | Installed as a global; property getters and methods. |
 | element wrappers | `ElementHost` | Lazily created and cached per backing `DomNode`; not a global. Fresh JS wrappers can represent the same native backing. |
@@ -86,7 +92,8 @@ listed as not covered.
   map; IDs are never reused.
 - `object_type` is the native category: `host_probe`, `console`, `navigator`,
   `screen`, `location`, `document`, `element`, `connection`, `orientation`,
-  `performance`, `crypto`, `storage`, `window`, or the fallback `host_object`.
+  `performance`, `crypto`, `storage`, `visual_viewport`, `window`, or the
+  fallback `host_object`.
 - `label` is a display hint. Global hosts use their global name; elements use
   their native HTML tag only. Labels must not be built by reading JS `id`,
   text, attributes, or other properties.
@@ -191,7 +198,7 @@ The callbacks use stable native tokens/backings for `object_id`; no plain-object
 descriptor, prototype, function identity, or `this` behavior is changed. A
 method is recorded when its native callback is entered, before implementation.
 Property reads on `performance`, `crypto`, or Storage — except the Storage
-`length` getter — remain unimplemented.
+`length` getter and `performance.timeOrigin` (§4.4) — remain unimplemented.
 
 ## 4.3 Intrinsic window metadata (step 5b)
 
@@ -223,7 +230,42 @@ access returns a wrapper over a stable Page-owned backing, so:
 
 `performance.timeOrigin` is a traced accessor on the otherwise plain
 `performance` object. Other performance/crypto/Storage property reads and
-`visualViewport` / `matchMedia` results remain for later step-5 groups.
+`matchMedia` results remain for later step-5 groups.
+
+## 4.5 Static visual viewport (step 5d)
+
+`visualViewport` is now a HostObject (`VisualViewportHost`) instead of a plain JS
+object, so:
+
+- `width` / `height` / `offsetLeft` / `offsetTop` / `pageLeft` / `pageTop` /
+  `scale` reads record `get` with `object_type: "visual_viewport"` and label
+  `"visualViewport"`; width/height still come from the Page environment and the
+  offsets/scale remain the same constants;
+- `addEventListener` / `removeEventListener` / `dispatchEvent` calls record
+  `call`; results are unchanged (`undefined` / `undefined` / `false`) and no
+  listener is stored;
+- `onresize` / `onscroll` record `set` and `get`; an assigned handler is stored
+  for the generation and returned on read, but no event is ever dispatched;
+- absent string keys produce `get_probe` / `resolution: "missing"` under the
+  same interceptor as other HostObjects.
+
+The global property remains read-only (`ReadOnly | DontDelete`), and values plus
+sloppy/strict write behavior are unchanged. Moving from a plain object to a
+HostObject intentionally changes some non-value characteristics:
+
+- the instance prototype is now the host-object template prototype (whose
+  prototype is `Object.prototype`); `visualViewport instanceof Object` and
+  inherited helpers still work, but
+  `Object.getPrototypeOf(visualViewport) === Object.prototype` is now false;
+- the no-op event-target methods are writable/configurable like other
+  host-object methods (the previous plain-object versions were read-only);
+- the writable `onresize` / `onscroll` descriptors remain data descriptors with
+  `writable: true` but are now non-configurable;
+- the read-only metadata descriptors keep their data shape (`value`,
+  `writable: false`, `enumerable: true`, `configurable: false`). Reading such a
+  descriptor through `Object.getOwnPropertyDescriptor` evaluates the native
+  getter, so it also emits a `get` event — native data-property descriptors are
+  materialized by calling the getter.
 
 ## 5. Source attribution
 
@@ -232,7 +274,10 @@ access returns a wrapper over a stable Page-owned backing, so:
   slice).
 - `html_script` — inline/external HTML script execution through
   `PageState::run_html_script`.
-- `internal` — generation bootstrap during `install_page`.
+- `internal` — generation bootstrap during `install_page`. The current fixed
+  bootstrap reads `window.innerWidth` / `innerHeight` once for the static media
+  evaluator, so those two `get` events appear with `source_kind: "internal"` on
+  every load.
 - `unknown` — timer/microtask/rAF/idle callbacks, lifecycle/event dispatch after
   the originating eval, DevTools evaluation, and `to_py` result conversion.
 
@@ -255,9 +300,8 @@ old channel.
 
 - Window `parent` / `top` / `frames` / `opener` and other intrinsic/global data
   properties not listed in §4.3.
-- `visualViewport` / `matchMedia(...)` result objects, `navigator.storage` /
-  `navigator.permissions` / `plugins` / `mimeTypes`, and nested BOM objects not
-  listed in §4.4.
+- `matchMedia(...)` result objects, `navigator.storage` / `navigator.permissions`
+  / `plugins` / `mimeTypes`, and nested BOM objects not listed in §4.4/§4.5.
 - Property reads on `performance`, `crypto`, and Storage (their independent
   native method calls are covered in step 5a); `navigator.storage`,
   `navigator.permissions`, `navigator.plugins` / `mimeTypes`, `matchMedia`
@@ -277,32 +321,37 @@ old channel.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The remaining step-5 groups expand `visualViewport`, `matchMedia` results,
-`navigator.storage` / `permissions` / `plugins` / `mimeTypes`, and other plain
-property reads; step 6 adds method-reference reads, `in`, delete, enumeration,
-descriptors, and value/argument/return summaries. None is implied by this slice.
+The remaining step-5 groups expand `matchMedia` results, `navigator.storage` /
+`permissions` / `plugins` / `mimeTypes`, and other plain property reads; step 6
+adds method-reference reads, `in`, delete, enumeration, descriptors, and
+value/argument/return summaries. None is implied by this slice.
 
 ## 8. Verification
 
-Verified on real V8 at commit `924effd` (branch `host-access-nested`):
+Verified on real V8 at commit `c87ffbe` (branch
+`host-access-visual-viewport`):
 
-- Linux `release-linux` run `41022649736` — cp311 / cp312 / cp313 / cp314,
-  each `1667 passed, 2 skipped`;
-- Windows `release-windows` run `41022653765` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1667 passed, 2 skipped`.
+- Linux `release-linux` run `41025891916` — cp311 / cp312 / cp313 / cp314,
+  each `1671 passed, 2 skipped`;
+- Windows `release-windows` run `41025896654` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1671 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
 `test/test_access_trace_probes.py` (10 items),
 `test/test_access_trace_bom_calls.py` (4 items),
-`test/test_access_trace_window.py` (4 items), and
-`test/test_access_trace_nested.py` (3 items) ran in every lane. The full suite
-collects 1669 items; 1667 pass and 2 are skipped.
+`test/test_access_trace_window.py` (4 items),
+`test/test_access_trace_nested.py` (3 items), and
+`test/test_access_trace_visual_viewport.py` (4 items) ran in every lane. The
+full suite collects 1673 items; 1671 pass and 2 are skipped.
 
-The initial nested attempt (`9567761`) had two expectations that assumed one
-event per nested access; the actual sequence includes the parent getter on each
-property access, and `performance.timeOrigin` is now traced. `924effd` corrected
-only the test expectations; the runtime behavior was intended.
+The initial visual-viewport attempt assumed reading a native data-property
+descriptor would not call its getter and that undefined method results would
+survive `Array.join`; the verified behavior emits a second `width` get for the
+descriptor read and stringifies undefined as an empty field. The final commit
+`c87ffbe` corrects only the test expectations and keeps the intended runtime
+behavior. The earlier nested attempt had a similar one-event-per-access
+assumption, corrected by `924effd`.
 
 The initial probe attempt (`76baaa2`) showed that V8 invokes the named getter
 for query-only operations and some existing-property paths. `8995b89` added the
@@ -329,6 +378,9 @@ Coverage in this slice:
   unchanged (the geometry/flag data properties are now accessors);
 - nested connection/orientation properties and `performance.timeOrigin` record
   reads, including repeated parent getter accesses and nested missing probes;
+- `visualViewport` metadata, writable handlers, no-op methods, and missing
+  probes record get/set/call/get_probe events; read-only writes still have no
+  set event, and the documented prototype/descriptor changes are asserted;
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
@@ -337,6 +389,6 @@ Coverage in this slice:
 - capacity, dropped-event counts, object-type filters, read-and-clear, stop,
   multiple Pages, and disposal behavior are covered by tests.
 
-The remaining step-5 blind spots (window/global fields and nested/native BOM
-property reads) and step 6 (remaining operations and values) remain
-intentionally out of scope.
+The remaining step-5 blind spots (`matchMedia` results, navigator
+storage/permissions/plugins, and other plain BOM property reads) and step 6
+(remaining operations and values) remain intentionally out of scope.
