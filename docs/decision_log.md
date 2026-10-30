@@ -516,6 +516,27 @@ Verified on real V8 at commit `c87ffbe`: Linux `41025891916`, Windows
 1673 items (1669 previous + 4 visualViewport tests). See
 `docs/host_access_trace.md`.
 
+### 32. Host access trace navigator.storage manager (step 5e)
+
+Decided/verified `2026-10-30`.
+
+`navigator.storage` is now exposed by `NavigatorHost` as a cached plain object
+whose `estimate` / `persisted` / `persist` methods are native callbacks. The
+parent read records a navigator `get`; each method call records a
+`storage_manager` `call` using a stable native token. This keeps the M11-43
+plain-object shape: `Object.prototype`, cached identity, read-only method
+descriptors, unchanged results, and unchanged rejected read-only writes. No
+manager descriptor/prototype change is needed.
+
+Manager property reads/probes, method-reference reads, and Promise/estimate
+values remain untraced and are documented as such. This slice passed on its
+first CI attempt.
+
+Verified on real V8 at commit `f91665f`: Linux `41027870583`, Windows
+`41027874811`, each wheel lane `1675 passed, 2 skipped`. The full suite collects
+1677 items (1673 previous + 4 storage-manager tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

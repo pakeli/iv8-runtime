@@ -6,7 +6,9 @@ Post-M11 note (`2026-10-30`): the host access trace step 5d now backs
 `visualViewport` with a HostObject so its accesses are traceable. Width/height,
 offsets, scale, method results, and read-only/writable behavior are unchanged;
 the instance prototype and some method/handler descriptors intentionally follow
-host-object conventions. See `docs/host_access_trace.md` §4.5.
+host-object conventions. Step 5e replaces the `navigator.storage` methods with
+native callbacks for tracing while keeping its plain-object shape, identity,
+descriptors, and results unchanged. See `docs/host_access_trace.md` §4.5–§4.6.
 
 This batch fills the remaining deterministic BOM metadata that can be served
 without layout, network, OS permission UI, background events, or a real storage

@@ -925,9 +925,10 @@ Final commit `e19f54d` (branch `host-access-window`):
 
 ### Next
 
-The nested metadata/timeOrigin group was completed as Priority 3y below, and the
-static visualViewport group as Priority 3z. Remaining step-5 groups:
-`matchMedia` results, navigator storage/permissions/plugins, and other plain
+The nested metadata/timeOrigin group was completed as Priority 3y below, the
+static visualViewport group as Priority 3z, and the navigator.storage manager as
+Priority 3aa. Remaining step-5 groups: `matchMedia` results, navigator
+permissions/plugins/mimeTypes, permission-status objects, and other plain
 property reads. Value/argument/return summaries remain step 6. The M11-46
 selector follow-up remains deferred.
 
@@ -1003,10 +1004,47 @@ documented. Runtime values and read/write behavior were intended.
 
 ### Next
 
-Continue step 5 with `matchMedia` result objects, `navigator.storage` /
-`permissions` / `plugins` / `mimeTypes`, and other plain property reads.
-Value/argument/return summaries remain step 6. The M11-46 selector follow-up
-remains deferred.
+Continue step 5 with the navigator.storage manager group (Priority 3aa below),
+then `matchMedia` result objects, `navigator.permissions` / `plugins` /
+`mimeTypes`, and other plain property reads. Value/argument/return summaries
+remain step 6. The M11-46 selector follow-up remains deferred.
+
+## Priority 3aa: Host access trace navigator.storage manager — DONE (`2026-10-30`)
+
+### What landed
+
+- `navigator.storage` is exposed by `NavigatorHost` as a cached plain object
+  whose `estimate` / `persisted` / `persist` methods are native callbacks, so
+  the parent read records a navigator `get` and each call records a
+  `storage_manager` `call`.
+- The manager keeps `Object.prototype`, cached identity, read-only method
+  descriptors, the same results (`{usage: 0, quota: 10737418240}` / `false` /
+  `false`), and the read-only assignment behavior. No descriptor change is
+  needed for the manager object itself.
+- Manager property reads/probes, method-reference reads, and returned
+  Promise/estimate values remain untraced.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_storage_manager.py` (4 items). Full suite collects 1677
+items; each wheel lane: **`1675 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `f91665f` (branch `host-access-storage-manager`):
+
+- Linux `release-linux` run `41027870583` — cp311–cp314, each
+  `1675 passed, 2 skipped`;
+- Windows `release-windows` run `41027874811` — Python 3.11–3.14, each
+  `1675 passed, 2 skipped`.
+
+This slice passed on the first CI attempt.
+
+### Next
+
+Continue step 5 with `matchMedia` result objects, `navigator.permissions` /
+`plugins` / `mimeTypes`, permission-status objects, and other plain property
+reads. Value/argument/return summaries remain step 6. The M11-46 selector
+follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

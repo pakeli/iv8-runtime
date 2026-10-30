@@ -1,16 +1,17 @@
 # Host Access Trace
 
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
-BOM callback calls + window/nested metadata + static visualViewport reads green
-on real V8 Linux + Windows (`2026-10-30`)**
+BOM callback calls + window/nested metadata + static visualViewport + navigator
+storage manager reads/calls green on real V8 Linux + Windows (`2026-10-30`)**
 
 This document freezes steps 1–4 and the first groups of step 5 of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
 string-key missing-property probes, call/get coverage for independent native BOM
 callbacks (performance, crypto, Storage), intrinsic window metadata reads,
 nested `navigator.connection` / `screen.orientation` / `performance.timeOrigin`
-reads, and the static `visualViewport` HostObject. It is a second-layer
-monitoring feature. It does not change the M1 `JSContext` contract, the existing
+reads, the static `visualViewport` HostObject, and the `navigator.storage`
+manager's parent read plus method calls. It is a second-layer monitoring
+feature. It does not change the M1 `JSContext` contract, the existing
 `watch_apis` / Reflect / Object.keys channels, or DOM/BOM values/assignment
 behavior.
 
@@ -51,6 +52,8 @@ setter does not retroactively remove the event.
 | `visualViewport.addEventListener()` / `removeEventListener()` / `dispatchEvent()` | records `call`; results and no-op behavior unchanged |
 | `visualViewport.onresize = fn` / reads of `onresize` / `onscroll` | records `set` / `get`; the assigned value is returned, no event is dispatched |
 | `visualViewport.someMissingProperty` | records `get_probe` / `resolution: "missing"` |
+| `navigator.storage.estimate()` / `persisted()` / `persist()` | records a navigator `get` for `storage` plus a `storage_manager` `call` |
+| `navigator.storage.someProperty` / method-reference reads | not covered; the manager stays a plain object |
 | other plain property reads on native BOM objects | not covered yet |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
 | `window.innerWidth` / `outerWidth` / `innerHeight` | records `get` from the window metadata accessor |
@@ -71,6 +74,7 @@ setter does not retroactively remove the event.
 | `navigator` | `NavigatorHost` | Installed as a global; properties only. |
 | `screen` | `ScreenHost` | Installed as a global; properties only. |
 | `visualViewport` | `VisualViewportHost` | Installed as a read-only global; metadata properties plus no-op event-target methods. |
+| `navigator.storage` | plain cached object + native callbacks | Returned by `NavigatorHost::get_property("storage")`; the parent read is `navigator`, method calls carry `storage_manager` identity. |
 | `location` | `LocationHost` | Installed as a global; `toString()` is its only method. |
 | `document` | `DocumentHost` | Installed as a global; property getters and methods. |
 | element wrappers | `ElementHost` | Lazily created and cached per backing `DomNode`; not a global. Fresh JS wrappers can represent the same native backing. |
@@ -92,8 +96,8 @@ listed as not covered.
   map; IDs are never reused.
 - `object_type` is the native category: `host_probe`, `console`, `navigator`,
   `screen`, `location`, `document`, `element`, `connection`, `orientation`,
-  `performance`, `crypto`, `storage`, `visual_viewport`, `window`, or the
-  fallback `host_object`.
+  `performance`, `crypto`, `storage`, `storage_manager`, `visual_viewport`,
+  `window`, or the fallback `host_object`.
 - `label` is a display hint. Global hosts use their global name; elements use
   their native HTML tag only. Labels must not be built by reading JS `id`,
   text, attributes, or other properties.
@@ -267,6 +271,28 @@ HostObject intentionally changes some non-value characteristics:
   getter, so it also emits a `get` event — native data-property descriptors are
   materialized by calling the getter.
 
+## 4.6 `navigator.storage` manager (step 5e)
+
+`navigator.storage` is exposed by `NavigatorHost` as a cached plain object, and
+its three methods are native callbacks:
+
+- reading `navigator.storage` records a `get` on the `navigator` object;
+- calling `estimate()` / `persisted()` / `persist()` records a `call` with
+  `object_type: "storage_manager"` and label `"navigator.storage"`;
+- the manager object stays a plain object: it keeps `Object.prototype`, the
+  cached identity (`navigator.storage === navigator.storage`), the read-only
+  method descriptors, and the `estimate` / `persisted` / `persist` results
+  (`{usage: 0, quota: 10737418240}` / `false` / `false`);
+- `navigator.storage = null` remains a no-op and
+  `navigator.storage.estimate = 1` is still rejected by the read-only method
+  property.
+
+Not covered for this group: method-reference reads
+(`const f = navigator.storage.estimate`), property reads/probes on the manager
+object itself, and the Promise/estimate values. `object_id` for manager calls
+uses a stable native token: it is stable within a generation and gets a new ID
+after `load()` because the generation identity map resets.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -300,8 +326,9 @@ old channel.
 
 - Window `parent` / `top` / `frames` / `opener` and other intrinsic/global data
   properties not listed in §4.3.
-- `matchMedia(...)` result objects, `navigator.storage` / `navigator.permissions`
-  / `plugins` / `mimeTypes`, and nested BOM objects not listed in §4.4/§4.5.
+- `matchMedia(...)` result objects, `navigator.permissions` / `plugins` /
+  `mimeTypes`, permission-status objects, and nested BOM objects not listed in
+  §4.4–§4.6.
 - Property reads on `performance`, `crypto`, and Storage (their independent
   native method calls are covered in step 5a); `navigator.storage`,
   `navigator.permissions`, `navigator.plugins` / `mimeTypes`, `matchMedia`
@@ -321,37 +348,36 @@ old channel.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The remaining step-5 groups expand `matchMedia` results, `navigator.storage` /
-`permissions` / `plugins` / `mimeTypes`, and other plain property reads; step 6
-adds method-reference reads, `in`, delete, enumeration, descriptors, and
-value/argument/return summaries. None is implied by this slice.
+The remaining step-5 groups expand `matchMedia` results, `navigator.permissions`
+/ `plugins` / `mimeTypes`, permission-status objects, and other plain property
+reads; step 6 adds method-reference reads, `in`, delete, enumeration,
+descriptors, and value/argument/return summaries. None is implied by this slice.
 
 ## 8. Verification
 
-Verified on real V8 at commit `c87ffbe` (branch
-`host-access-visual-viewport`):
+Verified on real V8 at commit `f91665f` (branch
+`host-access-storage-manager`):
 
-- Linux `release-linux` run `41025891916` — cp311 / cp312 / cp313 / cp314,
-  each `1671 passed, 2 skipped`;
-- Windows `release-windows` run `41025896654` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1671 passed, 2 skipped`.
+- Linux `release-linux` run `41027870583` — cp311 / cp312 / cp313 / cp314,
+  each `1675 passed, 2 skipped`;
+- Windows `release-windows` run `41027874811` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1675 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
 `test/test_access_trace_probes.py` (10 items),
 `test/test_access_trace_bom_calls.py` (4 items),
 `test/test_access_trace_window.py` (4 items),
-`test/test_access_trace_nested.py` (3 items), and
-`test/test_access_trace_visual_viewport.py` (4 items) ran in every lane. The
-full suite collects 1673 items; 1671 pass and 2 are skipped.
+`test/test_access_trace_nested.py` (3 items),
+`test/test_access_trace_visual_viewport.py` (4 items), and
+`test/test_access_trace_storage_manager.py` (4 items) ran in every lane. The
+full suite collects 1677 items; 1675 pass and 2 are skipped.
 
-The initial visual-viewport attempt assumed reading a native data-property
-descriptor would not call its getter and that undefined method results would
-survive `Array.join`; the verified behavior emits a second `width` get for the
-descriptor read and stringifies undefined as an empty field. The final commit
-`c87ffbe` corrects only the test expectations and keeps the intended runtime
-behavior. The earlier nested attempt had a similar one-event-per-access
-assumption, corrected by `924effd`.
+The storage-manager slice passed on its first CI attempt. Earlier groups
+recorded their test-expectation corrections in this document; the visual
+viewport attempt needed a second run for descriptor/getter and `Array.join`
+semantics, and the nested attempt needed a second run for repeated parent
+getters.
 
 The initial probe attempt (`76baaa2`) showed that V8 invokes the named getter
 for query-only operations and some existing-property paths. `8995b89` added the
@@ -381,6 +407,8 @@ Coverage in this slice:
 - `visualViewport` metadata, writable handlers, no-op methods, and missing
   probes record get/set/call/get_probe events; read-only writes still have no
   set event, and the documented prototype/descriptor changes are asserted;
+- `navigator.storage` parent reads and all three manager method calls record
+  events while preserving plain-object identity, descriptors, and results;
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
@@ -390,5 +418,6 @@ Coverage in this slice:
   multiple Pages, and disposal behavior are covered by tests.
 
 The remaining step-5 blind spots (`matchMedia` results, navigator
-storage/permissions/plugins, and other plain BOM property reads) and step 6
-(remaining operations and values) remain intentionally out of scope.
+permissions/plugins/mimeTypes, permission-status objects, and other plain BOM
+property reads) and step 6 (remaining operations and values) remain
+intentionally out of scope.

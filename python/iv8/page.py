@@ -26,8 +26,8 @@ from .errors import JSContextDisposedError, JSError
 
 __all__ = ["Page"]
 
-# Host access trace (first slice): the native object types that can emit
-# get/set/call events. Keep this in sync with AccessTrace::supported_object_types().
+# Host access trace: the native object types that can emit events. Keep this in
+# sync with AccessTrace::supported_object_types().
 _ACCESS_TRACE_OBJECT_TYPES = (
     "connection", "console", "crypto", "document", "element",
     "host_object", "host_probe", "location", "navigator", "orientation",
@@ -993,24 +993,25 @@ class Page:
         a V8-wide property hook. It covers ``connection``, ``console``,
         ``crypto``, ``document``, ``element``, ``host_object``, ``host_probe``,
         ``location``, ``navigator``, ``orientation``, ``performance``,
-        ``screen``, ``storage``, ``visual_viewport``, and ``window``. Missing
-        string-key reads on the HostObject hosts produce
+        ``screen``, ``storage``, ``storage_manager``, ``visual_viewport``, and
+        ``window``. Missing string-key reads on the HostObject hosts produce
         ``get_probe``/``resolution: "missing"`` events. The step-5 groups also
         record ``performance`` / ``crypto`` native method calls, Storage method
         calls and its ``length`` getter, traced window metadata accessors
         (``innerWidth`` / geometry / flags plus ``window.name``), reads of the
         nested ``navigator.connection`` / ``screen.orientation`` HostObjects plus
-        ``performance.timeOrigin``, and static ``visualViewport`` metadata,
+        ``performance.timeOrigin``, static ``visualViewport`` metadata,
         writable ``onresize``/``onscroll``, no-op event methods, and missing
-        probes. The visual viewport conversion keeps its values, global
+        probes, and ``navigator.storage`` parent reads plus manager method
+        calls. The visual viewport conversion keeps its values, global
         read-only behavior, and method results, but (like other host objects) it
         now has the host-object template prototype and writable/configurable
-        no-op methods; see the boundary document for the exact descriptor
-        changes. ``parent`` / ``top`` / ``frames`` / ``opener``, the remaining
-        plain BOM property reads and nested objects, returned plain
-        objects/arrays, non-HostObject missing probes, ``in``, delete,
-        enumeration, descriptors, method-reference reads, and user-created plain
-        objects are not covered yet.
+        no-op methods; the storage manager keeps its plain-object shape.
+        ``parent`` / ``top`` / ``frames`` / ``opener``, the remaining plain BOM
+        property reads and nested objects, returned plain objects/arrays,
+        non-HostObject missing probes, ``in``, delete, enumeration, descriptors,
+        method-reference reads, and user-created plain objects are not covered
+        yet.
 
         ``max_events`` is the retained-event capacity (earliest N retained; later
         events increment ``dropped_events``). It must be a positive ``int``; a
