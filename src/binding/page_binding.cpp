@@ -123,5 +123,12 @@ void register_page(py::module_& module) {
         // M10-2 Object.keys monitoring.
         .def("watch_object_keys", &iv8::PageState::watch_object_keys,
              py::arg("enabled"), py::arg("break_on_hit"))
-        .def("read_object_keys_hits", &iv8::PageState::read_object_keys_hits);
+        .def("read_object_keys_hits", &iv8::PageState::read_object_keys_hits)
+        // Host access trace (public surface is Page.start_access_trace /
+        // stop_access_trace / read_access_trace; validation in the facade).
+        .def("start_access_trace", &iv8::PageState::start_access_trace,
+             py::arg("max_events"), py::arg("object_types"))
+        .def("stop_access_trace", &iv8::PageState::stop_access_trace)
+        .def("read_access_trace", &iv8::PageState::read_access_trace,
+             py::arg("clear"));
 }

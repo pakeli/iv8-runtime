@@ -26,6 +26,13 @@ from .errors import JSContextDisposedError, JSError
 
 __all__ = ["Page"]
 
+# Host access trace (first slice): the native object types that can emit
+# get/set/call events. Keep this in sync with AccessTrace::supported_object_types().
+_ACCESS_TRACE_OBJECT_TYPES = (
+    "console", "document", "element", "host_object",
+    "host_probe", "location", "navigator", "screen",
+)
+
 # M11-1 host-environment baseline. This mapping is the SINGLE source of truth for
 # the default environment: the native layer holds no defaults of its own and always
 # receives a fully-resolved set of values from here. Every value is a fixed,
@@ -973,6 +980,80 @@ class Page:
         ``dispose()``.
         """
         return self._native.read_object_keys_hits()
+
+    def start_access_trace(self, max_events: int = 10000,
+                           object_types=None) -> None:
+        """Start recording native HostObject get/set/call accesses.
+
+        This is a structured, Page-level trace independent of :meth:`watch_apis`
+        and the Reflect/Object.keys channels. It records operations that enter the
+        generic HostObject property getter/setter or method trampoline; it is not
+        a V8-wide property hook. The first slice covers ``console``, ``document``,
+        ``element``, ``host_object``, ``host_probe``, ``location``, ``navigator``,
+        and ``screen``. Intrinsic ``window`` data properties, JS-created BOM
+        objects, returned plain objects/arrays, missing-property probes, ``in``,
+        delete, enumeration, descriptors, method-reference reads, and user-created
+        plain objects are not covered yet.
+
+        ``max_events`` is the retained-event capacity (earliest N retained; later
+        events increment ``dropped_events``). It must be a positive ``int``; a
+        ``bool`` is rejected. ``object_types`` is ``None`` or a list of supported
+        object-type strings; unknown names raise ``ValueError`` and duplicates are
+        removed. An empty list is valid and records nothing.
+
+        ``start`` begins a new session and clears old events/drops. The
+        configuration and events survive ``load()``; a load increments the
+        generation and resets native object-ID bindings. Recording is off until
+        this method is called. Raises ``JSContextDisposedError`` after
+        ``dispose()``.
+        """
+        if isinstance(max_events, bool) or not isinstance(max_events, int):
+            raise TypeError("max_events must be an int")
+        if max_events < 1:
+            raise ValueError("max_events must be >= 1")
+        if object_types is not None:
+            if not isinstance(object_types, list):
+                raise TypeError("object_types must be None or a list")
+            deduped = []
+            seen = set()
+            for index, object_type in enumerate(object_types):
+                if not isinstance(object_type, str):
+                    raise TypeError(f"object_types[{index}] must be a str")
+                if object_type not in _ACCESS_TRACE_OBJECT_TYPES:
+                    raise ValueError(
+                        f"unsupported access-trace object type: {object_type!r}")
+                if object_type not in seen:
+                    seen.add(object_type)
+                    deduped.append(object_type)
+            object_types = deduped
+        self._native.start_access_trace(max_events, object_types)
+
+    def stop_access_trace(self) -> None:
+        """Stop recording new access events while retaining the current log.
+
+        A later :meth:`start_access_trace` begins a new session. Raises
+        ``JSContextDisposedError`` after ``dispose()``.
+        """
+        self._native.stop_access_trace()
+
+    def read_access_trace(self, clear: bool = True) -> dict:
+        """Return the access-trace report, optionally clearing the event log.
+
+        The report has ``events``, ``enabled``, ``generation``, ``max_events``,
+        ``dropped_events``, ``filter_object_types``, and a ``coverage`` dictionary
+        describing this slice's explicit scope. Each event contains ``seq``,
+        ``generation``, ``object_id``, ``object_type``, ``label``, ``member``,
+        ``operation`` (``get``/``set``/``call``), ``phase`` (``enter``),
+        ``resource_name``, and ``source_kind`` (``eval``/``html_script``/
+        ``internal``/``unknown``).
+
+        ``clear=True`` clears events and ``dropped_events`` but preserves the
+        sequence, configuration, generation, and object-ID mappings. Reading never
+        executes page code. Raises ``JSContextDisposedError`` after ``dispose()``.
+        """
+        if not isinstance(clear, bool):
+            raise TypeError("clear must be a bool")
+        return self._native.read_access_trace(clear)
 
     def dispose(self) -> None:
         """Release the page's context-owned native resources. Idempotent."""

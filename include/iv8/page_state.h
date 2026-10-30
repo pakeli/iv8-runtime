@@ -1,13 +1,16 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include <pybind11/pybind11.h>
 
+#include "iv8/access_trace.h"
 #include "iv8/host_object.h"
 #include "iv8/watch_registry.h"
 
@@ -240,6 +243,17 @@ public:
     // "Object.keys"}) and clear the log (read-and-clear).
     pybind11::list read_object_keys_hits();
 
+    // First host-access-trace slice: start/stop a native HostObject get/set/call
+    // trace and read its events/report. Validation (max_events, object_types,
+    // clear) is done in the Python facade. Configuration and events are
+    // Page-level; load() keeps them, increments generation, and resets the
+    // object-ID bindings. Disposed pages raise JSContextDisposedError.
+    void start_access_trace(
+        std::size_t max_events,
+        std::optional<std::vector<std::string>> object_types);
+    void stop_access_trace();
+    pybind11::dict read_access_trace(bool clear);
+
 private:
     // Build a fresh ContextState for `base_url` (location source) and install the
     // page's host objects + global roots + timers into it. Used by the ctor and
@@ -327,6 +341,11 @@ private:
     // watch_apis() registration persists. Each install_page points the current
     // ContextState at it.
     WatchRegistry watch_registry_;
+    // Page-level host-access trace: independent of the watch registry, outlives
+    // each generation, and holds no V8 handles. Each install_page points the
+    // current ContextState at it and advances the generation.
+    AccessTrace access_trace_;
+    std::uint64_t generation_ = 0;
     // M9-4/M9-5/M10-1: whether the current generation's Reflect.get / .has /
     // .ownKeys are already wrapped (reset per install_page; prevents double-wrap).
     bool reflect_hook_installed_ = false;

@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "iv8/access_trace.h"
 #include "iv8/engine_runtime.h"
 #include "iv8/js_exception.h"
 #include "iv8/js_value.h"
@@ -689,7 +690,8 @@ py::object ContextState::value_to_py(std::uint64_t id) {
 }
 
 py::object ContextState::eval(const std::string& source, bool to_py,
-                              const std::string& name) {
+                              const std::string& name,
+                              const std::string& source_kind) {
     OperationScope guard(*this);
 
     // M9-2: stamp this script's resource name onto the watch registry for the
@@ -745,10 +747,22 @@ py::object ContextState::eval(const std::string& source, bool to_py,
             if (!v8::Script::Compile(context, source_string, &origin)
                      .ToLocal(&script)) {
                 error_data = extract_js_error(isolate, context, try_catch, name);
-            } else if (!script->Run(context).ToLocal(&result)) {
-                error_data = extract_js_error(isolate, context, try_catch, name);
             } else {
-                ok = true;
+                // Attribute host accesses to this script only for the duration
+                // of Run. Error extraction and to_py conversion happen outside
+                // this scope and therefore surface as source_kind "unknown".
+                bool run_ok = false;
+                {
+                    AccessTrace::SourceScope trace_scope(access_trace_, name,
+                                                         source_kind);
+                    run_ok = script->Run(context).ToLocal(&result);
+                }
+                if (!run_ok) {
+                    error_data =
+                        extract_js_error(isolate, context, try_catch, name);
+                } else {
+                    ok = true;
+                }
             }
         }
     }  // GIL reacquired

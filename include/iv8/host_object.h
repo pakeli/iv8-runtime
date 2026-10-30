@@ -69,6 +69,13 @@ public:
     // arguments without RTTI/dynamic_cast (which V8-linked builds may compile with
     // -fno-rtti). Default false; ElementHost overrides to true.
     virtual bool is_element() const { return false; }
+
+    // Host-access trace metadata (native only; no JS-visible properties). The
+    // default is used for abstract/never-installed hosts; concrete hosts override
+    // the type and, where useful, the display label. Labels must not inspect JS
+    // values or trigger property gets.
+    virtual std::string trace_object_type() const { return "host_object"; }
+    virtual std::string trace_label() const { return global_name(); }
 };
 
 // Build (WITHOUT installing) a JS object backed by `host`: an ObjectTemplate with

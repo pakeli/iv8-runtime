@@ -130,6 +130,7 @@ bool fill_os_random_bytes(std::uint8_t* out, std::size_t length) {
 class HostProbe : public HostObject {
 public:
     std::string global_name() const override { return "hostProbe"; }
+    std::string trace_object_type() const override { return "host_probe"; }
 
     std::vector<std::string> property_names() const override {
         return {"answer", "label"};
@@ -187,6 +188,7 @@ public:
 class ConsoleHost : public HostObject {
 public:
     std::string global_name() const override { return "console"; }
+    std::string trace_object_type() const override { return "console"; }
 
     std::vector<std::string> property_names() const override { return {}; }
 
@@ -447,6 +449,7 @@ public:
         : environment_(environment) {}
 
     std::string global_name() const override { return "navigator"; }
+    std::string trace_object_type() const override { return "navigator"; }
 
     std::vector<std::string> property_names() const override {
         return {"userAgent",       "platform",          "language",
@@ -573,6 +576,7 @@ public:
         : environment_(environment) {}
 
     std::string global_name() const override { return "screen"; }
+    std::string trace_object_type() const override { return "screen"; }
 
     std::vector<std::string> property_names() const override {
         return {"width",      "height",     "availWidth", "availHeight",
@@ -705,6 +709,7 @@ public:
     explicit LocationHost(UrlParts parts) : parts_(std::move(parts)) {}
 
     std::string global_name() const override { return "location"; }
+    std::string trace_object_type() const override { return "location"; }
 
     std::vector<std::string> property_names() const override {
         return {"href",     "origin",   "protocol", "host",
@@ -2669,6 +2674,8 @@ public:
 
     std::string global_name() const override { return std::string(); }  // never global
     bool is_element() const override { return true; }  // M4-A-3 arg identification
+    std::string trace_object_type() const override { return "element"; }
+    std::string trace_label() const override { return node_->tag; }
 
     // M11-5: read-only accessors used by the MutationObserver argument checks.
     DomNode* node() const { return node_; }
@@ -3006,6 +3013,7 @@ public:
     void clear_current_script() { current_script_ = nullptr; }
 
     std::string global_name() const override { return "document"; }
+    std::string trace_object_type() const override { return "document"; }
     std::vector<std::string> property_names() const override {
         return {"URL",  "title",           "readyState",  "documentElement",
                 "head", "body",            "currentScript", "scripts",
@@ -8945,6 +8953,82 @@ py::list PageState::read_object_keys_hits() {
     return out;
 }
 
+void PageState::start_access_trace(
+    std::size_t max_events,
+    std::optional<std::vector<std::string>> object_types) {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    access_trace_.start(max_events, std::move(object_types));
+}
+
+void PageState::stop_access_trace() {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    access_trace_.stop();
+}
+
+py::dict PageState::read_access_trace(bool clear) {
+    if (state_->disposed()) {
+        throw ContextDisposedError();
+    }
+    const AccessSnapshot snapshot = access_trace_.snapshot(clear);
+
+    py::dict report;
+    py::list events;
+    for (const AccessEvent& event : snapshot.events) {
+        py::dict record;
+        record["seq"] = py::cast(event.seq);
+        record["generation"] = py::cast(event.generation);
+        record["object_id"] = py::cast(event.object_id);
+        record["object_type"] = event.object_type;
+        record["label"] = event.label;
+        record["member"] = event.member;
+        record["operation"] = event.operation;
+        record["phase"] = event.phase;
+        record["resource_name"] = event.resource_name;
+        record["source_kind"] = event.source_kind;
+        events.append(record);
+    }
+    report["events"] = events;
+    report["enabled"] = snapshot.enabled;
+    report["generation"] = py::cast(snapshot.generation);
+    report["max_events"] = py::cast(snapshot.max_events);
+    report["dropped_events"] = py::cast(snapshot.dropped_events);
+    if (snapshot.filter_object_types.has_value()) {
+        py::list filter;
+        for (const std::string& type : *snapshot.filter_object_types) {
+            filter.append(type);
+        }
+        report["filter_object_types"] = filter;
+    } else {
+        report["filter_object_types"] = py::none();
+    }
+
+    py::dict coverage;
+    coverage["scope"] =
+        "installed HostObject getter/setter/method callbacks";
+    py::list object_types;
+    for (const std::string& type : AccessTrace::supported_object_types()) {
+        object_types.append(type);
+    }
+    coverage["object_types"] = object_types;
+    py::list operations;
+    operations.append("get");
+    operations.append("set");
+    operations.append("call");
+    coverage["operations"] = operations;
+    coverage["phase"] = "enter";
+    py::list not_covered;
+    for (const std::string& gap : AccessTrace::not_covered()) {
+        not_covered.append(gap);
+    }
+    coverage["not_covered"] = not_covered;
+    report["coverage"] = coverage;
+    return report;
+}
+
 // M11-35: window.name is a Page-level mutable string. The accessor data carries
 // the owning PageState pointer; the PageState outlives every generation, and the
 // context is torn down before it, so no callback can outlive it.
@@ -8999,6 +9083,11 @@ void PageState::install_page(const std::string& base_url,
     bootstrap_ = PageBootstrap{html, base_url};
 
     state_ = std::make_shared<ContextState>();
+    // Host-access tracing is Page-level. Each generation starts with fresh
+    // native identity bindings; the trace configuration/events themselves persist.
+    ++generation_;
+    access_trace_.begin_generation(generation_);
+    state_->set_access_trace(&access_trace_);
     // M11-37: the performance timeline is per-generation.
     performance_store_ = std::make_unique<PerformanceStore>();
     // M9-4/M9-5/M10-1: a fresh generation has pristine (unwrapped) Reflect.get /
@@ -9054,9 +9143,13 @@ void PageState::install_page(const std::string& base_url,
     // Install the host objects and the browser-like global roots into the
     // context. window / self are aliases of the global object; globalThis is the
     // intrinsic global — so window === globalThis and self === window.
-    state_->with_scope(
-        [this, &base_url](v8::Isolate* isolate,
-                          v8::Local<v8::Context> context) {
+    {
+        // Bootstrap accesses are internal, not target-script accesses.
+        AccessTrace::SourceScope trace_scope(&access_trace_, std::string(),
+                                             "internal");
+        state_->with_scope(
+            [this, &base_url](v8::Isolate* isolate,
+                              v8::Local<v8::Context> context) {
             for (const auto& host : host_objects_) {
                 install_host_object(isolate, context, host.get());
             }
@@ -9591,7 +9684,8 @@ void PageState::install_page(const std::string& base_url,
             if (watch_registry_.object_keys_enabled()) {
                 install_object_keys_hook(isolate, context);
             }
-        });
+            });
+    }
 }
 
 void PageState::dispatch_lifecycle_events() {
@@ -9696,7 +9790,7 @@ void PageState::run_html_script(std::size_t index, const std::string& code,
             }
         }
     } guard{document};
-    state_->eval(code, false, name);
+    state_->eval(code, false, name, "html_script");
 }
 
 void PageState::load(const std::string& html, const std::string& base_url) {

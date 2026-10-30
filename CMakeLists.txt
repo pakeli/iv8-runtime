@@ -47,6 +47,7 @@ if(IV8_LINK_V8)
       src/core/js_exception.cpp
       src/core/js_value.cpp
       src/core/host_object.cpp
+      src/core/access_trace.cpp
       src/core/page_state.cpp
       src/binding/context_binding.cpp
       src/binding/page_binding.cpp)

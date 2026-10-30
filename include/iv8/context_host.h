@@ -22,6 +22,10 @@ namespace iv8 {
 // iv8/watch_registry.h. ContextState only holds an observing pointer.
 class WatchRegistry;
 
+// Page-owned host-access trace (iv8/access_trace.h). ContextState only holds an
+// observing pointer; the Page outlives each generation.
+class AccessTrace;
+
 // Isolate embedder-data slot holding the owning ContextState* so host callbacks
 // (e.g. setTimeout) can reach it via isolate->GetData(). Each ContextState owns
 // its own isolate, so this slot is private to that context.
@@ -62,7 +66,8 @@ public:
 
     std::string version();
     pybind11::object eval(const std::string& source, bool to_py,
-                          const std::string& name);
+                          const std::string& name,
+                          const std::string& source_kind = "eval");
 
     // Run `fn` within this context's isolate / Locker / HandleScope /
     // Context::Scope, under the operation guard (so it observes disposal and
@@ -167,6 +172,11 @@ public:
     // stamps the current script's resource name onto it. Null on a bare JSContext.
     void set_watch_registry(WatchRegistry* registry) { watch_ = registry; }
     WatchRegistry* watch_registry() const { return watch_; }
+
+    // Host-access tracing: Page-owned, like the watch registry. Null on a bare
+    // JSContext. Host callbacks recover this through access_trace_from_isolate().
+    void set_access_trace(AccessTrace* trace) { access_trace_ = trace; }
+    AccessTrace* access_trace() const { return access_trace_; }
 
     // Explicit dispose: rejects if an operation is active (ContextBusyError),
     // otherwise runs the ordered teardown.
@@ -284,6 +294,9 @@ private:
     // M9-2 observing pointer to the Page-level watch registry (owned by PageState,
     // outlives each generation). Null unless PageState set it.
     WatchRegistry* watch_ = nullptr;
+    // Page-level host access trace (owned by PageState). Null on a bare
+    // JSContext; host callbacks recover it through access_trace_from_isolate().
+    AccessTrace* access_trace_ = nullptr;
 };
 
 // Thin per-JSContext owner: holds the shared state and delegates. This is the
