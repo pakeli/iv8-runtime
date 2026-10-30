@@ -1004,7 +1004,8 @@ UI, network, Python API, or new environment key is added. See
 
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
-manager, navigator.permissions, and matchMedia-result groups add
+manager, navigator.permissions, matchMedia-result, legacy-navigator, and
+window-alias groups add
 ``Page.start_access_trace(max_events=10000, object_types=None)`` /
 ``Page.stop_access_trace()`` / ``Page.read_access_trace(clear=True)``. It records
 native ``HostObject`` property get/set and method-call entries,
@@ -1014,13 +1015,14 @@ window metadata accessor gets plus ``window.name`` get/set, nested
 connection/orientation/``performance.timeOrigin`` reads, static
 ``visualViewport`` metadata, writable handler, no-op method, and missing-probe
 events, ``navigator.storage`` parent reads plus manager method calls,
-``navigator.permissions`` parent/query/status accesses, and matchMedia result
-reads/method calls, with sequence, generation, stable native object ID, object
-type/label, member, operation, resource name, and source kind. Visual viewport
-and matchMedia results use the host-object template prototype and
-writable/configurable no-op methods; the storage/permissions managers and
-PermissionStatus objects keep their plain-object shapes. See the boundary
-document for exact descriptor changes. It is a separate,
+``navigator.permissions`` parent/query/status accesses, matchMedia result
+reads/method calls, legacy navigator metadata, and window alias get/set events,
+with sequence, generation, stable native object ID, object type/label, member,
+operation, resource name, and source kind. Visual viewport and matchMedia
+results use the host-object template prototype and writable/configurable no-op
+methods; the storage/permissions managers and PermissionStatus objects keep
+their plain-object shapes. See the boundary document for exact descriptor
+changes. It is a separate,
 default-off monitoring channel; it does not change the five existing watch
 channels, add a JS-visible API, or cover ``parent``/``top``/``frames``/``opener``,
 the remaining plain BOM property reads/nested objects, user-created objects,

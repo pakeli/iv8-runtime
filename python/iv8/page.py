@@ -1004,11 +1004,14 @@ class Page:
         writable ``onresize``/``onscroll``, no-op event methods, and missing
         probes, ``navigator.storage`` parent reads plus manager method calls,
         ``navigator.permissions`` query calls plus PermissionStatus
-        name/state/method accesses, and matchMedia result calls/gets/method
-        calls. The visual viewport and matchMedia results are host objects, so
-        they use the template prototype and writable/configurable no-op
-        methods; the storage/permissions managers and PermissionStatus objects
-        keep their plain-object shapes.
+        name/state/method accesses, matchMedia result calls/gets/method calls,
+        legacy navigator plugins/mimeTypes/javaEnabled accesses, and window
+        parent/top/frames/opener get/set events. The visual viewport and
+        matchMedia results are host objects, so they use the template prototype
+        and writable/configurable no-op methods; the storage/permissions
+        managers and PermissionStatus objects keep their plain-object shapes.
+        Plain ``onchange``, array elements, and global binding reads are not
+        covered.
         ``parent`` / ``top`` / ``frames`` / ``opener``, the remaining plain BOM
         property reads and nested objects, returned plain objects/arrays,
         non-HostObject missing probes, ``in``, delete, enumeration, descriptors,

@@ -928,8 +928,9 @@ Final commit `e19f54d` (branch `host-access-window`):
 The nested metadata/timeOrigin group was completed as Priority 3y below, the
 static visualViewport group as Priority 3z, the navigator.storage manager as
 Priority 3aa, navigator.permissions/PermissionStatus as Priority 3ab, and
-matchMedia results as Priority 3ac. Remaining step-5 group: navigator
-plugins/mimeTypes plus the remaining plain/onchange reads. Value/argument/return summaries remain step 6. The M11-46
+matchMedia results as Priority 3ac. Priorities 3ad/3ae cover the final step-5
+groups (legacy navigator metadata and window aliases); all planned step-5 object
+groups are now complete. Value/argument/return summaries remain step 6. The M11-46
 selector follow-up remains deferred.
 
 ## Priority 3y: Host access trace nested metadata — DONE (`2026-10-30`)
@@ -1122,9 +1123,69 @@ This slice passed on its first CI attempt.
 
 ### Next
 
-Continue step 5 with `navigator.plugins` / `mimeTypes` and the remaining
-plain/onchange reads. Value/argument/return summaries remain step 6. The M11-46
-selector follow-up remains deferred.
+Continue step 5 with the legacy navigator metadata (Priority 3ad below) and
+window aliases (Priority 3ae), completing the planned object groups. Then move to
+step 6 (method references, `in`, delete, enumeration, descriptors,
+value/argument/return summaries). The M11-46 selector follow-up remains deferred.
+
+## Priority 3ad: Host access trace legacy navigator metadata — DONE (`2026-10-30`)
+
+### What landed
+
+- `navigator.plugins` / `mimeTypes` are cached frozen empty arrays returned by
+  `NavigatorHost`; reads record navigator `get` events, while array element reads
+  stay untraced.
+- `navigator.javaEnabled` is a cached native function exposed as a read-only
+  property; the property read records `get` and the call records `call` with its
+  own stable token, returning `false` (detached calls included).
+- Values, array identity/frozen state, read-only assignment behavior, and
+  descriptors are preserved; the function is now native, so `toString()` differs.
+
+### Verification — passed
+
+Final commit `b936307` (branch `host-access-window-aliases`):
+
+- Linux `release-linux` run `41035577072` — cp311–cp314, each
+  `1690 passed, 2 skipped`;
+- Windows `release-windows` run `41035582564` — Python 3.11–3.14, each
+  `1690 passed, 2 skipped`.
+
+This slice passed with the window-alias slice on its final run.
+
+## Priority 3ae: Host access trace window aliases — DONE (`2026-10-30`)
+
+### What landed
+
+- `window.parent` / `top` / `frames` / `opener` are traced native accessors.
+  `parent`/`frames` default to window, `top` is always window, `opener` is null.
+- Reads record `get`; `parent`/`frames`/`opener` writes record `set` and store a
+  per-generation replacement; `top` stays read-only. Replacements reset on
+  `load()`.
+- Values, write results, delete behavior, descriptor shapes, and top-level `let`
+  declarations are preserved by keeping the writable aliases configurable.
+
+### Verification — passed
+
+Final commit `b936307` (branch `host-access-window-aliases`):
+
+- Linux `release-linux` run `41035577072` — cp311–cp314, each
+  `1690 passed, 2 skipped`;
+- Windows `release-windows` run `41035582564` — Python 3.11–3.14, each
+  `1690 passed, 2 skipped`.
+
+The first attempt (`ac4e1f5`) made the writable aliases non-configurable, which
+broke top-level `let frames`; `b936307` preserves configurability and passes.
+
+Boundary/verification docs: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_legacy_navigator.py` (3 items) and
+`test/test_access_trace_window_aliases.py` (4 items). Full suite collects 1692
+items; each wheel lane: **`1690 passed, 2 skipped`**.
+
+### Next
+
+All planned step-5 object groups are complete. Move to step 6: method-reference
+reads, `in`, delete, enumeration, descriptor queries, and value/argument/return
+summaries. The M11-46 selector follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

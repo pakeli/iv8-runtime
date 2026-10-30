@@ -585,6 +585,37 @@ Verified on real V8 at commit `7d35a30`: Linux `41032945394`, Windows
 1685 items (1682 previous + 3 matchMedia tests). See
 `docs/host_access_trace.md`.
 
+### 35. Host access trace legacy navigator metadata (step 5h)
+
+Decided/verified `2026-10-30`.
+
+`navigator.plugins` / `mimeTypes` are cached frozen empty arrays returned by
+`NavigatorHost`, so parent reads record navigator `get` events while array
+element reads stay untraced. `navigator.javaEnabled` is a cached native function
+exposed as a read-only property: the property read records `get`, the call
+records `call` with its own stable token and returns `false`. Array identity,
+frozen state, read-only assignment behavior, and data descriptors are preserved;
+the function is native now, so its `toString()` differs.
+
+### 36. Host access trace window aliases (step 5i)
+
+Decided/verified `2026-10-30`.
+
+`window.parent` / `top` / `frames` / `opener` are traced native accessors backed
+by per-generation PageState overrides. `parent`/`frames` default to window,
+`top` is always window, and `opener` is null. Reads record `get`;
+`parent`/`frames`/`opener` writes record `set` and store a replacement that resets
+on `load()`; `top` stays read-only. The writable aliases keep their configurable
+attributes so delete behavior and top-level `let` declarations are unchanged.
+The first attempt (`ac4e1f5`) used non-configurable accessors and broke
+`let frames`; `b936307` fixed the attributes.
+
+Verified on real V8 at commit `b936307`: Linux `41035577072`, Windows
+`41035582564`, each wheel lane `1690 passed, 2 skipped`. The full suite collects
+1692 items (1685 previous + 3 legacy-navigator + 4 window-alias tests). This
+completes all planned step-5 object groups; remaining plain-property/returned-
+collection gaps are documented non-goals. See `docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

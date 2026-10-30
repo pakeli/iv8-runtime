@@ -32,16 +32,19 @@ git log --oneline --decorate -n 20
   M11 line is compatibility-first.
 - A post-M11 monitoring slice is also verified: **host access trace steps 1–4
   plus the step-5 native BOM call, window metadata, nested metadata, static
-  visualViewport, navigator.storage manager, navigator.permissions, and
-  matchMedia-result groups**
+  visualViewport, navigator.storage manager, navigator.permissions,
+  matchMedia-result, legacy-navigator, and window-alias groups — the complete
+  step-5 object coverage**
   (`Page.start_access_trace` / `stop_access_trace` / `read_access_trace`, native
   get/set/call, HostObject missing-string-key `get_probe`,
   performance/crypto/Storage callback calls, window metadata accessors,
   connection/orientation/timeOrigin reads, visualViewport metadata/methods,
   navigator.storage parent reads plus manager calls, permissions query plus
-  PermissionStatus accesses, and matchMedia result reads/method calls), green on
-  real V8 at commit `7d35a30`; the remaining step-5 groups and
-  value/argument/return summaries remain pending.
+  PermissionStatus accesses, matchMedia result reads/method calls, legacy
+  navigator metadata, and window alias get/set events), green on real V8 at
+  commit `b936307`; step 5 object coverage is complete and step 6
+  (method-reference reads, `in`, delete, enumeration, descriptors,
+  values/arguments/returns) remains pending.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -111,12 +114,13 @@ Answer roughly as follows:
     (BOM viewport/media/device metadata);
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
-    visualViewport, navigator.storage manager, navigator.permissions, and
-    matchMedia results (native HostObject get/set/call, missing-property probes,
-    performance/crypto/Storage calls, window accessors,
-    connection/orientation/timeOrigin, visualViewport metadata/methods,
-    navigator.storage parent reads plus manager calls, permissions query/status
-    accesses, and matchMedia result accesses; see
+    visualViewport, navigator.storage manager, navigator.permissions,
+    matchMedia results, legacy navigator metadata, and window aliases (native
+    HostObject get/set/call, missing-property probes, performance/crypto/Storage
+    calls, window metadata/alias accessors, connection/orientation/timeOrigin,
+    visualViewport metadata/methods, navigator.storage parent reads plus manager
+    calls, permissions query/status accesses, matchMedia result accesses,
+    plugins/mimeTypes/javaEnabled, and parent/top/frames/opener get/set; see
     `docs/host_access_trace.md`).
 
 ## Handoff Discipline

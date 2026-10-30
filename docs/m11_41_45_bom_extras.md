@@ -13,7 +13,9 @@ descriptors, and results unchanged. Step 5f does the same for
 accesses without changing the PermissionStatus shape. Step 5g backs returned
 MediaQueryList objects with cached HostObjects while keeping values, query
 evaluation, `onchange`, and non-native `matchMedia.toString()` behavior
-unchanged. See `docs/host_access_trace.md` §4.5–§4.8.
+unchanged. Steps 5h/5i trace legacy navigator metadata and window
+parent/top/frames/opener access without changing their values or read/write
+behavior. See `docs/host_access_trace.md` §4.5–§4.10.
 
 This batch fills the remaining deterministic BOM metadata that can be served
 without layout, network, OS permission UI, background events, or a real storage

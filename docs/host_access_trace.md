@@ -2,8 +2,8 @@
 
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
 BOM callback calls + window/nested metadata + static visualViewport + navigator
-storage/permissions managers + matchMedia results green on real V8 Linux +
-Windows (`2026-10-30`)**
+storage/permissions managers + matchMedia results + legacy navigator metadata +
+window aliases green on real V8 Linux + Windows (`2026-10-30`)**
 
 This document freezes steps 1–4 and the first groups of step 5 of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
@@ -12,8 +12,9 @@ callbacks (performance, crypto, Storage), intrinsic window metadata reads,
 nested `navigator.connection` / `screen.orientation` / `performance.timeOrigin`
 reads, the static `visualViewport` HostObject, the `navigator.storage`
 manager's parent read plus method calls, `navigator.permissions` parent reads
-plus query calls and returned PermissionStatus accesses, and matchMedia result
-objects. It is a second-layer monitoring feature. It does not change the M1 `JSContext` contract,
+plus query calls and returned PermissionStatus accesses, matchMedia result
+objects, legacy navigator metadata, and window browsing-context aliases. It is a
+second-layer monitoring feature. It does not change the M1 `JSContext` contract,
 the existing `watch_apis` / Reflect / Object.keys channels, or DOM/BOM
 values/assignment behavior.
 
@@ -61,13 +62,14 @@ setter does not retroactively remove the event.
 | permission-status `onchange` reads/writes and missing-property probes | not covered; those stay plain properties |
 | `matchMedia(query)` / `m.media` / `m.matches` / `m.addEventListener()` | records a `media_query_list` `call` plus `get`/`call` entries |
 | `m.onchange` reads/writes | not covered; it stays a per-wrapper plain property |
+| `navigator.plugins` / `navigator.mimeTypes` | records a navigator `get`; array element reads are not traced |
+| `navigator.javaEnabled()` | records a navigator `get` plus `call`; returns `false` |
 | other plain property reads on native BOM objects | not covered yet |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
 | `window.innerWidth` / `outerWidth` / `innerHeight` | records `get` from the window metadata accessor |
 | `window.name` | records `get` and `set` |
 | `window.origin` / `isSecureContext` / `crossOriginIsolated` / `closed` / `frameElement` | records `get`; read-only behavior unchanged |
-| `window.parent` / `top` / `frames` / `opener` | not covered by this accessor group |
-| `navigator.plugins` / `mimeTypes` | not covered yet |
+| `window.parent` / `top` / `frames` / `opener` | records `get`; parent/frames/opener also record `set`, top stays read-only |
 | `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered in this slice; step 6 |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
@@ -84,6 +86,8 @@ setter does not retroactively remove the event.
 | `navigator.storage` | plain cached object + native callbacks | Returned by `NavigatorHost::get_property("storage")`; the parent read is `navigator`, method calls carry `storage_manager` identity. |
 | `navigator.permissions` | plain cached object + native callback | Returned by `NavigatorHost::get_property("permissions")`; `query()` records `permissions` identity, returned statuses use fixed per-name identity. |
 | matchMedia results | `MediaQueryListHost` | Fresh JS wrapper per call over a Page-owned backing cached by query/matches; the JS `matchMedia` function still evaluates the query. |
+| legacy navigator metadata | cached arrays + native function | `navigator.plugins` / `mimeTypes` / `javaEnabled` are returned by `NavigatorHost::get_property`; javaEnabled calls use their own native token. |
+| window aliases | native global accessors | `parent` / `top` / `frames` / `opener` are traced accessors backed by per-generation PageState overrides. |
 | `location` | `LocationHost` | Installed as a global; `toString()` is its only method. |
 | `document` | `DocumentHost` | Installed as a global; property getters and methods. |
 | element wrappers | `ElementHost` | Lazily created and cached per backing `DomNode`; not a global. Fresh JS wrappers can represent the same native backing. |
@@ -244,7 +248,7 @@ access returns a wrapper over a stable Page-owned backing, so:
 
 `performance.timeOrigin` is a traced accessor on the otherwise plain
 `performance` object. Other performance/crypto/Storage property reads and
-`matchMedia` results remain for later step-5 groups.
+MediaQueryList `onchange` remain out of scope.
 
 ## 4.5 Static visual viewport (step 5d)
 
@@ -358,6 +362,39 @@ Media strings are stored as UTF-16 so the exact query text (including lone
 surrogates) is preserved. Backings live until the next `load()`; each unique
 query/matches pair allocates one small backing per generation.
 
+## 4.9 Legacy navigator metadata (step 5h)
+
+`navigator.plugins` and `navigator.mimeTypes` are cached frozen empty arrays,
+and `navigator.javaEnabled` is a cached native function:
+
+- reading `plugins` / `mimeTypes` records a navigator `get`; the arrays keep
+  `Array.prototype`, zero length, frozen state, and identity across reads;
+- reading `javaEnabled` records a navigator `get`; calling it records a `call`
+  with its own stable native token and returns `false`, including when the
+  function is detached first;
+- the read-only data descriptors, assignment no-ops, and array values are
+  unchanged. The javaEnabled function is now native, so its `toString()` differs
+  from the previous JS closure.
+
+Array element/length reads on `plugins` / `mimeTypes` stay untraced; only the
+navigator property read is observed.
+
+## 4.10 Window browsing-context aliases (step 5i)
+
+`window.parent`, `window.top`, `window.frames`, and `window.opener` are now
+traced native accessors:
+
+- `parent` / `frames` default to the window object, `top` is always the window,
+  and `opener` defaults to `null`;
+- every read records a `get` with `object_type: "window"`; assignments to
+  `parent` / `frames` / `opener` record `set` and store a per-generation
+  replacement; `top` stays read-only and produces no set event;
+- values, write results, delete behavior, and top-level `let` declarations
+  remain the same (the writable aliases stay configurable; `let top` remains
+  illegal);
+- replacements reset on `load()`; descriptor reads evaluate the getters and
+  therefore also emit `get` events.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -389,14 +426,15 @@ old channel.
 
 ## 7. Not covered in this first slice
 
-- Window `parent` / `top` / `frames` / `opener` and other intrinsic/global data
-  properties not listed in §4.3.
-- `navigator.plugins` / `mimeTypes`, MediaQueryList `onchange`/missing probes,
-  and nested BOM objects not listed in §4.4–§4.8.
+- Other intrinsic/global data properties not listed in §4.3/§4.10 (for example
+  reads of global function/host-object bindings themselves).
+- MediaQueryList/PermissionStatus `onchange` and missing probes, and nested BOM
+  objects not listed in §4.4–§4.10.
 - Method-reference/property reads on `performance`, `crypto`, and Storage (their
   independent native method calls and the covered getters are described in step
-  5a/5e); `navigator.plugins` / `mimeTypes`, `matchMedia` results, and nested
-  `classList` / `validity` objects.
+  5a/5e); array element reads on `navigator.plugins` / `mimeTypes`,
+  MediaQueryList/PermissionStatus `onchange`, and nested `classList` /
+  `validity` objects.
 - Arrays and other plain values returned from host getters/methods.
 - User-created plain JS objects, object literals, class instances, destructuring
   beyond covered getter execution, Proxy/AST instrumentation, and explicit
@@ -411,20 +449,21 @@ old channel.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The remaining step-5 groups expand `navigator.plugins` / `mimeTypes` and other
-plain property reads; step 6 adds method-reference reads, `in`, delete,
-enumeration, descriptors, and value/argument/return summaries. None is implied
-by this slice.
+The step-5 object groups are now complete. Remaining plain-property/returned-
+collection gaps (onchange, array elements, plain returned values, global binding
+reads) are explicitly out of scope; step 6 adds method-reference reads, `in`,
+delete, enumeration, descriptors, and value/argument/return summaries. None is
+implied by this slice.
 
 ## 8. Verification
 
-Verified on real V8 at commit `7d35a30` (branch
-`host-access-match-media`):
+Verified on real V8 at commit `b936307` (branch
+`host-access-window-aliases`):
 
-- Linux `release-linux` run `41032945394` — cp311 / cp312 / cp313 / cp314,
-  each `1683 passed, 2 skipped`;
-- Windows `release-windows` run `41032950281` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1683 passed, 2 skipped`.
+- Linux `release-linux` run `41035577072` — cp311 / cp312 / cp313 / cp314,
+  each `1690 passed, 2 skipped`;
+- Windows `release-windows` run `41035582564` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1690 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
@@ -434,14 +473,19 @@ Verified on real V8 at commit `7d35a30` (branch
 `test/test_access_trace_nested.py` (3 items),
 `test/test_access_trace_visual_viewport.py` (4 items),
 `test/test_access_trace_storage_manager.py` (4 items),
-`test/test_access_trace_permissions.py` (5 items), and
-`test/test_access_trace_match_media.py` (3 items) ran in every lane. The full
-suite collects 1685 items; 1683 pass and 2 are skipped.
+`test/test_access_trace_permissions.py` (5 items),
+`test/test_access_trace_match_media.py` (3 items),
+`test/test_access_trace_legacy_navigator.py` (3 items), and
+`test/test_access_trace_window_aliases.py` (4 items) ran in every lane. The full
+suite collects 1692 items; 1690 pass and 2 are skipped.
 
-The matchMedia and storage-manager slices passed on their first CI attempts.
-The permissions slice needed a second CI run only because `Array.join`
-stringifies `null` as an empty field in the descriptor assertion; the final
-commit `18e674e` corrects the test expectation. Earlier groups recorded their test-expectation
+The legacy-navigator slice passed on its first CI attempt. The first
+window-alias attempt (`ac4e1f5`) made the writable aliases non-configurable,
+which broke top-level `let frames`; `b936307` keeps their configurable
+attributes and passes. The matchMedia and storage-manager slices also passed on
+their first CI attempts. The permissions slice needed a second CI run only
+because `Array.join` stringifies `null` as an empty field in the descriptor
+assertion; `18e674e` corrected the test expectation. Earlier groups recorded their test-expectation
 corrections in this document; the visual viewport attempt needed a second run
 for descriptor/getter and `Array.join` semantics, and the nested attempt needed
 a second run for repeated parent getters.
@@ -482,6 +526,10 @@ Coverage in this slice:
 - `matchMedia` result calls/gets/method calls/missing probes, query-keyed
   identity, per-wrapper onchange independence, and the documented HostObject
   differences are covered;
+- legacy navigator plugin/mime-type reads and javaEnabled get/call events keep
+  array/function identity and read-only behavior;
+- window parent/top/frames/opener get/set events preserve replaceable,
+  read-only, delete, and lexical-declaration behavior across loads;
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
@@ -490,7 +538,7 @@ Coverage in this slice:
 - capacity, dropped-event counts, object-type filters, read-and-clear, stop,
   multiple Pages, and disposal behavior are covered by tests.
 
-The remaining step-5 blind spots (navigator plugins/mimeTypes,
-MediaQueryList/PermissionStatus `onchange`/missing probes, and other plain BOM
-property reads) and step 6 (remaining operations and values) remain
-intentionally out of scope.
+The remaining blind spots are plain-property/returned-collection gaps
+(MediaQueryList/PermissionStatus `onchange`, array elements, plain returned
+values, global binding reads) and step 6 (remaining operations and values); both
+remain intentionally out of scope.
