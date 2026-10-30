@@ -60,6 +60,9 @@ namespace {
 ContextState* state_from_isolate(v8::Isolate* isolate);
 void watch_record(v8::Isolate* isolate, const std::string& receiver,
                   const std::string& method);
+void access_trace_record(v8::Isolate* isolate, const void* identity,
+                         const char* object_type, const char* label,
+                         const char* member, AccessOperation operation);
 
 // M11-33: OS-backed entropy for crypto.getRandomValues() / randomUUID(). This is
 // deliberately the runtime's ONE non-deterministic surface: supported builds use
@@ -358,6 +361,8 @@ void storage_get_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (store == nullptr) {
         return;
     }
+    access_trace_record(isolate, store, "storage", "storage", "getItem",
+                        AccessOperation::kCall);
     const std::string key = storage_string_arg(isolate, context, info[0]);
     const auto it = storage_find(store, key);
     if (it == store->end()) {
@@ -374,6 +379,8 @@ void storage_set_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (store == nullptr) {
         return;
     }
+    access_trace_record(isolate, store, "storage", "storage", "setItem",
+                        AccessOperation::kCall);
     const std::string key = storage_string_arg(isolate, context, info[0]);
     const std::string value = storage_string_arg(isolate, context, info[1]);
     const auto it = storage_find(store, key);
@@ -391,6 +398,8 @@ void storage_remove_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (store == nullptr) {
         return;
     }
+    access_trace_record(isolate, store, "storage", "storage", "removeItem",
+                        AccessOperation::kCall);
     const std::string key = storage_string_arg(isolate, context, info[0]);
     const auto it = storage_find(store, key);
     if (it != store->end()) {
@@ -399,8 +408,11 @@ void storage_remove_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
 }
 
 void storage_clear(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
     StorageStore* store = storage_store_from(info.Data());
     if (store != nullptr) {
+        access_trace_record(isolate, store, "storage", "storage", "clear",
+                            AccessOperation::kCall);
         store->clear();
     }
 }
@@ -412,6 +424,8 @@ void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (store == nullptr) {
         return;
     }
+    access_trace_record(isolate, store, "storage", "storage", "key",
+                        AccessOperation::kCall);
     v8::Local<v8::Uint32> index_value;
     if (!info[0]->ToUint32(context).ToLocal(&index_value)) {
         return;
@@ -433,6 +447,8 @@ void storage_length_getter(v8::Local<v8::Name> property,
     if (store == nullptr) {
         return;
     }
+    access_trace_record(isolate, store, "storage", "storage", "length",
+                        AccessOperation::kGet);
     info.GetReturnValue().Set(
         v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size())));
 }
@@ -5069,6 +5085,23 @@ void watch_record(v8::Isolate* isolate, const std::string& receiver,
     registry->maybe_record(receiver + "." + method);
 }
 
+// Step 5 call coverage for runtime-owned plain BOM objects. These are
+// independent native callbacks, not HostObject methods, so they use explicit
+// stable native tokens for object identity. Property reads on these objects are
+// a later group and are not implied by these calls.
+static char kPerformanceTraceToken;
+static char kCryptoTraceToken;
+static char kStorageTraceToken;
+
+void access_trace_record(v8::Isolate* isolate, const void* identity,
+                         const char* object_type, const char* label,
+                         const char* member, AccessOperation operation) {
+    AccessTrace* trace = access_trace_from_isolate(isolate);
+    if (trace != nullptr && trace->enabled()) {
+        trace->record(identity, object_type, label, member, operation);
+    }
+}
+
 // M11-32: fire the minimal `invalid` event at a control. It is a target-only,
 // non-bubbling event with the standard read fields; it is a plain object (like
 // the M3-4 lifecycle events), not a full Event instance, so preventDefault /
@@ -5980,7 +6013,10 @@ std::int64_t performance_clock_ms(v8::Isolate* isolate) {
 }
 
 void performance_now_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "performance", "now");  // M9-2 style
+    watch_record(info.GetIsolate(), "performance", "now");
+    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
+                        "performance", "performance", "now",
+                        AccessOperation::kCall);  // M9-2 style
     ContextState* state = state_from_isolate(info.GetIsolate());
     const double ms = state == nullptr
                           ? 0.0
@@ -6025,6 +6061,9 @@ v8::Local<v8::Array> performance_entries_array(
 void performance_mark_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "mark");
+    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
+                        "performance", "performance", "mark",
+                        AccessOperation::kCall);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6043,6 +6082,9 @@ void performance_mark_callback(
 void performance_measure_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "measure");
+    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
+                        "performance", "performance", "measure",
+                        AccessOperation::kCall);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6092,6 +6134,9 @@ void performance_measure_callback(
 void performance_get_entries_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "getEntries");
+    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
+                        "performance", "performance", "getEntries",
+                        AccessOperation::kCall);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6105,6 +6150,9 @@ void performance_get_entries_callback(
 void performance_get_entries_by_name_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "getEntriesByName");
+    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
+                        "performance", "performance", "getEntriesByName",
+                        AccessOperation::kCall);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6118,6 +6166,9 @@ void performance_get_entries_by_name_callback(
 void performance_get_entries_by_type_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "getEntriesByType");
+    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
+                        "performance", "performance", "getEntriesByType",
+                        AccessOperation::kCall);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6142,6 +6193,9 @@ void performance_clear_entries(PerformanceStore* store, const std::string& type,
 void performance_clear_marks_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "clearMarks");
+    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
+                        "performance", "performance", "clearMarks",
+                        AccessOperation::kCall);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6153,6 +6207,9 @@ void performance_clear_marks_callback(
 void performance_clear_measures_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "clearMeasures");
+    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
+                        "performance", "performance", "clearMeasures",
+                        AccessOperation::kCall);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6743,6 +6800,9 @@ bool is_integer_typed_array(v8::Local<v8::Value> value) {
 void crypto_get_random_values_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "crypto", "getRandomValues");
+    access_trace_record(info.GetIsolate(), &kCryptoTraceToken,
+                        "crypto", "crypto", "getRandomValues",
+                        AccessOperation::kCall);
     v8::Isolate* isolate = info.GetIsolate();
     if (info.Length() < 1 || !is_integer_typed_array(info[0])) {
         isolate->ThrowException(v8::Exception::TypeError(
@@ -6793,6 +6853,9 @@ void crypto_get_random_values_callback(
 void crypto_random_uuid_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "crypto", "randomUUID");
+    access_trace_record(info.GetIsolate(), &kCryptoTraceToken,
+                        "crypto", "crypto", "randomUUID",
+                        AccessOperation::kCall);
     v8::Isolate* isolate = info.GetIsolate();
     std::uint8_t bytes[16];
     if (!fill_os_random_bytes(bytes, sizeof(bytes))) {

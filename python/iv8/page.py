@@ -29,8 +29,9 @@ __all__ = ["Page"]
 # Host access trace (first slice): the native object types that can emit
 # get/set/call events. Keep this in sync with AccessTrace::supported_object_types().
 _ACCESS_TRACE_OBJECT_TYPES = (
-    "console", "document", "element", "host_object",
-    "host_probe", "location", "navigator", "screen",
+    "console", "crypto", "document", "element", "host_object",
+    "host_probe", "location", "navigator", "performance", "screen",
+    "storage",
 )
 
 # M11-1 host-environment baseline. This mapping is the SINGLE source of truth for

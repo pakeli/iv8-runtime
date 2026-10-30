@@ -176,16 +176,18 @@ AccessTrace::SourceScope::~SourceScope() noexcept {
 
 const std::vector<std::string>& AccessTrace::supported_object_types() {
     static const std::vector<std::string> types = {
-        "console", "document", "element", "host_object",
-        "host_probe", "location", "navigator", "screen",
+        "console", "crypto", "document", "element", "host_object",
+        "host_probe", "location", "navigator", "performance", "screen",
+        "storage",
     };
     return types;
 }
 
 const std::vector<std::string>& AccessTrace::not_covered() {
     static const std::vector<std::string> gaps = {
+        "performance/crypto/Storage property reads (their native method calls are covered)",
         "window/global data properties",
-        "performance/crypto/Storage/visualViewport/matchMedia/navigator subobjects",
+        "visualViewport/matchMedia/navigator subobjects",
         "arrays and plain values returned by host APIs",
         "user-created plain JS objects",
         "method-reference reads",
