@@ -105,7 +105,7 @@ M11-36 through M11-40 (BOM completion batch) were verified on
 `m11-36-40-bom-completion` (final commit `512117c`) and merged to the fork's
 `master`. Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
-report documents (`docs/m11_6_report.md` … `docs/m11_35_report.md`).
+report documents (`docs/m11_6_report.md` … `docs/m11_36_40_report.md`).
 
 This means the project is no longer only a `JSContext` kernel. It now includes a
 hosted `Page` runtime, a minimal DOM/form/web-platform layer, and a second-layer
