@@ -30,9 +30,9 @@ __all__ = ["Page"]
 # sync with AccessTrace::supported_object_types().
 _ACCESS_TRACE_OBJECT_TYPES = (
     "connection", "console", "crypto", "document", "element",
-    "host_object", "host_probe", "location", "navigator", "orientation",
-    "performance", "permission_status", "permissions", "screen", "storage",
-    "storage_manager", "visual_viewport", "window",
+    "host_object", "host_probe", "location", "media_query_list", "navigator",
+    "orientation", "performance", "permission_status", "permissions",
+    "screen", "storage", "storage_manager", "visual_viewport", "window",
 )
 
 # M11-1 host-environment baseline. This mapping is the SINGLE source of truth for

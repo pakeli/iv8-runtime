@@ -52,6 +52,12 @@ struct PerformanceStore {
     std::vector<PerformanceEntryRecord> entries;
 };
 
+// Step 5g: Page-owned backings for matchMedia result objects. Keyed by media
+// string + evaluated matches; cleared on every generation.
+struct MediaQueryListStore {
+    std::unordered_map<std::u16string, std::unique_ptr<HostObject>> by_key;
+};
+
 namespace {
 
 // M9-2 forward declarations (definitions lower in this TU): the isolate->owning-
@@ -795,6 +801,91 @@ v8::Local<v8::Object> make_permissions_object(v8::Isolate* isolate,
         context, v8::String::NewFromUtf8Literal(isolate, "query"), query,
         static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
     return permissions;
+}
+
+// Step 5g: a matchMedia result. The JS bootstrap still owns the bounded query
+// evaluator and the matchMedia function; it calls a temporary native factory
+// that maps (query, matches) to a cached HostObject backing and creates a fresh
+// JS wrapper per call. `onchange` stays a plain per-wrapper own property.
+constexpr v8::ExternalPointerTypeTag kMediaQueryFactoryTag =
+    v8::kExternalPointerTypeTagDefault;
+
+class MediaQueryListHost : public HostObject {
+public:
+    MediaQueryListHost(std::u16string media, bool matches)
+        : media_(std::move(media)), matches_(matches) {}
+
+    std::string global_name() const override { return std::string(); }
+    std::string trace_object_type() const override { return "media_query_list"; }
+    std::string trace_label() const override { return "matchMedia"; }
+
+    std::vector<std::string> property_names() const override {
+        return {"media", "matches"};
+    }
+
+    std::vector<std::string> method_names() const override {
+        return {"addListener",        "removeListener", "addEventListener",
+                "removeEventListener", "dispatchEvent"};
+    }
+
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context>,
+                                      const std::string& name) override {
+        if (name == "media") {
+            // Preserve UTF-16 exactly (including lone surrogates).
+            return v8::String::NewFromTwoByte(
+                       isolate,
+                       reinterpret_cast<const std::uint16_t*>(media_.data()),
+                       v8::NewStringType::kNormal,
+                       static_cast<int>(media_.size()))
+                .ToLocalChecked();
+        }
+        if (name == "matches") {
+            return v8::Boolean::New(isolate, matches_);
+        }
+        return v8::Undefined(isolate);
+    }
+
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>&) override {
+        if (name == "dispatchEvent") {
+            return v8::Boolean::New(isolate, false);
+        }
+        return v8::Undefined(isolate);
+    }
+
+private:
+    std::u16string media_;
+    bool matches_ = false;
+};
+
+void make_media_query_list_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kMediaQueryFactoryTag));
+    if (page == nullptr) {
+        info.GetReturnValue().Set(v8::Undefined(isolate));
+        return;
+    }
+    std::u16string media;
+    if (info.Length() >= 1 && info[0]->IsString()) {
+        v8::String::Value utf16(isolate, info[0]);
+        if (*utf16 != nullptr) {
+            media.assign(reinterpret_cast<const char16_t*>(*utf16),
+                         static_cast<std::size_t>(utf16.length()));
+        }
+    }
+    const bool matches = info.Length() >= 2 && info[1]->BooleanValue(isolate);
+    HostObject* host = page->media_query_list_host(media, matches);
+    access_trace_record(isolate, host, "media_query_list", "matchMedia",
+                        "matchMedia", AccessOperation::kCall);
+    v8::Local<v8::Object> list = make_host_object(isolate, context, host);
+    (void)list->Set(context, v8_string(isolate, "onchange").As<v8::String>(),
+                    v8::Null(isolate));
+    info.GetReturnValue().Set(list);
 }
 
 // M2-3 minimal navigator (read-only), configurable since M11-1 and extended by
@@ -6994,7 +7085,11 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
     });
   }
 
-  function noop() {}
+  // Step 5g: capture the temporary native result factory and remove its global
+  // binding. matchMedia itself stays a JS function (its toString behavior is
+  // unchanged); only the returned list is HostObject-backed.
+  var makeMediaQueryList = globalThis.__iv8MakeMediaQueryList;
+  delete globalThis.__iv8MakeMediaQueryList;
 
   // The reported viewport is fixed for the generation, so read it once during
   // the internal bootstrap instead of on every media-query evaluation. These
@@ -7113,22 +7208,9 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
     return false;
   }
 
-  function makeMediaQueryList(rawQuery) {
-    var query = String(rawQuery);
-    var list = {};
-    defineReadonly(list, 'media', query);
-    defineReadonly(list, 'matches', mediaMatches(query));
-    list.onchange = null;
-    defineReadonly(list, 'addListener', noop);
-    defineReadonly(list, 'removeListener', noop);
-    defineReadonly(list, 'addEventListener', noop);
-    defineReadonly(list, 'removeEventListener', noop);
-    defineReadonly(list, 'dispatchEvent', function () { return false; });
-    return list;
-  }
-
   defineReadonly(globalThis, 'matchMedia', function (query) {
-    return makeMediaQueryList(query);
+    var text = String(query);
+    return makeMediaQueryList(text, mediaMatches(text));
   });
 
   // M11-43: deterministic StorageManager. It is installed natively through
@@ -9571,6 +9653,25 @@ void window_metadata_getter(v8::Local<v8::Name> property,
     info.GetReturnValue().Set(page->window_metadata_value(isolate, name));
 }
 
+HostObject* PageState::media_query_list_host(const std::u16string& media,
+                                              bool matches) {
+    if (!media_query_lists_) {
+        media_query_lists_ = std::make_unique<MediaQueryListStore>();
+    }
+    std::u16string key = media;
+    key.push_back(u'\x01');
+    key.push_back(matches ? u'1' : u'0');
+    auto& by_key = media_query_lists_->by_key;
+    auto it = by_key.find(key);
+    if (it == by_key.end()) {
+        it = by_key
+                 .emplace(key, std::make_unique<MediaQueryListHost>(media,
+                                                                    matches))
+                 .first;
+    }
+    return it->second.get();
+}
+
 void PageState::install_page(const std::string& base_url,
                              const std::string& html) {
     bootstrap_ = PageBootstrap{html, base_url};
@@ -9614,6 +9715,9 @@ void PageState::install_page(const std::string& base_url,
         }
     });
     host_objects_.clear();
+    // Step 5g: matchMedia backings are per-generation; their JS wrappers died
+    // with the previous context above.
+    media_query_lists_.reset();
     host_objects_.push_back(std::make_unique<HostProbe>());    // M2-1 probe
     host_objects_.push_back(std::make_unique<ConsoleHost>());  // M2-2 console
     // M2-3 navigator + M11-1 screen, both sourced from the Page-level environment_
@@ -9873,6 +9977,22 @@ void PageState::install_page(const std::string& base_url,
                     try_catch.Reset();  // fixed bootstrap; never poison install
                 }
             }
+            // Step 5g: temporary native factory the bootstrap captures in a
+            // closure and deletes immediately, so matchMedia stays a JS function
+            // while each result object gets a traceable HostObject backing.
+            {
+                v8::Local<v8::Function> factory =
+                    v8::FunctionTemplate::New(
+                        isolate, &make_media_query_list_callback,
+                        v8::External::New(isolate, this, kMediaQueryFactoryTag))
+                        ->GetFunction(context)
+                        .ToLocalChecked();
+                (void)global->Set(
+                    context,
+                    v8::String::NewFromUtf8Literal(
+                        isolate, "__iv8MakeMediaQueryList"),
+                    factory);
+            }
             // M11-41..M11-45 BOM metadata/device stubs. Installed after the
             // window dimensions and navigator so the bootstrap can derive the
             // static visual viewport and media-query results from them.
@@ -9891,6 +10011,11 @@ void PageState::install_page(const std::string& base_url,
                     try_catch.Reset();  // fixed bootstrap; never poison install
                 }
             }
+            // Never leave the temporary factory visible to page scripts.
+            (void)global->Delete(
+                context,
+                v8::String::NewFromUtf8Literal(isolate,
+                                               "__iv8MakeMediaQueryList"));
             // Step 5d: the static visual viewport is a HostObject (the bootstrap
             // above no longer creates it), so get/set/call/probe entries are
             // observable. Width/height still come from environment_; the global

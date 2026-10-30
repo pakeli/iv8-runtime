@@ -77,6 +77,9 @@ class ContextState;
 // M11-37 opaque per-generation performance-entry store (defined in
 // page_state.cpp; reset on every install_page).
 struct PerformanceStore;
+// Step 5g opaque per-generation store for cached matchMedia result backings
+// (defined in page_state.cpp; cleared on every install_page).
+struct MediaQueryListStore;
 // M9-1 opaque holder for the V8 Inspector objects (defined in page_state.cpp so
 // v8-inspector.h stays out of this header). Destroyed via the out-of-line
 // ~PageState / the context teardown hook while the isolate is still alive.
@@ -108,6 +111,10 @@ public:
     pybind11::object eval(const std::string& source, bool to_py,
                           const std::string& name);
     void dispose();
+
+    // Step 5g: internal factory used only by the JS matchMedia bootstrap; returns
+    // a cached HostObject backing for one query result. Not bound to Python.
+    HostObject* media_query_list_host(const std::u16string& media, bool matches);
 
     // M2-4 manual pumps (delegate to the owned context). run_timers fires
     // currently-scheduled timer callbacks once; run_jobs drains the microtask
@@ -319,6 +326,8 @@ private:
     std::shared_ptr<ContextState> state_;
     // M11-37: performance mark/measure entries for the current generation.
     std::unique_ptr<PerformanceStore> performance_store_;
+    // Step 5g: cached matchMedia result backings for the current generation.
+    std::unique_ptr<MediaQueryListStore> media_query_lists_;
     // M11-35: window.name survives load() generations of this Page.
     std::string window_name_;
     // M11-7 Web Storage backings. Insertion-ordered and page-lifetime: they
