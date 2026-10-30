@@ -775,9 +775,50 @@ test. Report: `docs/m11_41_45_report.md`.
 
 ### Next
 
-Choose `M11-46` — selector pseudo-classes remain the planned selector
-follow-up; `navigator.userAgentData` is deliberately deferred in this version.
-Remaining candidates are inventoried in `docs/dom_bom_gaps.md`.
+M11-41..M11-45 completed the BOM metadata batch. The post-M11 host access trace
+became the next work item (Priority 3u). The `M11-46` selector follow-up and
+`navigator.userAgentData` remain deferred.
+
+## Priority 3u: Host access trace first slice — DONE (`2026-10-30`)
+
+### What landed
+
+- Page-level `start_access_trace(max_events=10000, object_types=None)` /
+  `stop_access_trace()` / `read_access_trace(clear=True)`.
+- Native HostObject `property_getter` / `property_setter` / `method_callback`
+  events at `phase: "enter"`, with sequence, generation, stable native object
+  ID, object type/label, member, operation, resource name, and source kind.
+- Earliest-N capacity with explicit `dropped_events`, object-type filters,
+  read-and-clear, stop/start, generation/load handling, and per-Page isolation.
+- Source attribution: `eval`, `html_script`, `internal`, `unknown`; existing
+  `watch_apis` / Reflect / Object.keys channels remain unchanged.
+
+Boundary: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_api.py` (9 items) and
+`test/test_access_trace_runtime.py` (11 items). Full suite collects 1648 items;
+each wheel lane: **`1646 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `44fc847` (feature commits `95461c6`, `0176ebe`, `edb3dd7`; branch
+`host-access-trace`):
+
+- Linux `release-linux` run `41015201477` — cp311–cp314, each
+  `1646 passed, 2 skipped`;
+- Windows `release-windows` run `41015206089` — Python 3.11–3.14, each
+  `1646 passed, 2 skipped`.
+
+The first attempt (`edb3dd7`) failed one test that assumed an object-toString
+conversion would throw; `44fc847` switched the fixture to a deterministic
+non-element `appendChild` call. Boundary/verification: `docs/host_access_trace.md`;
+roadmap: `docs/host_access_tracing_plan.md`.
+
+### Next
+
+Implement step 4 of `docs/host_access_tracing_plan.md`: missing-property probes
+after validating named-property-interceptor behavior on the pinned V8 version.
+Do not expand to window/BOM objects before the step-4 gate is satisfied. The
+M11-46 selector follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

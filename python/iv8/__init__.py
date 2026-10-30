@@ -1002,6 +1002,17 @@ frozen empty ``navigator.plugins`` / ``mimeTypes`` with
 UI, network, Python API, or new environment key is added. See
 ``docs/m11_41_45_bom_extras.md``.
 
+The post-M11 host access trace first slice adds
+``Page.start_access_trace(max_events=10000, object_types=None)`` /
+``Page.stop_access_trace()`` / ``Page.read_access_trace(clear=True)``. It records
+native ``HostObject`` property get/set and method-call entries with sequence,
+generation, stable native object ID, object type/label, member, operation,
+resource name, and source kind. It is a separate, default-off monitoring channel;
+it does not change the five existing watch channels, add a JS-visible API, or
+cover intrinsic ``window`` fields, runtime-created plain BOM objects,
+user-created objects, method-reference reads, missing-property probes, ``in``,
+delete, enumeration, or descriptors yet. See ``docs/host_access_trace.md``.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free

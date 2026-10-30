@@ -1,6 +1,7 @@
 # Host Access Trace
 
-Status: **IN PROGRESS — boundary frozen; implementation pending (`2026-10-30`)**
+Status: **VERIFIED — first slice (native get/set/call) green on real V8 Linux
++ Windows (`2026-10-30`)**
 
 This document freezes the first slice of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing. It is
@@ -56,9 +57,9 @@ setter does not retroactively remove the event.
 | — | `WindowEventTarget` | Listener store only; never installed. |
 | — | `FileReaderEvents` | Listener store only; never installed. |
 
-The current implementation must be audited before this boundary is frozen for
-verification: any new `HostObject` subclass or new `make_host_object` path must
-either be added to this table or explicitly listed as not covered.
+The inventory above was audited for this slice. Any later `HostObject` subclass
+or `make_host_object` path must either be added to this table or explicitly
+listed as not covered.
 
 ## 3. Identity and labels
 
@@ -186,8 +187,35 @@ operations. Neither is implied by this slice.
 
 ## 8. Verification
 
-Focused tests will cover API shape/validation, get/set/call recording, resource
-and source attribution, object identity, generation/load behavior, capacity and
-filters, coexistence with the old channels, and error/read-only behavior. Real
-V8 Linux and Windows release workflows must run the new trace tests in every
-wheel lane. This status changes to **VERIFIED** only after those runs are green.
+Verified on real V8 at commit `44fc847` (branch `host-access-trace`):
+
+- Linux `release-linux` run `41015201477` — cp311 / cp312 / cp313 / cp314,
+  each `1646 passed, 2 skipped`;
+- Windows `release-windows` run `41015206089` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1646 passed, 2 skipped`.
+
+`test/test_access_trace_api.py` (9 items) and
+`test/test_access_trace_runtime.py` (11 items) ran in every lane. The full suite
+collects 1648 items; 1646 pass and 2 are skipped.
+
+The first verification attempt (`edb3dd7`) failed one runtime assertion that
+assumed an object-toString conversion would throw; `44fc847` switched the test
+to a deterministic non-element `appendChild` throw. The runtime recording path
+was unchanged by the fix.
+
+Coverage in this slice:
+
+- get/set/call for all installed `HostObject` properties/methods, including
+  `navigator.userAgent`, `screen.width`, `location.toString()`, `document`
+  queries, element properties/methods, and `console` methods;
+- read-only writes and method-reference reads stay untraced;
+- source attribution: `eval`, inline HTML script, internal bootstrap, and
+  unknown (timer/Promise callback) evidence;
+- native object IDs remain stable across fresh element wrappers and reset with
+  a new generation;
+- capacity, dropped-event counts, object-type filters, read-and-clear, stop,
+  multiple Pages, and disposal behavior are covered by tests.
+
+The known blind spots listed in §7 remain intentionally out of scope. Step 4
+(missing-property probes) is the next implementation slice; step 5/6 cover
+additional runtime objects and operations.

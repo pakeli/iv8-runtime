@@ -384,6 +384,32 @@ fixed only the test. Verified on real V8 at commit `61abc3b`: Linux
 The full suite collects 1628 items (1619 previous + 9 new tests). See
 `docs/m11_41_45_report.md`.
 
+### 26. Host access trace first slice (steps 1-3)
+
+Decided/verified `2026-10-30`, following `docs/host_access_tracing_plan.md`
+without assigning a new milestone number.
+
+The first slice adds a separate Page-level `start_access_trace` /
+`stop_access_trace` / `read_access_trace` channel for native HostObject
+`property_getter` / `property_setter` / `method_callback` entries. Events are
+`phase: "enter"`, carry sequence/generation/stable native object ID/type/label/
+member/operation/resource/source kind, use earliest-N capacity with explicit
+drops, support object-type filters, and do not add a JS-visible API or change
+the five existing watch channels. The native hook fires before the concrete host
+implementation; read-only writes and method-reference reads are not recorded.
+
+Step 2/3 entry points are `property_getter`, `property_setter`, and
+`method_callback` only; `window` data properties, plain BOM objects, user
+objects, method-reference reads, and missing-property probes remain explicitly
+out of scope. Step 4 (missing-property probes) is the next design gate.
+
+The first verification attempt (`edb3dd7`) failed one test that assumed an
+object-toString conversion would throw; `44fc847` switched the fixture to a
+deterministic non-element `appendChild` throw. The runtime path was unchanged.
+Verified on real V8 at commit `44fc847`: Linux `41015201477`, Windows
+`41015206089`, each wheel lane `1646 passed, 2 skipped`. The full suite collects
+1648 items (1628 previous + 20 new tests). See `docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

@@ -3,7 +3,9 @@
 Last reviewed: `2026-10-30` · Latest verified milestone: **M11-41..M11-45**
 (BOM viewport/media/device metadata: `visualViewport`, `matchMedia`,
 `navigator.storage`, `navigator.permissions`, and legacy navigator metadata),
-verified on real V8 (Linux + Windows) on `2026-10-30`.
+verified on real V8 (Linux + Windows) on `2026-10-30`. The post-M11 host access
+trace first slice is also verified on the same date; see
+`docs/host_access_trace.md`.
 
 ## 0. What this document is
 
@@ -120,8 +122,9 @@ All Python-side; none of these add a JS-visible global.
 | `watch_reflect_has(...)` / `read_reflect_has_hits()` | M9-5 | `Reflect.has` |
 | `watch_reflect_ownkeys(...)` / `read_reflect_ownkeys_hits()` | M10-1 | `Reflect.ownKeys` |
 | `watch_object_keys(...)` / `read_object_keys_hits()` | M10-2 | `Object.keys` |
+| `start_access_trace(max_events=10000, object_types=None)` / `stop_access_trace()` / `read_access_trace(clear=True)` | host access trace, first slice (verified 2026-10-30) | native HostObject property `get`/`set`/method `call` entries; structured events with generation, object identity, resource, and source kind; see `docs/host_access_trace.md` |
 
-Shared semantics across all five channels:
+Shared semantics across the five watch channels:
 
 - each `read_*` is **read-and-clear** and returns `list[dict]`; the five logs are
   independent and never cross-talk;
@@ -136,6 +139,15 @@ Shared semantics across all five channels:
 - configuration is `Page`-level and **persists across `load()`**; the hooks are
   re-installed per generation. Never enabling any of it leaves runtime paths at zero
   overhead.
+
+The **host access trace** is a separate, later channel, not part of the five
+watch channels above: it is default-off, has no `break_on_hit`, records every
+entered generic `HostObject` getter/setter/method trampoline (subject to an
+optional object-type filter), and returns events plus a coverage report. It
+does not cover intrinsic `window` data properties, JS-created BOM objects,
+returned plain values, user-created objects, method-reference reads,
+missing-property probes, `in`, delete, enumeration, or descriptors in this
+slice. See `docs/host_access_trace.md`.
 
 Not public surface: `_core.Page.devtools_pause_count()` is an internal test probe for
 pause evidence (M9-3).
@@ -459,6 +471,7 @@ clock.
 | M11-35 | deterministic BOM metadata completion (window/screen/navigator; 36-key environment) — verified 2026-10-30 | `docs/m11_35_bom_metadata.md`, `docs/m11_35_report.md` |
 | M11-36..M11-40 | BOM completion batch (dialogs, performance timeline, structuredClone, single-context window metadata, scheduler.postTask) — verified 2026-10-30 | `docs/m11_36_40_bom_completion.md`, `docs/m11_36_40_report.md` |
 | M11-41..M11-45 | BOM viewport/media/device metadata (visualViewport, matchMedia, navigator.storage/permissions, legacy navigator metadata) — verified 2026-10-30 | `docs/m11_41_45_bom_extras.md`, `docs/m11_41_45_report.md` |
+| Post-M11 host access trace (steps 1–3) | native HostObject get/set/call trace (`start_access_trace` / `stop_access_trace` / `read_access_trace`) — verified 2026-10-30 | `docs/host_access_trace.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference
