@@ -79,9 +79,10 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   `visualViewport` + window flags, bounded `matchMedia`, deterministic
   `navigator.storage` and `navigator.permissions`, and empty legacy
   `navigator.plugins` / `mimeTypes` / `javaEnabled`
-- Post-M11 host access trace (steps 1–4): `Page.start_access_trace` /
-  `stop_access_trace` / `read_access_trace`, recording native HostObject
-  get/set/call entries plus missing string-key `get_probe` events with
+- Post-M11 host access trace (steps 1–4 + step-5 BOM calls):
+  `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
+  recording native HostObject get/set/call entries, missing string-key
+  `get_probe` events, and performance/crypto/Storage callback calls with
   generation, object identity, resource, and source attribution
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
@@ -115,7 +116,10 @@ M11-36 through M11-40 (BOM completion batch) were verified on
 verified on `m11-41-45-bom-extras` (final commit `61abc3b`) and merged to the
 fork's `master`. The post-M11 host access trace steps 1–4 were verified on
 `host-access-probes` (commit `8995b89`) with Linux run `41017981567` and
-Windows run `41017987566`, each wheel lane `1656 passed, 2 skipped`.
+Windows run `41017987566`, each wheel lane `1656 passed, 2 skipped`. The first
+step-5 group (performance/crypto/Storage native calls) was verified on
+`host-access-bom-calls` (commit `ac80ee8`) with Linux run `41019395760` and
+Windows run `41019399775`, each wheel lane `1660 passed, 2 skipped`.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -179,12 +183,13 @@ Implemented and present at `HEAD`:
 Post-M11 monitoring extension (verified `2026-10-30`):
 
 - `Page.start_access_trace()` / `Page.stop_access_trace()` /
-  `Page.read_access_trace()` — native HostObject `get`/`set`/`call` events plus
-  missing string-key `get_probe`/`resolution: "missing"` events, with
-  generation/object identity, capacity/drop accounting, object-type filters,
-  and source attribution. It is a separate channel from the five watch APIs;
-  non-HostObject missing probes and BOM objects are not covered yet. See
-  `docs/host_access_trace.md`.
+  `Page.read_access_trace()` — native HostObject `get`/`set`/`call` events,
+  missing string-key `get_probe`/`resolution: "missing"` events, and
+  performance/crypto/Storage native callback calls plus Storage `length` reads,
+  with generation/object identity, capacity/drop accounting, object-type
+  filters, and source attribution. It is a separate channel from the five watch
+  APIs; remaining plain-object property reads and non-HostObject missing probes
+  are not covered yet. See `docs/host_access_trace.md`.
 
 ### M11 compatibility line
 
@@ -368,8 +373,9 @@ Recent implementation sequence from Git history:
 - `M11-41` through `M11-45`: BOM viewport/media/device metadata — visualViewport,
   matchMedia, navigator.storage/permissions, and legacy navigator metadata
   (verified `2026-10-30`)
-- Post-M11 host access trace (steps 1–4): native HostObject get/set/call and
-  missing string-key probe API (verified `2026-10-30`)
+- Post-M11 host access trace (steps 1–4 + step-5 BOM calls): native HostObject
+  get/set/call, missing string-key probe, and performance/crypto/Storage call
+  API (verified `2026-10-30`)
 
 ## 4. Release / Distribution Status
 
@@ -483,8 +489,11 @@ The repository is executing its post-M10 direction:
   missing-property probes) are **landed and verified on real V8 (Linux +
   Windows)** on `2026-10-30`; see `docs/host_access_trace.md` and
   `docs/host_access_tracing_plan.md`;
-- the next execution handoff is host-access-trace step 5 (runtime-owned BOM
-  objects and intrinsic window metadata). The M11 selector follow-up (`M11-46`
+- the first step-5 group (performance/crypto/Storage native method calls and
+  Storage `length`) is **landed and verified on real V8 (Linux + Windows)** on
+  `2026-10-30`;
+- the next execution handoff is the remaining step-5 groups (plain BOM property
+  reads and intrinsic window metadata). The M11 selector follow-up (`M11-46`
   candidate) and `navigator.userAgentData` remain deferred priorities; remaining
   BOM/DOM gaps are inventoried in `docs/dom_bom_gaps.md`.
 
@@ -497,10 +506,9 @@ These are the questions a new coding session should resolve before major new wor
   settled, landed, and verified; selector pseudo-classes remain the planned
   selector follow-up, while UA-CH is deliberately deferred and the remaining
   candidates come from `docs/dom_bom_gaps.md`.)
-- Which runtime-owned BOM groups should step 5 migrate first, and which
-  descriptor/Proxy compromises are acceptable for `window.innerWidth`,
-  `performance`, Storage, and nested navigator objects? (Gate in
-  `docs/host_access_tracing_plan.md` §7.)
+- Which descriptor/Proxy compromises are acceptable for the remaining step-5
+  groups: `window.innerWidth`, plain property reads on `performance` / Storage,
+  and nested navigator objects? (Gate in `docs/host_access_tracing_plan.md` §7.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -515,8 +523,9 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime, the M9–M10 monitoring extensions, and the M11 compatibility
-> line through M11-41..M11-45, and has landed the first four steps of a post-M11
-> host access trace — all verified on real V8 (Linux + Windows) on `2026-10-30`.
+> line through M11-41..M11-45, and has landed the first four steps plus the
+> native-BOM-call group of a post-M11 host access trace — all verified on real
+> V8 (Linux + Windows) on `2026-10-30`.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

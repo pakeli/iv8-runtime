@@ -432,6 +432,24 @@ Verified on real V8 at commit `8995b89`: Linux `41017981567`, Windows
 `41017987566`, each wheel lane `1656 passed, 2 skipped`. The full suite collects
 1658 items (1648 previous + 10 probe tests). See `docs/host_access_trace.md`.
 
+### 28. Host access trace native BOM callbacks (step 5a)
+
+Decided/verified `2026-10-30`.
+
+The first step-5 group records independent native BOM callback calls without
+changing plain-object descriptors, prototypes, function identity, or `this`:
+`performance` methods, `crypto` methods, and Storage methods plus the Storage
+`length` getter. `performance`/`crypto` use stable native identity tokens;
+`localStorage` and `sessionStorage` use their distinct backing store pointers as
+object IDs and both report `object_type: "storage"` / label `"storage"`. Property
+reads on these plain objects (other than Storage `length`) remain the next
+step-5 group; value/argument/return summaries remain step 6.
+
+Verified on real V8 at commit `ac80ee8`: Linux `41019395760`, Windows
+`41019399775`, each wheel lane `1660 passed, 2 skipped`. The full suite collects
+1662 items (1658 previous + 4 BOM-call tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

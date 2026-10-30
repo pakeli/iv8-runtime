@@ -1,13 +1,14 @@
 # Host Access Trace
 
-Status: **VERIFIED — native get/set/call plus HostObject missing-property
-probes green on real V8 Linux + Windows (`2026-10-30`)**
+Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
+BOM callback calls green on real V8 Linux + Windows (`2026-10-30`)**
 
-This document freezes steps 1–4 of
-`docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing and
-string-key missing-property probes. It is a second-layer monitoring feature. It
-does not change the M1 `JSContext` contract, the existing `watch_apis` /
-Reflect / Object.keys channels, or any DOM/BOM behavior.
+This document freezes steps 1–4 and the first group of step 5 of
+`docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
+string-key missing-property probes, and call/get coverage for independent native
+BOM callbacks (performance, crypto, Storage). It is a second-layer monitoring
+feature. It does not change the M1 `JSContext` contract, the existing
+`watch_apis` / Reflect / Object.keys channels, or any DOM/BOM behavior.
 
 ## 1. Entry-point contract
 
@@ -20,6 +21,7 @@ The only operations covered by this slice are the generic callbacks in
 | `property_setter` | A script wrote a property registered in `HostObject::writable_property_names()`. |
 | `method_callback` | A script invoked a method registered in `HostObject::method_names()`. |
 | `named_property_getter` | A script read a missing string key after normal lookup; recorded as `get_probe`. |
+| independent native callbacks | performance/crypto/Storage methods, plus the Storage `length` accessor, record `call`/`get` with native identity tokens. |
 
 This is **not** a V8-wide property-access hook. It proves that a native host
 entry point ran; it does not prove every `obj.x` expression was observed.
@@ -37,8 +39,11 @@ setter does not retroactively remove the event.
 | `document.querySelector('#app')` | records `call` |
 | `const fn = document.querySelector` | records neither `get` nor `call` |
 | `navigator.someMissingProperty` | records `get_probe` with `resolution: "missing"` for a HostObject string key |
+| `performance.now()` / `crypto.randomUUID()` | records `call` |
+| `localStorage.getItem()` / `sessionStorage.setItem()` / `localStorage.length` | records `call`; `length` records `get` |
+| `performance.timeOrigin` / plain property reads on native BOM objects | not covered in step 5a |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
-| `window.innerWidth` | not covered in this slice; step 5 |
+| `window.innerWidth` | not covered in this slice; later step-5 group |
 | `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered in this slice; step 6 |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
@@ -71,7 +76,8 @@ listed as not covered.
 - IDs are scoped to a generation. A new `load()` generation clears the backing
   map; IDs are never reused.
 - `object_type` is the native category: `host_probe`, `console`, `navigator`,
-  `screen`, `location`, `document`, `element`, or the fallback `host_object`.
+  `screen`, `location`, `document`, `element`, `performance`, `crypto`,
+  `storage`, or the fallback `host_object`.
 - `label` is a display hint. Global hosts use their global name; elements use
   their native HTML tag only. Labels must not be built by reading JS `id`,
   text, attributes, or other properties.
@@ -159,6 +165,25 @@ events for ordinary successful reads. Numeric indices, Symbols, non-HostObject
 objects, and `in` / delete / enumeration / descriptor operations remain outside
 this slice.
 
+## 4.2 Independent native BOM callbacks (step 5a)
+
+The first step-5 group records calls without converting the plain BOM objects to
+accessor-based wrappers:
+
+- `performance` methods: `now`, `mark`, `measure`, `getEntries`,
+  `getEntriesByName`, `getEntriesByType`, `clearMarks`, `clearMeasures`;
+- `crypto` methods: `getRandomValues`, `randomUUID`;
+- Storage methods: `getItem`, `setItem`, `removeItem`, `clear`, `key`, plus the
+  `length` property getter. `localStorage` and `sessionStorage` share
+  `object_type: "storage"` and label `"storage"` but have distinct backing
+  object IDs.
+
+The callbacks use stable native tokens/backings for `object_id`; no plain-object
+descriptor, prototype, function identity, or `this` behavior is changed. A
+method is recorded when its native callback is entered, before implementation.
+Property reads on `performance`, `crypto`, or Storage — except the Storage
+`length` getter — remain unimplemented.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -189,10 +214,11 @@ old channel.
 
 - Intrinsic `window`/global data properties (`innerWidth`, `outerWidth`,
   `name`, `parent`, `visualViewport`, etc.).
-- Plain/bootstrapped BOM objects: `performance`, `crypto`, Storage,
-  `navigator.storage`, `navigator.permissions`, `navigator.plugins` /
-  `mimeTypes`, `matchMedia` results, nested `connection` / `orientation` /
-  `classList` / `validity` objects.
+- Property reads on `performance`, `crypto`, and Storage (their independent
+  native method calls are covered in step 5a); `navigator.storage`,
+  `navigator.permissions`, `navigator.plugins` / `mimeTypes`, `matchMedia`
+  results, nested `connection` / `orientation` / `classList` / `validity`
+  objects.
 - Arrays and other plain values returned from host getters/methods.
 - User-created plain JS objects, object literals, class instances, destructuring
   beyond covered getter execution, Proxy/AST instrumentation, and explicit
@@ -207,28 +233,32 @@ old channel.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-Step 5 expands runtime-owned plain BOM objects and intrinsic window metadata;
-step 6 adds method-reference reads, `in`, delete, enumeration, descriptors, and
-value/argument/return summaries. Neither is implied by this slice.
+The remaining step-5 groups expand plain BOM object properties and intrinsic
+window metadata; step 6 adds method-reference reads, `in`, delete, enumeration,
+descriptors, and value/argument/return summaries. Neither is implied by this
+slice.
 
 ## 8. Verification
 
-Verified on real V8 at commit `8995b89` (branch `host-access-probes`):
+Verified on real V8 at commit `ac80ee8` (branch `host-access-bom-calls`):
 
-- Linux `release-linux` run `41017981567` — cp311 / cp312 / cp313 / cp314,
-  each `1656 passed, 2 skipped`;
-- Windows `release-windows` run `41017987566` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1656 passed, 2 skipped`.
+- Linux `release-linux` run `41019395760` — cp311 / cp312 / cp313 / cp314,
+  each `1660 passed, 2 skipped`;
+- Windows `release-windows` run `41019399775` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1660 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
-`test/test_access_trace_runtime.py` (11 items), and
-`test/test_access_trace_probes.py` (10 items) ran in every lane. The full suite
-collects 1658 items; 1656 pass and 2 are skipped.
+`test/test_access_trace_runtime.py` (11 items),
+`test/test_access_trace_probes.py` (10 items), and
+`test/test_access_trace_bom_calls.py` (4 items) ran in every lane. The full suite
+collects 1662 items; 1660 pass and 2 are skipped.
 
 The initial probe attempt (`76baaa2`) showed that V8 invokes the named getter
 for query-only operations and some existing-property paths. `8995b89` added the
 no-op named query callback and the real own/prototype property guard; the
 interceptor still returns `kNo` so normal lookup and descriptors are unchanged.
+The BOM-callback group (`ac80ee8`) added independent native callback recording
+without changing plain-object descriptors or function identity.
 
 Coverage in this slice:
 
@@ -240,14 +270,17 @@ Coverage in this slice:
 - own properties with value `undefined`, prototype properties, existing
   properties, `in`, `hasOwnProperty`, `Object.keys`, descriptors, Symbols, and
   numeric reads do not produce missing probes;
+- independent native BOM callbacks record performance/crypto/Storage calls and
+  the Storage `length` getter; properties on those plain objects remain
+  untraced in this group;
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
-- native object IDs remain stable across fresh element wrappers and reset with
+- native object IDs remain stable across fresh element wrappers, and reset with
   a new generation;
 - capacity, dropped-event counts, object-type filters, read-and-clear, stop,
   multiple Pages, and disposal behavior are covered by tests.
 
-The known blind spots listed in §7 remain intentionally out of scope. Step 5
-(runtime-owned BOM objects/window metadata) is the next slice; step 6 covers the
-remaining operations and value/argument/return summaries.
+The remaining step-5 blind spots (window/global fields and nested/native BOM
+property reads) and step 6 (remaining operations and values) remain
+intentionally out of scope.

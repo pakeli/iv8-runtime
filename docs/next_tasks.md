@@ -815,9 +815,9 @@ roadmap: `docs/host_access_tracing_plan.md`.
 
 ### Next
 
-Step 4 was completed as Priority 3v below. Step 5 (runtime-owned BOM objects and
-intrinsic window metadata) is next. The M11-46 selector follow-up remains
-deferred.
+Step 4 was completed as Priority 3v below. Step 5 began as Priority 3w below;
+its remaining property/nested-object groups are next. The M11-46 selector
+follow-up remains deferred.
 
 ## Priority 3v: Host access trace missing-property probes — DONE (`2026-10-30`)
 
@@ -856,10 +856,44 @@ numeric indices remain out of scope, and `resolution` currently emits only
 
 ### Next
 
-Implement step 5 of `docs/host_access_tracing_plan.md`: migrate runtime-owned BOM
-objects and intrinsic window metadata into the same tracing mechanism. Do not
-add value/argument/return summaries until step 6. The M11-46 selector follow-up
-remains deferred.
+Step 5 began as Priority 3w below. Remaining step-5 groups (plain BOM property
+reads and intrinsic window metadata) are next; value/argument/return summaries
+remain step 6. The M11-46 selector follow-up remains deferred.
+
+## Priority 3w: Host access trace native BOM calls — DONE (`2026-10-30`)
+
+### What landed
+
+- `performance` method calls: `now` / `mark` / `measure` / `getEntries*` /
+  `clearMarks` / `clearMeasures`.
+- `crypto` method calls: `getRandomValues` / `randomUUID`.
+- Storage method calls: `getItem` / `setItem` / `removeItem` / `clear` / `key`,
+  plus the `length` property getter.
+- A new `performance`, `crypto`, and `storage` object-type family with stable
+  native identities; `localStorage` and `sessionStorage` share the `storage`
+  label but get distinct backing object IDs.
+- No plain-object property descriptors, prototypes, function identities, or
+  `this` behavior were changed.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_bom_calls.py` (4 items). Full suite collects 1662 items;
+each wheel lane: **`1660 passed, 2 skipped`**.
+
+### Verification — passed
+
+Commit `ac80ee8` (branch `host-access-bom-calls`):
+
+- Linux `release-linux` run `41019395760` — cp311–cp314, each
+  `1660 passed, 2 skipped`;
+- Windows `release-windows` run `41019399775` — Python 3.11–3.14, each
+  `1660 passed, 2 skipped`.
+
+### Next
+
+Continue step 5 with plain property reads on `performance` / Storage and nested
+BOM objects, then intrinsic window metadata; descriptor/Proxy tradeoffs must be
+validated per group. Value/argument/return summaries remain step 6. The M11-46
+selector follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
