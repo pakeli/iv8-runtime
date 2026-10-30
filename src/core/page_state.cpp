@@ -888,6 +888,19 @@ void make_media_query_list_callback(
     info.GetReturnValue().Set(list);
 }
 
+// Step 5h: legacy navigator metadata. The arrays stay plain frozen arrays (read
+// through NavigatorHost's traced getter); javaEnabled stays a read-only property
+// whose cached native function records the call and returns false.
+constexpr char kJavaEnabledTraceToken = 0;
+
+void navigator_java_enabled_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    access_trace_record(isolate, &kJavaEnabledTraceToken, "navigator",
+                        "navigator", "javaEnabled", AccessOperation::kCall);
+    info.GetReturnValue().Set(v8::Boolean::New(isolate, false));
+}
+
 // M2-3 minimal navigator (read-only), configurable since M11-1 and extended by
 // M11-24/M11-27. Values come from the page's HostEnvironment, which the Python
 // facade always supplies fully resolved — this class holds no defaults and never
@@ -909,7 +922,8 @@ public:
                 "appCodeName",     "product",           "vendor",
                 "vendorSub",       "productSub",        "maxTouchPoints",
                 "pdfViewerEnabled", "doNotTrack",        "connection",
-                "storage",         "permissions"};
+                "storage",         "permissions",       "plugins",
+                "mimeTypes",       "javaEnabled"};
     }
 
     std::vector<std::string> method_names() const override { return {}; }
@@ -917,6 +931,9 @@ public:
     void release_v8_handles() noexcept override {
         storage_object_.Reset();
         permissions_object_.Reset();
+        plugins_object_.Reset();
+        mime_types_object_.Reset();
+        java_enabled_object_.Reset();
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -1006,6 +1023,31 @@ public:
             }
             return permissions_object_.Get(isolate);
         }
+        // Step 5h: legacy empty plugin/mime-type lists and javaEnabled. The
+        // arrays and function are cached so identity and read-only descriptors
+        // match the previous bootstrap behavior; reads/calls are traced.
+        if (name == "plugins" || name == "mimeTypes") {
+            v8::Global<v8::Array>& slot =
+                name == "plugins" ? plugins_object_ : mime_types_object_;
+            if (slot.IsEmpty()) {
+                v8::Local<v8::Array> array = v8::Array::New(isolate, 0);
+                (void)array->SetIntegrityLevel(context,
+                                              v8::IntegrityLevel::kFrozen);
+                slot.Reset(isolate, array);
+            }
+            return slot.Get(isolate);
+        }
+        if (name == "javaEnabled") {
+            if (java_enabled_object_.IsEmpty()) {
+                java_enabled_object_.Reset(
+                    isolate,
+                    v8::FunctionTemplate::New(isolate,
+                                              &navigator_java_enabled_callback)
+                        ->GetFunction(context)
+                        .ToLocalChecked());
+            }
+            return java_enabled_object_.Get(isolate);
+        }
         return v8::Undefined(isolate);
     }
 
@@ -1024,6 +1066,10 @@ private:
     // navigator.permissions objects.
     v8::Global<v8::Object> storage_object_;
     v8::Global<v8::Object> permissions_object_;
+    // Step 5h: cached legacy navigator metadata.
+    v8::Global<v8::Array> plugins_object_;
+    v8::Global<v8::Array> mime_types_object_;
+    v8::Global<v8::Function> java_enabled_object_;
 };
 
 // M11-1/M11-25 minimal screen (read-only). Static dimensions and color/pixel
@@ -7097,12 +7143,8 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
   var viewportWidth = Number(globalThis.innerWidth || 0);
   var viewportHeight = Number(globalThis.innerHeight || 0);
 
-  // M11-45: modern Chromium exposes empty plugin/mime-type lists; Java is off.
-  defineReadonly(globalThis.navigator, 'plugins', Object.freeze([]));
-  defineReadonly(globalThis.navigator, 'mimeTypes', Object.freeze([]));
-  defineReadonly(globalThis.navigator, 'javaEnabled', function () {
-    return false;
-  });
+  // M11-45: navigator plugins/mimeTypes/javaEnabled are installed natively
+  // through NavigatorHost (see its get_property) so reads/calls can be traced.
 
   // M11-42: bounded media-query evaluation. Supported media types are all,
   // screen, and print; supported features are width/height (exact/min/max in
