@@ -538,12 +538,86 @@ private:
     const HostEnvironment* environment_;
 };
 
+// Step 5e: navigator.storage stays a plain object so its method descriptors,
+// prototype, and cached identity match the M11-43 surface, but its native
+// method callbacks record with this stable native identity. The parent
+// navigator.storage getter is recorded by NavigatorHost's normal property
+// accessor.
+constexpr char kStorageManagerTraceToken = 0;
+
+v8::Local<v8::Value> resolved_promise(v8::Isolate* isolate,
+                                      v8::Local<v8::Context> context,
+                                      v8::Local<v8::Value> value) {
+    v8::Local<v8::Promise::Resolver> resolver;
+    if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) {
+        return v8::Undefined(isolate);
+    }
+    (void)resolver->Resolve(context, value);
+    return resolver->GetPromise();
+}
+
+void storage_manager_estimate_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    access_trace_record(isolate, &kStorageManagerTraceToken, "storage_manager",
+                        "navigator.storage", "estimate",
+                        AccessOperation::kCall);
+    v8::Local<v8::Object> estimate = v8::Object::New(isolate);
+    (void)estimate->Set(context, v8_string(isolate, "usage"),
+                        v8::Integer::New(isolate, 0));
+    (void)estimate->Set(context, v8_string(isolate, "quota"),
+                        v8::Number::New(isolate, 10737418240.0));
+    info.GetReturnValue().Set(resolved_promise(isolate, context, estimate));
+}
+
+void storage_manager_persisted_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    access_trace_record(isolate, &kStorageManagerTraceToken, "storage_manager",
+                        "navigator.storage", "persisted",
+                        AccessOperation::kCall);
+    info.GetReturnValue().Set(
+        resolved_promise(isolate, context, v8::Boolean::New(isolate, false)));
+}
+
+void storage_manager_persist_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    access_trace_record(isolate, &kStorageManagerTraceToken, "storage_manager",
+                        "navigator.storage", "persist",
+                        AccessOperation::kCall);
+    info.GetReturnValue().Set(
+        resolved_promise(isolate, context, v8::Boolean::New(isolate, false)));
+}
+
+v8::Local<v8::Object> make_storage_manager_object(
+    v8::Isolate* isolate, v8::Local<v8::Context> context) {
+    v8::Local<v8::Object> manager = v8::Object::New(isolate);
+    const auto define = [&](const char* name, v8::FunctionCallback callback) {
+        v8::Local<v8::Function> fn =
+            v8::FunctionTemplate::New(isolate, callback)
+                ->GetFunction(context)
+                .ToLocalChecked();
+        (void)manager->DefineOwnProperty(
+            context,
+            v8::String::NewFromUtf8(isolate, name).ToLocalChecked(), fn,
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+    };
+    define("estimate", &storage_manager_estimate_callback);
+    define("persisted", &storage_manager_persisted_callback);
+    define("persist", &storage_manager_persist_callback);
+    return manager;
+}
+
 // M2-3 minimal navigator (read-only), configurable since M11-1 and extended by
 // M11-24/M11-27. Values come from the page's HostEnvironment, which the Python
 // facade always supplies fully resolved — this class holds no defaults and never
 // derives a value from the host OS, display, or locale, so a page is
 // deterministic and identical across Linux/Windows. Still no UA-CH /
-// userAgentData, connection, or device-permission surface.
+// userAgentData surface.
 class NavigatorHost : public HostObject {
 public:
     explicit NavigatorHost(const HostEnvironment* environment)
@@ -558,10 +632,13 @@ public:
                 "cookieEnabled",   "hardwareConcurrency", "appName",
                 "appCodeName",     "product",           "vendor",
                 "vendorSub",       "productSub",        "maxTouchPoints",
-                "pdfViewerEnabled", "doNotTrack",        "connection"};
+                "pdfViewerEnabled", "doNotTrack",        "connection",
+                "storage"};
     }
 
     std::vector<std::string> method_names() const override { return {}; }
+
+    void release_v8_handles() noexcept override { storage_object_.Reset(); }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
                                       v8::Local<v8::Context> context,
@@ -630,6 +707,17 @@ public:
         if (name == "connection") {
             return make_host_object(isolate, context, &connection_);
         }
+        // Step 5e: cache the plain StorageManager object so repeated reads keep
+        // the same identity and the read-only method descriptors unchanged.
+        // The parent `navigator.storage` read itself is traced by the generic
+        // HostObject getter; the method calls are traced by their callbacks.
+        if (name == "storage") {
+            if (storage_object_.IsEmpty()) {
+                storage_object_.Reset(
+                    isolate, make_storage_manager_object(isolate, context));
+            }
+            return storage_object_.Get(isolate);
+        }
         return v8::Undefined(isolate);
     }
 
@@ -644,6 +732,8 @@ private:
     // valid for as long as this host object is installed.
     const HostEnvironment* environment_;
     ConnectionHost connection_;
+    // Step 5e: per-generation cached plain navigator.storage object.
+    v8::Global<v8::Object> storage_object_;
 };
 
 // M11-1/M11-25 minimal screen (read-only). Static dimensions and color/pixel
@@ -6842,19 +6932,9 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
     return makeMediaQueryList(query);
   });
 
-  // M11-43: deterministic StorageManager. There is no quota enforcement,
-  // persistence, bucket, or filesystem backing.
-  var storage = {};
-  defineReadonly(storage, 'estimate', function () {
-    return Promise.resolve({usage: 0, quota: 10737418240});
-  });
-  defineReadonly(storage, 'persisted', function () {
-    return Promise.resolve(false);
-  });
-  defineReadonly(storage, 'persist', function () {
-    return Promise.resolve(false);
-  });
-  defineReadonly(globalThis.navigator, 'storage', storage);
+  // M11-43: deterministic StorageManager. It is installed natively through
+  // NavigatorHost (see make_storage_manager_object) so its reads/calls can be
+  // access-traced while keeping the plain-object shape.
 
   // M11-44: static PermissionStatus query. All known permissions report
   // "prompt"; there is no prompt UI, actual device access, or change event.
