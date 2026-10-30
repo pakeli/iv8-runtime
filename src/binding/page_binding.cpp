@@ -39,10 +39,25 @@ void register_page(py::module_& module) {
             resolved.vendor = environment["vendor"].cast<std::string>();
             resolved.vendor_sub = environment["vendorSub"].cast<std::string>();
             resolved.product_sub = environment["productSub"].cast<std::string>();
+            resolved.max_touch_points =
+                environment["maxTouchPoints"].cast<int>();
+            resolved.pdf_viewer_enabled =
+                environment["pdfViewerEnabled"].cast<bool>();
+            resolved.do_not_track =
+                environment["doNotTrack"].cast<std::string>();
+            resolved.connection_effective_type =
+                environment["connectionEffectiveType"].cast<std::string>();
+            resolved.connection_rtt = environment["connectionRtt"].cast<int>();
+            resolved.connection_downlink =
+                environment["connectionDownlink"].cast<double>();
+            resolved.connection_save_data =
+                environment["connectionSaveData"].cast<bool>();
             resolved.screen_width = environment["screenWidth"].cast<int>();
             resolved.screen_height = environment["screenHeight"].cast<int>();
             resolved.avail_width = environment["availWidth"].cast<int>();
             resolved.avail_height = environment["availHeight"].cast<int>();
+            resolved.avail_left = environment["screenAvailLeft"].cast<int>();
+            resolved.avail_top = environment["screenAvailTop"].cast<int>();
             resolved.color_depth = environment["screenColorDepth"].cast<int>();
             resolved.pixel_depth = environment["screenPixelDepth"].cast<int>();
             resolved.device_pixel_ratio =

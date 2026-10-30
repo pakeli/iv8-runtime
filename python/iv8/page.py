@@ -47,10 +47,19 @@ _DEFAULT_ENVIRONMENT = {
     "vendor": "",
     "vendorSub": "",
     "productSub": "20100101",
+    "maxTouchPoints": 0,
+    "pdfViewerEnabled": False,
+    "doNotTrack": "0",
+    "connectionEffectiveType": "4g",
+    "connectionRtt": 50,
+    "connectionDownlink": 10.0,
+    "connectionSaveData": False,
     "screenWidth": 1920,
     "screenHeight": 1080,
     "availWidth": 1920,
     "availHeight": 1040,
+    "screenAvailLeft": 0,
+    "screenAvailTop": 0,
     "screenColorDepth": 24,
     "screenPixelDepth": 24,
     "devicePixelRatio": 1.0,
@@ -75,14 +84,21 @@ _STR_KEYS = (
     "vendor",
     "vendorSub",
     "productSub",
+    "doNotTrack",
+    "connectionEffectiveType",
 )
-_BOOL_KEYS = ("webdriver", "onLine", "cookieEnabled")
+_BOOL_KEYS = ("webdriver", "onLine", "cookieEnabled", "pdfViewerEnabled",
+              "connectionSaveData")
 _INT_KEYS = (
     "hardwareConcurrency",
+    "maxTouchPoints",
+    "connectionRtt",
     "screenWidth",
     "screenHeight",
     "availWidth",
     "availHeight",
+    "screenAvailLeft",
+    "screenAvailTop",
     "screenColorDepth",
     "screenPixelDepth",
     "innerWidth",
@@ -92,7 +108,7 @@ _INT_KEYS = (
     "screenX",
     "screenY",
 )
-_FLOAT_KEYS = ("devicePixelRatio",)
+_FLOAT_KEYS = ("devicePixelRatio", "connectionDownlink")
 _LIST_STR_KEYS = ("languages",)
 
 # M11-17: nested environment sections -> flat native keys.
@@ -112,12 +128,21 @@ _NESTED_ENVIRONMENT = {
         "vendor": "vendor",
         "vendorSub": "vendorSub",
         "productSub": "productSub",
+        "maxTouchPoints": "maxTouchPoints",
+        "pdfViewerEnabled": "pdfViewerEnabled",
+        "doNotTrack": "doNotTrack",
+        "connectionEffectiveType": "connectionEffectiveType",
+        "connectionRtt": "connectionRtt",
+        "connectionDownlink": "connectionDownlink",
+        "connectionSaveData": "connectionSaveData",
     },
     "screen": {
         "width": "screenWidth",
         "height": "screenHeight",
         "availWidth": "availWidth",
         "availHeight": "availHeight",
+        "availLeft": "screenAvailLeft",
+        "availTop": "screenAvailTop",
         "colorDepth": "screenColorDepth",
         "pixelDepth": "screenPixelDepth",
     },
@@ -291,12 +316,15 @@ class Page:
         Sections: ``navigator`` (``userAgent`` / ``platform`` / ``language`` /
         ``webdriver`` / ``languages`` / ``onLine`` / ``cookieEnabled`` /
         ``hardwareConcurrency`` / ``appName`` / ``appCodeName`` / ``product`` /
-        ``vendor`` / ``vendorSub`` / ``productSub``), ``screen`` (``width`` /
-        ``height`` / ``availWidth`` / ``availHeight`` / ``colorDepth`` /
-        ``pixelDepth``), and ``window`` (``devicePixelRatio`` / ``innerWidth`` /
-        ``innerHeight`` / ``outerWidth`` / ``outerHeight`` / ``screenX`` /
-        ``screenY``). The result is a fresh, fully nested ``dict``; it is
-        accepted directly by ``Page(environment=...)``.
+        ``vendor`` / ``vendorSub`` / ``productSub`` / ``maxTouchPoints`` /
+        ``pdfViewerEnabled`` / ``doNotTrack`` / ``connectionEffectiveType`` /
+        ``connectionRtt`` / ``connectionDownlink`` / ``connectionSaveData``),
+        ``screen`` (``width`` / ``height`` / ``availWidth`` / ``availHeight`` /
+        ``availLeft`` / ``availTop`` / ``colorDepth`` / ``pixelDepth``), and
+        ``window`` (``devicePixelRatio`` / ``innerWidth`` / ``innerHeight`` /
+        ``outerWidth`` / ``outerHeight`` / ``screenX`` / ``screenY``). The result
+        is a fresh, fully nested ``dict``; it is accepted directly by
+        ``Page(environment=...)``.
         """
         return {
             "navigator": {
@@ -315,12 +343,24 @@ class Page:
                 "vendor": _DEFAULT_ENVIRONMENT["vendor"],
                 "vendorSub": _DEFAULT_ENVIRONMENT["vendorSub"],
                 "productSub": _DEFAULT_ENVIRONMENT["productSub"],
+                "maxTouchPoints": _DEFAULT_ENVIRONMENT["maxTouchPoints"],
+                "pdfViewerEnabled": _DEFAULT_ENVIRONMENT["pdfViewerEnabled"],
+                "doNotTrack": _DEFAULT_ENVIRONMENT["doNotTrack"],
+                "connectionEffectiveType":
+                    _DEFAULT_ENVIRONMENT["connectionEffectiveType"],
+                "connectionRtt": _DEFAULT_ENVIRONMENT["connectionRtt"],
+                "connectionDownlink":
+                    _DEFAULT_ENVIRONMENT["connectionDownlink"],
+                "connectionSaveData":
+                    _DEFAULT_ENVIRONMENT["connectionSaveData"],
             },
             "screen": {
                 "width": _DEFAULT_ENVIRONMENT["screenWidth"],
                 "height": _DEFAULT_ENVIRONMENT["screenHeight"],
                 "availWidth": _DEFAULT_ENVIRONMENT["availWidth"],
                 "availHeight": _DEFAULT_ENVIRONMENT["availHeight"],
+                "availLeft": _DEFAULT_ENVIRONMENT["screenAvailLeft"],
+                "availTop": _DEFAULT_ENVIRONMENT["screenAvailTop"],
                 "colorDepth": _DEFAULT_ENVIRONMENT["screenColorDepth"],
                 "pixelDepth": _DEFAULT_ENVIRONMENT["screenPixelDepth"],
             },

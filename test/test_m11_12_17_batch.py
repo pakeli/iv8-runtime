@@ -177,10 +177,13 @@ def test_nested_environment_defaults_shape():
     assert set(defaults["navigator"]) == {
         "userAgent", "platform", "language", "webdriver", "languages",
         "onLine", "cookieEnabled", "hardwareConcurrency", "appName",
-        "appCodeName", "product", "vendor", "vendorSub", "productSub"}
+        "appCodeName", "product", "vendor", "vendorSub", "productSub",
+        "maxTouchPoints", "pdfViewerEnabled", "doNotTrack",
+        "connectionEffectiveType", "connectionRtt", "connectionDownlink",
+        "connectionSaveData"}
     assert set(defaults["screen"]) == {
-        "width", "height", "availWidth", "availHeight", "colorDepth",
-        "pixelDepth"}
+        "width", "height", "availWidth", "availHeight", "availLeft",
+        "availTop", "colorDepth", "pixelDepth"}
     assert set(defaults["window"]) == {
         "devicePixelRatio", "innerWidth", "innerHeight", "outerWidth",
         "outerHeight", "screenX", "screenY"}

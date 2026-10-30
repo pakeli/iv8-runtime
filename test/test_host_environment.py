@@ -39,10 +39,19 @@ EXPECTED_KEYS = {
     "vendor": str,
     "vendorSub": str,
     "productSub": str,
+    "maxTouchPoints": int,
+    "pdfViewerEnabled": bool,
+    "doNotTrack": str,
+    "connectionEffectiveType": str,
+    "connectionRtt": int,
+    "connectionDownlink": float,
+    "connectionSaveData": bool,
     "screenWidth": int,
     "screenHeight": int,
     "availWidth": int,
     "availHeight": int,
+    "screenAvailLeft": int,
+    "screenAvailTop": int,
     "screenColorDepth": int,
     "screenPixelDepth": int,
     "devicePixelRatio": float,
@@ -71,10 +80,19 @@ EXPECTED_DEFAULTS = {
     "vendor": "",
     "vendorSub": "",
     "productSub": "20100101",
+    "maxTouchPoints": 0,
+    "pdfViewerEnabled": False,
+    "doNotTrack": "0",
+    "connectionEffectiveType": "4g",
+    "connectionRtt": 50,
+    "connectionDownlink": 10.0,
+    "connectionSaveData": False,
     "screenWidth": 1920,
     "screenHeight": 1080,
     "availWidth": 1920,
     "availHeight": 1040,
+    "screenAvailLeft": 0,
+    "screenAvailTop": 0,
     "screenColorDepth": 24,
     "screenPixelDepth": 24,
     "devicePixelRatio": 1.0,
@@ -102,10 +120,19 @@ JS_READER = {
     "vendor": "navigator.vendor",
     "vendorSub": "navigator.vendorSub",
     "productSub": "navigator.productSub",
+    "maxTouchPoints": "navigator.maxTouchPoints",
+    "pdfViewerEnabled": "navigator.pdfViewerEnabled",
+    "doNotTrack": "navigator.doNotTrack",
+    "connectionEffectiveType": "navigator.connection.effectiveType",
+    "connectionRtt": "navigator.connection.rtt",
+    "connectionDownlink": "navigator.connection.downlink",
+    "connectionSaveData": "navigator.connection.saveData",
     "screenWidth": "screen.width",
     "screenHeight": "screen.height",
     "availWidth": "screen.availWidth",
     "availHeight": "screen.availHeight",
+    "screenAvailLeft": "screen.availLeft",
+    "screenAvailTop": "screen.availTop",
     "screenColorDepth": "screen.colorDepth",
     "screenPixelDepth": "screen.pixelDepth",
     "devicePixelRatio": "devicePixelRatio",
@@ -139,10 +166,19 @@ OVERRIDE = {
     "vendor": "CustomVendor",
     "vendorSub": "CustomSub",
     "productSub": "CustomProductSub",
+    "maxTouchPoints": 7,
+    "pdfViewerEnabled": True,
+    "doNotTrack": "1",
+    "connectionEffectiveType": "2g",
+    "connectionRtt": 250,
+    "connectionDownlink": 0.5,
+    "connectionSaveData": True,
     "screenWidth": 2560,
     "screenHeight": 1440,
     "availWidth": 2550,
     "availHeight": 1400,
+    "screenAvailLeft": 5,
+    "screenAvailTop": 7,
     "screenColorDepth": 30,
     "screenPixelDepth": 30,
     "devicePixelRatio": 2.5,
@@ -423,22 +459,26 @@ def test_unknown_key_rejected_even_beside_valid_keys():
 
 @pytest.mark.parametrize("key", ["userAgent", "platform", "language",
                                  "appName", "appCodeName", "product", "vendor",
-                                 "vendorSub", "productSub"])
+                                 "vendorSub", "productSub", "doNotTrack",
+                                 "connectionEffectiveType"])
 def test_string_keys_reject_non_strings(key):
     for bad in (1, 1.0, True, None, [], {}, b"bytes"):
         with pytest.raises(TypeError, match="must be a str"):
             iv8.Page(environment={key: bad})
 
 
-@pytest.mark.parametrize("key", ["webdriver", "onLine", "cookieEnabled"])
+@pytest.mark.parametrize("key", ["webdriver", "onLine", "cookieEnabled",
+                                 "pdfViewerEnabled", "connectionSaveData"])
 def test_bool_keys_reject_non_bools(key):
     for bad in (1, 0, "true", None, [], 1.0):
         with pytest.raises(TypeError, match="must be a bool"):
             iv8.Page(environment={key: bad})
 
 
-@pytest.mark.parametrize("key", ["hardwareConcurrency", "screenWidth",
+@pytest.mark.parametrize("key", ["hardwareConcurrency", "maxTouchPoints",
+                                 "connectionRtt", "screenWidth",
                                  "screenHeight", "availWidth", "availHeight",
+                                 "screenAvailLeft", "screenAvailTop",
                                  "screenColorDepth", "screenPixelDepth",
                                  "innerWidth", "innerHeight", "outerWidth",
                                  "outerHeight", "screenX", "screenY"])
@@ -448,8 +488,10 @@ def test_int_keys_reject_non_ints(key):
             iv8.Page(environment={key: bad})
 
 
-@pytest.mark.parametrize("key", ["hardwareConcurrency", "screenWidth",
+@pytest.mark.parametrize("key", ["hardwareConcurrency", "maxTouchPoints",
+                                 "connectionRtt", "screenWidth",
                                  "screenHeight", "availWidth", "availHeight",
+                                 "screenAvailLeft", "screenAvailTop",
                                  "screenColorDepth", "screenPixelDepth",
                                  "innerWidth", "innerHeight", "outerWidth",
                                  "outerHeight", "screenX", "screenY"])
@@ -472,10 +514,11 @@ def test_languages_override_applied():
         assert page.eval("navigator.languages.join(',')") == "ja-JP"
 
 
-def test_device_pixel_ratio_rejects_non_numbers():
+@pytest.mark.parametrize("key", ["devicePixelRatio", "connectionDownlink"])
+def test_float_keys_reject_non_numbers(key):
     for bad in ("2.0", None, [], {}, True, False):
         with pytest.raises(TypeError, match="must be a real number"):
-            iv8.Page(environment={"devicePixelRatio": bad})
+            iv8.Page(environment={key: bad})
 
 
 def test_validation_happens_before_any_page_is_created():

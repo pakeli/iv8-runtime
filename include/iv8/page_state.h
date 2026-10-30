@@ -43,10 +43,20 @@ struct HostEnvironment {
     std::string vendor;
     std::string vendor_sub;
     std::string product_sub;
+    // M11-35: deterministic BOM metadata.
+    int max_touch_points = 0;
+    bool pdf_viewer_enabled = false;
+    std::string do_not_track;
+    std::string connection_effective_type;
+    int connection_rtt = 0;
+    double connection_downlink = 0.0;
+    bool connection_save_data = false;
     int screen_width = 0;
     int screen_height = 0;
     int avail_width = 0;
     int avail_height = 0;
+    int avail_left = 0;
+    int avail_top = 0;
     // M11-25: screen depth metadata.
     int color_depth = 0;
     int pixel_depth = 0;
@@ -128,6 +138,11 @@ public:
     // surface). NOT a real navigation/loader. On the current context being busy
     // -> JSContextBusyError; after dispose() -> JSContextDisposedError.
     void load(const std::string& html, const std::string& base_url);
+
+    // M11-35: Page-level window.name value. It survives load() generations (like
+    // window.name in a browsing context) and is reset by a new Page instance.
+    std::string window_name() const { return window_name_; }
+    void set_window_name(const std::string& name) { window_name_ = name; }
 
     // M3-4: dispatch the load-lifecycle events for a just-completed load —
     // DOMContentLoaded on document, then load on window (fixed order). Called by
@@ -279,6 +294,8 @@ private:
     // it and must never outlive it. Fixed after construction (no setter).
     HostEnvironment environment_;
     std::shared_ptr<ContextState> state_;
+    // M11-35: window.name survives load() generations of this Page.
+    std::string window_name_;
     // M11-7 Web Storage backings. Insertion-ordered and page-lifetime: they
     // survive load() generations of this Page but are never shared across Page
     // instances, disk, or origins. Each generation installs fresh Storage

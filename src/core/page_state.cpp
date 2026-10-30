@@ -435,11 +435,12 @@ public:
     std::string global_name() const override { return "navigator"; }
 
     std::vector<std::string> property_names() const override {
-        return {"userAgent",     "platform",          "language",
-                "webdriver",     "languages",         "onLine",
-                "cookieEnabled", "hardwareConcurrency", "appName",
-                "appCodeName",   "product",           "vendor",
-                "vendorSub",     "productSub"};
+        return {"userAgent",       "platform",          "language",
+                "webdriver",       "languages",         "onLine",
+                "cookieEnabled",   "hardwareConcurrency", "appName",
+                "appCodeName",     "product",           "vendor",
+                "vendorSub",       "productSub",        "maxTouchPoints",
+                "pdfViewerEnabled", "doNotTrack",        "connection"};
     }
 
     std::vector<std::string> method_names() const override { return {}; }
@@ -497,6 +498,41 @@ public:
         if (name == "productSub") {
             return v8_string(isolate, environment_->product_sub);
         }
+        // M11-35: deterministic navigator metadata additions.
+        if (name == "maxTouchPoints") {
+            return v8::Integer::New(isolate, environment_->max_touch_points);
+        }
+        if (name == "pdfViewerEnabled") {
+            return v8::Boolean::New(isolate,
+                                    environment_->pdf_viewer_enabled);
+        }
+        if (name == "doNotTrack") {
+            return v8_string(isolate, environment_->do_not_track);
+        }
+        if (name == "connection") {
+            v8::Local<v8::Object> connection = v8::Object::New(isolate);
+            const auto define = [&](const char* key,
+                                    v8::Local<v8::Value> value) {
+                (void)connection->DefineOwnProperty(
+                    context,
+                    v8::String::NewFromUtf8(isolate, key).ToLocalChecked(),
+                    value,
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                       v8::DontDelete));
+            };
+            define("effectiveType",
+                   v8_string(isolate,
+                             environment_->connection_effective_type));
+            define("rtt", v8::Integer::New(isolate,
+                                           environment_->connection_rtt));
+            define("downlink",
+                   v8::Number::New(isolate,
+                                   environment_->connection_downlink));
+            define("saveData",
+                   v8::Boolean::New(isolate,
+                                    environment_->connection_save_data));
+            return connection;
+        }
         return v8::Undefined(isolate);
     }
 
@@ -526,12 +562,14 @@ public:
 
     std::vector<std::string> property_names() const override {
         return {"width",      "height",     "availWidth", "availHeight",
-                "colorDepth", "pixelDepth"};
+                "availLeft",  "availTop",   "colorDepth", "pixelDepth",
+                "orientation"};
     }
 
     std::vector<std::string> method_names() const override { return {}; }
 
-    v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context> context,
                                       const std::string& name) override {
         if (name == "width") {
             return v8::Integer::New(isolate, environment_->screen_width);
@@ -545,11 +583,39 @@ public:
         if (name == "availHeight") {
             return v8::Integer::New(isolate, environment_->avail_height);
         }
+        // M11-35: reported available origin (independent configured values).
+        if (name == "availLeft") {
+            return v8::Integer::New(isolate, environment_->avail_left);
+        }
+        if (name == "availTop") {
+            return v8::Integer::New(isolate, environment_->avail_top);
+        }
         if (name == "colorDepth") {
             return v8::Integer::New(isolate, environment_->color_depth);
         }
         if (name == "pixelDepth") {
             return v8::Integer::New(isolate, environment_->pixel_depth);
+        }
+        // M11-35: deterministic orientation derived from the reported screen
+        // dimensions. No orientation events or lock() semantics.
+        if (name == "orientation") {
+            const bool landscape =
+                environment_->screen_width >= environment_->screen_height;
+            v8::Local<v8::Object> orientation = v8::Object::New(isolate);
+            const auto define = [&](const char* key,
+                                    v8::Local<v8::Value> value) {
+                (void)orientation->DefineOwnProperty(
+                    context,
+                    v8::String::NewFromUtf8(isolate, key).ToLocalChecked(),
+                    value,
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                       v8::DontDelete));
+            };
+            define("type", v8_string(isolate,
+                                     landscape ? "landscape-primary"
+                                               : "portrait-primary"));
+            define("angle", v8::Integer::New(isolate, landscape ? 0 : 90));
+            return orientation;
         }
         return v8::Undefined(isolate);
     }
@@ -8050,6 +8116,55 @@ py::list PageState::read_object_keys_hits() {
     return out;
 }
 
+// M11-35: window.name is a Page-level mutable string. The accessor data carries
+// the owning PageState pointer; the PageState outlives every generation, and the
+// context is torn down before it, so no callback can outlive it.
+constexpr v8::ExternalPointerTypeTag kWindowNameTag =
+    v8::kExternalPointerTypeTagDefault;
+
+void window_name_getter(v8::Local<v8::Name>,
+                        const v8::PropertyCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kWindowNameTag));
+    info.GetReturnValue().Set(v8_string(isolate, page->window_name()));
+}
+
+void window_name_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
+                        const v8::PropertyCallbackInfo<void>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return;  // coercion threw; leave the stored name unchanged
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kWindowNameTag));
+    page->set_window_name(
+        *utf8 != nullptr
+            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+            : std::string());
+}
+
+// M11-35: a deterministic secure-context bit derived from the base URL (no host
+// OS or network access): https/wss/file are secure; http/ws are secure only for
+// loopback hosts; everything else is insecure.
+bool is_secure_context_url(const std::string& base_url) {
+    const std::string lower = ascii_lower(base_url);
+    if (lower.rfind("https://", 0) == 0 || lower.rfind("wss://", 0) == 0 ||
+        lower.rfind("file://", 0) == 0) {
+        return true;
+    }
+    if (lower.rfind("http://", 0) == 0 || lower.rfind("ws://", 0) == 0) {
+        const UrlParts parts = decompose_url(base_url);
+        const std::string host = ascii_lower(parts.hostname);
+        return host == "localhost" || host == "127.0.0.1" ||
+               host == "::1" || host == "[::1]";
+    }
+    return false;
+}
+
 void PageState::install_page(const std::string& base_url,
                              const std::string& html) {
     bootstrap_ = PageBootstrap{html, base_url};
@@ -8109,7 +8224,8 @@ void PageState::install_page(const std::string& base_url,
     // context. window / self are aliases of the global object; globalThis is the
     // intrinsic global — so window === globalThis and self === window.
     state_->with_scope(
-        [this](v8::Isolate* isolate, v8::Local<v8::Context> context) {
+        [this, &base_url](v8::Isolate* isolate,
+                          v8::Local<v8::Context> context) {
             for (const auto& host : host_objects_) {
                 install_host_object(isolate, context, host.get());
             }
@@ -8118,6 +8234,11 @@ void PageState::install_page(const std::string& base_url,
                 context, v8::String::NewFromUtf8Literal(isolate, "window"), global);
             (void)global->Set(
                 context, v8::String::NewFromUtf8Literal(isolate, "self"), global);
+            // M11-35: mutable window.name, persisted by PageState across load().
+            (void)global->SetNativeDataProperty(
+                context, v8::String::NewFromUtf8Literal(isolate, "name"),
+                &window_name_getter, &window_name_setter,
+                v8::External::New(isolate, this, kWindowNameTag));
             // M2-4 JS-visible timers (manual-pump; see PageState::run_timers).
             install_global_function(isolate, context, global, "setTimeout",
                                     &set_timeout_callback);
@@ -8200,14 +8321,12 @@ void PageState::install_page(const std::string& base_url,
                     static_cast<v8::PropertyAttribute>(v8::ReadOnly |
                                                        v8::DontDelete));
             }
-            // M11-1 window.devicePixelRatio / innerWidth / innerHeight. window is
-            // the intrinsic global object, so these are read-only data properties on
-            // the global rather than host-object accessors. Values come from the
-            // Page-level environment_ and are re-applied on every generation, so a
-            // load() reports the same numbers. Read-only (ReadOnly|DontDelete): a JS
-            // write is a silent no-op in sloppy mode / TypeError in strict, matching
-            // navigator and screen. No outerWidth / screenX / scroll / resize /
-            // matchMedia surface.
+            // M11-1/M11-26 window geometry. window is the intrinsic global object,
+            // so these are read-only data properties on the global rather than host
+            // accessors. Values come from the Page-level environment_ and are
+            // re-applied on every generation. M11-35 adds window.length,
+            // screenLeft/screenTop aliases, and isSecureContext. Read-only
+            // (ReadOnly|DontDelete); no scroll / resize / matchMedia surface.
             {
                 const auto define_readonly = [&](const char* name,
                                                  v8::Local<v8::Value> value) {
@@ -8236,6 +8355,17 @@ void PageState::install_page(const std::string& base_url,
                                 v8::Integer::New(isolate, environment_.screen_x));
                 define_readonly("screenY",
                                 v8::Integer::New(isolate, environment_.screen_y));
+                // M11-35: no child browsing contexts -> length 0; screenLeft/Top
+                // alias the reported screen coordinates.
+                define_readonly("length", v8::Integer::New(isolate, 0));
+                define_readonly("screenLeft",
+                                v8::Integer::New(isolate, environment_.screen_x));
+                define_readonly("screenTop",
+                                v8::Integer::New(isolate, environment_.screen_y));
+                define_readonly(
+                    "isSecureContext",
+                    v8::Boolean::New(isolate,
+                                     is_secure_context_url(base_url)));
             }
             // M11-7 Web Storage: two independent, per-Page in-memory stores.
             // The backings live in PageState (so they survive load()); each

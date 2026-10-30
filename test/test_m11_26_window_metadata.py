@@ -50,9 +50,11 @@ def test_surface_is_read_only():
 
 
 @on_only
-def test_window_name_is_not_added():
+def test_window_name_landed_in_m11_35():
+    # window.name was absent in M11-26; M11-35 adds it as a mutable string.
     with iv8.Page() as page:
-        assert page.eval("typeof window.name") == "undefined"
+        assert page.eval("typeof window.name") == "string"
+        assert page.eval("window.name") == ""
 
 
 def test_no_new_python_surface():
