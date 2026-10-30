@@ -30,10 +30,11 @@ git log --oneline --decorate -n 20
   viewport/media/device metadata), green on real V8 Linux + Windows (commit
   `61abc3b`, merged to `master` on the fork; upstream sync out of scope). The
   M11 line is compatibility-first.
-- A post-M11 monitoring slice is also verified: **host access trace steps 1–3**
-  (`Page.start_access_trace` / `stop_access_trace` / `read_access_trace`),
-  green on real V8 at commit `44fc847`; missing-property probes and non-
-  HostObject BOM coverage are not implemented yet.
+- A post-M11 monitoring slice is also verified: **host access trace steps 1–4**
+  (`Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
+  native get/set/call plus HostObject missing-string-key `get_probe`),
+  green on real V8 at commit `8995b89`; non-HostObject BOM coverage and
+  value/argument/return summaries are not implemented yet.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -101,8 +102,8 @@ Answer roughly as follows:
     on real V8 Linux + Windows; latest verification `2026-10-30`;
   - latest implemented and verified compatibility feature: M11-41..M11-45
     (BOM viewport/media/device metadata);
-  - latest verified post-M11 monitoring slice: host access trace steps 1–3
-    (native HostObject get/set/call recording; see
+  - latest verified post-M11 monitoring slice: host access trace steps 1–4
+    (native HostObject get/set/call + missing-property probes; see
     `docs/host_access_trace.md`).
 
 ## Handoff Discipline

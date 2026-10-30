@@ -410,6 +410,28 @@ Verified on real V8 at commit `44fc847`: Linux `41015201477`, Windows
 `41015206089`, each wheel lane `1646 passed, 2 skipped`. The full suite collects
 1648 items (1628 previous + 20 new tests). See `docs/host_access_trace.md`.
 
+### 27. Host access trace missing-property probes (step 4)
+
+Decided/verified `2026-10-30`.
+
+HostObject templates now install a named getter with `kNonMasking` +
+`kOnlyInterceptStrings`, plus a no-op named query handler. Missing string-key
+reads produce a `get_probe` event with `resolution: "missing"` and return
+`Intercepted::kNo`; normal undefined/prototype lookup and descriptors are
+unchanged. A real own/prototype property guard (`HasRealNamedProperty` chain
+walk) suppresses false probes for existing properties, including value-
+`undefined` own properties and prototype properties. Proxy/host prototypes are
+treated conservatively as present. Numeric indices, Symbols, non-HostObject
+objects, `in`, delete, enumeration, and descriptors remain outside this slice.
+`resolution` currently emits only `"missing"`; no present/unknown classification
+is emitted.
+
+The first probe attempt (`76baaa2`) exposed query-path and existing-property
+false probes; `8995b89` added the no-op query handler and real-property guard.
+Verified on real V8 at commit `8995b89`: Linux `41017981567`, Windows
+`41017987566`, each wheel lane `1656 passed, 2 skipped`. The full suite collects
+1658 items (1648 previous + 10 probe tests). See `docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

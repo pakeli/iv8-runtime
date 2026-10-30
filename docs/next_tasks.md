@@ -815,10 +815,51 @@ roadmap: `docs/host_access_tracing_plan.md`.
 
 ### Next
 
-Implement step 4 of `docs/host_access_tracing_plan.md`: missing-property probes
-after validating named-property-interceptor behavior on the pinned V8 version.
-Do not expand to window/BOM objects before the step-4 gate is satisfied. The
-M11-46 selector follow-up remains deferred.
+Step 4 was completed as Priority 3v below. Step 5 (runtime-owned BOM objects and
+intrinsic window metadata) is next. The M11-46 selector follow-up remains
+deferred.
+
+## Priority 3v: Host access trace missing-property probes — DONE (`2026-10-30`)
+
+### What landed
+
+- A named-property getter interceptor on `HostObject` templates with
+  `kNonMasking` + `kOnlyInterceptStrings`.
+- A no-op named query handler so `in`, `hasOwnProperty`, `Object.keys`, and
+  descriptor queries do not masquerade as reads.
+- A real own/prototype existence guard (`HasRealNamedProperty` chain walk) that
+  prevents existing properties, including value-`undefined` own properties and
+  prototype properties, from being reported missing. Proxy/host prototypes are
+  treated conservatively as present.
+- Missing HostObject string-key reads now emit exactly one
+  `get_probe`/`resolution: "missing"` event and return `Intercepted::kNo` so the
+  original lookup and value are unchanged.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_probes.py` (10 items). Full suite collects 1658 items;
+each wheel lane: **`1656 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `8995b89` (initial probe commit `76baaa2`; branch
+`host-access-probes`):
+
+- Linux `release-linux` run `41017981567` — cp311–cp314, each
+  `1656 passed, 2 skipped`;
+- Windows `release-windows` run `41017987566` — Python 3.11–3.14, each
+  `1656 passed, 2 skipped`.
+
+The initial attempt (`76baaa2`) exposed query-path and existing-property false
+probes; `8995b89` added the query no-op and real-property guard. Symbols and
+numeric indices remain out of scope, and `resolution` currently emits only
+`"missing"` (no present/unknown classification).
+
+### Next
+
+Implement step 5 of `docs/host_access_tracing_plan.md`: migrate runtime-owned BOM
+objects and intrinsic window metadata into the same tracing mechanism. Do not
+add value/argument/return summaries until step 6. The M11-46 selector follow-up
+remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

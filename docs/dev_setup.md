@@ -114,6 +114,6 @@ If you only remember one thing:
 > `HEAD` is not an M1-only repository; implementation is through M11-41..M11-45
 > (BOM viewport/media/device metadata), verified on real V8 (Linux + Windows) on
 > `2026-10-30` and merged to `master` on the fork (`pakeli/iv8-runtime`); upstream
-> sync is out of scope. A post-M11 host access trace first slice is also verified
-> (commit `44fc847`); see `docs/m11_41_45_report.md` and
+> sync is out of scope. The post-M11 host access trace steps 1–4 are also
+> verified (commit `8995b89`); see `docs/m11_41_45_report.md` and
 > `docs/host_access_trace.md`.

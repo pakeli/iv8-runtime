@@ -1,13 +1,13 @@
 # Host Access Trace
 
-Status: **VERIFIED — first slice (native get/set/call) green on real V8 Linux
-+ Windows (`2026-10-30`)**
+Status: **VERIFIED — native get/set/call plus HostObject missing-property
+probes green on real V8 Linux + Windows (`2026-10-30`)**
 
-This document freezes the first slice of
-`docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing. It is
-a second-layer monitoring feature. It does not change the M1 `JSContext`
-contract, the existing `watch_apis` / Reflect / Object.keys channels, or any
-DOM/BOM behavior.
+This document freezes steps 1–4 of
+`docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing and
+string-key missing-property probes. It is a second-layer monitoring feature. It
+does not change the M1 `JSContext` contract, the existing `watch_apis` /
+Reflect / Object.keys channels, or any DOM/BOM behavior.
 
 ## 1. Entry-point contract
 
@@ -19,6 +19,7 @@ The only operations covered by this slice are the generic callbacks in
 | `property_getter` | A script read a property registered in `HostObject::property_names()`. |
 | `property_setter` | A script wrote a property registered in `HostObject::writable_property_names()`. |
 | `method_callback` | A script invoked a method registered in `HostObject::method_names()`. |
+| `named_property_getter` | A script read a missing string key after normal lookup; recorded as `get_probe`. |
 
 This is **not** a V8-wide property-access hook. It proves that a native host
 entry point ran; it does not prove every `obj.x` expression was observed.
@@ -35,7 +36,7 @@ setter does not retroactively remove the event.
 | `element.textContent = 'abc'` | records `set`, where the property is declared writable |
 | `document.querySelector('#app')` | records `call` |
 | `const fn = document.querySelector` | records neither `get` nor `call` |
-| `navigator.someMissingProperty` | not covered in this slice; step 4 |
+| `navigator.someMissingProperty` | records `get_probe` with `resolution: "missing"` for a HostObject string key |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
 | `window.innerWidth` | not covered in this slice; step 5 |
 | `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered in this slice; step 6 |
@@ -105,12 +106,14 @@ Event shape:
 
 ```text
 seq, generation, object_id, object_type, label, member,
-operation, phase, resource_name, source_kind
+operation, phase, resolution?, resource_name, source_kind
 ```
 
 - `member` is the property or method name as registered by the HostObject.
-- `operation` is `get`, `set`, or `call`.
+- `operation` is `get`, `set`, `call`, or `get_probe`.
 - `phase` is always `enter` in this slice.
+- `resolution` is present only for `get_probe`; current value is `"missing"`.
+  Present/unknown classification is not emitted.
 - `source_kind` is `eval`, `html_script`, `internal`, or `unknown`.
 
 Report shape:
@@ -124,14 +127,37 @@ Report shape:
     "dropped_events": int,
     "filter_object_types": list[str] | None,
     "coverage": {
-        "scope": "installed HostObject getter/setter/method callbacks",
+        "scope": "installed HostObject getter/setter/method/get_probe callbacks",
         "object_types": [...],
-        "operations": ["get", "set", "call"],
+        "operations": ["get", "set", "call", "get_probe"],
         "phase": "enter",
         "not_covered": [...],
     },
 }
 ```
+
+## 4.1 Missing-property probes (step 4)
+
+Host-object templates install a named getter with `kNonMasking` and
+`kOnlyInterceptStrings`. A no-op named query handler keeps `in`,
+`hasOwnProperty`, `Object.keys`, and descriptor queries on the normal path. The
+getter also checks real own/prototype properties without invoking getters before
+recording anything; a Proxy or host-object prototype is treated conservatively
+as present, so it cannot produce a false missing verdict.
+
+When the property is absent, the event is:
+
+```text
+operation: "get_probe", resolution: "missing", phase: "enter"
+```
+
+The interceptor returns `Intercepted::kNo`, so V8 performs the normal lookup and
+the script still receives `undefined` (or the normal prototype result). It does
+not create placeholders, proxies, or return values. The current implementation
+emits only `resolution: "missing"`; it does not emit `present` or `unknown`
+events for ordinary successful reads. Numeric indices, Symbols, non-HostObject
+objects, and `in` / delete / enumeration / descriptor operations remain outside
+this slice.
 
 ## 5. Source attribution
 
@@ -171,43 +197,49 @@ old channel.
 - User-created plain JS objects, object literals, class instances, destructuring
   beyond covered getter execution, Proxy/AST instrumentation, and explicit
   object-level hooks.
-- Method-reference reads (`const fn = document.querySelector`), missing-property
-  probes, `in`, delete, enumeration, property descriptors, and dynamic
-  defineProperty/shadowing behavior.
+- Method-reference reads (`const fn = document.querySelector`), `in`, delete,
+  enumeration, property descriptors, dynamic defineProperty/shadowing behavior,
+  and missing-property probes on non-HostObject objects (including numeric keys
+  and Symbols).
 - Read-only write attempts that V8 rejects before reaching a native setter.
 - Arguments, return values, stacks, timing, Inspector pauses /
   `break_on_hit`, and DevTools evaluation attribution.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-Step 4 of the implementation plan will address missing-property probes only
-after the named-property-interceptor behavior is validated on the pinned V8
-version. Step 5 expands runtime-owned plain BOM objects; step 6 adds the other
-operations. Neither is implied by this slice.
+Step 5 expands runtime-owned plain BOM objects and intrinsic window metadata;
+step 6 adds method-reference reads, `in`, delete, enumeration, descriptors, and
+value/argument/return summaries. Neither is implied by this slice.
 
 ## 8. Verification
 
-Verified on real V8 at commit `44fc847` (branch `host-access-trace`):
+Verified on real V8 at commit `8995b89` (branch `host-access-probes`):
 
-- Linux `release-linux` run `41015201477` — cp311 / cp312 / cp313 / cp314,
-  each `1646 passed, 2 skipped`;
-- Windows `release-windows` run `41015206089` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1646 passed, 2 skipped`.
+- Linux `release-linux` run `41017981567` — cp311 / cp312 / cp313 / cp314,
+  each `1656 passed, 2 skipped`;
+- Windows `release-windows` run `41017987566` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1656 passed, 2 skipped`.
 
-`test/test_access_trace_api.py` (9 items) and
-`test/test_access_trace_runtime.py` (11 items) ran in every lane. The full suite
-collects 1648 items; 1646 pass and 2 are skipped.
+`test/test_access_trace_api.py` (9 items),
+`test/test_access_trace_runtime.py` (11 items), and
+`test/test_access_trace_probes.py` (10 items) ran in every lane. The full suite
+collects 1658 items; 1656 pass and 2 are skipped.
 
-The first verification attempt (`edb3dd7`) failed one runtime assertion that
-assumed an object-toString conversion would throw; `44fc847` switched the test
-to a deterministic non-element `appendChild` throw. The runtime recording path
-was unchanged by the fix.
+The initial probe attempt (`76baaa2`) showed that V8 invokes the named getter
+for query-only operations and some existing-property paths. `8995b89` added the
+no-op named query callback and the real own/prototype property guard; the
+interceptor still returns `kNo` so normal lookup and descriptors are unchanged.
 
 Coverage in this slice:
 
 - get/set/call for all installed `HostObject` properties/methods, including
   `navigator.userAgent`, `screen.width`, `location.toString()`, `document`
   queries, element properties/methods, and `console` methods;
+- missing string-key reads on those hosts produce exactly one
+  `get_probe`/`resolution: "missing"` event;
+- own properties with value `undefined`, prototype properties, existing
+  properties, `in`, `hasOwnProperty`, `Object.keys`, descriptors, Symbols, and
+  numeric reads do not produce missing probes;
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
@@ -216,6 +248,6 @@ Coverage in this slice:
 - capacity, dropped-event counts, object-type filters, read-and-clear, stop,
   multiple Pages, and disposal behavior are covered by tests.
 
-The known blind spots listed in §7 remain intentionally out of scope. Step 4
-(missing-property probes) is the next implementation slice; step 5/6 cover
-additional runtime objects and operations.
+The known blind spots listed in §7 remain intentionally out of scope. Step 5
+(runtime-owned BOM objects/window metadata) is the next slice; step 6 covers the
+remaining operations and value/argument/return summaries.
