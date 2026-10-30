@@ -157,6 +157,15 @@ public:
     std::string window_name() const { return window_name_; }
     void set_window_name(const std::string& name) { window_name_ = name; }
 
+    // Step 5i: traced window.parent / top / frames / opener accessors. Overrides
+    // are per-generation V8 values; reset while the isolate is still alive.
+    v8::Local<v8::Value> window_alias_value(v8::Isolate* isolate,
+                                            v8::Local<v8::Context> context,
+                                            const std::string& name) const;
+    void set_window_alias(v8::Isolate* isolate, const std::string& name,
+                          v8::Local<v8::Value> value);
+    void reset_window_aliases() noexcept;
+
     // Host-access trace, step 5: value source for the generic window metadata
     // accessors. Only known names are installed by install_page; unknown names
     // return undefined. No JS property read is performed here.
@@ -330,6 +339,10 @@ private:
     std::unique_ptr<MediaQueryListStore> media_query_lists_;
     // M11-35: window.name survives load() generations of this Page.
     std::string window_name_;
+    // Step 5i: per-generation replaced window aliases (parent/frames/opener).
+    v8::Global<v8::Value> window_parent_override_;
+    v8::Global<v8::Value> window_frames_override_;
+    v8::Global<v8::Value> window_opener_override_;
     // M11-7 Web Storage backings. Insertion-ordered and page-lifetime: they
     // survive load() generations of this Page but are never shared across Page
     // instances, disk, or origins. Each generation installs fresh Storage

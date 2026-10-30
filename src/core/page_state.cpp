@@ -9615,6 +9615,44 @@ void window_name_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
             : std::string());
 }
 
+// Step 5i: window.parent / top / frames / opener are traced accessors.
+// parent/frames/opener are replaceable (the setter stores the new value per
+// generation); top stays read-only. Values and assignment results are unchanged.
+constexpr v8::ExternalPointerTypeTag kWindowAliasTag =
+    v8::kExternalPointerTypeTagDefault;
+
+void window_alias_getter(v8::Local<v8::Name> property,
+                         const v8::PropertyCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kWindowAliasTag));
+    if (page == nullptr) {
+        return;
+    }
+    v8::String::Utf8Value utf8(isolate, property);
+    const std::string name(*utf8 != nullptr ? *utf8 : "");
+    access_trace_record(isolate, page, "window", "window", name.c_str(),
+                        AccessOperation::kGet);
+    info.GetReturnValue().Set(page->window_alias_value(
+        isolate, isolate->GetCurrentContext(), name));
+}
+
+void window_alias_setter(v8::Local<v8::Name> property,
+                         v8::Local<v8::Value> value,
+                         const v8::PropertyCallbackInfo<void>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kWindowAliasTag));
+    if (page == nullptr) {
+        return;
+    }
+    v8::String::Utf8Value utf8(isolate, property);
+    const std::string name(*utf8 != nullptr ? *utf8 : "");
+    access_trace_record(isolate, page, "window", "window", name.c_str(),
+                        AccessOperation::kSet);
+    page->set_window_alias(isolate, name, value);
+}
+
 // M11-35: a deterministic secure-context bit derived from the base URL (no host
 // OS or network access): https/wss/file are secure; http/ws are secure only for
 // loopback hosts; everything else is insecure.
@@ -9675,6 +9713,47 @@ v8::Local<v8::Value> PageState::window_metadata_value(
         return v8::Null(isolate);
     }
     return v8::Undefined(isolate);
+}
+
+v8::Local<v8::Value> PageState::window_alias_value(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const std::string& name) const {
+    if (name == "parent") {
+        return window_parent_override_.IsEmpty()
+                   ? v8::Local<v8::Value>(context->Global())
+                   : window_parent_override_.Get(isolate);
+    }
+    if (name == "frames") {
+        return window_frames_override_.IsEmpty()
+                   ? v8::Local<v8::Value>(context->Global())
+                   : window_frames_override_.Get(isolate);
+    }
+    if (name == "top") {
+        return context->Global();
+    }
+    if (name == "opener") {
+        return window_opener_override_.IsEmpty()
+                   ? v8::Local<v8::Value>(v8::Null(isolate))
+                   : window_opener_override_.Get(isolate);
+    }
+    return v8::Undefined(isolate);
+}
+
+void PageState::set_window_alias(v8::Isolate* isolate, const std::string& name,
+                                 v8::Local<v8::Value> value) {
+    if (name == "parent") {
+        window_parent_override_.Reset(isolate, value);
+    } else if (name == "frames") {
+        window_frames_override_.Reset(isolate, value);
+    } else if (name == "opener") {
+        window_opener_override_.Reset(isolate, value);
+    }
+}
+
+void PageState::reset_window_aliases() noexcept {
+    window_parent_override_.Reset();
+    window_frames_override_.Reset();
+    window_opener_override_.Reset();
 }
 
 constexpr v8::ExternalPointerTypeTag kWindowTraceTag =
@@ -9752,6 +9831,9 @@ void PageState::install_page(const std::string& base_url,
         for (const std::unique_ptr<HostObject>& host : host_objects_) {
             host->release_v8_handles();
         }
+        // Step 5i: drop replaced parent/frames/opener values while the isolate is
+        // still alive.
+        reset_window_aliases();
         if (window_events_) {
             window_events_->release_v8_handles();
         }
@@ -9932,34 +10014,13 @@ void PageState::install_page(const std::string& base_url,
                     static_cast<v8::PropertyAttribute>(v8::ReadOnly |
                                                        v8::DontDelete));
             }
-            // M11-1/M11-26 window geometry. window is the intrinsic global object,
-            // so these are read-only data properties on the global rather than host
-            // accessors. Values come from the Page-level environment_ and are
-            // re-applied on every generation. M11-35 adds window.length,
+            // M11-1/M11-26 window geometry. window is the intrinsic global object;
+            // these are read-only native accessors on it. Values come from the
+            // Page-level environment_ and are re-applied on every generation. M11-35 adds window.length,
             // screenLeft/screenTop aliases, and isSecureContext. Geometry and
             // capabilities are read-only (ReadOnly|DontDelete); no scroll /
             // resize / matchMedia surface.
             {
-                const auto define_readonly = [&](const char* name,
-                                                 v8::Local<v8::Value> value) {
-                    (void)global->DefineOwnProperty(
-                        context,
-                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
-                        value,
-                        static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                           v8::DontDelete));
-                };
-                // [Replaceable]/writable browsing-context aliases. Unlike the
-                // read-only metadata above, page scripts may replace these with
-                // ordinary assignments (browsers expose parent/frames as
-                // [Replaceable] and opener as a writable any).
-                const auto define_replaceable = [&](const char* name,
-                                                    v8::Local<v8::Value> value) {
-                    (void)global->Set(
-                        context,
-                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
-                        value);
-                };
                 // Host-access trace step 5: these were read-only data properties;
                 // they are now read-only native accessors so their reads can be
                 // observed. Values and assignment behavior are unchanged.
@@ -9996,10 +10057,33 @@ void PageState::install_page(const std::string& base_url,
                 // context. parent/top/frames alias the window itself; there is
                 // no opener and no child frame collection. parent and frames are
                 // replaceable; top is the [LegacyUnforgeable] read-only alias.
-                define_replaceable("parent", global);
-                define_readonly("top", global);
-                define_replaceable("frames", global);
-                define_replaceable("opener", v8::Null(isolate));
+                // Step 5i: these are traced accessors now. parent/frames/opener
+                // keep their writable+configurable behavior (the setter stores a
+                // per-generation replacement, and `delete` / top-level `let`
+                // declarations still work); top stays read-only. Descriptor reads
+                // evaluate the getter.
+                const auto define_traced_alias = [&](const char* name,
+                                                     bool writable) {
+                    v8::Local<v8::Name> key =
+                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked();
+                    v8::Local<v8::Value> data =
+                        v8::External::New(isolate, this, kWindowAliasTag);
+                    if (writable) {
+                        (void)global->SetNativeDataProperty(
+                            context, key, &window_alias_getter,
+                            &window_alias_setter, data,
+                            v8::PropertyAttribute::None);
+                    } else {
+                        (void)global->SetNativeDataProperty(
+                            context, key, &window_alias_getter, nullptr, data,
+                            static_cast<v8::PropertyAttribute>(
+                                v8::ReadOnly | v8::DontDelete));
+                    }
+                };
+                define_traced_alias("parent", true);
+                define_traced_alias("top", false);
+                define_traced_alias("frames", true);
+                define_traced_alias("opener", true);
             }
             // M11-40 scheduler.postTask bootstrap. Compiled after setTimeout and
             // Promise are available; scheduler tasks therefore use the existing

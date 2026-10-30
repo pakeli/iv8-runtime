@@ -188,7 +188,7 @@ const std::vector<std::string>& AccessTrace::supported_object_types() {
 const std::vector<std::string>& AccessTrace::not_covered() {
     static const std::vector<std::string> gaps = {
         "remaining performance/crypto/Storage property reads (their native method calls and performance.timeOrigin are covered)",
-        "window/global data properties",
+        "other window/global data properties",
         "permission-status missing probes/onchange and MediaQueryList onchange/missing probes",
         "arrays and plain values returned by host APIs",
         "user-created plain JS objects",
