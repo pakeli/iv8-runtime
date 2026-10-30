@@ -176,9 +176,9 @@ AccessTrace::SourceScope::~SourceScope() noexcept {
 
 const std::vector<std::string>& AccessTrace::supported_object_types() {
     static const std::vector<std::string> types = {
-        "console", "crypto", "document", "element", "host_object",
-        "host_probe", "location", "navigator", "performance", "screen",
-        "storage", "window",
+        "connection", "console", "crypto", "document", "element",
+        "host_object", "host_probe", "location", "navigator", "orientation",
+        "performance", "screen", "storage", "window",
     };
     return types;
 }

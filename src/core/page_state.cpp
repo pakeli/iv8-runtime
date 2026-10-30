@@ -453,6 +453,91 @@ void storage_length_getter(v8::Local<v8::Name> property,
         v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size())));
 }
 
+// Step 5: nested connection metadata. HostObject-backed so reads, missing
+// probes, and object identity use the normal access-trace channel.
+class ConnectionHost : public HostObject {
+public:
+    explicit ConnectionHost(const HostEnvironment* environment)
+        : environment_(environment) {}
+
+    std::string global_name() const override { return std::string(); }
+    std::string trace_object_type() const override { return "connection"; }
+    std::string trace_label() const override { return "navigator.connection"; }
+
+    std::vector<std::string> property_names() const override {
+        return {"effectiveType", "rtt", "downlink", "saveData"};
+    }
+    std::vector<std::string> method_names() const override { return {}; }
+
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context>,
+                                      const std::string& name) override {
+        if (name == "effectiveType") {
+            return v8_string(isolate,
+                             environment_->connection_effective_type);
+        }
+        if (name == "rtt") {
+            return v8::Integer::New(isolate, environment_->connection_rtt);
+        }
+        if (name == "downlink") {
+            return v8::Number::New(isolate, environment_->connection_downlink);
+        }
+        if (name == "saveData") {
+            return v8::Boolean::New(isolate, environment_->connection_save_data);
+        }
+        return v8::Undefined(isolate);
+    }
+
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
+        const v8::FunctionCallbackInfo<v8::Value>&) override {
+        return v8::Undefined(isolate);
+    }
+
+private:
+    const HostEnvironment* environment_;
+};
+
+// Step 5: nested screen orientation metadata.
+class ScreenOrientationHost : public HostObject {
+public:
+    explicit ScreenOrientationHost(const HostEnvironment* environment)
+        : environment_(environment) {}
+
+    std::string global_name() const override { return std::string(); }
+    std::string trace_object_type() const override { return "orientation"; }
+    std::string trace_label() const override { return "screen.orientation"; }
+
+    std::vector<std::string> property_names() const override {
+        return {"type", "angle"};
+    }
+    std::vector<std::string> method_names() const override { return {}; }
+
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context>,
+                                      const std::string& name) override {
+        const bool landscape =
+            environment_->screen_width >= environment_->screen_height;
+        if (name == "type") {
+            return v8_string(isolate, landscape ? "landscape-primary"
+                                                : "portrait-primary");
+        }
+        if (name == "angle") {
+            return v8::Integer::New(isolate, landscape ? 0 : 90);
+        }
+        return v8::Undefined(isolate);
+    }
+
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
+        const v8::FunctionCallbackInfo<v8::Value>&) override {
+        return v8::Undefined(isolate);
+    }
+
+private:
+    const HostEnvironment* environment_;
+};
+
 // M2-3 minimal navigator (read-only), configurable since M11-1 and extended by
 // M11-24/M11-27. Values come from the page's HostEnvironment, which the Python
 // facade always supplies fully resolved — this class holds no defaults and never
@@ -462,7 +547,7 @@ void storage_length_getter(v8::Local<v8::Name> property,
 class NavigatorHost : public HostObject {
 public:
     explicit NavigatorHost(const HostEnvironment* environment)
-        : environment_(environment) {}
+        : environment_(environment), connection_(environment) {}
 
     std::string global_name() const override { return "navigator"; }
     std::string trace_object_type() const override { return "navigator"; }
@@ -543,28 +628,7 @@ public:
             return v8_string(isolate, environment_->do_not_track);
         }
         if (name == "connection") {
-            v8::Local<v8::Object> connection = v8::Object::New(isolate);
-            const auto define = [&](const char* key,
-                                    v8::Local<v8::Value> value) {
-                (void)connection->DefineOwnProperty(
-                    context,
-                    v8::String::NewFromUtf8(isolate, key).ToLocalChecked(),
-                    value,
-                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete));
-            };
-            define("effectiveType",
-                   v8_string(isolate,
-                             environment_->connection_effective_type));
-            define("rtt", v8::Integer::New(isolate,
-                                           environment_->connection_rtt));
-            define("downlink",
-                   v8::Number::New(isolate,
-                                   environment_->connection_downlink));
-            define("saveData",
-                   v8::Boolean::New(isolate,
-                                    environment_->connection_save_data));
-            return connection;
+            return make_host_object(isolate, context, &connection_);
         }
         return v8::Undefined(isolate);
     }
@@ -579,6 +643,7 @@ private:
     // Owned by PageState (outlives every generation), so this raw pointer stays
     // valid for as long as this host object is installed.
     const HostEnvironment* environment_;
+    ConnectionHost connection_;
 };
 
 // M11-1/M11-25 minimal screen (read-only). Static dimensions and color/pixel
@@ -589,7 +654,7 @@ private:
 class ScreenHost : public HostObject {
 public:
     explicit ScreenHost(const HostEnvironment* environment)
-        : environment_(environment) {}
+        : environment_(environment), orientation_(environment) {}
 
     std::string global_name() const override { return "screen"; }
     std::string trace_object_type() const override { return "screen"; }
@@ -631,25 +696,9 @@ public:
             return v8::Integer::New(isolate, environment_->pixel_depth);
         }
         // M11-35: deterministic orientation derived from the reported screen
-        // dimensions. No orientation events or lock() semantics.
+        // dimensions. Step 5 exposes it as a nested HostObject.
         if (name == "orientation") {
-            const bool landscape =
-                environment_->screen_width >= environment_->screen_height;
-            v8::Local<v8::Object> orientation = v8::Object::New(isolate);
-            const auto define = [&](const char* key,
-                                    v8::Local<v8::Value> value) {
-                (void)orientation->DefineOwnProperty(
-                    context,
-                    v8::String::NewFromUtf8(isolate, key).ToLocalChecked(),
-                    value,
-                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete));
-            };
-            define("type", v8_string(isolate,
-                                     landscape ? "landscape-primary"
-                                               : "portrait-primary"));
-            define("angle", v8::Integer::New(isolate, landscape ? 0 : 90));
-            return orientation;
+            return make_host_object(isolate, context, &orientation_);
         }
         return v8::Undefined(isolate);
     }
@@ -662,6 +711,7 @@ public:
 
 private:
     const HostEnvironment* environment_;
+    ScreenOrientationHost orientation_;
 };
 
 // The static components of a decomposed URL (WHATWG-style names). Only the
@@ -6012,6 +6062,15 @@ std::int64_t performance_clock_ms(v8::Isolate* isolate) {
     return state != nullptr ? state->event_loop_time_ms() : 0;
 }
 
+void performance_time_origin_getter(
+    v8::Local<v8::Name>,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    access_trace_record(isolate, &kPerformanceTraceToken, "performance",
+                        "performance", "timeOrigin", AccessOperation::kGet);
+    info.GetReturnValue().Set(v8::Number::New(isolate, 0.0));
+}
+
 void performance_now_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "now");
     access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
@@ -9356,8 +9415,13 @@ void PageState::install_page(const std::string& base_url,
                         ->GetFunction(context)
                         .ToLocalChecked();
                 define_performance_readonly("now", now_fn);
-                define_performance_readonly("timeOrigin",
-                                            v8::Number::New(isolate, 0.0));
+                (void)performance->SetNativeDataProperty(
+                    context,
+                    v8::String::NewFromUtf8Literal(isolate, "timeOrigin"),
+                    &performance_time_origin_getter, nullptr,
+                    v8::Local<v8::Value>(),
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                       v8::DontDelete));
                 v8::Local<v8::External> performance_data =
                     v8::External::New(isolate, performance_store_.get(),
                                       kPerformanceTag);
