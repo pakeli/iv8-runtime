@@ -1,7 +1,7 @@
 name: release-macos
 
 # Phase 9 / D: build macOS arm64 wheels (cp311-cp314) with V8 linked, on
-# GitHub's macos-14 (Apple Silicon) runner. Mirrors release-linux.yml /
+# GitHub's macos-15 (Apple Silicon) runner. Mirrors release-linux.yml /
 # release-windows.yml: the pinned V8 monolith is built once and cached, then a
 # per-Python wheel matrix builds, installs, and tests the wheel.
 #
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   build-v8:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +56,7 @@ jobs:
 
   wheels:
     needs: build-v8
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 90
     strategy:
       fail-fast: false
