@@ -157,6 +157,11 @@ public:
     std::string window_name() const { return window_name_; }
     void set_window_name(const std::string& name) { window_name_ = name; }
 
+    // M11-46: Page-level deterministic in-memory document.cookie jar. It survives
+    // load() generations, is isolated per Page, and is never persisted.
+    std::string document_cookie() const;
+    void set_document_cookie(const std::string& value);
+
     // Step 5i: traced window.parent / top / frames / opener accessors. Overrides
     // are per-generation V8 values; reset while the isolate is still alive.
     v8::Local<v8::Value> window_alias_value(v8::Isolate* isolate,
@@ -344,6 +349,8 @@ private:
     std::unique_ptr<MediaQueryListStore> media_query_lists_;
     // M11-35: window.name survives load() generations of this Page.
     std::string window_name_;
+    // M11-46: deterministic document.cookie entries, insertion/update ordered.
+    std::vector<std::pair<std::string, std::string>> document_cookies_;
     // Step 5i: per-generation replaced window aliases (parent/frames/opener).
     v8::Global<v8::Value> window_parent_override_;
     v8::Global<v8::Value> window_frames_override_;

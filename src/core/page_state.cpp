@@ -8,8 +8,12 @@
 #include <cstdlib>
 #include <cstdint>
 #include <cstring>
+#include <ctime>
 #include <functional>
+#include <iomanip>
+#include <locale>
 #include <memory>
+#include <sstream>
 #include <random>
 #include <string>
 #include <unordered_map>
@@ -3541,8 +3545,8 @@ private:
 // that tears down the context invalidates everything together.
 class DocumentHost : public EventTargetHost {
 public:
-    DocumentHost(const std::string& html, std::string url)
-        : url_(std::move(url)), title_(extract_title(html)) {
+    DocumentHost(const std::string& html, std::string url, PageState* page)
+        : page_(page), url_(std::move(url)), title_(extract_title(html)) {
         parse_html(html, pool_, roots_, scripts_);
         // M5-5: deterministic initial single-select — within each <select>, keep
         // only the document-order-first pre-selected <option>, clearing the rest.
@@ -3638,7 +3642,12 @@ public:
                 "applets",
                 // M11-23 deterministic document metadata.
                 "characterSet", "contentType", "compatMode", "referrer",
-                "domain", "visibilityState", "hidden", "activeElement"};
+                "domain", "visibilityState", "hidden", "activeElement",
+                // M11-46 deterministic Page-level cookie jar.
+                "cookie"};
+    }
+    std::vector<std::string> writable_property_names() const override {
+        return {"cookie"};
     }
     std::vector<std::string> method_names() const override {
         // M2-6 document methods + M4-A-1 static queries + M4-A-2 createElement +
@@ -3701,6 +3710,10 @@ public:
         }
         if (name == "visibilityState") return v8_string(isolate, "visible");
         if (name == "hidden") return v8::False(isolate);
+        if (name == "cookie") {
+            return v8_string(isolate, page_ != nullptr ? page_->document_cookie()
+                                                       : std::string());
+        }
         if (name == "activeElement") {
             return wrap_element(isolate, context, find_tag("body"));
         }
@@ -3790,6 +3803,23 @@ public:
             return elements_array(isolate, context, elements_by_tag("applet"));
         }
         return v8::Undefined(isolate);
+    }
+
+    void set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                      const std::string& name,
+                      v8::Local<v8::Value> value) override {
+        if (name != "cookie" || page_ == nullptr) {
+            return;
+        }
+        v8::Local<v8::String> str;
+        if (!value->ToString(context).ToLocal(&str)) {
+            return;
+        }
+        v8::String::Utf8Value utf8(isolate, str);
+        page_->set_document_cookie(
+            *utf8 != nullptr
+                ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+                : std::string());
     }
 
     v8::Local<v8::Value> call_method(
@@ -4231,6 +4261,7 @@ private:
         return collect(tag_predicate(raw));
     }
 
+    PageState* page_ = nullptr;  // M11-46 cookie jar owner (outlives generations)
     std::string url_;
     std::string title_;
     std::string ready_state_ = "complete";  // M3-6 JS document.readyState
@@ -9377,6 +9408,96 @@ void has_own_property_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
     (void)call_wrapped_original(info, context, info.This());
 }
 
+// M11-46: deterministic document.cookie parsing helpers. Cookie text is kept
+// byte-for-byte (no percent decoding); only ASCII OWS trimming and attribute
+// name normalization are applied. There is no wall clock: expiry is compared to
+// the fixed Unix epoch 1970-01-01T00:00:00Z, so a cookie is deleted only when it
+// specifies max-age <= 0 or an expires at/before that epoch.
+std::string cookie_trim(std::string value) {
+    std::size_t begin = 0;
+    while (begin < value.size() &&
+           (value[begin] == ' ' || value[begin] == '\t' ||
+            value[begin] == '\r' || value[begin] == '\n')) {
+        ++begin;
+    }
+    std::size_t end = value.size();
+    while (end > begin && (value[end - 1] == ' ' || value[end - 1] == '\t' ||
+                           value[end - 1] == '\r' ||
+                           value[end - 1] == '\n')) {
+        --end;
+    }
+    return value.substr(begin, end - begin);
+}
+
+std::string cookie_ascii_lower(std::string value) {
+    for (char& c : value) {
+        if (c >= 'A' && c <= 'Z') {
+            c = static_cast<char>(c - 'A' + 'a');
+        }
+    }
+    return value;
+}
+
+long long cookie_days_from_civil(int year, unsigned month, unsigned day) {
+    year -= month <= 2;
+    const int era = (year >= 0 ? year : year - 399) / 400;
+    const unsigned yoe = static_cast<unsigned>(year - era * 400);
+    const int adjusted_month =
+        static_cast<int>(month) + (month > 2 ? -3 : 9);
+    const unsigned doy =
+        (153 * adjusted_month + 2) / 5 + day - 1;
+    const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    return static_cast<long long>(era) * 146097 + static_cast<long long>(doe) -
+           719468;
+}
+
+bool cookie_parse_http_date(const std::string& text, long long* epoch) {
+    std::tm tm{};
+    std::istringstream input(text);
+    input.imbue(std::locale::classic());
+    input >> std::get_time(&tm, "%a, %d %b %Y %H:%M:%S");
+    if (input.fail()) {
+        input.clear();
+        input.str(text);
+        input.imbue(std::locale::classic());
+        input >> std::get_time(&tm, "%a, %d-%b-%Y %H:%M:%S");
+    }
+    if (input.fail()) {
+        input.clear();
+        input.str(text);
+        input.imbue(std::locale::classic());
+        input >> std::get_time(&tm, "%a %b %d %H:%M:%S %Y");
+    }
+    if (input.fail()) {
+        return false;
+    }
+    const int year = tm.tm_year + 1900;
+    const unsigned month = static_cast<unsigned>(tm.tm_mon + 1);
+    const unsigned day = static_cast<unsigned>(tm.tm_mday);
+    if (month < 1 || month > 12 || day < 1 || day > 31 || tm.tm_hour < 0 ||
+        tm.tm_hour > 23 || tm.tm_min < 0 || tm.tm_min > 59 || tm.tm_sec < 0 ||
+        tm.tm_sec > 59) {
+        return false;
+    }
+    const long long days = cookie_days_from_civil(year, month, day);
+    *epoch = days * 86400 + static_cast<long long>(tm.tm_hour) * 3600 +
+             static_cast<long long>(tm.tm_min) * 60 + tm.tm_sec;
+    return true;
+}
+
+bool cookie_parse_int64(const std::string& text, long long* value) {
+    if (text.empty()) {
+        return false;
+    }
+    char* end = nullptr;
+    const long long parsed = std::strtoll(text.c_str(), &end, 10);
+    if (end == text.c_str() || end == nullptr || *end != '\0') {
+        return false;
+    }
+    *value = parsed;
+    return true;
+}
+
 }  // namespace
 
 // M9-1: the current generation's V8 Inspector objects (opaque in the header). The
@@ -9396,6 +9517,95 @@ PageState::PageState(HostEnvironment environment)
     watch_registry_.set_pause_requester([this]() { request_inspector_pause(); });
     // Initial page state uses the fixed default base URL and empty document seed.
     install_page(kDefaultBaseUrl, std::string());
+}
+
+std::string PageState::document_cookie() const {
+    std::string result;
+    for (const auto& entry : document_cookies_) {
+        if (!result.empty()) {
+            result += "; ";
+        }
+        result += entry.first;
+        result += '=';
+        result += entry.second;
+    }
+    return result;
+}
+
+void PageState::set_document_cookie(const std::string& value) {
+    const std::string header = cookie_trim(value);
+    if (header.empty()) {
+        return;
+    }
+    const std::size_t first_separator = header.find(';');
+    const std::string pair = cookie_trim(header.substr(0, first_separator));
+    const std::size_t equals = pair.find('=');
+    if (equals == std::string::npos) {
+        return;
+    }
+    const std::string name = cookie_trim(pair.substr(0, equals));
+    const std::string cookie_value = cookie_trim(pair.substr(equals + 1));
+    if (name.empty()) {
+        return;
+    }
+
+    bool has_max_age = false;
+    bool max_age_deletes = false;
+    bool expires_deletes = false;
+    if (first_separator != std::string::npos) {
+        std::size_t position = first_separator + 1;
+        while (position <= header.size()) {
+            const std::size_t next = header.find(';', position);
+            std::string attribute = cookie_trim(header.substr(
+                position, next == std::string::npos ? std::string::npos
+                                                    : next - position));
+            if (!attribute.empty()) {
+                const std::size_t attr_equals = attribute.find('=');
+                const std::string attr_name = cookie_ascii_lower(cookie_trim(
+                    attribute.substr(0, attr_equals)));
+                const std::string attr_value =
+                    attr_equals == std::string::npos
+                        ? std::string()
+                        : cookie_trim(attribute.substr(attr_equals + 1));
+                if (attr_name == "max-age") {
+                    long long seconds = 0;
+                    if (cookie_parse_int64(attr_value, &seconds)) {
+                        has_max_age = true;
+                        max_age_deletes = seconds <= 0;
+                    }
+                } else if (attr_name == "expires") {
+                    long long epoch = 0;
+                    if (cookie_parse_http_date(attr_value, &epoch)) {
+                        expires_deletes = epoch <= 0;
+                    }
+                }
+                // path / domain / secure / samesite and unknown attributes are
+                // accepted but intentionally ignored in this deterministic jar.
+            }
+            if (next == std::string::npos) {
+                break;
+            }
+            position = next + 1;
+        }
+    }
+
+    const bool should_delete = has_max_age ? max_age_deletes : expires_deletes;
+    if (should_delete) {
+        document_cookies_.erase(
+            std::remove_if(document_cookies_.begin(), document_cookies_.end(),
+                           [&name](const auto& entry) {
+                               return entry.first == name;
+                           }),
+            document_cookies_.end());
+        return;
+    }
+    for (auto& entry : document_cookies_) {
+        if (entry.first == name) {
+            entry.second = cookie_value;
+            return;
+        }
+    }
+    document_cookies_.emplace_back(name, cookie_value);
 }
 
 void PageState::request_inspector_pause() {
@@ -10179,7 +10389,7 @@ void PageState::install_page(const std::string& base_url,
     host_objects_.push_back(std::make_unique<ScreenHost>(&environment_));  // M11-1
     host_objects_.push_back(  // M2-3 location, sourced from this page's base URL
         std::make_unique<LocationHost>(decompose_url(base_url)));
-    auto document = std::make_unique<DocumentHost>(html, base_url);  // M2-6
+    auto document = std::make_unique<DocumentHost>(html, base_url, this);  // M2-6
     document_host_ = document.get();  // M3-4 observing ptr for lifecycle dispatch
     host_objects_.push_back(std::move(document));
     // M3-4 window event target: NOT installed as a named global (window stays the

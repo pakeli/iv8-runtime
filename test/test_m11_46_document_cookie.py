@@ -1,0 +1,135 @@
+"""M11-46: deterministic Page-level document.cookie jar."""
+
+import pytest
+
+import iv8
+
+v8_linked = getattr(iv8, "_v8_linked", False)
+on_only = pytest.mark.skipif(not v8_linked, reason="requires a V8-linked build")
+
+BASE = "https://document-cookie.test/"
+HTML = "<html><body></body></html>"
+
+
+def _load(page, html=HTML, base=BASE):
+    page.load(html, base)
+
+
+@on_only
+def test_cookie_get_set_update_and_order():
+    with iv8.Page() as page:
+        _load(page)
+        assert page.eval("document.cookie") == ""
+        assert page.eval(
+            """
+            document.cookie = 'a=1';
+            document.cookie = 'b=2';
+            document.cookie;
+            """
+        ) == "a=1; b=2"
+        assert page.eval(
+            """
+            document.cookie = 'a=3';
+            document.cookie;
+            """
+        ) == "a=3; b=2"
+        assert page.eval(
+            """
+            document.cookie = 'c=4; Path=/; Secure; SameSite=Lax';
+            document.cookie;
+            """
+        ) == "a=3; b=2; c=4"
+        assert page.eval(
+            """
+            document.cookie = 'token=a=b';
+            document.cookie;
+            """
+        ) == "a=3; b=2; c=4; token=a=b"
+
+
+@on_only
+def test_cookie_invalid_inputs_and_to_string_coercion():
+    with iv8.Page() as page:
+        _load(page)
+        assert page.eval(
+            """
+            document.cookie = '';
+            document.cookie = 'noequals';
+            document.cookie = '=empty-name';
+            document.cookie = 'x=1';
+            document.cookie = 'x=2';
+            document.cookie = {toString() { return 'y=3'; }};
+            document.cookie;
+            """
+        ) == "x=2; y=3"
+        assert page.eval("document.cookie = 5; document.cookie") == "x=2; y=3"
+
+
+@on_only
+def test_cookie_deletion_with_max_age_and_epoch_expires():
+    with iv8.Page() as page:
+        _load(page)
+        assert page.eval(
+            """
+            document.cookie = 'a=1';
+            document.cookie = 'b=2';
+            document.cookie = 'a=; Max-Age=0';
+            document.cookie;
+            """
+        ) == "b=2"
+        assert page.eval(
+            """
+            document.cookie = 'c=3';
+            document.cookie = 'c=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            document.cookie;
+            """
+        ) == "b=2"
+        assert page.eval(
+            """
+            document.cookie = 'd=4; max-age=-1';
+            document.cookie = 'e=5; expires=Thu, 01 Jan 2026 00:00:00 GMT';
+            document.cookie = 'f=6; max-age=invalid';
+            document.cookie;
+            """
+        ) == "b=2; e=5; f=6"
+
+
+@on_only
+def test_cookie_persists_across_load_and_is_page_isolated():
+    with iv8.Page() as page:
+        _load(page)
+        page.eval("document.cookie = 'session=abc'")
+        _load(page, "<html><body><p>new</p></body></html>")
+        assert page.eval("document.cookie") == "session=abc"
+    with iv8.Page() as other:
+        _load(other)
+        assert other.eval("document.cookie") == ""
+
+
+@on_only
+def test_cookie_is_a_writable_traced_document_property():
+    with iv8.Page() as page:
+        _load(page)
+        assert page.eval(
+            """
+            (() => {
+              const d = Object.getOwnPropertyDescriptor(document, 'cookie');
+              return typeof d.get === 'function' &&
+                     typeof d.set === 'function' &&
+                     d.configurable === false;
+            })();
+            """
+        ) is True
+        page.start_access_trace()
+        page.eval(
+            "document.cookie = 'a=1'; document.cookie;",
+            name="cookie.js"
+        )
+        events = page.read_access_trace()["events"]
+        assert [(event["object_type"], event["member"], event["operation"])
+                for event in events] == [
+            ("document", "cookie", "set"),
+            ("document", "cookie", "get"),
+        ]
+        assert events[0]["outcome"] == "returned"
+        assert events[1]["value_summary"] == "string:3:a=1"
