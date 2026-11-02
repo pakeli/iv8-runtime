@@ -570,9 +570,10 @@ These are the questions a new coding session should resolve before major new wor
   settled, landed, and verified; selector pseudo-classes remain the planned
   selector follow-up, while UA-CH is deliberately deferred and the remaining
   candidates come from `docs/dom_bom_gaps.md`.)
-- How should step 6 represent `in`/delete/enumeration/descriptor queries and
-  value/argument/return summaries without folding them into get/set?
-  (`docs/host_access_tracing_plan.md` §8.)
+- How should the remaining step 6 represent `in`/delete/enumeration/descriptor
+  queries and method-reference reads without folding them into get/set?
+  (Step 6a already added value/argument/return summaries and returned/threw
+  outcomes; see `docs/host_access_tracing_plan.md` §8.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)

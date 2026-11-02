@@ -6,7 +6,7 @@ storage/permissions managers + matchMedia results + legacy navigator metadata +
 window aliases + step-6a value/argument/return summaries green on real V8 Linux
 + Windows + macOS arm64 (`2026-11-02`)**
 
-This document freezes steps 1–4 and the first groups of step 5 of
+This document freezes steps 1–4, the step-5 object groups, and step 6a of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
 string-key missing-property probes, call/get coverage for independent native BOM
 callbacks (performance, crypto, Storage), intrinsic window metadata reads,
@@ -14,7 +14,8 @@ nested `navigator.connection` / `screen.orientation` / `performance.timeOrigin`
 reads, the static `visualViewport` HostObject, the `navigator.storage`
 manager's parent read plus method calls, `navigator.permissions` parent reads
 plus query calls and returned PermissionStatus accesses, matchMedia result
-objects, legacy navigator metadata, and window browsing-context aliases. It is a
+objects, legacy navigator metadata, window browsing-context aliases, and
+primitive value/argument/return summaries with returned/threw outcomes. It is a
 second-layer monitoring feature. It does not change the M1 `JSContext` contract,
 the existing `watch_apis` / Reflect / Object.keys channels, or DOM/BOM
 values/assignment behavior.
@@ -77,7 +78,7 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `window.name` | records `get` and `set` |
 | `window.origin` / `isSecureContext` / `crossOriginIsolated` / `closed` / `frameElement` | records `get`; read-only behavior unchanged |
 | `window.parent` / `top` / `frames` / `opener` | records `get`; parent/frames/opener also record `set`, top stays read-only |
-| `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered in this slice; step 6 |
+| `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered yet; remaining step 6 |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
 
