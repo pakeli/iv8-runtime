@@ -1,6 +1,6 @@
 # Next Tasks
 
-Last reviewed: `2026-10-30`
+Last reviewed: `2026-11-02`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
@@ -1183,10 +1183,11 @@ items; each wheel lane: **`1690 passed, 2 skipped`**.
 
 ### Next
 
-All planned step-5 object groups are complete. Continue with step 6: the
-value/argument/return summary slice (Priority 3ag below), then method-reference
-reads, `in`, delete, enumeration, and descriptor queries. The M11-46 selector
-follow-up remains deferred.
+All planned step-5 object groups are complete. Step 6 then added
+value/argument/return summaries (3ag), method-reference reads (3ah), and
+delete/enumeration/define operations (3ai); remaining step-6 work is
+`in`/`hasOwnProperty`, descriptor queries, Reflect target identity, and
+native-callback summaries. The M11-46 selector follow-up remains deferred.
 
 ## Priority 3af: macOS arm64 V8-linked release wheels — DONE (`2026-10-30`)
 
@@ -1237,8 +1238,9 @@ conflict with the shim; `use_allocator_shim=false` +
   implementation cannot steal it. Allocation failures are best-effort and do
   not affect JS.
 - Event count is unchanged; only optional fields are added. Independent native
-  callbacks, get_probe, method references, `in`/delete/enumeration/descriptors,
-  and exception messages/stacks remain for the rest of step 6.
+  callbacks, get_probe, method references, `in`/`hasOwnProperty`, descriptor
+  queries, and exception messages/stacks were still pending at this point;
+  method references (3ah) and delete/enumeration/define (3ai) were added later.
 
 Boundary/verification: `docs/host_access_trace.md`. Tests:
 `test/test_access_trace_values.py` (6 items). Full suite collects 1698 items;
@@ -1259,9 +1261,11 @@ This slice passed on its first CI attempt.
 
 ### Next
 
-Continue step 6 with method-reference reads (Priority 3ah below), then `in`,
-delete, enumeration, descriptor queries, Reflect target identity, and summaries
-for independent native callbacks. The M11-46 selector follow-up remains deferred.
+Continue step 6 with method-reference reads (Priority 3ah), then
+delete/enumeration/define operations (Priority 3ai), then
+`in`/`hasOwnProperty` and descriptor queries. Reflect target identity and
+summaries for independent native callbacks remain after that. The M11-46
+selector follow-up remains deferred.
 
 ## Priority 3ah: Host access trace method references (step 6b) — DONE (`2026-11-02`)
 
@@ -1298,9 +1302,52 @@ This slice passed on its first CI attempt.
 
 ### Next
 
-Continue step 6 with `in`, delete, enumeration, descriptor queries, Reflect
-target identity, and summaries for independent native callbacks. The M11-46
-selector follow-up remains deferred.
+Continue step 6 with `in`/`hasOwnProperty` and descriptor queries (Priority 3ai
+added delete/enumeration/define), Reflect target identity, and summaries for
+independent native callbacks. The M11-46 selector follow-up remains deferred.
+
+## Priority 3ai: Host access trace delete/enumeration/define operations (step 6c) — DONE (`2026-11-02`)
+
+### What landed
+
+- HostObject templates keep the named interceptor active for existing string
+  properties (removed `kNonMasking`, kept `kOnlyInterceptStrings`).
+- The named deleter, enumerator, and definer record `delete`, `own_keys` (with
+  an empty member), and `define_property` request events. Delete/define events
+  are emitted before V8 applies the operation; own-key enumeration emits one
+  event per request.
+- Every callback returns `Intercepted::kNo` or an empty extra-key array, so
+  deletion results, enumeration order/result, descriptors, and definition
+  behavior are unchanged.
+- Coverage operations now list eight entries including delete, own_keys, and
+  define_property.
+- Descriptor queries and `in`/`hasOwnProperty` are deferred. The first attempt
+  (`d314256`) installed the named descriptor callback and failed three existing
+  matchMedia/visualViewport expectations because V8 also invoked it for internal
+  property bookkeeping (matchMedia's per-wrapper `onchange`); that attempt is not
+  part of the verified slice.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_operations.py` (5 items). Full suite collects 1706
+items; each wheel lane: **`1704 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final code commit `96c7c00` (branch `host-access-operations`; identical tree to
+the release-tested `2addf62`):
+
+- Linux `release-linux` run `41399273630` — cp311–cp314, each
+  `1704 passed, 2 skipped`;
+- Windows `release-windows` run `41399284773` — Python 3.11–3.14, each
+  `1704 passed, 2 skipped`;
+- macOS arm64 `release-macos` run `41399294680` — cp311–cp314
+  `macosx_11_0_arm64` wheels, each `1704 passed, 2 skipped`.
+
+### Next
+
+Continue step 6 with `in`/`hasOwnProperty` and descriptor queries (needs a
+non-invasive observation point), Reflect target identity, and summaries for
+independent native callbacks. The M11-46 selector follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

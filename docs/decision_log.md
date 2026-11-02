@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-10-30`
+Last reviewed: `2026-11-02`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -679,6 +679,37 @@ Verified on real V8 at commit `c13bdf5`: Linux `41395700932`, Windows
 2 skipped`. The full suite collects 1701 items (1698 previous + 3
 method-reference tests). See
 `docs/host_access_trace.md`.
+
+### 40. Host access trace delete/enumeration/define operations (step 6c)
+
+Decided/verified `2026-11-02`.
+
+HostObject named-property handlers now keep the interceptor active for existing
+string keys (removed `kNonMasking`, kept `kOnlyInterceptStrings`) and record
+three request events: `delete`, `own_keys` (empty member), and
+`define_property`. Delete and define events are written before V8 applies the
+operation, so a failed deletion still leaves evidence of the request. Every
+callback returns `Intercepted::kNo` or an empty extra-key array, so lookup,
+deletion results, enumeration order, descriptors, and definition behavior are
+unchanged.
+
+The named descriptor callback was implemented first (`d314256`) but removed
+before verification. CI showed V8 invoking it for internal property bookkeeping
+beyond explicit queries — for example, adding the per-wrapper matchMedia
+`onchange` through native `Set` — which polluted ordinary traces with
+indistinguishable `get_own_property_descriptor` events. Descriptor queries and
+`in`/`hasOwnProperty` remain deferred; the latter has no reliable non-invasive
+record point in the no-op query callback. A descriptor read may still evaluate a
+native getter and emit `get`/`get_method`, but no descriptor operation event.
+
+The operations currently carry only common fields, not completion summaries.
+Coverage operations grow from five to eight entries.
+
+Verified on real V8 against the tree of commit `96c7c00` (the release runs used
+the identical tree `2addf62`, cleanly re-committed as `96c7c00`): Linux
+`41399273630`, Windows `41399284773`, and macOS arm64 `41399294680`, each wheel
+lane `1704 passed, 2 skipped`. The full suite collects 1706 items (1701 previous
++ 5 operation tests). See `docs/host_access_trace.md`.
 
 ## Pending Decisions
 

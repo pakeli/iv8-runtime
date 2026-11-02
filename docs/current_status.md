@@ -1,13 +1,13 @@
 # Current Status
 
-Last reviewed: `2026-10-30`
+Last reviewed: `2026-11-02`
 
 ## 1. Summary
 
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-10-30`, the latest implemented and verified milestone is
+As of `2026-11-02`, the latest implemented and verified M11 milestone is
 **M11-41..M11-45** (BOM viewport / media / device metadata: `visualViewport`,
 `matchMedia`, `navigator.storage`, `navigator.permissions`, and legacy navigator
 metadata). Real-V8 CI is green on both platforms — Linux run `41000182750`,
@@ -88,10 +88,12 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   `navigator.storage` manager method calls, `navigator.permissions` query calls
   plus PermissionStatus accesses, matchMedia result reads/method calls, legacy
   navigator plugins/mimeTypes/javaEnabled accesses, window
-  parent/top/frames/opener get/set events, and step-6a value/argument/return
+  parent/top/frames/opener get/set events, step-6a value/argument/return
   summaries plus returned/threw outcomes for generic HostObject get/set/call,
-  method-reference `get_method` events with adjacent-call folding, with
-  generation, object identity, resource, and source attribution
+  method-reference `get_method` events with adjacent-call folding, step-6c
+  `delete`/`own_keys`/`define_property` request events, with generation, object
+  identity, resource, and source attribution; descriptor queries and
+  `in`/`hasOwnProperty` remain pending
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -152,7 +154,11 @@ Linux run `41383785169`, Windows run `41383788221`, and macOS arm64 run
 `41384345701`, each wheel lane `1696 passed, 2 skipped`. The method-reference
 slice was verified on `host-access-method-reads` (commit `c13bdf5`) with Linux
 run `41395700932`, Windows run `41395704544`, and macOS arm64 run `41396277098`,
-each wheel lane `1699 passed, 2 skipped`.
+each wheel lane `1699 passed, 2 skipped`. The step-6c delete/enumeration/define
+operation slice was verified on `host-access-operations` against the tree of
+commit `96c7c00` (release-tested tree `2addf62`) with Linux run `41399273630`,
+Windows run `41399284773`, and macOS arm64 run `41399294680`, each wheel lane
+`1704 passed, 2 skipped`.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -414,8 +420,9 @@ Recent implementation sequence from Git history:
   navigator.permissions query calls plus PermissionStatus accesses, matchMedia
   result reads/method calls, legacy navigator metadata accesses, window
   parent/top/frames/opener get/set events, step-6a value/argument/return
-  summaries with returned/threw outcomes, and step-6b method-reference reads
-  (verified `2026-11-02`)
+  summaries with returned/threw outcomes, step-6b method-reference reads, and
+  step-6c `delete`/`own_keys`/`define_property` request events (verified
+  `2026-11-02`)
 
 ## 4. Release / Distribution Status
 
@@ -560,10 +567,15 @@ The repository is executing its post-M10 direction:
   outcomes for generic HostObject get/set/call) is **landed and verified on real
   V8 (Linux + Windows)** on `2026-11-02`;
 - step 6b (method-reference reads with adjacent-call folding) is **landed and
-  verified on real V8 (Linux + Windows)** on `2026-11-02`;
-- the next execution handoff is the rest of step 6: `in`, delete, enumeration,
-  property descriptors, target association for the existing Reflect channels,
-  and summaries for independent native callbacks.
+  verified on real V8 (Linux + Windows + macOS arm64)** on `2026-11-02`;
+- step 6c (delete/enumeration/define request events on HostObject members) is
+  **landed and verified on real V8 (Linux + Windows + macOS arm64)** on
+  `2026-11-02`; descriptor queries and `in`/`hasOwnProperty` are deliberately
+  deferred because the interceptor cannot distinguish explicit queries from V8's
+  internal descriptor bookkeeping;
+- the next execution handoff is the rest of step 6: `in`/`hasOwnProperty`,
+  property descriptor queries, target association for the existing Reflect
+  channels, and summaries for independent native callbacks.
   The M11 selector follow-up (`M11-46` candidate) and `navigator.userAgentData`
   remain deferred priorities; remaining BOM/DOM gaps are inventoried in
   `docs/dom_bom_gaps.md`.
@@ -577,10 +589,10 @@ These are the questions a new coding session should resolve before major new wor
   settled, landed, and verified; selector pseudo-classes remain the planned
   selector follow-up, while UA-CH is deliberately deferred and the remaining
   candidates come from `docs/dom_bom_gaps.md`.)
-- How should the remaining step 6 represent `in`/delete/enumeration/descriptor
-  queries without folding them into get/set? (Step 6a already added
-  value/argument/return summaries and step 6b method-reference reads; see
-  `docs/host_access_tracing_plan.md` §8.)
+- How should the remaining step 6 represent `in`/`hasOwnProperty` and
+  descriptor queries without folding them into get/set? (Step 6a added
+  value/argument/return summaries, step 6b method-reference reads, and step 6c
+  delete/enumeration/define events; see `docs/host_access_tracing_plan.md` §8.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -599,9 +611,10 @@ If you need a one-line answer:
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage
 > manager, navigator-permissions, matchMedia-result, legacy-navigator, and
 > window-alias groups of a post-M11 host access trace, plus step-6a value/
-> argument/return summaries and step-6b method-reference reads — all verified on
-> real V8 (Linux + Windows) on `2026-11-02`. The step-5 object groups are
-> complete.
+> argument/return summaries, step-6b method-reference reads, and step-6c
+> delete/enumeration/define request events — all verified on real V8 (Linux +
+> Windows + macOS arm64) on `2026-11-02`. The step-5 object groups are complete;
+> descriptor queries and `in`/`hasOwnProperty` remain for the rest of step 6.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

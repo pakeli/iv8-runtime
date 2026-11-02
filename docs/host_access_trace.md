@@ -4,9 +4,11 @@ Status: **VERIFIED — HostObject get/set/call + missing-property probes + nativ
 BOM callback calls + window/nested metadata + static visualViewport + navigator
 storage/permissions managers + matchMedia results + legacy navigator metadata +
 window aliases + step-6a value/argument/return summaries + step-6b method
-references green on real V8 Linux + Windows + macOS arm64 (`2026-11-02`)**
+references + step-6c delete/enumeration/define operations (descriptor queries
+and HasProperty deferred) green on real V8 Linux + Windows + macOS arm64
+(`2026-11-02`)**
 
-This document freezes steps 1–4, the step-5 object groups, and step 6a of
+This document freezes steps 1–4, the step-5 object groups, and steps 6a–6c of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
 string-key missing-property probes, call/get coverage for independent native BOM
 callbacks (performance, crypto, Storage), intrinsic window metadata reads,
@@ -14,11 +16,12 @@ nested `navigator.connection` / `screen.orientation` / `performance.timeOrigin`
 reads, the static `visualViewport` HostObject, the `navigator.storage`
 manager's parent read plus method calls, `navigator.permissions` parent reads
 plus query calls and returned PermissionStatus accesses, matchMedia result
-objects, legacy navigator metadata, window browsing-context aliases, and
-primitive value/argument/return summaries with returned/threw outcomes, and
-method-reference reads. It is a second-layer monitoring feature. It does not change the M1 `JSContext` contract,
+objects, legacy navigator metadata, window browsing-context aliases,
+primitive value/argument/return summaries with returned/threw outcomes,
+method-reference reads, and delete/enumeration/define operation events. It is a
+second-layer monitoring feature. It does not change the M1 `JSContext` contract,
 the existing `watch_apis` / Reflect / Object.keys channels, or DOM/BOM
-values/assignment behavior.
+values/assignment/deletion/enumeration/definition behavior.
 
 ## 1. Entry-point contract
 
@@ -32,7 +35,14 @@ The only operations covered by this slice are the generic callbacks in
 | `method_callback` | A script invoked a method registered in `HostObject::method_names()`. |
 | `method_getter` | A script read a function-valued method property; recorded as `get_method` (or folded into the following call). |
 | `named_property_getter` | A script read a missing string key after normal lookup; recorded as `get_probe`. |
+| `named_property_deleter` | A script requested deletion of a string key; recorded as `delete`. |
+| `named_property_enumerator` | A script requested own-key enumeration; recorded as `own_keys` with an empty member. |
+| `named_property_definer` | A script requested definition of a string property; recorded as `define_property` when V8 routes the definition through the named definer. |
+| `named_property_query` | No-op; keeps `in` / `hasOwnProperty` / descriptor lookup on the normal path and is not recorded. |
 | independent native callbacks | performance/crypto/Storage methods, plus the Storage `length` accessor, record `call`/`get` with native identity tokens. |
+
+The named descriptor callback is intentionally **not** installed; descriptor
+queries remain untraced (see §4.13).
 
 This is **not** a V8-wide property-access hook. It proves that a native host
 entry point ran; it does not prove every `obj.x` expression was observed.
@@ -81,7 +91,12 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `window.name` | records `get` and `set` |
 | `window.origin` / `isSecureContext` / `crossOriginIsolated` / `closed` / `frameElement` | records `get`; read-only behavior unchanged |
 | `window.parent` / `top` / `frames` / `opener` | records `get`; parent/frames/opener also record `set`, top stays read-only |
-| `'x' in navigator`, `delete`, enumeration, descriptor queries | not covered yet; remaining step 6 |
+| `delete navigator.userAgent` | records `delete` before V8 applies the deletion; the return value (including `false` for a non-configurable property) is unchanged |
+| `delete navigator.missing` | records `delete`; the normal `true` result is unchanged |
+| `Object.keys(navigator)` / `for...in` | records one member-less `own_keys` event per own-key request; keys and order are unchanged |
+| `Object.defineProperty(navigator, 'x', {...})` | records `define_property` when V8 routes the definition through the named definer; the result and property behavior are unchanged |
+| method deletion and redefinition | records `delete` / `define_property`; descriptor materialization may still record `get_method` |
+| `'x' in navigator`, `hasOwnProperty`, descriptor queries | not covered; a descriptor read may still evaluate a getter and record `get`/`get_method` |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
 
@@ -162,8 +177,10 @@ outcome?, value_summary?, argument_count?, argument_summaries?,
 return_summary?
 ```
 
-- `member` is the property or method name as registered by the HostObject.
-- `operation` is `get`, `set`, `get_method`, `call`, or `get_probe`.
+- `member` is the property or method name as registered by the HostObject; it is
+  empty for `own_keys`.
+- `operation` is `get`, `set`, `get_method`, `call`, `get_probe`, `delete`,
+  `own_keys`, or `define_property`.
 - `phase` is always `enter` in this slice.
 - `resolution` is present only for `get_probe`; current value is `"missing"`.
   Present/unknown classification is not emitted.
@@ -176,9 +193,9 @@ return_summary?
   - `argument_count`: full argument count for `call`;
   - `argument_summaries`: first up to 8 argument summaries for `call`;
   - `return_summary`: for `call` when `outcome` is `"returned"`.
-  These fields are absent on `get_method`, `get_probe`, on independent native
-  callbacks, and when completion was unavailable (e.g. the event was cleared or
-  the trace was stopped).
+  These fields are absent on `get_method`, `get_probe`, `delete`, `own_keys`,
+  `define_property`, on independent native callbacks, and when completion was
+  unavailable (e.g. the event was cleared or the trace was stopped).
 
 Report shape:
 
@@ -193,7 +210,8 @@ Report shape:
     "coverage": {
         "scope": "installed HostObject getter/setter/method/get_probe callbacks",
         "object_types": [...],
-        "operations": ["get", "set", "get_method", "call", "get_probe"],
+        "operations": ["get", "set", "get_method", "call", "get_probe",
+                       "delete", "own_keys", "define_property"],
         "phase": "enter",
         "summaries": "generic HostObject get/set/call: returned/threw outcome, ...",
         "not_covered": [...],
@@ -203,10 +221,11 @@ Report shape:
 
 ## 4.1 Missing-property probes (step 4)
 
-Host-object templates install a named getter with `kNonMasking` and
-`kOnlyInterceptStrings`. A no-op named query handler keeps `in`,
-`hasOwnProperty`, `Object.keys`, and descriptor queries on the normal path. The
-getter also checks real own/prototype properties without invoking getters before
+Host-object templates install a named getter with `kOnlyInterceptStrings`; the
+previous `kNonMasking` flag was removed in step 6c so existing string properties
+also reach the named operation callbacks. A no-op named query handler keeps
+`in`, `hasOwnProperty`, and descriptor queries on the normal path. The getter
+also checks real own/prototype properties without invoking getters before
 recording anything; a Proxy or host-object prototype is treated conservatively
 as present, so it cannot produce a false missing verdict.
 
@@ -221,8 +240,9 @@ the script still receives `undefined` (or the normal prototype result). It does
 not create placeholders, proxies, or return values. The current implementation
 emits only `resolution: "missing"`; it does not emit `present` or `unknown`
 events for ordinary successful reads. Numeric indices, Symbols, non-HostObject
-objects, and `in` / delete / enumeration / descriptor operations remain outside
-this slice.
+objects, and `in` / `hasOwnProperty` / descriptor queries remain outside this
+slice. Deletion, own-key enumeration, and property definition are covered in
+§4.13.
 
 ## 4.2 Independent native BOM callbacks (step 5a)
 
@@ -483,6 +503,42 @@ produce a separate `call`. The folding rule is deliberately conservative: it
 never removes a non-adjacent `get_method` event, and no user `toString`/`valueOf`
 or property Get is executed to produce method metadata.
 
+## 4.13 Delete, enumeration, and define operations (step 6c)
+
+Host-object templates keep the named interceptor active for existing string
+properties (they no longer set `kNonMasking`), so the named deleter, enumerator,
+and definer observe requests that previously bypassed the interceptor. Every
+callback returns `Intercepted::kNo` or an empty extra-key array, so V8 still
+performs the real operation and results/errors are unchanged.
+
+| JavaScript behavior | Event | Notes |
+|---|---|---|
+| `delete host.userAgent` | `delete` | Recorded before V8 applies deletion. A non-configurable property still returns `false`; the event is evidence of the request, not proof of deletion. |
+| `delete host.missing` | `delete` | The normal `true` result is unchanged. |
+| `Object.keys(host)` / `for...in` | `own_keys` | One event per request with `member: ""`. The enumerator returns no extra keys; V8's normal own-key set and order are preserved. |
+| `Object.defineProperty(host, 'x', {...})` | `define_property` | Recorded when V8 routes the definition through the named definer, for missing or existing keys. The definition result and descriptors are unchanged. |
+| method deletion/redefinition | `delete` / `define_property` | A preceding descriptor read may still materialize the method accessor and record `get_method`. |
+
+These operations carry only the common event fields; there are no outcome,
+value, argument, or return summaries for them yet. They use the same object
+identity, generation, filter, resource, and source attribution as get/set/call.
+
+Descriptor and HasProperty operations are deliberately deferred:
+
+- The named descriptor callback is not installed. When it was present (attempt
+  `d314256`), V8 also invoked it for internal property bookkeeping, such as
+  adding the per-wrapper `matchMedia` `onchange` property via native `Set`.
+  Those events were indistinguishable from explicit
+  `Object.getOwnPropertyDescriptor` calls and polluted ordinary matchMedia
+  traces.
+- `in` / `hasOwnProperty` do not have a reliable, non-invasive record point in
+  this interceptor design. The no-op query handler keeps their lookup normal;
+  recording them by returning `kYes`/`kNo` would change semantics.
+- An explicit descriptor read still performs the normal lookup. Reading a native
+  data-property descriptor can evaluate its getter (emitting `get`), and reading
+  a method descriptor can materialize the method accessor (emitting
+  `get_method`); there is simply no `get_own_property_descriptor` event.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -523,39 +579,43 @@ old channel.
   5a/5e); array element reads on `navigator.plugins` / `mimeTypes`,
   MediaQueryList/PermissionStatus `onchange`, and nested `classList` /
   `validity` objects.
-- Summaries for independent native callbacks (only generic HostObject get/set/
-  call has them in step 6a); exception messages, stacks, and timing.
+- Summaries for independent native callbacks and for `delete`/`own_keys`/
+  `define_property` (only generic HostObject get/set/call has them in step 6a);
+  exception messages, stacks, and timing.
 - Arrays and other plain values returned from host getters/methods.
 - User-created plain JS objects, object literals, class instances, destructuring
   beyond covered getter execution, Proxy/AST instrumentation, and explicit
   object-level hooks.
-- `in`, delete, enumeration, property descriptors, dynamic
-  defineProperty/shadowing behavior, and missing-property probes on
-  non-HostObject objects (including numeric keys and Symbols).
+- `in` / `hasOwnProperty`, descriptor queries, non-HostObject deletion /
+  enumeration / definition / dynamic shadowing behavior, and missing-property
+  probes on non-HostObject objects (including numeric keys and Symbols).
 - Read-only write attempts that V8 rejects before reaching a native setter.
 - Arguments/returns for non-generic trace sources, exception messages, stacks,
   timing, Inspector pauses / `break_on_hit`, and DevTools evaluation attribution.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The step-5 object groups are complete. Step 6a now adds primitive value,
-argument, and return summaries plus returned/threw outcomes for the generic
-HostObject get/set/call path. Remaining step-6 work: `in`,
-delete, enumeration, descriptors, target association for existing Reflect
-channels, and summaries for independent native callbacks. Plain-property/
-returned-collection gaps (onchange, array elements, plain returned values,
-global binding reads) remain explicit non-goals.
+The step-5 object groups and step-6a/6b slices are complete. Step 6c adds
+request events for delete, own-key enumeration, and property definition on
+HostObject string members while preserving their results and descriptors.
+Remaining step-6 work: `in`/`hasOwnProperty`, descriptor queries, target
+association for the existing Reflect channels, native-callback summaries, and
+exception messages/stacks/timing. Plain-property/returned-collection gaps
+(onchange, array elements, plain returned values, global binding reads) remain
+explicit non-goals.
 
 ## 8. Verification
 
-Verified on real V8 at commit `c13bdf5` (branch `host-access-method-reads`):
+Verified on real V8 against the tree of commit `96c7c00` (branch
+`host-access-operations`; the release runs used the identical tree `2addf62`,
+cleanly re-committed as `96c7c00`):
 
-- Linux `release-linux` run `41395700932` — cp311 / cp312 / cp313 / cp314,
-  each `1699 passed, 2 skipped`;
-- Windows `release-windows` run `41395704544` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1699 passed, 2 skipped`;
-- macOS arm64 `release-macos` run `41396277098` — cp311 / cp312 / cp313 /
-  cp314 `macosx_11_0_arm64` wheels, each `1699 passed, 2 skipped`.
+- Linux `release-linux` run `41399273630` — cp311 / cp312 / cp313 / cp314,
+  each `1704 passed, 2 skipped`;
+- Windows `release-windows` run `41399284773` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1704 passed, 2 skipped`;
+- macOS arm64 `release-macos` run `41399294680` — cp311 / cp312 / cp313 /
+  cp314 `macosx_11_0_arm64` wheels, each `1704 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
@@ -569,12 +629,19 @@ Verified on real V8 at commit `c13bdf5` (branch `host-access-method-reads`):
 `test/test_access_trace_match_media.py` (3 items),
 `test/test_access_trace_legacy_navigator.py` (3 items),
 `test/test_access_trace_window_aliases.py` (4 items),
-`test/test_access_trace_values.py` (6 items), and
-`test/test_access_trace_method_reads.py` (3 items) ran in every lane. The full
-suite collects 1701 items; 1699 pass and 2 are skipped.
+`test/test_access_trace_values.py` (6 items),
+`test/test_access_trace_method_reads.py` (3 items), and
+`test/test_access_trace_operations.py` (5 items) ran in every lane. The full
+suite collects 1706 items; 1704 pass and 2 are skipped.
 
 The step-6a value-summary, step-6b method-reference, and legacy-navigator slices
-passed on their first CI attempts. The first window-alias attempt (`ac4e1f5`) made the writable
+passed on their first CI attempts. The first step-6c attempt (`d314256`, Linux
+`41398033669` / Windows `41398037880`) failed three existing matchMedia /
+visualViewport expectations because the named descriptor callback also fired for
+V8's internal property bookkeeping (for example, adding the per-wrapper
+matchMedia `onchange` through native `Set`). The final slice omits that callback,
+records delete/enumeration/define only, and passed Linux, Windows, and macOS on
+the runs above. The first window-alias attempt (`ac4e1f5`) made the writable
 aliases non-configurable, which broke top-level `let frames`; `b936307` keeps
 their configurable attributes and passes. The matchMedia and storage-manager slices also passed on
 their first CI attempts. The permissions slice needed a second CI run only
@@ -631,6 +698,11 @@ Coverage in this slice:
 - method references record `get_method`; adjacent calls fold into one `call`,
   intervening accesses keep both, method identity/override/descriptor behavior
   and non-function override reads are covered;
+- delete, own-key enumeration, and define requests record `delete`, `own_keys`
+  (empty member), and `define_property` while preserving deletion results,
+  enumeration order/identity, and definition results; the new operations work
+  for existing and missing members, native properties, and methods, and obey
+  object-type filters;
 - read-only writes stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
@@ -641,6 +713,6 @@ Coverage in this slice:
 
 The remaining blind spots are plain-property/returned-collection gaps
 (MediaQueryList/PermissionStatus `onchange`, array elements, plain returned
-values, global binding reads), the rest of step 6
-(`in`/delete/enumeration/descriptors, Reflect target identity, native-callback
-summaries), and step 7 (runtime report/usage flow).
+values, global binding reads), the rest of step 6 (`in`/`hasOwnProperty`,
+descriptor queries, Reflect target identity, native-callback summaries,
+exception messages/stacks/timing), and step 7 (runtime report/usage flow).

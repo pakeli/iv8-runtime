@@ -38,8 +38,9 @@ git log --oneline --decorate -n 20
   plus the step-5 native BOM call, window metadata, nested metadata, static
   visualViewport, navigator.storage manager, navigator.permissions,
   matchMedia-result, legacy-navigator, and window-alias groups — the complete
-  step-5 object coverage — plus step-6a value/argument/return summaries and
-  step-6b method-reference reads**
+  step-5 object coverage — plus step-6a value/argument/return summaries,
+  step-6b method-reference reads, and step-6c delete/enumeration/define
+  operations**
   (`Page.start_access_trace` / `stop_access_trace` / `read_access_trace`, native
   get/set/call, HostObject missing-string-key `get_probe`,
   performance/crypto/Storage callback calls, window metadata accessors,
@@ -47,10 +48,11 @@ git log --oneline --decorate -n 20
   navigator.storage parent reads plus manager calls, permissions query plus
   PermissionStatus accesses, matchMedia result reads/method calls, legacy
   navigator metadata, window alias get/set events, step-6a value/argument/
-  return summaries with returned/threw outcomes, and step-6b method-reference
-  reads), green on real V8 at commit `c13bdf5`; step 5 object coverage and
-  steps 6a–6b are complete, while the rest of step 6 (`in`, delete, enumeration,
-  descriptors, native-callback summaries) remains pending.
+  return summaries with returned/threw outcomes, step-6b method-reference
+  reads, and step-6c `delete`/`own_keys`/`define_property` request events),
+  green on real V8 at commit `96c7c00`; step 5 object coverage and steps 6a–6c
+  are complete, while the rest of step 6 (`in`/`hasOwnProperty`, descriptor
+  queries, native-callback summaries) remains pending.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -127,7 +129,8 @@ Answer roughly as follows:
     visualViewport metadata/methods, navigator.storage parent reads plus manager
     calls, permissions query/status accesses, matchMedia result accesses,
     plugins/mimeTypes/javaEnabled, parent/top/frames/opener get/set, step-6a
-    value/argument/return summaries, and step-6b method-reference reads; see
+    value/argument/return summaries, step-6b method-reference reads, and
+    step-6c delete/enumeration/define request events; see
     `docs/host_access_trace.md`).
 
 ## Handoff Discipline
