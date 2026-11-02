@@ -1107,6 +1107,155 @@ class Page:
             raise TypeError("clear must be a bool")
         return self._native.read_access_trace(clear)
 
+    def access_trace_report(self, *, clear: bool = False,
+                            progress=None) -> dict:
+        """Aggregate the current access trace into an actionable usage report.
+
+        This is a pure-Python view over :meth:`read_access_trace`; it does not
+        execute page code. By default it is non-destructive (``clear=False``);
+        pass ``clear=True`` to clear the underlying raw log after building the
+        report. The report is based only on events executed during the current
+        trace session and is therefore a dynamic branch, not a static dependency
+        list.
+
+        ``progress`` is an optional caller-supplied ``dict`` describing event-loop
+        progress (for example ``{"event_loop": "run_until_idle", "complete": True,
+        "max_steps": 200}``). It is copied into the report and never interpreted by
+        the runtime.
+
+        The returned dict contains:
+
+        - ``trace``: ``enabled``, ``generation``, ``max_events``,
+          ``dropped_events``, and ``filter_object_types``;
+        - ``coverage``: the trace coverage dictionary, including
+          ``not_covered`` boundaries;
+        - ``events``: ``count``, ``by_operation``, and ``by_object_type`` totals;
+        - ``accesses``: first-seen ordered groups keyed by object type/label/
+          object ID/member/operation, with count, first/last ``seq``, first
+          resource/source, and optional outcome counts;
+        - ``missing_candidates``: grouped ``get_probe``/``resolution:
+          "missing"`` candidates with the same first-source metadata;
+        - ``warnings``: structured capacity/filter/recording/empty-log warnings;
+        - ``progress``: the copied caller progress or ``None``.
+
+        Raw individual events remain available through :meth:`read_access_trace`.
+        Raises ``TypeError`` for invalid argument types and
+        ``JSContextDisposedError`` after ``dispose()``.
+        """
+        if not isinstance(clear, bool):
+            raise TypeError("clear must be a bool")
+        if progress is not None and not isinstance(progress, dict):
+            raise TypeError("progress must be a dict or None")
+        trace = self.read_access_trace(clear=clear)
+        accesses = {}
+        missing = {}
+        by_operation = {}
+        by_object_type = {}
+        for event in trace["events"]:
+            operation = event["operation"]
+            object_type = event["object_type"]
+            by_operation[operation] = by_operation.get(operation, 0) + 1
+            by_object_type[object_type] = by_object_type.get(object_type, 0) + 1
+            key = (object_type, event["label"], event["object_id"],
+                   event["member"], operation)
+            group = accesses.get(key)
+            if group is None:
+                group = {
+                    "object_type": object_type,
+                    "label": event["label"],
+                    "object_id": event["object_id"],
+                    "member": event["member"],
+                    "operation": operation,
+                    "count": 0,
+                    "first_seq": event["seq"],
+                    "last_seq": event["seq"],
+                    "first_resource_name": event["resource_name"],
+                    "first_source_kind": event["source_kind"],
+                    "outcomes": {},
+                }
+                if "resolution" in event:
+                    group["resolution"] = event["resolution"]
+                accesses[key] = group
+            group["count"] += 1
+            group["last_seq"] = event["seq"]
+            outcome = event.get("outcome")
+            if outcome is not None:
+                group["outcomes"][outcome] = (
+                    group["outcomes"].get(outcome, 0) + 1)
+            if operation == "get_probe" and event.get("resolution") == "missing":
+                missing_key = (object_type, event["label"], event["object_id"],
+                               event["member"])
+                candidate = missing.get(missing_key)
+                if candidate is None:
+                    candidate = {
+                        "object_type": object_type,
+                        "label": event["label"],
+                        "object_id": event["object_id"],
+                        "member": event["member"],
+                        "count": 0,
+                        "first_seq": event["seq"],
+                        "last_seq": event["seq"],
+                        "first_resource_name": event["resource_name"],
+                        "first_source_kind": event["source_kind"],
+                        "resolution": "missing",
+                    }
+                    missing[missing_key] = candidate
+                candidate["count"] += 1
+                candidate["last_seq"] = event["seq"]
+
+        warning_list = []
+        if trace["dropped_events"]:
+            warning_list.append({
+                "code": "capacity_exceeded",
+                "message": (
+                    f"{trace['dropped_events']} event(s) were dropped after "
+                    f"the max_events={trace['max_events']} capacity was full"),
+            })
+        if trace["filter_object_types"] is not None:
+            warning_list.append({
+                "code": "object_type_filter_active",
+                "message": (
+                    "object_types filtering is active; events outside the "
+                    f"filter were not recorded: {trace['filter_object_types']!r}"),
+            })
+        if not trace["enabled"]:
+            warning_list.append({
+                "code": "trace_not_recording",
+                "message": "the trace is currently stopped or was never started",
+            })
+        if not trace["events"]:
+            warning_list.append({
+                "code": "no_events",
+                "message": "no access events were recorded in this session",
+            })
+
+        trace_info = {
+            "enabled": trace["enabled"],
+            "generation": trace["generation"],
+            "max_events": trace["max_events"],
+            "dropped_events": trace["dropped_events"],
+            "filter_object_types": trace["filter_object_types"],
+        }
+        return {
+            "trace": trace_info,
+            "coverage": trace["coverage"],
+            "events": {
+                "count": len(trace["events"]),
+                "by_operation": by_operation,
+                "by_object_type": by_object_type,
+            },
+            "accesses": sorted(
+                accesses.values(),
+                key=lambda entry: entry["first_seq"],
+            ),
+            "missing_candidates": sorted(
+                missing.values(),
+                key=lambda entry: entry["first_seq"],
+            ),
+            "warnings": warning_list,
+            "progress": dict(progress) if progress is not None else None,
+        }
+
     def dispose(self) -> None:
         """Release the page's context-owned native resources. Idempotent."""
         # M9-1: stop the DevTools server first (best-effort) so its port is freed;
