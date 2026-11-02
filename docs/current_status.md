@@ -1,18 +1,21 @@
 # Current Status
 
-Last reviewed: `2026-11-02`
+Last reviewed: `2026-11-03`
 
 ## 1. Summary
 
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-11-02`, the latest implemented and verified M11 milestone is
+As of `2026-11-03`, the latest implemented and verified M11 milestone is
+**M11-46** (`document.cookie` as a deterministic per-Page in-memory jar — the
+first slice of the object-oriented common-API completion track). Real-V8 CI is
+green on Linux, Windows, and macOS arm64 — Linux run `41479330002`, Windows run
+`41479338268`, macOS arm64 fallback run `41482460847`, all on tree `18f1f4b`,
+each wheel lane reporting `1725 passed, 2 skipped`. It builds on
 **M11-41..M11-45** (BOM viewport / media / device metadata: `visualViewport`,
 `matchMedia`, `navigator.storage`, `navigator.permissions`, and legacy navigator
-metadata). Real-V8 CI is green on both platforms — Linux run `41000182750`,
-Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
-`1626 passed, 2 skipped`:
+metadata), verified on commit `61abc3b` with `1626 passed, 2 skipped` per lane:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -79,6 +82,10 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   `visualViewport` + window flags, bounded `matchMedia`, deterministic
   `navigator.storage` and `navigator.permissions`, and empty legacy
   `navigator.plugins` / `mimeTypes` / `javaEnabled`
+- `M11-46`: `document.cookie` — deterministic per-Page in-memory jar that
+  survives `load()`, with insertion/update ordering, `max-age` / epoch
+  `expires` deletion, ordinary `ToString` coercion, and access-trace get/set
+  events; no HTTP integration or origin/path filtering
 - Post-M11 host access trace (steps 1–4, the complete step-5 object groups, steps 6a–6h, and step 7):
   `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
   recording native HostObject get/set/call entries, missing string-key
@@ -173,6 +180,14 @@ Windows run `41426817304`, each wheel lane `1720 passed, 2 skipped`. macOS arm64
 macOS arm64 fallback release run `41466841016` (macos-14, cached V8 monolith,
 `macosx_11_0_arm64` wheels) also reported `1720 passed, 2 skipped`; the official
 macos-15 run `41426828872` was cancelled while queued by runner availability.
+M11-46 (`document.cookie`) was verified on `m11-46-document-cookie` (tree
+`18f1f4b`) with Linux run `41479330002`, Windows run `41479338268`, and macOS
+arm64 fallback run `41482460847` (macos-14, cached V8 monolith,
+`macosx_11_0_arm64` wheels), each wheel lane `1725 passed, 2 skipped` and the
+five new cookie tests present. The first attempt (`f92887c`) failed only one new
+descriptor assertion that assumed native data properties expose `get`/`set`;
+`18f1f4b` corrected the test to the framework's materialized data descriptor
+(the descriptor read evaluates the getter) without changing runtime behavior.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -602,19 +617,26 @@ The repository is executing its post-M10 direction:
 - step 7 (aggregated usage report and workflow) is **landed and verified on real
   V8 (Linux + Windows release lanes; macOS arm64 macos-14 fallback release)** on
   `2026-11-02`; see `docs/host_access_trace_workflow.md`;
-- the next execution handoff is selecting `M11-46` from the selector follow-up
-  or the remaining BOM/DOM gaps. `navigator.userAgentData` remains deliberately
-  deferred; gaps are inventoried in `docs/dom_bom_gaps.md`.
+- M11-46 (`document.cookie`, the first Document slice of the object-oriented
+  common-API track) is **landed and verified on real V8 (Linux + Windows +
+  macOS arm64)** on `2026-11-02`; see `docs/m11_46_document_cookie.md` and
+  `docs/m11_46_report.md`;
+- the next execution handoff continues the object-oriented common-API track
+  with the next Document slice (text nodes / `document.write` and related
+  surfaces), then moves to the next commonly used object. `document.cookie`
+  landed as M11-46; the unassigned selector follow-up remains deferred, and
+  `navigator.userAgentData` remains deliberately deferred. Gaps are inventoried
+  in `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete compatibility slice should become `M11-46` after the access
-  trace work? (`docs/decision_log.md` §A — `M11-1` through `M11-45` are
-  settled, landed, and verified; selector pseudo-classes remain the planned
-  selector follow-up, while UA-CH is deliberately deferred and the remaining
-  candidates come from `docs/dom_bom_gaps.md`.)
+- Which concrete Document API slice should become `M11-47` next on the
+  object-oriented common-API track? (`docs/decision_log.md` §A — `M11-1`
+  through `M11-46` are settled, landed, and verified; the unassigned selector
+  pseudo-class follow-up remains deferred, UA-CH is deliberately deferred, and
+  the remaining candidates come from `docs/dom_bom_gaps.md`.)
 - Should the `in` operator, non-HostObject query targets, or wrapper-cached
   references ever be covered through a Proxy/AST design, or remain explicit
   out-of-scope blind spots? (Steps 6a–6h cover the explicit has/descriptor APIs

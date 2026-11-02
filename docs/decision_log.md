@@ -780,14 +780,54 @@ each reported `1720 passed, 2 skipped`. A macOS arm64 fallback release build
 reported `1720 passed, 2 skipped`; the official macos-15 runner run was
 cancelled while queued and produced no test failure.
 
-The next work item is selecting `M11-46` from the selector follow-up or the
-ranked BOM/DOM gaps.
+The next work item became `M11-46` on the object-oriented common-API track
+(entry 43); the selector follow-up remains unassigned.
+
+### 43. Document.cookie — first Document slice of the common-API track
+
+Decided/verified `2026-11-02`.
+
+The project direction changed from filling isolated BOM/DOM gaps to completing
+commonly used browser objects one at a time. `Document` is the first object, and
+`M11-46` is its first slice: `document.cookie`.
+
+- **Numbering.** `M11-46` had been an unassigned placeholder ("the selector
+  follow-up or another gap item"). It is now assigned to this slice. Selector
+  pseudo-classes were never numbered and remain a deferred, unassigned
+  follow-up. This avoids renumbering and records the choice explicitly.
+- **Storage.** The jar is owned by `PageState`, not `DocumentHost`, so entries
+  survive `load()` generations and are isolated per `Page`. It is never persisted
+  or shared across processes.
+- **Determinism.** There is no wall clock. `max-age <= 0` deletes; `expires` is
+  parsed as an HTTP date and deletes only when at or before the Unix epoch.
+  Positive/later expiries never fire during a Page's lifetime. This keeps the
+  default environment deterministic.
+- **Parsing.** Only the first `name=value` pair is processed; ASCII OWS is
+  trimmed; names update in place and new names append; malformed inputs are
+  ignored. Attributes are case-insensitive and `path` / `domain` / `secure` /
+  `SameSite` are accepted but ignored. Non-string assignments use ordinary
+  `ToString` coercion, and conversion exceptions propagate.
+- **Descriptor.** The property uses the standard writable HostObject native data
+  property path. `Object.getOwnPropertyDescriptor` materializes a data descriptor
+  (`value`, `writable: true`, `enumerable: true`, `configurable: false`) and
+  evaluates the getter; this matches other writable HostObject properties.
+- **Trace.** Reads/writes use the generic getter/setter path, so the access
+  trace records `document` / `cookie` / `get|set` with ordinary completion
+  metadata. No new trace event type or Python/JS API was added.
+
+The first verification attempt (`f92887c`) failed only one new descriptor test
+that assumed `get`/`set` accessors; `18f1f4b` corrected the test to the
+framework's descriptor shape without runtime changes. The full suite collects
+1727 items. Linux `41479330002`, Windows `41479338268`, and macOS arm64 fallback
+`41482460847` each reported `1725 passed, 2 skipped` on tree `18f1f4b`; the five
+new tests ran in every lane. See `docs/m11_46_document_cookie.md` and
+`docs/m11_46_report.md`.
 
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
 
-### A. Which concrete compatibility slice becomes `M11-46`?
+### A. Which concrete compatibility slice becomes the next numbered milestone?
 
 Settled and implemented so far:
 
@@ -934,9 +974,17 @@ direction alone.
   `navigator.permissions`, and empty legacy navigator metadata. Boundary:
   `docs/m11_41_45_bom_extras.md`. Verified on real V8 (Linux `41000182750`,
   Windows `41000186396`, commit `61abc3b`, each wheel lane
-  `1626 passed, 2 skipped`); see `docs/m11_41_45_report.md`. The next slice
-  (`M11-46`) can resume selector pseudo-classes or take another gap item;
-  UA-CH remains deliberately deferred.
+  `1626 passed, 2 skipped`); see `docs/m11_41_45_report.md`.
+
+- `M11-46` — **`document.cookie`** — selected on `2026-11-02` as the first slice
+  of the object-oriented common-API track (Document first): a deterministic
+  per-Page in-memory jar with insertion/update ordering, `max-age` / epoch
+  `expires` deletion, and access-trace get/set events; no HTTP integration or
+  origin/path filtering. Boundary: `docs/m11_46_document_cookie.md`. Verified on
+  real V8 (Linux `41479330002`, Windows `41479338268`, macOS arm64 fallback
+  `41482460847`, tree `18f1f4b`, each wheel lane `1725 passed, 2 skipped`); see
+  `docs/m11_46_report.md`. The selector follow-up was never numbered and
+  remains deferred; UA-CH remains deliberately deferred.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

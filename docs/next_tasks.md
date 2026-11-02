@@ -1,6 +1,6 @@
 # Next Tasks
 
-Last reviewed: `2026-11-02`
+Last reviewed: `2026-11-03`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
@@ -776,7 +776,7 @@ test. Report: `docs/m11_41_45_report.md`.
 ### Next
 
 M11-41..M11-45 completed the BOM metadata batch. The post-M11 host access trace
-became the next work item (Priority 3u). The `M11-46` selector follow-up and
+became the next work item (Priority 3u). The unassigned selector follow-up and
 `navigator.userAgentData` remain deferred.
 
 ## Priority 3u: Host access trace first slice — DONE (`2026-10-30`)
@@ -816,7 +816,7 @@ roadmap: `docs/host_access_tracing_plan.md`.
 ### Next
 
 Step 4 was completed as Priority 3v below. Step 5 began as Priority 3w below;
-its remaining property/nested-object groups are next. The M11-46 selector
+its remaining property/nested-object groups are next. The unassigned selector
 follow-up remains deferred.
 
 ## Priority 3v: Host access trace missing-property probes — DONE (`2026-10-30`)
@@ -858,7 +858,7 @@ numeric indices remain out of scope, and `resolution` currently emits only
 
 Step 5 began as Priority 3w below. Remaining step-5 groups (plain BOM property
 reads and intrinsic window metadata) are next; value/argument/return summaries
-remain step 6. The M11-46 selector follow-up remains deferred.
+remain step 6. The unassigned selector follow-up remains deferred.
 
 ## Priority 3w: Host access trace native BOM calls — DONE (`2026-10-30`)
 
@@ -892,7 +892,7 @@ Commit `ac80ee8` (branch `host-access-bom-calls`):
 
 The intrinsic window metadata group was completed as Priority 3x below.
 Remaining step-5 groups: plain property reads on performance/Storage and nested
-BOM objects. Value/argument/return summaries remain step 6. The M11-46 selector
+BOM objects. Value/argument/return summaries remain step 6. The unassigned selector
 follow-up remains deferred.
 
 ## Priority 3x: Host access trace window metadata reads — DONE (`2026-10-30`)
@@ -930,7 +930,7 @@ static visualViewport group as Priority 3z, the navigator.storage manager as
 Priority 3aa, navigator.permissions/PermissionStatus as Priority 3ab, and
 matchMedia results as Priority 3ac. Priorities 3ad/3ae cover the final step-5
 groups (legacy navigator metadata and window aliases); all planned step-5 object
-groups are now complete. Value/argument/return summaries remain step 6. The M11-46
+groups are now complete. Value/argument/return summaries remain step 6. The unassigned
 selector follow-up remains deferred.
 
 ## Priority 3y: Host access trace nested metadata — DONE (`2026-10-30`)
@@ -966,7 +966,7 @@ and the new timeOrigin event. The runtime behavior was intended.
 Continue step 5 with the static visualViewport group (Priority 3z), then
 `matchMedia` result objects, `navigator.storage` / `permissions` / `plugins` /
 `mimeTypes`, and other plain property reads. Value/argument/return summaries
-remain step 6. The M11-46 selector follow-up remains deferred.
+remain step 6. The unassigned selector follow-up remains deferred.
 
 ## Priority 3z: Host access trace static visualViewport — DONE (`2026-10-30`)
 
@@ -1008,7 +1008,7 @@ documented. Runtime values and read/write behavior were intended.
 Continue step 5 with the navigator.storage manager group (Priority 3aa below),
 then `matchMedia` result objects, `navigator.permissions` / `plugins` /
 `mimeTypes`, and other plain property reads. Value/argument/return summaries
-remain step 6. The M11-46 selector follow-up remains deferred.
+remain step 6. The unassigned selector follow-up remains deferred.
 
 ## Priority 3aa: Host access trace navigator.storage manager — DONE (`2026-10-30`)
 
@@ -1045,7 +1045,7 @@ This slice passed on the first CI attempt.
 Continue step 5 with navigator.permissions/PermissionStatus (Priority 3ab
 below), then `matchMedia` result objects, `navigator.plugins` / `mimeTypes`, and
 other plain property reads. Value/argument/return summaries remain step 6. The
-M11-46 selector follow-up remains deferred.
+unassigned selector follow-up remains deferred.
 
 ## Priority 3ab: Host access trace navigator.permissions — DONE (`2026-10-30`)
 
@@ -1084,7 +1084,7 @@ The first CI attempt failed only because a descriptor assertion used
 
 Continue step 5 with matchMedia result objects (Priority 3ac below), then
 `navigator.plugins` / `mimeTypes` and the remaining plain/onchange reads.
-Value/argument/return summaries remain step 6. The M11-46 selector follow-up
+Value/argument/return summaries remain step 6. The unassigned selector follow-up
 remains deferred.
 
 ## Priority 3ac: Host access trace matchMedia results — DONE (`2026-10-30`)
@@ -1125,7 +1125,7 @@ This slice passed on its first CI attempt.
 
 Continue step 5 with the legacy navigator metadata (Priority 3ad below) and
 window aliases (Priority 3ae), completing the planned object groups. Then move to
-step 6 (starting with value/argument/return summaries, Priority 3ag). The M11-46
+step 6 (starting with value/argument/return summaries, Priority 3ag). The unassigned
 selector follow-up remains deferred.
 
 ## Priority 3ad: Host access trace legacy navigator metadata — DONE (`2026-10-30`)
@@ -1188,7 +1188,7 @@ value/argument/return summaries (3ag), method-reference reads (3ah),
 delete/enumeration/define operations (3ai), and the remaining query/target/
 summary/exception batch (3aj). Step 6 is complete for the traceable HostObject
 surface; `in`, non-HostObject targets, wrapper caching, asynchronous exception
-metadata, and timing remain documented blind spots. The M11-46 selector
+metadata, and timing remain documented blind spots. The unassigned selector
 follow-up remains deferred.
 
 ## Priority 3af: macOS arm64 V8-linked release wheels — DONE (`2026-10-30`)
@@ -1267,7 +1267,7 @@ Later slices completed method-reference reads (3ah), delete/enumeration/define
 operations (3ai), and explicit queries, Reflect target metadata, native
 summaries, and synchronous exception metadata (3aj). Step 6 is complete for the
 traceable HostObject surface; the `in` operator and documented wrapper blind
-spots remain. The M11-46 selector follow-up remains deferred.
+spots remain. The unassigned selector follow-up remains deferred.
 
 ## Priority 3ah: Host access trace method references (step 6b) — DONE (`2026-11-02`)
 
@@ -1307,7 +1307,7 @@ This slice passed on its first CI attempt.
 Delete/enumeration/define (3ai) and the remaining query/target/summary/
 exception batch (3aj) completed step 6. The `in` operator, non-HostObject
 targets, cached wrappers, asynchronous exception metadata, and timing remain
-documented blind spots. The M11-46 selector follow-up remains deferred.
+documented blind spots. The unassigned selector follow-up remains deferred.
 
 ## Priority 3ai: Host access trace delete/enumeration/define operations (step 6c) — DONE (`2026-11-02`)
 
@@ -1350,7 +1350,7 @@ the release-tested `2addf62`):
 
 Continue with Priority 3aj below: explicit has/descriptor query wrappers,
 Reflect target metadata, native callback/getter summaries, and synchronous
-exception metadata. The M11-46 selector follow-up remains deferred.
+exception metadata. The unassigned selector follow-up remains deferred.
 
 ## Priority 3aj: Host access trace queries, Reflect targets, native summaries, exception metadata (step 6d–6h) — DONE (`2026-11-02`)
 
@@ -1405,7 +1405,7 @@ The first full 6d–6h attempt (`8f8dc23`) failed one query test because the
 Continue with Priority 3ak below: the aggregated usage report/workflow (step 7).
 The `in` operator, non-HostObject targets, wrapper caching, asynchronous
 exception metadata, and timing remain documented blind spots rather than M11
-scope. The M11-46 selector follow-up remains deferred.
+scope. The unassigned selector follow-up remains deferred.
 
 ## Priority 3ak: Host access trace usage report/workflow (step 7) — DONE (`2026-11-02`)
 
@@ -1452,8 +1452,60 @@ expectation.
 
 ### Next
 
-Step 7 is complete. Select `M11-46` from the selector follow-up or the ranked
-BOM/DOM gaps; `navigator.userAgentData` remains deliberately deferred.
+Step 7 is complete. M11-46 (`document.cookie`) starts the object-oriented
+common-API track (Priority 3al below). Continue with the next Document slice,
+then the next commonly used object; the selector follow-up is unassigned and
+`navigator.userAgentData` remains deliberately deferred.
+
+## Priority 3al: Common-API track — Document.cookie (M11-46) — DONE (`2026-11-02`)
+
+### Goal
+
+Begin completing commonly used browser APIs one object at a time, starting with
+`Document`, instead of continuing isolated gap slices.
+
+### What landed
+
+- `document.cookie` is a writable, access-traced Document property backed by a
+  deterministic in-memory jar owned by `PageState`.
+- The setter processes the first `name=value` pair, trims ASCII whitespace,
+  updates existing names in place, and appends new names; malformed inputs are
+  ignored. `max-age <= 0` and `expires` at or before the Unix epoch delete.
+  Attributes are case-insensitive; `path` / `domain` / `secure` / `SameSite`
+  are accepted and ignored.
+- The jar survives `load()` generations and is isolated per `Page`; it is never
+  persisted. Non-string assignments use ordinary `ToString` coercion.
+- Reads/writes use the existing HostObject path, so the access trace records
+  `document` / `cookie` / `get|set` with normal completion metadata. No new
+  Python or JS API was added.
+- The descriptor is the framework's writable native data property shape:
+  `{value, writable: true, enumerable: true, configurable: false}`; the
+  descriptor read evaluates the getter.
+
+Boundary: `docs/m11_46_document_cookie.md`. Tests:
+`test/test_m11_46_document_cookie.py` (5 items). The full suite collects 1727
+items; each wheel lane: **`1725 passed, 2 skipped`**. The first attempt
+(`f92887c`) failed only one descriptor assertion that assumed `get`/`set`
+accessors; `18f1f4b` corrected the test to the materialized data descriptor
+without runtime changes.
+
+### Verification — passed
+
+Tree `18f1f4b` (branch `m11-46-document-cookie`):
+
+- Linux `release-linux` run `41479330002` — cp311–cp314, each
+  `1725 passed, 2 skipped`;
+- Windows `release-windows` run `41479338268` — Python 3.11–3.14, each
+  `1725 passed, 2 skipped`;
+- macOS arm64 fallback run `41482460847` (`macos-14`, cached V8 monolith,
+  `macosx_11_0_arm64` wheels) — cp311–cp314, each `1725 passed, 2 skipped`.
+  The official macos-15 lane remains unavailable.
+
+### Next
+
+Continue the Document object: text nodes, `document.write`/`writeln`, and
+related commonly used APIs. Then move to the next browser object (Window /
+Navigator / Element / Form / Event). The selector follow-up remains unassigned.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

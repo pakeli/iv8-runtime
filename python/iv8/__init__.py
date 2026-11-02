@@ -1002,6 +1002,17 @@ frozen empty ``navigator.plugins`` / ``mimeTypes`` with
 UI, network, Python API, or new environment key is added. See
 ``docs/m11_41_45_bom_extras.md``.
 
+M11-46 starts the object-oriented common-API track with ``document.cookie``. It
+is a writable, access-traced property backed by a deterministic per-Page
+in-memory jar: the first ``name=value`` pair per assignment, insertion/update
+ordering, ASCII whitespace trimming, case-insensitive attributes,
+``max-age <= 0`` / epoch ``expires`` deletion, and ordinary ``ToString``
+coercion. ``path`` / ``domain`` / ``secure`` / ``SameSite`` are accepted and
+ignored; the jar survives ``load()`` and is isolated per ``Page``. There is no
+HTTP cookie integration, origin/path filtering, wall-clock expiry, persistence,
+or cookie store, and no new Python API or environment key. See
+``docs/m11_46_document_cookie.md``.
+
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and

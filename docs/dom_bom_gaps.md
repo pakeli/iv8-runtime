@@ -37,7 +37,7 @@ viewport/media/device metadata verified `2026-10-30`)
 | Missing | Status |
 |---|---|
 | `storage` events and cross-page/cross-tab notification | **absent** — M11-7 provides per-Page in-memory stores only |
-| `document.cookie` | **excluded** |
+| `document.cookie` | **implemented** — M11-46 deterministic per-Page in-memory jar (`max-age` / epoch `expires` deletion; path/domain/secure/SameSite ignored; no HTTP integration) |
 | IndexedDB, Cache API | **absent** |
 | `navigator.storage` / `StorageManager` | **partially implemented** — M11-43 adds static Promise-based `estimate()` (`usage: 0`, fixed 10 GiB quota), `persisted()`, and `persist()` (both `false`); no quota accounting, persistence, buckets, filesystem, or `getDirectory()` |
 | Persistence across `Page` instances or processes | **excluded** — entries survive `load()` within one Page only |
@@ -230,7 +230,7 @@ Implemented for contrast: inline and classic external `<script>` execution,
 
 | Missing | Status |
 |---|---|
-| `document.cookie` | **excluded** |
+| `document.cookie` | **implemented** — M11-46 deterministic per-Page in-memory jar; see §1.2 for limits |
 | `document.createRange` / `createTreeWalker` / `createNodeIterator` / `createEvent` | **absent** |
 | `document.all` / `document.plugins` | **absent** — M11-45 adds empty `navigator.plugins` / `mimeTypes` only |
 | Browsing contexts, frames, `<iframe>` behavior | **absent** |
@@ -238,7 +238,8 @@ Implemented for contrast: inline and classic external `<script>` execution,
 Implemented for contrast: M11-23 added read-only `characterSet` / `contentType`
 / `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
 `activeElement` and `hasFocus()`; M11-22 added read-only `select.length`, plus
-`select.item` / `namedItem`.
+`select.item` / `namedItem`; M11-46 added the writable, traced
+`document.cookie` jar (deterministic and page-scoped, with no HTTP backing).
 
 ## 3. Cross-cutting architecture boundaries
 

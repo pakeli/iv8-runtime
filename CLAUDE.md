@@ -30,10 +30,13 @@ git log --oneline --decorate -n 20
   `tools/build_v8_macos.sh` + `.github/workflows/release-macos.yml`) all build
   and test V8-linked wheels. macOS wheels are tagged `macosx_11_0_arm64`;
   Intel/x64 and universal2 are not built.
-- As of `2026-10-30`, the latest verified milestone is **M11-41..M11-45** (BOM
-  viewport/media/device metadata), green on real V8 Linux + Windows (commit
-  `61abc3b`, merged to `master` on the fork; upstream sync out of scope). The
-  M11 line is compatibility-first.
+- As of `2026-11-02`, the latest verified milestone is **M11-46**
+  (`document.cookie` — deterministic per-Page in-memory jar, the first slice of
+  the object-oriented common-API completion track), green on real V8 Linux +
+  Windows + macOS arm64 (tree `18f1f4b`, merged to `master` on the fork;
+  upstream sync out of scope). It follows **M11-41..M11-45** (BOM
+  viewport/media/device metadata, commit `61abc3b`). The M11 line is
+  compatibility-first.
 - A post-M11 monitoring slice is also verified: **host access trace steps 1–4
   plus the step-5 native BOM call, window metadata, nested metadata, static
   visualViewport, navigator.storage manager, navigator.permissions,
@@ -106,7 +109,7 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-45`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-46`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
     Storage, Blob/File/FileReader, event cancellation,
     `classList`/`toggleAttribute`, event capture + listener options, element
@@ -120,10 +123,11 @@ Answer roughly as follows:
     (deterministic dialogs, performance entry timeline, `structuredClone`,
     single-context window metadata, `scheduler.postTask`), and the BOM
     viewport/media/device batch (`visualViewport`, bounded `matchMedia`,
-    `navigator.storage` / `permissions`, legacy navigator metadata) — verified
-    on real V8 Linux + Windows; latest verification `2026-10-30`;
-  - latest implemented and verified compatibility feature: M11-41..M11-45
-    (BOM viewport/media/device metadata);
+    `navigator.storage` / `permissions`, legacy navigator metadata), and the
+    deterministic `document.cookie` jar (M11-46) — verified on real V8 Linux +
+    Windows + macOS arm64; latest verification `2026-11-02`;
+  - latest implemented and verified compatibility feature: M11-46
+    (`document.cookie`, first Document slice of the common-API track);
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

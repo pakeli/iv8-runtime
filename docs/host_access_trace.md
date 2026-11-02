@@ -73,6 +73,7 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `navigator.userAgent` / `navigator['userAgent']` | records `get` |
 | `element.textContent = 'abc'` | records `set`, where the property is declared writable |
 | `document.querySelector('#app')` | records `call` |
+| `document.cookie = 'a=1'` / `document.cookie` | records `set` / `get` on the writable `cookie` property |
 | `const fn = document.querySelector` | records `get_method`; it is not a `call` |
 | `navigator.someMissingProperty` | records `get_probe` with `resolution: "missing"` for a HostObject string key |
 | `performance.now()` / `crypto.randomUUID()` | records `call` |
@@ -134,7 +135,7 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | legacy navigator metadata | cached arrays + native function | `navigator.plugins` / `mimeTypes` / `javaEnabled` are returned by `NavigatorHost::get_property`; javaEnabled calls use their own native token. |
 | window aliases | native global accessors | `parent` / `top` / `frames` / `opener` are traced accessors backed by per-generation PageState overrides. |
 | `location` | `LocationHost` | Installed as a global; `toString()` is its only method. |
-| `document` | `DocumentHost` | Installed as a global; property getters and methods. |
+| `document` | `DocumentHost` | Installed as a global; property getters, the writable `cookie` property (M11-46), and methods. |
 | element wrappers | `ElementHost` | Lazily created and cached per backing `DomNode`; not a global. Fresh JS wrappers can represent the same native backing. |
 | — | `EventTargetHost` | Abstract/base plumbing. |
 | — | `WindowEventTarget` | Listener store only; never installed. |

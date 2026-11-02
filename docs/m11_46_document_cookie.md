@@ -1,6 +1,6 @@
 # M11-46 — Document.cookie
 
-Status: **IN PROGRESS — deterministic per-Page cookie jar**
+Status: **VERIFIED — real V8 green on Linux + Windows + macOS arm64 (`2026-11-02`)**
 
 This is the first slice of the object-oriented common-API completion track:
 finish a browser object's most-used surface before moving to the next object.
@@ -87,6 +87,7 @@ rules are not modeled.
 
 ## Verification
 
-Real-V8 Linux/Windows release lanes and a macOS arm64 wheel build must execute
-the new tests and the full suite. The final verification counts and run IDs are
-recorded in `docs/m11_46_report.md` after the change is verified.
+Real V8 is green for the release-tested tree `18f1f4b` on Linux, Windows, and
+macOS arm64; every wheel lane reports `1725 passed, 2 skipped` and the five new
+tests execute. Verification counts, run IDs, and the descriptor-assumption fix
+are recorded in `docs/m11_46_report.md`.

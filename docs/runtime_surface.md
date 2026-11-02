@@ -1,9 +1,12 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-11-02` · Latest verified milestone: **M11-41..M11-45**
-(BOM viewport/media/device metadata: `visualViewport`, `matchMedia`,
+Last reviewed: `2026-11-03` · Latest verified milestone: **M11-46**
+(`document.cookie` — deterministic per-Page in-memory jar, the first slice of
+the object-oriented common-API completion track), verified on real V8 (Linux +
+Windows + macOS arm64) on `2026-11-02`. It follows **M11-41..M11-45** (BOM
+viewport/media/device metadata: `visualViewport`, `matchMedia`,
 `navigator.storage`, `navigator.permissions`, and legacy navigator metadata),
-verified on real V8 (Linux + Windows) on `2026-10-30`. The post-M11 host access
+verified on `2026-10-30`. The post-M11 host access
 trace steps 1–4 plus the step-5 BOM-callback, window metadata, nested metadata,
 static visualViewport, navigator-storage-manager, navigator-permissions,
 matchMedia-result, legacy-navigator, and window-alias groups, plus step-6a
@@ -349,6 +352,13 @@ Installed per generation by `install_page`:
   `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
   `activeElement`, plus `hasFocus()` (always `false`). No focus, visibility, or
   navigation machinery;
+- **document.cookie** (M11-46) — writable, access-traced property backed by a
+  deterministic per-Page in-memory jar: first `name=value` pair per assignment,
+  insertion/update ordering, ASCII OWS trimming, case-insensitive attributes,
+  `max-age <= 0` / epoch `expires` deletion, and ordinary `ToString` coercion.
+  `path` / `domain` / `secure` / `SameSite` are accepted and ignored. The jar
+  survives `load()` and is isolated per `Page`; there is no HTTP integration,
+  origin/path filtering, wall-clock expiry, persistence, or cookie store;
 - **animation frames** — `requestAnimationFrame` / `cancelAnimationFrame` (M11-2,
   manual-pump only via `Page.run_animation_frame()`, and driven by the M11-30
   facade at fixed 16ms virtual frames). A separate FIFO queue from the timers,
@@ -511,6 +521,7 @@ clock.
 | M11-35 | deterministic BOM metadata completion (window/screen/navigator; 36-key environment) — verified 2026-10-30 | `docs/m11_35_bom_metadata.md`, `docs/m11_35_report.md` |
 | M11-36..M11-40 | BOM completion batch (dialogs, performance timeline, structuredClone, single-context window metadata, scheduler.postTask) — verified 2026-10-30 | `docs/m11_36_40_bom_completion.md`, `docs/m11_36_40_report.md` |
 | M11-41..M11-45 | BOM viewport/media/device metadata (visualViewport, matchMedia, navigator.storage/permissions, legacy navigator metadata) — verified 2026-10-30 | `docs/m11_41_45_bom_extras.md`, `docs/m11_41_45_report.md` |
+| M11-46 | `document.cookie` — deterministic per-Page in-memory jar, access-traced, first Document slice of the common-API track — verified 2026-11-02 | `docs/m11_46_document_cookie.md`, `docs/m11_46_report.md` |
 | Post-M11 host access trace (steps 1–4 + complete step-5 object groups + steps 6a–7) | native HostObject get/set/call trace + missing-property probes + `get_method` references + `delete`/`own_keys`/`define_property` request events + explicit `has`/`get_own_property_descriptor` query events + Reflect target metadata + performance/crypto/Storage/permissions/matchMedia/window callbacks and getters + window metadata/alias accessors + nested/visualViewport accessors and methods + navigator.storage manager calls + navigator.permissions query/status accesses + matchMedia result accesses + legacy navigator metadata + primitive value/argument/return summaries + synchronous exception metadata + step-7 aggregated report (`start_access_trace` / `stop_access_trace` / `read_access_trace` / `access_trace_report`) — verified 2026-11-02 | `docs/host_access_trace.md`, `docs/host_access_trace_workflow.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
