@@ -1259,9 +1259,48 @@ This slice passed on its first CI attempt.
 
 ### Next
 
-Continue step 6 with method-reference reads, `in`, delete, enumeration,
-descriptor queries, Reflect target identity, and summaries for independent
-native callbacks. The M11-46 selector follow-up remains deferred.
+Continue step 6 with method-reference reads (Priority 3ah below), then `in`,
+delete, enumeration, descriptor queries, Reflect target identity, and summaries
+for independent native callbacks. The M11-46 selector follow-up remains deferred.
+
+## Priority 3ah: Host access trace method references (step 6b) — DONE (`2026-11-02`)
+
+### What landed
+
+- HostObject method properties are function-valued accessors. Reading one records
+  `get_method`; the function is cached in a private slot so identity and
+  writable/configurable/enumerable behavior stay unchanged.
+- A normal `receiver.method(...)` read folds into one `call` event when it is the
+  last event; if another traced access intervenes, the `get_method` is kept and a
+  separate `call` is recorded.
+- Assignments record `set`; non-function overrides read as ordinary properties
+  (not `get_method`). Descriptor reads materialize the accessor and can produce
+  `get_method`.
+- Coverage operations now include `get_method`. Detached references are not
+  calls; no user `toString`/`valueOf` is executed.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_method_reads.py` (3 items). Full suite collects 1701
+items; each wheel lane: **`1699 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `c13bdf5` (branch `host-access-method-reads`):
+
+- Linux `release-linux` run `41395700932` — cp311–cp314, each
+  `1699 passed, 2 skipped`;
+- Windows `release-windows` run `41395704544` — Python 3.11–3.14, each
+  `1699 passed, 2 skipped`;
+- macOS arm64 `release-macos` run `41396277098` — cp311–cp314
+  `macosx_11_0_arm64` wheels, each `1699 passed, 2 skipped`.
+
+This slice passed on its first CI attempt.
+
+### Next
+
+Continue step 6 with `in`, delete, enumeration, descriptor queries, Reflect
+target identity, and summaries for independent native callbacks. The M11-46
+selector follow-up remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

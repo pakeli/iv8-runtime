@@ -151,8 +151,8 @@ summary slice was verified on `host-access-values` (commit `4d0800b`) with
 Linux run `41383785169`, Windows run `41383788221`, and macOS arm64 run
 `41384345701`, each wheel lane `1696 passed, 2 skipped`. The method-reference
 slice was verified on `host-access-method-reads` (commit `c13bdf5`) with Linux
-run `41395700932` and Windows run `41395704544`, each wheel lane `1699 passed,
-2 skipped`.
+run `41395700932`, Windows run `41395704544`, and macOS arm64 run `41396277098`,
+each wheel lane `1699 passed, 2 skipped`.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
