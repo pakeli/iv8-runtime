@@ -1503,9 +1503,60 @@ Tree `18f1f4b` (branch `m11-46-document-cookie`):
 
 ### Next
 
-Continue the Document object: text nodes, `document.write`/`writeln`, and
-related commonly used APIs. Then move to the next browser object (Window /
-Navigator / Element / Form / Event). The selector follow-up remains unassigned.
+The Document identity slice was completed as Priority 3am below. Later Document
+work can revisit the excluded text-node/DocumentFragment architecture or a
+scoped `document.write` decision, then move to the next browser object
+(Window / Navigator / Element / Form / Event). The selector follow-up remains
+unassigned.
+
+## Priority 3am: Common-API track — Document identity (M11-47) — DONE (`2026-11-02`)
+
+### Goal
+
+Continue the object-oriented common-API track with the remaining commonly used
+`Document` identity members after `document.cookie`.
+
+### What landed
+
+- `document.title` is writable: ordinary `ToString` coercion (conversion errors
+  propagate unchanged), updates the document title string, and reflects the
+  value into the first parsed `<title>` element's aggregate `textContent`
+  (element children detached like `textContent = ...`; a missing title element
+  is not created). A new `load()` rebuilds the title from the new HTML.
+- `document.documentURI` / `baseURI` return the current generation base URL;
+  `<base href>` is not resolved.
+- `document.defaultView` is the context global, identical to `window` /
+  `globalThis` (single browsing context).
+- `document.location` is the same `LocationHost` wrapper as the global
+  `location`; it is read-only on the Document and adds no navigation.
+- The four read-only aliases use `ReadOnly | DontDelete`; strict-mode
+  assignment throws a `TypeError`.
+- All five members use the generic HostObject get/set path and are visible to
+  the access trace with ordinary completion metadata. No new Python/JS API.
+
+Boundary: `docs/m11_47_document_identity.md`. Tests:
+`test/test_m11_47_document_identity.py` (6 items). The full suite collects 1733
+items; each wheel lane: **`1731 passed, 2 skipped`**. All lanes passed on the
+first attempt.
+
+### Verification — passed
+
+Tree `cc1c47d` (branch `m11-47-document-identity`):
+
+- Linux `release-linux` run `41483937440` — cp311–cp314, each
+  `1731 passed, 2 skipped`;
+- Windows `release-windows` run `41483943983` — Python 3.11–3.14, each
+  `1731 passed, 2 skipped`;
+- macOS arm64 fallback run `41485210986` (`macos-14`, cached V8 monolith,
+  `macosx_11_0_arm64` wheels) — cp311–cp314, each `1731 passed, 2 skipped`.
+  The official macos-15 lane remains unavailable.
+
+### Next
+
+Continue with the next commonly used Document surface, then the next browser
+object. `document.createEvent` is the most direct remaining common method; the
+excluded text-node/DocumentFragment architecture and `document.write` need an
+explicit scope decision. The selector follow-up remains unassigned.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

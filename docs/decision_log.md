@@ -823,6 +823,41 @@ framework's descriptor shape without runtime changes. The full suite collects
 new tests ran in every lane. See `docs/m11_46_document_cookie.md` and
 `docs/m11_46_report.md`.
 
+### 44. Document identity — title and URL/view aliases
+
+Decided/verified `2026-11-02`.
+
+The second Document slice of the common-API track adds the remaining commonly
+used identity members without changing architecture:
+
+- **Writable title.** `document.title` uses the ordinary writable HostObject
+  path. Assignment coerces with `ToString` (conversion errors propagate
+  unchanged), updates the document string, and reflects the value into the
+  first parsed `<title>` element's aggregate `textContent`. Element children
+  are detached like `textContent = ...`; a missing `<title>` is never created.
+  A new `Page.load()` rebuilds the title from the new HTML.
+- **URL aliases.** `document.documentURI` and `baseURI` return the current
+  generation base URL. The runtime has no `<base href>` resolution, so both
+  equal `document.URL`.
+- **Single-context view/location.** `document.defaultView` is the context
+  global (identical to `window` / `globalThis`). `document.location` returns
+  the same `LocationHost` wrapper installed as the global `location`; it is
+  read-only on the Document and adds no navigation.
+- **Descriptors and trace.** The four aliases use `ReadOnly | DontDelete`
+  (strict writes throw `TypeError`); `title` is a writable native data property
+  whose descriptor materializes the value. All five members use the generic
+  HostObject path and appear in the access trace as `document` / member /
+  `get`, with `title` writes recorded as `set` plus completion metadata.
+- **Non-goals.** `lastModified`, `<base href>`, title-element creation, entity
+  decoding, `document.location` navigation, and multi-window/null `defaultView`
+  behavior.
+
+The full suite collects 1733 items. Linux `41483937440`, Windows `41483943983`,
+and macOS arm64 fallback `41485210986` each reported `1731 passed, 2 skipped` on
+tree `cc1c47d`; the six new tests ran in every lane and all lanes passed on the
+first attempt. See `docs/m11_47_document_identity.md` and
+`docs/m11_47_report.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
@@ -985,6 +1020,15 @@ direction alone.
   `41482460847`, tree `18f1f4b`, each wheel lane `1725 passed, 2 skipped`); see
   `docs/m11_46_report.md`. The selector follow-up was never numbered and
   remains deferred; UA-CH remains deliberately deferred.
+
+- `M11-47` — **Document identity** — selected on `2026-11-02` as the second
+  Document slice: writable `document.title` reflected into the first parsed
+  `<title>`, plus read-only `documentURI` / `baseURI` (base URL),
+  `defaultView` (the single global window), and `location` (the same
+  `LocationHost` as the global). Boundary:
+  `docs/m11_47_document_identity.md`. Verified on real V8 (Linux `41483937440`,
+  Windows `41483943983`, macOS arm64 fallback `41485210986`, tree `cc1c47d`,
+  each wheel lane `1731 passed, 2 skipped`); see `docs/m11_47_report.md`.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

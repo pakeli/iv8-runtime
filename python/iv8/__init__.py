@@ -1013,6 +1013,16 @@ HTTP cookie integration, origin/path filtering, wall-clock expiry, persistence,
 or cookie store, and no new Python API or environment key. See
 ``docs/m11_46_document_cookie.md``.
 
+M11-47 continues the Document track with identity members: ``document.title``
+becomes writable (ordinary ``ToString`` coercion, reflected into the first
+parsed ``<title>`` element's ``textContent``; no title-element creation and
+reset by ``load()``), and the read-only ``documentURI`` / ``baseURI`` (current
+base URL; no ``<base href>``), ``defaultView`` (the single global window), and
+``location`` (the same object as the global ``location``) aliases are added.
+All are access-traced; strict assignment to the aliases throws. No navigation,
+multi-window behavior, Python API, or environment key is added. See
+``docs/m11_47_document_identity.md``.
+
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and

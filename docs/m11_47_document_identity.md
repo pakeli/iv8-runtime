@@ -1,6 +1,6 @@
 # M11-47 — Document identity: title, URL aliases, and view/location
 
-Status: **IN PROGRESS — second Document slice of the common-API track**
+Status: **VERIFIED — real V8 green on Linux + Windows + macOS arm64 (`2026-11-02`)**
 
 This slice continues the object-oriented common-API track with the remaining
 commonly used `Document` identity members: a writable `document.title`, the
@@ -88,3 +88,10 @@ existing `location` get. No new trace event type or Python/JS API is added.
   global `location`, plus `href` agreement;
 - access-trace get/set events and value summaries for the new members;
 - descriptor-visible writable/read-only shape.
+
+## Verification
+
+Real V8 is green for the release-tested tree `cc1c47d` on Linux, Windows, and
+macOS arm64; every wheel lane reports `1731 passed, 2 skipped` and the six new
+tests execute. Verification counts, run IDs, and artifact IDs are recorded in
+`docs/m11_47_report.md`.

@@ -239,7 +239,10 @@ Implemented for contrast: M11-23 added read-only `characterSet` / `contentType`
 / `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
 `activeElement` and `hasFocus()`; M11-22 added read-only `select.length`, plus
 `select.item` / `namedItem`; M11-46 added the writable, traced
-`document.cookie` jar (deterministic and page-scoped, with no HTTP backing).
+`document.cookie` jar (deterministic and page-scoped, with no HTTP backing);
+M11-47 made `document.title` writable (reflected into the first parsed
+`<title>`) and added the read-only `documentURI` / `baseURI` / `defaultView` /
+`location` identity aliases (single-context, no `<base href>` or navigation).
 
 ## 3. Cross-cutting architecture boundaries
 

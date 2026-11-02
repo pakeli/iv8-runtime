@@ -130,12 +130,14 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; implementation is through M11-46
-> (`document.cookie`, the first slice of the object-oriented common-API track),
-> verified on real V8 (Linux + Windows + macOS arm64) on `2026-11-02` and merged
-> to `master` on the fork (`pakeli/iv8-runtime`); upstream sync is out of scope.
-> It follows M11-41..M11-45 (BOM viewport/media/device metadata), verified on
-> real V8 (Linux + Windows) on `2026-10-30`. The post-M11 host access trace steps 1–4 plus the
+> `HEAD` is not an M1-only repository; implementation is through M11-47
+> (Document identity — writable `document.title` plus `documentURI` / `baseURI`
+> / `defaultView` / `location` aliases, the second slice of the object-oriented
+> common-API track), verified on real V8 (Linux + Windows + macOS arm64) on
+> `2026-11-02` and merged to `master` on the fork (`pakeli/iv8-runtime`);
+> upstream sync is out of scope. It follows M11-46 (`document.cookie`) and
+> M11-41..M11-45 (BOM viewport/media/device metadata, verified on `2026-10-30`).
+> The post-M11 host access trace steps 1–4 plus the
 > step-5 native BOM call, window metadata, nested metadata, static
 > visualViewport, navigator.storage manager, navigator.permissions,
 > matchMedia-result, legacy-navigator, and window-alias groups are also verified
@@ -146,6 +148,6 @@ If you only remember one thing:
 > (`Page.access_trace_report()` and the usage workflow) is verified at commit
 > `c678ede` (release-tested tree `62af2e6`), including a macos-14 fallback
 > macOS arm64 wheel build; see `docs/m11_41_45_report.md`,
-> `docs/m11_46_report.md`, `docs/host_access_trace.md`, and
-> `docs/host_access_trace_workflow.md`. The full suite collects 1727 items;
-> each release lane reports `1725 passed, 2 skipped`.
+> `docs/m11_46_report.md`, `docs/m11_47_report.md`, `docs/host_access_trace.md`,
+> and `docs/host_access_trace_workflow.md`. The full suite collects 1733 items;
+> each release lane reports `1731 passed, 2 skipped`.
