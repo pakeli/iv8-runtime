@@ -35,6 +35,25 @@ struct AccessEvent {
     std::string resolution;  // non-empty only for get_probe
     std::string resource_name;
     std::string source_kind;
+    // Step 6a completion fields for generic HostObject get/set/call. They are
+    // attached to the same event after dispatch; get_probe and independent
+    // native callbacks leave them empty.
+    std::string outcome;        // "returned" | "threw"
+    std::string value_summary;  // get/set
+    std::uint64_t argument_count = 0;
+    std::vector<std::string> argument_summaries;  // first 8 arguments
+    std::string return_summary;                   // call
+};
+
+// Completion data attached to an already-recorded event. Kept separate so the
+// enter path stays allocation-light and the record lock is not held during the
+// host implementation.
+struct AccessCompletion {
+    std::string outcome;
+    std::string value_summary;
+    std::uint64_t argument_count = 0;
+    std::vector<std::string> argument_summaries;
+    std::string return_summary;
 };
 
 struct AccessSnapshot {
@@ -76,12 +95,18 @@ public:
         return enabled_.load(std::memory_order_acquire);
     }
 
-    // Record an event before the concrete host operation runs. Never throws:
-    // allocation/other failures increment the dropped counter when possible.
-    void record(const void* identity, std::string_view object_type,
-                std::string_view label, std::string_view member,
-                AccessOperation operation,
-                std::string_view resolution = {}) noexcept;
+    // Record an event before the concrete host operation runs. Returns the
+    // event's seq when it was retained, or 0 when tracing is disabled/filtered,
+    // the capacity is full, or allocation failed. Never throws.
+    std::uint64_t record(const void* identity, std::string_view object_type,
+                         std::string_view label, std::string_view member,
+                         AccessOperation operation,
+                         std::string_view resolution = {}) noexcept;
+
+    // Attach completion data to a retained event. No-op if the seq is no longer
+    // present (cleared/stopped between enter and completion). Never throws and
+    // never performs V8/Python work while holding the trace mutex.
+    void complete(std::uint64_t seq, AccessCompletion completion) noexcept;
 
     // Copy the current report data. If `clear` is true, events and
     // dropped_events are cleared after the copy; sequence/configuration/

@@ -64,17 +64,17 @@ void AccessTrace::begin_generation(std::uint64_t generation) noexcept {
     }
 }
 
-void AccessTrace::record(const void* identity, std::string_view object_type,
-                         std::string_view label, std::string_view member,
-                         AccessOperation operation,
-                         std::string_view resolution) noexcept {
+std::uint64_t AccessTrace::record(
+    const void* identity, std::string_view object_type,
+    std::string_view label, std::string_view member, AccessOperation operation,
+    std::string_view resolution) noexcept {
     if (identity == nullptr || !enabled_.load(std::memory_order_acquire)) {
-        return;
+        return 0;
     }
     try {
         std::lock_guard<std::mutex> lock(mutex_);
         if (!enabled_.load(std::memory_order_relaxed)) {
-            return;
+            return 0;
         }
         if (filter_object_types_.has_value()) {
             bool allowed = false;
@@ -85,12 +85,12 @@ void AccessTrace::record(const void* identity, std::string_view object_type,
                 }
             }
             if (!allowed) {
-                return;  // filtered events are not drops
+                return 0;  // filtered events are not drops
             }
         }
         if (events_.size() >= max_events_) {
             ++dropped_events_;
-            return;
+            return 0;
         }
 
         std::uint64_t object_id = 0;
@@ -114,7 +114,9 @@ void AccessTrace::record(const void* identity, std::string_view object_type,
         event.resolution = resolution;
         event.resource_name = current_resource_;
         event.source_kind = current_source_kind_;
+        const std::uint64_t retained_seq = event.seq;
         events_.push_back(std::move(event));
+        return retained_seq;
     } catch (...) {
         try {
             std::lock_guard<std::mutex> lock(mutex_);
@@ -122,6 +124,35 @@ void AccessTrace::record(const void* identity, std::string_view object_type,
         } catch (...) {
             // Tracing must never surface an allocation/lock failure to JS.
         }
+        return 0;
+    }
+}
+
+void AccessTrace::complete(std::uint64_t seq,
+                           AccessCompletion completion) noexcept {
+    if (seq == 0 || completion.outcome.empty()) {
+        return;
+    }
+    try {
+        std::lock_guard<std::mutex> lock(mutex_);
+        // Completion normally follows the enter event immediately, but nested
+        // host accesses can append events in between; search backwards by seq.
+        for (auto it = events_.rbegin(); it != events_.rend(); ++it) {
+            if (it->seq < seq) {
+                break;
+            }
+            if (it->seq != seq) {
+                continue;
+            }
+            it->outcome = std::move(completion.outcome);
+            it->value_summary = std::move(completion.value_summary);
+            it->argument_count = completion.argument_count;
+            it->argument_summaries = std::move(completion.argument_summaries);
+            it->return_summary = std::move(completion.return_summary);
+            return;
+        }
+    } catch (...) {
+        // Completion metadata is best-effort; never surface failures to JS.
     }
 }
 

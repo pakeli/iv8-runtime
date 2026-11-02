@@ -9539,6 +9539,23 @@ py::dict PageState::read_access_trace(bool clear) {
         }
         record["resource_name"] = event.resource_name;
         record["source_kind"] = event.source_kind;
+        if (!event.outcome.empty()) {
+            record["outcome"] = event.outcome;
+        }
+        if (!event.value_summary.empty()) {
+            record["value_summary"] = event.value_summary;
+        }
+        if (!event.return_summary.empty()) {
+            record["return_summary"] = event.return_summary;
+        }
+        if (event.operation == "call") {
+            record["argument_count"] = py::cast(event.argument_count);
+            py::list argument_summaries;
+            for (const std::string& summary : event.argument_summaries) {
+                argument_summaries.append(summary);
+            }
+            record["argument_summaries"] = argument_summaries;
+        }
         events.append(record);
     }
     report["events"] = events;
@@ -9571,6 +9588,10 @@ py::dict PageState::read_access_trace(bool clear) {
     operations.append("get_probe");
     coverage["operations"] = operations;
     coverage["phase"] = "enter";
+    coverage["summaries"] =
+        "generic HostObject get/set/call: returned/threw outcome, primitive "
+        "value summaries, first 8 argument summaries, call return summaries; "
+        "string content capped at 64 bytes with the original byte length";
     py::list not_covered;
     for (const std::string& gap : AccessTrace::not_covered()) {
         not_covered.append(gap);

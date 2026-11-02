@@ -1,7 +1,10 @@
 #include "iv8/host_object.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "iv8/access_trace.h"
 
@@ -36,14 +39,130 @@ HostObject* backing_of(v8::Local<v8::Object> self) {
 // enabled. The fast path is one isolate-data lookup plus an atomic check; labels
 // and type strings are built only while tracing. This is intentionally separate
 // from the old watch_apis path.
-void trace_access(v8::Isolate* isolate, HostObject* host,
-                  const std::string& member, AccessOperation operation) {
+AccessTrace* active_trace(v8::Isolate* isolate) {
     AccessTrace* trace = access_trace_from_isolate(isolate);
-    if (trace == nullptr || !trace->enabled()) {
-        return;
+    return trace != nullptr && trace->enabled() ? trace : nullptr;
+}
+
+std::uint64_t record_access(AccessTrace* trace, HostObject* host,
+                            const std::string& member,
+                            AccessOperation operation) {
+    if (trace == nullptr) {
+        return 0;
     }
-    trace->record(host, host->trace_object_type(), host->trace_label(), member,
-                  operation);
+    return trace->record(host, host->trace_object_type(), host->trace_label(),
+                         member, operation);
+}
+
+// Step 6a value summaries. Only primitive/type inspection is performed: no
+// toString/valueOf, property Get, or other user code can run here.
+constexpr int kMaxSummaryBytes = 64;
+constexpr int kMaxConvertedStringBytes = 4096;
+constexpr int kMaxArgumentSummaries = 8;
+
+std::string summarize_string(v8::Isolate* isolate,
+                             v8::Local<v8::String> value) {
+    const int utf8_length = value->Utf8Length(isolate);
+    std::string summary = "string:" + std::to_string(utf8_length) + ":";
+    if (utf8_length > kMaxConvertedStringBytes) {
+        summary += "...";
+        return summary;
+    }
+    v8::String::Utf8Value utf8(isolate, value);
+    if (*utf8 == nullptr) {
+        summary += "...";
+        return summary;
+    }
+    const std::size_t length = static_cast<std::size_t>(utf8.length());
+    std::size_t cut = std::min(length, static_cast<std::size_t>(kMaxSummaryBytes));
+    if (cut < length) {
+        // Do not split a UTF-8 continuation byte; Python must receive valid
+        // UTF-8 from the report.
+        while (cut > 0 &&
+               (static_cast<unsigned char>((*utf8)[cut]) & 0xC0) == 0x80) {
+            --cut;
+        }
+    }
+    const auto* bytes = reinterpret_cast<const unsigned char*>(*utf8);
+    for (std::size_t i = 0; i < cut; ++i) {
+        const unsigned char c = bytes[i];
+        switch (c) {
+            case '\\':
+                summary += "\\\\";
+                break;
+            case '\n':
+                summary += "\\n";
+                break;
+            case '\r':
+                summary += "\\r";
+                break;
+            case '\t':
+                summary += "\\t";
+                break;
+            default:
+                if (c < 0x20 || c == 0x7f) {
+                    char escaped[8];
+                    std::snprintf(escaped, sizeof(escaped), "\\x%02x", c);
+                    summary += escaped;
+                } else {
+                    summary += static_cast<char>(c);
+                }
+                break;
+        }
+    }
+    if (cut < length) {
+        summary += "...";
+    }
+    return summary;
+}
+
+std::string summarize_value(v8::Isolate* isolate, v8::Local<v8::Value> value) {
+    if (value.IsEmpty() || value->IsUndefined()) {
+        return "undefined";
+    }
+    if (value->IsNull()) {
+        return "null";
+    }
+    if (value->IsBoolean()) {
+        return value->BooleanValue(isolate) ? "boolean:true" : "boolean:false";
+    }
+    if (value->IsNumber()) {
+        char buffer[40];
+        std::snprintf(buffer, sizeof(buffer), "%.17g",
+                      value.As<v8::Number>()->Value());
+        return std::string("number:") + buffer;
+    }
+    if (value->IsString()) {
+        return summarize_string(isolate, value.As<v8::String>());
+    }
+    if (value->IsBigInt()) {
+        return "bigint";
+    }
+    if (value->IsSymbol()) {
+        return "symbol";
+    }
+    if (value->IsFunction()) {
+        return "function";
+    }
+    if (value->IsArray()) {
+        return "array";
+    }
+    if (value->IsObject()) {
+        return host_object_backing(value) != nullptr ? "host_object" : "object";
+    }
+    return "unknown";
+}
+
+std::vector<std::string> summarize_arguments(
+    v8::Isolate* isolate,
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const int count = std::min(info.Length(), kMaxArgumentSummaries);
+    std::vector<std::string> summaries;
+    summaries.reserve(static_cast<std::size_t>(count));
+    for (int i = 0; i < count; ++i) {
+        summaries.push_back(summarize_value(isolate, info[i]));
+    }
+    return summaries;
 }
 
 // Keep existence/attribute queries on the normal lookup path. Without a query
@@ -130,8 +249,24 @@ void property_getter(v8::Local<v8::Name> property,
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::String::Utf8Value name(isolate, property);
     const std::string key(*name != nullptr ? *name : "");
-    trace_access(isolate, host, key, AccessOperation::kGet);
-    info.GetReturnValue().Set(host->get_property(isolate, context, key));
+    AccessTrace* trace = active_trace(isolate);
+    const std::uint64_t seq =
+        record_access(trace, host, key, AccessOperation::kGet);
+    v8::Local<v8::Value> result = host->get_property(isolate, context, key);
+    info.GetReturnValue().Set(result);
+    if (seq != 0) {
+        try {
+            AccessCompletion completion;
+            completion.outcome =
+                isolate->HasPendingException() ? "threw" : "returned";
+            if (completion.outcome == "returned") {
+                completion.value_summary = summarize_value(isolate, result);
+            }
+            trace->complete(seq, std::move(completion));
+        } catch (...) {
+            // Summaries are best-effort and must never affect JS behavior.
+        }
+    }
 }
 
 // Generic setter for writable properties (M2-8): dispatch to set_property().
@@ -145,8 +280,23 @@ void property_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::String::Utf8Value name(isolate, property);
     const std::string key(*name != nullptr ? *name : "");
-    trace_access(isolate, host, key, AccessOperation::kSet);
+    AccessTrace* trace = active_trace(isolate);
+    const std::uint64_t seq =
+        record_access(trace, host, key, AccessOperation::kSet);
     host->set_property(isolate, context, key, value);
+    if (seq != 0) {
+        try {
+            AccessCompletion completion;
+            completion.outcome =
+                isolate->HasPendingException() ? "threw" : "returned";
+            if (completion.outcome == "returned") {
+                completion.value_summary = summarize_value(isolate, value);
+            }
+            trace->complete(seq, std::move(completion));
+        } catch (...) {
+            // Summaries are best-effort and must never affect JS behavior.
+        }
+    }
 }
 
 // One generic method trampoline: the method name is carried as the function's
@@ -160,8 +310,35 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::String::Utf8Value name(isolate, info.Data());
     const std::string key(*name != nullptr ? *name : "");
-    trace_access(isolate, host, key, AccessOperation::kCall);
-    info.GetReturnValue().Set(host->call_method(isolate, context, key, info));
+    AccessTrace* trace = active_trace(isolate);
+    const std::uint64_t seq =
+        record_access(trace, host, key, AccessOperation::kCall);
+    AccessCompletion completion;
+    if (seq != 0) {
+        try {
+            completion.argument_count =
+                static_cast<std::uint64_t>(info.Length());
+            completion.argument_summaries =
+                summarize_arguments(isolate, info);
+        } catch (...) {
+            // Keep the argument count if only the summaries failed.
+        }
+    }
+    v8::Local<v8::Value> result =
+        host->call_method(isolate, context, key, info);
+    info.GetReturnValue().Set(result);
+    if (seq != 0) {
+        try {
+            completion.outcome =
+                isolate->HasPendingException() ? "threw" : "returned";
+            if (completion.outcome == "returned") {
+                completion.return_summary = summarize_value(isolate, result);
+            }
+            trace->complete(seq, std::move(completion));
+        } catch (...) {
+            // Summaries are best-effort and must never affect JS behavior.
+        }
+    }
 }
 
 }  // namespace
