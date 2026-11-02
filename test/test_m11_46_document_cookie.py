@@ -110,16 +110,18 @@ def test_cookie_persists_across_load_and_is_page_isolated():
 def test_cookie_is_a_writable_traced_document_property():
     with iv8.Page() as page:
         _load(page)
+        # Native data properties materialize their value into a data descriptor
+        # on Object.getOwnPropertyDescriptor, which also invokes the getter.
         assert page.eval(
             """
             (() => {
+              document.cookie = 'a=1';
               const d = Object.getOwnPropertyDescriptor(document, 'cookie');
-              return typeof d.get === 'function' &&
-                     typeof d.set === 'function' &&
-                     d.configurable === false;
+              return [d.value, d.writable, d.enumerable,
+                      d.configurable].join('|');
             })();
             """
-        ) is True
+        ) == "a=1|true|true|false"
         page.start_access_trace()
         page.eval(
             "document.cookie = 'a=1'; document.cookie;",

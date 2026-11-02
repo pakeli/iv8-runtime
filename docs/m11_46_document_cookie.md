@@ -54,11 +54,14 @@ with normal `get`/`set` completion metadata. No dedicated trace event is added.
 
 ## Descriptor / semantic differences
 
-`document.cookie` is a writable accessor on the HostObject instance, not the
-browser's `Document.prototype` accessor. Its exact descriptor follows the
-generic HostObject writable-property rules. Cookie strings are not
-percent-encoded or decoded; CR/LF/control-character validation, quoted values,
-and cookie-name syntax rules are not modeled.
+`document.cookie` is a writable native data property on the HostObject
+instance, not the browser's `Document.prototype` accessor. As with the other
+writable HostObject properties, `Object.getOwnPropertyDescriptor` materializes
+the current value into a data descriptor and therefore invokes the getter:
+`{value: <cookie string>, writable: true, enumerable: true,
+configurable: false}`. Cookie strings are not percent-encoded or decoded;
+CR/LF/control-character validation, quoted values, and cookie-name syntax
+rules are not modeled.
 
 ## Explicit non-goals
 
