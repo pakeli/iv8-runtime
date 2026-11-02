@@ -4,7 +4,7 @@ Status: **VERIFIED — HostObject get/set/call + missing-property probes + nativ
 BOM callback calls + window/nested metadata + static visualViewport + navigator
 storage/permissions managers + matchMedia results + legacy navigator metadata +
 window aliases + step-6a value/argument/return summaries green on real V8 Linux
-+ Windows (`2026-11-02`)**
++ Windows + macOS arm64 (`2026-11-02`)**
 
 This document freezes steps 1–4 and the first groups of step 5 of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
@@ -516,7 +516,9 @@ Verified on real V8 at commit `4d0800b` (branch `host-access-values`):
 - Linux `release-linux` run `41383785169` — cp311 / cp312 / cp313 / cp314,
   each `1696 passed, 2 skipped`;
 - Windows `release-windows` run `41383788221` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1696 passed, 2 skipped`.
+  3.14, each `1696 passed, 2 skipped`;
+- macOS arm64 `release-macos` run `41384345701` — cp311 / cp312 / cp313 /
+  cp314 `macosx_11_0_arm64` wheels, each `1696 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),

@@ -147,8 +147,8 @@ alias groups were verified together on `host-access-window-aliases` (final
 commit `b936307`) with Linux run `41035577072` and Windows run `41035582564`,
 each wheel lane `1690 passed, 2 skipped`. The step-6a value/argument/return
 summary slice was verified on `host-access-values` (commit `4d0800b`) with
-Linux run `41383785169` and Windows run `41383788221`, each wheel lane
-`1696 passed, 2 skipped`.
+Linux run `41383785169`, Windows run `41383788221`, and macOS arm64 run
+`41384345701`, each wheel lane `1696 passed, 2 skipped`.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and

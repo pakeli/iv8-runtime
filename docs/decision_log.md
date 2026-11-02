@@ -652,9 +652,9 @@ method-reference reads, `in`/delete/enumeration/descriptors, Reflect target
 identity, exception messages, stacks, and timing remain pending.
 
 Verified on real V8 at commit `4d0800b`: Linux `41383785169`, Windows
-`41383788221`, each wheel lane `1696 passed, 2 skipped`. The full suite collects
-1698 items (1692 previous + 6 value-summary tests). See
-`docs/host_access_trace.md`.
+`41383788221`, and macOS arm64 `41384345701`, each wheel lane `1696 passed,
+2 skipped`. The full suite collects 1698 items (1692 previous + 6 value-summary
+tests). See `docs/host_access_trace.md`.
 
 ## Pending Decisions
 

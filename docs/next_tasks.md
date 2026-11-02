@@ -1221,7 +1221,9 @@ Final commit `4d0800b` (branch `host-access-values`):
 - Linux `release-linux` run `41383785169` — cp311–cp314, each
   `1696 passed, 2 skipped`;
 - Windows `release-windows` run `41383788221` — Python 3.11–3.14, each
-  `1696 passed, 2 skipped`.
+  `1696 passed, 2 skipped`;
+- macOS arm64 `release-macos` run `41384345701` — cp311–cp314
+  `macosx_11_0_arm64` wheels, each `1696 passed, 2 skipped`.
 
 This slice passed on its first CI attempt.
 
