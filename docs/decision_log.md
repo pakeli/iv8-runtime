@@ -675,8 +675,9 @@ not calls; no user `toString`/`valueOf` is executed. Coverage operations now
 include `get_method`.
 
 Verified on real V8 at commit `c13bdf5`: Linux `41395700932`, Windows
-`41395704544`, each wheel lane `1699 passed, 2 skipped`. The full suite collects
-1701 items (1698 previous + 3 method-reference tests). See
+`41395704544`, and macOS arm64 `41396277098`, each wheel lane `1699 passed,
+2 skipped`. The full suite collects 1701 items (1698 previous + 3
+method-reference tests). See
 `docs/host_access_trace.md`.
 
 ## Pending Decisions
