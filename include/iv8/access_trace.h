@@ -22,6 +22,9 @@ enum class AccessOperation {
     kCall,
     kGetProbe,
     kGetMethod,
+    kDelete,
+    kOwnKeys,
+    kDefineProperty,
 };
 
 struct AccessEvent {
@@ -31,7 +34,8 @@ struct AccessEvent {
     std::string object_type;
     std::string label;
     std::string member;
-    std::string operation;   // get | set | call | get_probe | get_method
+    std::string operation;   // get | set | call | get_probe | get_method |
+                             // delete | own_keys | define_property
     std::string phase;       // "enter"
     std::string resolution;  // non-empty only for get_probe
     std::string resource_name;

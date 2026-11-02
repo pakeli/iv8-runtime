@@ -9587,6 +9587,9 @@ py::dict PageState::read_access_trace(bool clear) {
     operations.append("get_method");
     operations.append("call");
     operations.append("get_probe");
+    operations.append("delete");
+    operations.append("own_keys");
+    operations.append("define_property");
     coverage["operations"] = operations;
     coverage["phase"] = "enter";
     coverage["summaries"] =

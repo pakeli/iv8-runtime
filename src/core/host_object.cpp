@@ -175,6 +175,56 @@ v8::Intercepted named_property_query(
     return v8::Intercepted::kNo;
 }
 
+void record_operation(v8::Isolate* isolate, v8::Local<v8::Object> holder,
+                      v8::Local<v8::Name> property,
+                      AccessOperation operation) {
+    AccessTrace* trace = active_trace(isolate);
+    if (trace == nullptr || property.IsEmpty() || !property->IsString()) {
+        return;
+    }
+    HostObject* host = backing_of(holder);
+    if (host == nullptr) {
+        return;
+    }
+    v8::String::Utf8Value utf8(isolate, property);
+    if (*utf8 == nullptr) {
+        return;
+    }
+    const std::string key(*utf8, static_cast<std::size_t>(utf8.length()));
+    trace->record(host, host->trace_object_type(), host->trace_label(), key,
+                  operation);
+}
+
+v8::Intercepted named_property_deleter(
+    v8::Local<v8::Name> property,
+    const v8::PropertyCallbackInfo<v8::Boolean>& info) {
+    record_operation(info.GetIsolate(), info.Holder(), property,
+                     AccessOperation::kDelete);
+    return v8::Intercepted::kNo;
+}
+
+v8::Intercepted named_property_definer(
+    v8::Local<v8::Name> property, const v8::PropertyDescriptor&,
+    const v8::PropertyCallbackInfo<v8::Boolean>& info) {
+    record_operation(info.GetIsolate(), info.Holder(), property,
+                     AccessOperation::kDefineProperty);
+    return v8::Intercepted::kNo;
+}
+
+void named_property_enumerator(
+    const v8::PropertyCallbackInfo<v8::Array>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    AccessTrace* trace = active_trace(isolate);
+    if (trace != nullptr) {
+        HostObject* host = backing_of(info.Holder());
+        if (host != nullptr) {
+            trace->record(host, host->trace_object_type(), host->trace_label(),
+                          std::string(), AccessOperation::kOwnKeys);
+        }
+    }
+    info.GetReturnValue().Set(v8::Array::New(isolate, 0));
+}
+
 // Walk real own-property descriptors without invoking getters or interceptors.
 // A Proxy or a host-object prototype is conservatively treated as present: we
 // suppress a probe rather than report a false missing property.
@@ -449,12 +499,21 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
     // Observe absent string-key reads without masking own/prototype properties.
     // The callback only records when tracing is enabled and otherwise takes the
     // same normal lookup path as an object without an interceptor.
+    // Step 6c: keep the interceptor active for existing string properties too,
+    // so delete, enumeration, and define operations can be observed. Descriptor
+    // and HasProperty queries are intentionally not observed here: V8 invokes
+    // the named descriptor callback for some internal property bookkeeping
+    // (for example, adding the per-wrapper matchMedia onchange property), which
+    // cannot be distinguished from an explicit descriptor query.
+    // Every callback returns kNo (or an empty enumerator list) so normal lookup,
+    // descriptors, deletion, and enumeration remain authoritative.
     const auto handler_flags = static_cast<v8::PropertyHandlerFlags>(
-        static_cast<int>(v8::PropertyHandlerFlags::kNonMasking) |
         static_cast<int>(v8::PropertyHandlerFlags::kOnlyInterceptStrings));
     tmpl->SetHandler(v8::NamedPropertyHandlerConfiguration(
-        &named_property_getter, nullptr, &named_property_query, nullptr,
-        nullptr, v8::Local<v8::Value>(), handler_flags));
+        &named_property_getter, nullptr, &named_property_query,
+        &named_property_deleter, &named_property_enumerator,
+        &named_property_definer, nullptr,
+        v8::Local<v8::Value>(), handler_flags));
 
     // Data properties are getter-computed. Read-only ones use ReadOnly|DontDelete
     // (a JS write is a no-op in sloppy mode / TypeError in strict). Writable ones

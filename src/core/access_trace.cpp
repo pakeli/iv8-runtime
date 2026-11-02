@@ -21,6 +21,12 @@ const char* operation_name(AccessOperation operation) {
             return "get_probe";
         case AccessOperation::kGetMethod:
             return "get_method";
+        case AccessOperation::kDelete:
+            return "delete";
+        case AccessOperation::kOwnKeys:
+            return "own_keys";
+        case AccessOperation::kDefineProperty:
+            return "define_property";
     }
     return "unknown";
 }
@@ -250,7 +256,7 @@ const std::vector<std::string>& AccessTrace::not_covered() {
         "permission-status missing probes/onchange and MediaQueryList onchange/missing probes",
         "arrays and plain values returned by host APIs",
         "user-created plain JS objects",
-        "non-HostObject missing-property probes/in/delete/enumeration/descriptors",
+        "non-HostObject probes/operations, HasProperty (in/hasOwnProperty), and descriptor query events",
         "read-only write attempts",
         "arguments/returns/stacks",
     };
