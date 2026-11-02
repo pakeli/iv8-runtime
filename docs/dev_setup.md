@@ -138,5 +138,6 @@ If you only remember one thing:
 > visualViewport, navigator.storage manager, navigator.permissions,
 > matchMedia-result, legacy-navigator, and window-alias groups are also verified
 > (commit `b936307`), completing the step-5 object coverage. Step 6a
-> value/argument/return summaries are verified at commit `4d0800b`; see
-> `docs/m11_41_45_report.md` and `docs/host_access_trace.md`.
+> value/argument/return summaries (step 6a) and method-reference reads (step 6b)
+> are verified at commit `c13bdf5`; see `docs/m11_41_45_report.md` and
+> `docs/host_access_trace.md`.

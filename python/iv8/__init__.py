@@ -1005,7 +1005,8 @@ UI, network, Python API, or new environment key is added. See
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and
-window-alias groups, plus the step-6a value/argument/return summaries, add
+window-alias groups, plus the step-6a value/argument/return summaries and
+step-6b method-reference reads, add
 ``Page.start_access_trace(max_events=10000, object_types=None)`` /
 ``Page.stop_access_trace()`` / ``Page.read_access_trace(clear=True)``. It records
 native ``HostObject`` property get/set and method-call entries,
@@ -1018,7 +1019,8 @@ events, ``navigator.storage`` parent reads plus manager method calls,
 ``navigator.permissions`` parent/query/status accesses, matchMedia result
 reads/method calls, legacy navigator metadata, window alias get/set events, and
 step-6a completion metadata (``outcome`` plus primitive value/argument/return
-summaries for generic get/set/call), with sequence, generation, stable native
+summaries for generic get/set/call and ``get_method`` references with adjacent
+call folding), with sequence, generation, stable native
 object ID, object type/label, member, operation, resource name, and source kind.
 Visual viewport and matchMedia results use the host-object template prototype
 and writable/configurable no-op methods; the storage/permissions managers and
@@ -1026,9 +1028,9 @@ PermissionStatus objects keep their plain-object shapes. See the boundary
 document for exact descriptor changes. It is a separate,
 default-off monitoring channel; it does not change the five existing watch
 channels, add a JS-visible API, or cover the remaining plain BOM property
-reads/nested objects, user-created objects, method-reference reads, ``in``,
-delete, enumeration, descriptors, numeric/Symbol probes, native-callback
-summaries, exception messages/stacks, or the rest of step 6 yet. See
+reads/nested objects, user-created objects, ``in``, delete, enumeration,
+descriptors, numeric/Symbol probes, native-callback summaries, exception
+messages/stacks, or the rest of step 6 yet. See
 ``docs/host_access_trace.md``.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,

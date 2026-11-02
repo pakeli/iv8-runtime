@@ -3,8 +3,8 @@
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
 BOM callback calls + window/nested metadata + static visualViewport + navigator
 storage/permissions managers + matchMedia results + legacy navigator metadata +
-window aliases + step-6a value/argument/return summaries green on real V8 Linux
-+ Windows + macOS arm64 (`2026-11-02`)**
+window aliases + step-6a value/argument/return summaries + step-6b method
+references green on real V8 Linux + Windows + macOS arm64 (`2026-11-02`)**
 
 This document freezes steps 1–4, the step-5 object groups, and step 6a of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
@@ -15,8 +15,8 @@ reads, the static `visualViewport` HostObject, the `navigator.storage`
 manager's parent read plus method calls, `navigator.permissions` parent reads
 plus query calls and returned PermissionStatus accesses, matchMedia result
 objects, legacy navigator metadata, window browsing-context aliases, and
-primitive value/argument/return summaries with returned/threw outcomes. It is a
-second-layer monitoring feature. It does not change the M1 `JSContext` contract,
+primitive value/argument/return summaries with returned/threw outcomes, and
+method-reference reads. It is a second-layer monitoring feature. It does not change the M1 `JSContext` contract,
 the existing `watch_apis` / Reflect / Object.keys channels, or DOM/BOM
 values/assignment behavior.
 
@@ -30,6 +30,7 @@ The only operations covered by this slice are the generic callbacks in
 | `property_getter` | A script read a property registered in `HostObject::property_names()`. |
 | `property_setter` | A script wrote a property registered in `HostObject::writable_property_names()`. |
 | `method_callback` | A script invoked a method registered in `HostObject::method_names()`. |
+| `method_getter` | A script read a function-valued method property; recorded as `get_method` (or folded into the following call). |
 | `named_property_getter` | A script read a missing string key after normal lookup; recorded as `get_probe`. |
 | independent native callbacks | performance/crypto/Storage methods, plus the Storage `length` accessor, record `call`/`get` with native identity tokens. |
 
@@ -49,7 +50,7 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `navigator.userAgent` / `navigator['userAgent']` | records `get` |
 | `element.textContent = 'abc'` | records `set`, where the property is declared writable |
 | `document.querySelector('#app')` | records `call` |
-| `const fn = document.querySelector` | records neither `get` nor `call` |
+| `const fn = document.querySelector` | records `get_method`; it is not a `call` |
 | `navigator.someMissingProperty` | records `get_probe` with `resolution: "missing"` for a HostObject string key |
 | `performance.now()` / `crypto.randomUUID()` | records `call` |
 | `localStorage.getItem()` / `sessionStorage.setItem()` / `localStorage.length` | records `call`; `length` records `get` |
@@ -70,7 +71,9 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `navigator.javaEnabled()` | records a navigator `get` plus `call`; returns `false` |
 | `hostProbe.answer` / `element.textContent` reads | record `get` with `value_summary` and `outcome` |
 | `element.textContent = 'x'` | records `set` with the assigned `value_summary` |
-| `hostProbe.add(2, 3)` | records `call` with `argument_count`, up to 8 `argument_summaries`, `return_summary`, and `outcome` |
+| `hostProbe.add(2, 3)` | records one `call` (the immediately preceding method read is folded); includes `argument_count`, up to 8 `argument_summaries`, `return_summary`, and `outcome` |
+| method read, other trace event, then call | keeps the `get_method` and adds a separate `call` |
+| assignment to `hostProbe.echo` | records `set`; a non-function override read is an ordinary read, not `get_method` |
 | method that throws | records `call` with `outcome: "threw"` (no return summary), exception still propagates |
 | other plain property reads on native BOM objects | not covered yet |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
@@ -160,7 +163,7 @@ return_summary?
 ```
 
 - `member` is the property or method name as registered by the HostObject.
-- `operation` is `get`, `set`, `call`, or `get_probe`.
+- `operation` is `get`, `set`, `get_method`, `call`, or `get_probe`.
 - `phase` is always `enter` in this slice.
 - `resolution` is present only for `get_probe`; current value is `"missing"`.
   Present/unknown classification is not emitted.
@@ -173,9 +176,9 @@ return_summary?
   - `argument_count`: full argument count for `call`;
   - `argument_summaries`: first up to 8 argument summaries for `call`;
   - `return_summary`: for `call` when `outcome` is `"returned"`.
-  These fields are absent on `get_probe`, on independent native callbacks, and
-  when completion was unavailable (e.g. the event was cleared or the trace was
-  stopped).
+  These fields are absent on `get_method`, `get_probe`, on independent native
+  callbacks, and when completion was unavailable (e.g. the event was cleared or
+  the trace was stopped).
 
 Report shape:
 
@@ -190,7 +193,7 @@ Report shape:
     "coverage": {
         "scope": "installed HostObject getter/setter/method/get_probe callbacks",
         "object_types": [...],
-        "operations": ["get", "set", "call", "get_probe"],
+        "operations": ["get", "set", "get_method", "call", "get_probe"],
         "phase": "enter",
         "summaries": "generic HostObject get/set/call: returned/threw outcome, ...",
         "not_covered": [...],
@@ -442,9 +445,43 @@ it. Summaries are best-effort: allocation failure leaves the enter event intact.
 Not covered by step 6a: summaries for independent native callbacks
 (performance/crypto/Storage/permissions-status/matchMedia/visualViewport/window
 metadata), arguments or return values for get/set beyond the summary fields,
-exception messages, stacks, timing, method-reference reads, and the other
-operations listed in §7. The generic path's event count is unchanged; only
-fields are added.
+exception messages, stacks, timing, and the other operations listed in §7. The
+generic path's event count is unchanged; only fields are added.
+
+## 4.12 Method-reference reads (step 6b)
+
+HostObject methods are now function-valued accessors rather than plain data
+properties. Reading one records:
+
+```text
+operation: "get_method", phase: "enter"
+```
+
+The function is created lazily and cached in a private slot on the JS wrapper, so
+identity is stable and the property stays writable/configurable/enumerable like
+the previous data property. Assigning a function or non-function value records a
+`set`; reading a non-function override is an ordinary read and is not reported as
+`get_method`.
+
+For the common `receiver.method(...)` form, the method read is normally the last
+event before the call; `method_callback` **folds that event into a single
+`call`** instead of emitting two events. If another traced access occurs between
+the read and the call (for example an argument expression that reads another host
+property), the `get_method` event is retained and a separate `call` event is
+recorded:
+
+```text
+const fn = hostProbe.echo;       // get_method
+hostProbe.answer;                // get
+fn.call(hostProbe, 'x');         // call (not folded)
+```
+
+Descriptor reads such as `Object.getOwnPropertyDescriptor(host, 'method')`
+materialize the accessor and therefore also produce `get_method`. Detached method
+references are not calls; calling one later with the host receiver can still
+produce a separate `call`. The folding rule is deliberately conservative: it
+never removes a non-adjacent `get_method` event, and no user `toString`/`valueOf`
+or property Get is executed to produce method metadata.
 
 ## 5. Source attribution
 
@@ -475,7 +512,7 @@ inside the new channel. A traced native method call is recorded once in the new
 channel even if the old manual `watch_record` site also records the call in the
 old channel.
 
-## 7. Not covered in this first slice
+## 7. Not covered
 
 - Other intrinsic/global data properties not listed in §4.3/§4.10 (for example
   reads of global function/host-object bindings themselves).
@@ -492,10 +529,9 @@ old channel.
 - User-created plain JS objects, object literals, class instances, destructuring
   beyond covered getter execution, Proxy/AST instrumentation, and explicit
   object-level hooks.
-- Method-reference reads (`const fn = document.querySelector`), `in`, delete,
-  enumeration, property descriptors, dynamic defineProperty/shadowing behavior,
-  and missing-property probes on non-HostObject objects (including numeric keys
-  and Symbols).
+- `in`, delete, enumeration, property descriptors, dynamic
+  defineProperty/shadowing behavior, and missing-property probes on
+  non-HostObject objects (including numeric keys and Symbols).
 - Read-only write attempts that V8 rejects before reaching a native setter.
 - Arguments/returns for non-generic trace sources, exception messages, stacks,
   timing, Inspector pauses / `break_on_hit`, and DevTools evaluation attribution.
@@ -504,22 +540,20 @@ old channel.
 
 The step-5 object groups are complete. Step 6a now adds primitive value,
 argument, and return summaries plus returned/threw outcomes for the generic
-HostObject get/set/call path. Remaining step-6 work: method-reference reads,
-`in`, delete, enumeration, descriptors, target association for existing Reflect
+HostObject get/set/call path. Remaining step-6 work: `in`,
+delete, enumeration, descriptors, target association for existing Reflect
 channels, and summaries for independent native callbacks. Plain-property/
 returned-collection gaps (onchange, array elements, plain returned values,
 global binding reads) remain explicit non-goals.
 
 ## 8. Verification
 
-Verified on real V8 at commit `4d0800b` (branch `host-access-values`):
+Verified on real V8 at commit `c13bdf5` (branch `host-access-method-reads`):
 
-- Linux `release-linux` run `41383785169` — cp311 / cp312 / cp313 / cp314,
-  each `1696 passed, 2 skipped`;
-- Windows `release-windows` run `41383788221` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1696 passed, 2 skipped`;
-- macOS arm64 `release-macos` run `41384345701` — cp311 / cp312 / cp313 /
-  cp314 `macosx_11_0_arm64` wheels, each `1696 passed, 2 skipped`.
+- Linux `release-linux` run `41395700932` — cp311 / cp312 / cp313 / cp314,
+  each `1699 passed, 2 skipped`;
+- Windows `release-windows` run `41395704544` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1699 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
@@ -532,12 +566,13 @@ Verified on real V8 at commit `4d0800b` (branch `host-access-values`):
 `test/test_access_trace_permissions.py` (5 items),
 `test/test_access_trace_match_media.py` (3 items),
 `test/test_access_trace_legacy_navigator.py` (3 items),
-`test/test_access_trace_window_aliases.py` (4 items), and
-`test/test_access_trace_values.py` (6 items) ran in every lane. The full suite
-collects 1698 items; 1696 pass and 2 are skipped.
+`test/test_access_trace_window_aliases.py` (4 items),
+`test/test_access_trace_values.py` (6 items), and
+`test/test_access_trace_method_reads.py` (3 items) ran in every lane. The full
+suite collects 1701 items; 1699 pass and 2 are skipped.
 
-The step-6a value-summary slice and the legacy-navigator slice passed on their
-first CI attempts. The first window-alias attempt (`ac4e1f5`) made the writable
+The step-6a value-summary, step-6b method-reference, and legacy-navigator slices
+passed on their first CI attempts. The first window-alias attempt (`ac4e1f5`) made the writable
 aliases non-configurable, which broke top-level `let frames`; `b936307` keeps
 their configurable attributes and passes. The matchMedia and storage-manager slices also passed on
 their first CI attempts. The permissions slice needed a second CI run only
@@ -573,7 +608,8 @@ Coverage in this slice:
 - nested connection/orientation properties and `performance.timeOrigin` record
   reads, including repeated parent getter accesses and nested missing probes;
 - `visualViewport` metadata, writable handlers, no-op methods, and missing
-  probes record get/set/call/get_probe events; read-only writes still have no
+  probes record get/set/call/get_probe (and method references get_method)
+  events; read-only writes still have no
   set event, and the documented prototype/descriptor changes are asserted;
 - `navigator.storage` parent reads and all three manager method calls record
   events while preserving plain-object identity, descriptors, and results;
@@ -590,7 +626,10 @@ Coverage in this slice:
 - generic HostObject get/set/call completion records returned/threw outcomes,
   primitive value and return summaries, 8-argument summaries with full counts,
   UTF-8-safe string truncation, and nested-completion attachment by seq;
-- read-only writes and method-reference reads stay untraced;
+- method references record `get_method`; adjacent calls fold into one `call`,
+  intervening accesses keep both, method identity/override/descriptor behavior
+  and non-function override reads are covered;
+- read-only writes stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
 - native object IDs remain stable across fresh element wrappers, and reset with
@@ -600,6 +639,6 @@ Coverage in this slice:
 
 The remaining blind spots are plain-property/returned-collection gaps
 (MediaQueryList/PermissionStatus `onchange`, array elements, plain returned
-values, global binding reads), the rest of step 6 (method references,
-`in`/delete/enumeration/descriptors, Reflect target identity, native-callback
+values, global binding reads), the rest of step 6
+(`in`/delete/enumeration/descriptors, Reflect target identity, native-callback
 summaries), and step 7 (runtime report/usage flow).

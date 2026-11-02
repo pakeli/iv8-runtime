@@ -656,6 +656,29 @@ Verified on real V8 at commit `4d0800b`: Linux `41383785169`, Windows
 2 skipped`. The full suite collects 1698 items (1692 previous + 6 value-summary
 tests). See `docs/host_access_trace.md`.
 
+### 39. Host access trace method-reference reads (step 6b)
+
+Decided/verified `2026-11-02`.
+
+HostObject method properties are now function-valued accessors. A read records
+`get_method`; the function is created lazily and cached in a V8 private slot on
+the wrapper, preserving identity, writability/configurability/enumerability, and
+override/delete behavior. A normal `receiver.method(...)` read is folded into one
+`call` when it is the last trace event; if another access intervenes, the
+`get_method` remains and a separate call is recorded. Method assignment records
+`set`, and non-function overrides read as ordinary properties rather than
+`get_method`.
+
+The folding rule is intentionally conservative and documented: descriptor reads
+instantiate the accessor and may produce `get_method`; detached references are
+not calls; no user `toString`/`valueOf` is executed. Coverage operations now
+include `get_method`.
+
+Verified on real V8 at commit `c13bdf5`: Linux `41395700932`, Windows
+`41395704544`, each wheel lane `1699 passed, 2 skipped`. The full suite collects
+1701 items (1698 previous + 3 method-reference tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

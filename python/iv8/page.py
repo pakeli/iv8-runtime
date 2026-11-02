@@ -1020,9 +1020,11 @@ class Page:
         ``toString``/``valueOf``; string content is capped at 64 bytes with the
         original byte length, and strings over 4096 bytes keep only the length.
         Native-callback events and ``get_probe`` do not carry these fields yet.
-        ``onchange``, array elements, global binding reads, method-reference
-        reads, ``in``, delete, enumeration, descriptors, and exception
-        messages/stacks remain out of scope.
+        Method references record ``get_method``; an adjacent method call folds
+        that event into one ``call``, while intervening accesses keep both.
+        ``onchange``, array elements, global binding reads, ``in``, delete,
+        enumeration, descriptors, and exception messages/stacks remain out of
+        scope.
 
         ``max_events`` is the retained-event capacity (earliest N retained; later
         events increment ``dropped_events``). It must be a positive ``int``; a
@@ -1072,11 +1074,13 @@ class Page:
         ``dropped_events``, ``filter_object_types``, and a ``coverage`` dictionary
         describing this slice's explicit scope. Each event contains ``seq``,
         ``generation``, ``object_id``, ``object_type``, ``label``, ``member``,
-        ``operation`` (``get``/``set``/``call``/``get_probe``), ``phase``
-        (``enter``), ``resource_name``, and ``source_kind`` (``eval``/
-        ``html_script``/``internal``/``unknown``). ``get_probe`` events also
-        carry ``resolution`` (currently ``"missing"`` for absent HostObject
-        string-key reads).
+        ``operation`` (``get``/``set``/``get_method``/``call``/``get_probe``),
+        ``phase`` (``enter``), ``resource_name``, and ``source_kind``
+        (``eval``/``html_script``/``internal``/``unknown``). ``get_probe``
+        events also carry ``resolution`` (currently ``"missing"`` for absent
+        HostObject string-key reads). Generic get/set/call events may also carry
+        step-6a ``outcome``, ``value_summary``, ``argument_count``,
+        ``argument_summaries``, and ``return_summary`` fields.
 
         ``clear=True`` clears events and ``dropped_events`` but preserves the
         sequence, configuration, generation, and object-ID mappings. Reading never
