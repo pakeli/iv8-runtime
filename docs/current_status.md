@@ -79,7 +79,7 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   `visualViewport` + window flags, bounded `matchMedia`, deterministic
   `navigator.storage` and `navigator.permissions`, and empty legacy
   `navigator.plugins` / `mimeTypes` / `javaEnabled`
-- Post-M11 host access trace (steps 1–4, the complete step-5 object groups, and steps 6a–6h):
+- Post-M11 host access trace (steps 1–4, the complete step-5 object groups, steps 6a–6h, and step 7):
   `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
   recording native HostObject get/set/call entries, missing string-key
   `get_probe` events, performance/crypto/Storage callback calls, intrinsic
@@ -93,9 +93,10 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   method-reference `get_method` events with adjacent-call folding, step-6c
   `delete`/`own_keys`/`define_property` request events, step-6d explicit
   has/descriptor query events, step-6f Reflect target type/label metadata,
-  step-6g native callback/getter summaries, and step-6h synchronous exception
-  name/message/location/stack, with generation, object identity, resource, and
-  source attribution; `in`, non-HostObject query targets, cached wrappers, and
+  step-6g native callback/getter summaries, step-6h synchronous exception
+  name/message/location/stack, and the step-7 `Page.access_trace_report()`
+  aggregated report, with generation, object identity, resource, and source
+  attribution; `in`, non-HostObject query targets, cached wrappers, and
   asynchronous exception metadata remain blind spots
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
@@ -166,7 +167,13 @@ Reflect target metadata, native summaries, and synchronous exception metadata)
 was verified against the tree of commit `bd148c2` (release-tested tree
 `72c00ed`) with Linux run `41406392044`, Windows run
 `41406401506`, and macOS arm64 run `41406410844`, each wheel lane
-`1714 passed, 2 skipped`.
+`1714 passed, 2 skipped`. The step-7 aggregated report was verified against the tree of commit
+`c678ede` (release-tested tree `62af2e6`) with Linux run `41426804187` and
+Windows run `41426817304`, each wheel lane `1720 passed, 2 skipped`. macOS arm64
+full-suite overlay run `41431606189` (macos-14, verified step-6 wheel plus the
+step-7 Python facade) also reported `1720 passed, 2 skipped`; the fresh
+`release-macos` run `41426828872` was cancelled while queued by macos-15 runner
+availability and produced no test failure.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -227,16 +234,21 @@ Implemented and present at `HEAD`:
 - `Page.watch_object_keys()` / `read_object_keys_hits()`;
 - optional `break_on_hit=True` pause behavior when a DevTools client is attached.
 
-Post-M11 monitoring extension (verified `2026-10-30`):
+Post-M11 monitoring extension (verified `2026-11-02`):
 
 - `Page.start_access_trace()` / `Page.stop_access_trace()` /
-  `Page.read_access_trace()` — native HostObject `get`/`set`/`call` events,
-  missing string-key `get_probe`/`resolution: "missing"` events, and
-  performance/crypto/Storage native callback calls plus Storage `length` reads,
-  with generation/object identity, capacity/drop accounting, object-type
-  filters, and source attribution. It is a separate channel from the five watch
-  APIs; remaining plain-object property reads and non-HostObject missing probes
-  are not covered yet. See `docs/host_access_trace.md`.
+  `Page.read_access_trace()` — native HostObject and traced native get/set/call
+  events, missing string-key `get_probe`/`resolution: "missing"` events,
+  explicit has/descriptor queries, Reflect target metadata, completion
+  summaries, and synchronous exception metadata, with generation/object
+  identity, capacity/drop accounting, object-type filters, and source
+  attribution. It is a separate channel from the five watch APIs; remaining
+  plain-object property reads, the `in` operator, and other documented blind
+  spots are not covered. See `docs/host_access_trace.md`.
+- `Page.access_trace_report()` — a pure-Python aggregated dynamic-run report
+  with access counts, missing candidates, first-sequence/source metadata,
+  coverage boundaries, capacity/filter/stopped warnings, and caller-supplied
+  event-loop progress. See `docs/host_access_trace_workflow.md`.
 
 ### M11 compatibility line
 
@@ -420,7 +432,7 @@ Recent implementation sequence from Git history:
 - `M11-41` through `M11-45`: BOM viewport/media/device metadata — visualViewport,
   matchMedia, navigator.storage/permissions, and legacy navigator metadata
   (verified `2026-10-30`)
-- Post-M11 host access trace (steps 1–4, the complete step-5 object groups, and steps 6a–6h):
+- Post-M11 host access trace (steps 1–4, the complete step-5 object groups, steps 6a–6h, and step 7):
   native HostObject get/set/call, missing string-key probe,
   performance/crypto/Storage calls, window metadata accessors, nested
   connection/orientation/timeOrigin reads, static visualViewport
@@ -588,10 +600,12 @@ The repository is executing its post-M10 direction:
   operator, non-HostObject query targets, query wrappers cached before tracing
   starts, asynchronous exception metadata, and general call-site
   locations/timing are explicit blind spots;
-- the next execution handoff is step 7 (runtime report/usage workflow).
-  The M11 selector follow-up (`M11-46` candidate) and `navigator.userAgentData`
-  remain deferred priorities; remaining BOM/DOM gaps are inventoried in
-  `docs/dom_bom_gaps.md`.
+- step 7 (aggregated usage report and workflow) is **landed and verified on real
+  V8 (Linux + Windows release lanes; macOS arm64 full-suite overlay)** on
+  `2026-11-02`; see `docs/host_access_trace_workflow.md`;
+- the next execution handoff is selecting `M11-46` from the selector follow-up
+  or the remaining BOM/DOM gaps. `navigator.userAgentData` remains deliberately
+  deferred; gaps are inventoried in `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
@@ -627,7 +641,8 @@ If you need a one-line answer:
 > argument/return summaries, step-6b method-reference reads, step-6c
 > delete/enumeration/define request events, step-6d explicit has/descriptor
 > queries, step-6f Reflect target metadata, step-6g native callback/getter
-> summaries, and step-6h synchronous exception metadata — all verified on real
+> summaries, and step-6h synchronous exception metadata, plus the step-7
+> `Page.access_trace_report()` aggregated usage report — all verified on real
 > V8 (Linux + Windows + macOS arm64) on `2026-11-02`. The step-5 object groups
 > and steps 6a–6h are complete for the traceable HostObject surface; `in`,
 > non-HostObject query targets, cached wrappers, and asynchronous exception

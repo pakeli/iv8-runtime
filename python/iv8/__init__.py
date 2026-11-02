@@ -1040,8 +1040,10 @@ channels or add a JS-visible API. It does not cover the remaining plain BOM
 property reads/nested objects, user-created objects, the ``in`` operator,
 non-HostObject query targets, query wrappers cached before tracing,
 asynchronous exception metadata, numeric/Symbol probes, or general call-site
-location/timing yet. See
-``docs/host_access_trace.md``.
+location/timing yet. ``Page.access_trace_report(clear=False, progress=None)``
+provides a pure-Python aggregated report (access groups, missing candidates,
+coverage/capacity/filter warnings, and caller-supplied event-loop progress);
+see ``docs/host_access_trace_workflow.md`` and ``docs/host_access_trace.md``.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are

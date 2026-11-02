@@ -652,6 +652,17 @@ invoke getters. Metadata is attached only to a trace event that was retained;
 asynchronous failures, failures outside a traced native entry, and timing
 information are not covered.
 
+## 4.18 Aggregated usage report (step 7)
+
+`Page.access_trace_report(clear=False, progress=None)` is a pure-Python view
+over `read_access_trace`. It groups accesses by target/member/operation, lists
+missing-property candidates, preserves each group's first `seq` and source,
+and returns the coverage dictionary plus capacity/filter/stopped/empty
+warnings. It defaults to a non-destructive read; `progress` is an optional
+caller-supplied dict copied into the report. It adds no native event type or
+JS-visible surface. The exact report shape and recommended run workflow are in
+`docs/host_access_trace_workflow.md`.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -847,5 +858,6 @@ The remaining blind spots are plain-property/returned-collection gaps
 (MediaQueryList/PermissionStatus `onchange`, array elements, plain returned
 values, global binding reads), the `in` operator, non-HostObject query targets,
 query wrappers cached before tracing starts, asynchronous exception metadata,
-general call-site locations/timing, and step 7 (runtime report/usage flow).
-Steps 6a–6h are complete for the traceable HostObject surface.
+and general call-site locations/timing. Steps 6a–6h are complete for the
+traceable HostObject surface; the step-7 aggregated report/workflow is frozen
+in `docs/host_access_trace_workflow.md`.

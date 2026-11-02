@@ -140,5 +140,7 @@ If you only remember one thing:
 > (commit `b936307`), completing the step-5 object coverage. Steps 6a–6h
 > (summaries, method references, delete/enumeration/define, explicit
 > has/descriptor query wrappers, Reflect target metadata, native summaries, and
-> synchronous exception metadata) are verified at commit `bd148c2`; see
-> `docs/m11_41_45_report.md` and `docs/host_access_trace.md`.
+> synchronous exception metadata) are verified at commit `bd148c2`; step 7
+> (`Page.access_trace_report()` and the usage workflow) is verified at commit
+> `c678ede` (release-tested tree `62af2e6`); see `docs/m11_41_45_report.md`, `docs/host_access_trace.md`, and
+> `docs/host_access_trace_workflow.md`.

@@ -38,10 +38,10 @@ git log --oneline --decorate -n 20
   plus the step-5 native BOM call, window metadata, nested metadata, static
   visualViewport, navigator.storage manager, navigator.permissions,
   matchMedia-result, legacy-navigator, and window-alias groups — the complete
-  step-5 object coverage — plus steps 6a–6h: value/argument/return summaries,
-  method-reference reads, delete/enumeration/define operations, explicit
-  has/descriptor query wrappers, Reflect target metadata, native callback/getter
-  summaries, and synchronous exception metadata**
+  step-5 object coverage — plus steps 6a–6h (summaries, method references,
+  delete/enumeration/define, explicit query wrappers, Reflect target metadata,
+  native summaries, and exception metadata) and the step-7 aggregated
+  ``Page.access_trace_report()`` workflow**
   (`Page.start_access_trace` / `stop_access_trace` / `read_access_trace`, native
   get/set/call, HostObject missing-string-key `get_probe`,
   performance/crypto/Storage callback calls, window metadata accessors,
@@ -51,9 +51,12 @@ git log --oneline --decorate -n 20
   navigator metadata, window alias get/set events, query-result completions, and
   exception name/message/location/stack), green on real V8 at commit `bd148c2`;
   step 5 object coverage and steps 6a–6h are complete for the traceable
-  HostObject surface. The `in` operator, non-HostObject query targets, cached
-  wrappers, asynchronous exception metadata, and general call-site timing remain
-  documented blind spots.
+  HostObject surface; step 7 is verified at commit `c678ede` (release-tested
+  tree `62af2e6`) with `Page.access_trace_report()` and the workflow in
+  `docs/host_access_trace_workflow.md` (Linux/Windows release lanes plus a
+  macOS arm64 full-suite overlay). The `in` operator, non-HostObject query
+  targets, cached wrappers, asynchronous exception metadata, and general
+  call-site timing remain documented blind spots.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -130,10 +133,11 @@ Answer roughly as follows:
     visualViewport metadata/methods, navigator.storage parent reads plus manager
     calls, permissions query/status accesses, matchMedia result accesses,
     plugins/mimeTypes/javaEnabled, parent/top/frames/opener get/set, steps 6a–6h
-    (value/argument/return summaries, method references, delete/enumeration/
-    define operations, explicit has/descriptor query wrappers, Reflect target
-    metadata, native summaries, and synchronous exception metadata); see
-    `docs/host_access_trace.md`).
+    (summaries, method references, delete/enumeration/define, explicit
+    has/descriptor query wrappers, Reflect target metadata, native summaries,
+    and synchronous exception metadata), and the step-7 aggregated
+    `Page.access_trace_report()` workflow; see `docs/host_access_trace.md` and
+    `docs/host_access_trace_workflow.md`).
 
 ## Handoff Discipline
 

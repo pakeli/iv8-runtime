@@ -10,8 +10,10 @@ matchMedia-result, legacy-navigator, and window-alias groups, plus step-6a
 value/argument/return summaries, step-6b method-reference reads, step-6c
 delete/enumeration/define operations, step-6d explicit has/descriptor queries,
 step-6f Reflect target metadata, step-6g native callback/getter summaries, and
-step-6h synchronous exception metadata, are also verified (Linux + Windows +
-macOS arm64, `2026-11-02`); see `docs/host_access_trace.md`.
+step-6h synchronous exception metadata, plus the step-7 aggregated
+`Page.access_trace_report()` workflow, are also verified (Linux + Windows +
+macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
+`docs/host_access_trace_workflow.md`.
 
 ## 0. What this document is
 
@@ -128,7 +130,8 @@ All Python-side; none of these add a JS-visible global.
 | `watch_reflect_has(...)` / `read_reflect_has_hits()` | M9-5 | `Reflect.has` |
 | `watch_reflect_ownkeys(...)` / `read_reflect_ownkeys_hits()` | M10-1 | `Reflect.ownKeys` |
 | `watch_object_keys(...)` / `read_object_keys_hits()` | M10-2 | `Object.keys` |
-| `start_access_trace(max_events=10000, object_types=None)` / `stop_access_trace()` / `read_access_trace(clear=True)` | host access trace, steps 1–4 + the complete step-5 object groups + steps 6a–6h (verified 2026-11-02) | native HostObject property `get`/`set`, method `call`, missing string-key `get_probe`, `get_method` references with adjacent-call folding, `delete`/`own_keys`/`define_property` request events, explicit `has`/`get_own_property_descriptor` query events for HostObject targets, independent performance/crypto/Storage/permissions/matchMedia/window callback and getter entries, window metadata/alias accessors, nested connection/orientation/timeOrigin reads, visualViewport metadata/handler/method accesses, navigator.storage manager calls, navigator.permissions query/status accesses, matchMedia result reads/method calls, legacy navigator plugins/mimeTypes/javaEnabled accesses, generic/native get/set/call and query completion summaries, and synchronous exception name/message/location/stack; structured events with generation, object identity, resource, and source kind; see `docs/host_access_trace.md` |
+| `access_trace_report(*, clear=False, progress=None)` | step 7 (verified 2026-11-02) | pure-Python aggregated dynamic-run report: access groups with first/last seq and source, missing candidates, operation/object-type totals, coverage/capacity/filter/stopped warnings, and caller-supplied progress; see `docs/host_access_trace_workflow.md` |
+| `start_access_trace(max_events=10000, object_types=None)` / `stop_access_trace()` / `read_access_trace(clear=True)` | host access trace, steps 1–4 + the complete step-5 object groups + steps 6a–6h (verified 2026-11-02) | native HostObject property `get`/`set`, method `call`, missing string-key `get_probe`, `get_method` references with adjacent-call folding, `delete`/`own_keys`/`define_property` request events, explicit `has`/`get_own_property_descriptor` query events for HostObject targets, independent performance/crypto/Storage/permissions/matchMedia/window callback and getter entries, window metadata/alias accessors, nested connection/orientation/timeOrigin reads, visualViewport metadata/handler/method accesses, navigator.storage manager calls, navigator.permissions query/status accesses, matchMedia result reads/method calls, legacy navigator plugins/mimeTypes/javaEnabled accesses, generic/native get/set/call and query completion summaries, and synchronous exception name/message/location/stack; structured events with generation, object identity, resource, and source kind. The separate step-7 report aggregates this log; see `docs/host_access_trace.md` and `docs/host_access_trace_workflow.md` |
 
 Shared semantics across the five watch channels:
 
@@ -508,7 +511,7 @@ clock.
 | M11-35 | deterministic BOM metadata completion (window/screen/navigator; 36-key environment) — verified 2026-10-30 | `docs/m11_35_bom_metadata.md`, `docs/m11_35_report.md` |
 | M11-36..M11-40 | BOM completion batch (dialogs, performance timeline, structuredClone, single-context window metadata, scheduler.postTask) — verified 2026-10-30 | `docs/m11_36_40_bom_completion.md`, `docs/m11_36_40_report.md` |
 | M11-41..M11-45 | BOM viewport/media/device metadata (visualViewport, matchMedia, navigator.storage/permissions, legacy navigator metadata) — verified 2026-10-30 | `docs/m11_41_45_bom_extras.md`, `docs/m11_41_45_report.md` |
-| Post-M11 host access trace (steps 1–4 + complete step-5 object groups + steps 6a–6h) | native HostObject get/set/call trace + missing-property probes + `get_method` references + `delete`/`own_keys`/`define_property` request events + explicit `has`/`get_own_property_descriptor` query events + Reflect target metadata + performance/crypto/Storage/permissions/matchMedia/window callbacks and getters + window metadata/alias accessors + nested/visualViewport accessors and methods + navigator.storage manager calls + navigator.permissions query/status accesses + matchMedia result accesses + legacy navigator metadata + primitive value/argument/return summaries + synchronous exception metadata (`start_access_trace` / `stop_access_trace` / `read_access_trace`) — verified 2026-11-02 | `docs/host_access_trace.md` |
+| Post-M11 host access trace (steps 1–4 + complete step-5 object groups + steps 6a–7) | native HostObject get/set/call trace + missing-property probes + `get_method` references + `delete`/`own_keys`/`define_property` request events + explicit `has`/`get_own_property_descriptor` query events + Reflect target metadata + performance/crypto/Storage/permissions/matchMedia/window callbacks and getters + window metadata/alias accessors + nested/visualViewport accessors and methods + navigator.storage manager calls + navigator.permissions query/status accesses + matchMedia result accesses + legacy navigator metadata + primitive value/argument/return summaries + synchronous exception metadata + step-7 aggregated report (`start_access_trace` / `stop_access_trace` / `read_access_trace` / `access_trace_report`) — verified 2026-11-02 | `docs/host_access_trace.md`, `docs/host_access_trace_workflow.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
 authoritative answer to "does this project support X?" — prefer it over inference

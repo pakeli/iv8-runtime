@@ -748,6 +748,41 @@ interceptor behavior:
 
 See `docs/host_access_trace.md`.
 
+### 42. Host access trace usage report/workflow (step 7)
+
+Decided/verified `2026-11-02`.
+
+Step 7 is implemented entirely in the Python facade: no new native event type,
+JS-visible global, or top-level export. `Page.access_trace_report(clear=False,
+progress=None)` builds an aggregated view from `read_access_trace`:
+
+- Access groups are keyed by object type/label/object ID/member/operation and
+  retain first/last `seq`, count, first resource/source, optional resolution,
+  and outcome counts. Missing-property candidates are grouped separately.
+- `trace` and `coverage` preserve capacity/filter/generation/coverage
+  boundaries. Structured warnings report capacity overflow, active object-type
+  filters, a stopped/never-started trace, and an empty snapshot.
+- The default is non-destructive (`clear=False`); `clear=True` snapshots then
+  clears the raw log. `progress` is a caller-supplied dict copied verbatim for
+  event-loop budget/completion context, not interpreted by the runtime.
+- Raw events remain the source of truth and are available through
+  `read_access_trace`; the report is a dynamic-run view, not a static
+  dependency list.
+
+The boundary/report shape and recommended workflow are frozen in
+`docs/host_access_trace_workflow.md`. Tests:
+`test/test_access_trace_report.py` (6 items). The first attempt (`3fcc156`)
+failed one stopped-report warning expectation because capacity warnings persist
+with retained events; `c678ede` (identical tree to the tested `62af2e6`) corrected it. The full
+suite then collected 1722 items; Linux `41426804187` and Windows `41426817304`
+each reported `1720 passed, 2 skipped`. macOS arm64 full-suite overlay
+`41431606189` (verified step-6 wheel plus the step-7 Python facade) also
+reported `1720 passed, 2 skipped`; the fresh macos-15 release run was cancelled
+while queued and produced no test failure.
+
+The next work item is selecting `M11-46` from the selector follow-up or the
+ranked BOM/DOM gaps.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

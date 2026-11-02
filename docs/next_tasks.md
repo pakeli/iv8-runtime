@@ -1402,11 +1402,58 @@ The first full 6d–6h attempt (`8f8dc23`) failed one query test because the
 
 ### Next
 
-Step 6 is complete for the traceable HostObject surface. The next work item is
-step 7 (runtime report/usage workflow). The `in` operator, non-HostObject
-targets, wrapper caching, asynchronous exception metadata, and timing remain
-documented blind spots rather than M11 scope. The M11-46 selector follow-up
-remains deferred.
+Continue with Priority 3ak below: the aggregated usage report/workflow (step 7).
+The `in` operator, non-HostObject targets, wrapper caching, asynchronous
+exception metadata, and timing remain documented blind spots rather than M11
+scope. The M11-46 selector follow-up remains deferred.
+
+## Priority 3ak: Host access trace usage report/workflow (step 7) — DONE (`2026-11-02`)
+
+### What landed
+
+- `Page.access_trace_report(clear=False, progress=None)` is a pure-Python view
+  over `read_access_trace`; it does not execute page code.
+- The report groups accesses by object type/label/object ID/member/operation and
+  preserves each group's first `seq`, first resource/source, last `seq`, count,
+  and outcome counts. Missing-property candidates are grouped separately with
+  the same first-source metadata.
+- `trace`/`coverage` boundaries, operation/object-type totals, and structured
+  warnings (`capacity_exceeded`, `object_type_filter_active`,
+  `trace_not_recording`, `no_events`) are included.
+- The default is non-destructive; `clear=True` snapshots then clears the raw
+  log. `progress` is copied from the caller and never interpreted; it records
+  event-loop budget/completion for the workflow.
+- The exact report shape and recommended run sequence are frozen in
+  `docs/host_access_trace_workflow.md`, including the dynamic-run/no-log and
+  coverage blind-spot caveats.
+
+Boundary/verification: `docs/host_access_trace_workflow.md`. Tests:
+`test/test_access_trace_report.py` (6 items). Full suite collects 1722 items;
+each wheel lane: **`1720 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final code commit `c678ede` (branch `host-access-report`; identical tree to
+the release-tested `62af2e6`):
+
+- Linux `release-linux` run `41426804187` — cp311–cp314, each
+  `1720 passed, 2 skipped`;
+- Windows `release-windows` run `41426817304` — Python 3.11–3.14, each
+  `1720 passed, 2 skipped`;
+- macOS arm64 full-suite overlay run `41431606189` (`macos-14`) — downloaded
+  the verified step-6 `macosx_11_0_arm64` wheel, overlaid the step-7 Python
+  facade, and ran the full suite: `1720 passed, 2 skipped`. Step 7 adds no
+  native code; the fresh `release-macos` run `41426828872` was cancelled while
+  queued by macos-15 runner availability and produced no test failure.
+
+The first attempt (`3fcc156`) failed one stopped-report warning expectation
+because capacity warnings persist with retained events; `c678ede` corrected the
+expectation.
+
+### Next
+
+Step 7 is complete. Select `M11-46` from the selector follow-up or the ranked
+BOM/DOM gaps; `navigator.userAgentData` remains deliberately deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
