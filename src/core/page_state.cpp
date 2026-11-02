@@ -3548,6 +3548,9 @@ public:
     DocumentHost(const std::string& html, std::string url, PageState* page)
         : page_(page), url_(std::move(url)), title_(extract_title(html)) {
         parse_html(html, pool_, roots_, scripts_);
+        // M11-47: reflect document.title writes into the first parsed <title>
+        // element (never create one; see docs/m11_47_document_identity.md).
+        title_node_ = find_tag("title");
         // M5-5: deterministic initial single-select — within each <select>, keep
         // only the document-order-first pre-selected <option>, clearing the rest.
         // (No auto-select when none is pre-selected: select.value is then "".)
@@ -3624,7 +3627,8 @@ public:
     std::string global_name() const override { return "document"; }
     std::string trace_object_type() const override { return "document"; }
     std::vector<std::string> property_names() const override {
-        return {"URL",  "title",           "readyState",  "documentElement",
+        return {"URL",  "title",           "documentURI", "baseURI",
+                "defaultView", "location", "readyState",  "documentElement",
                 "head", "body",            "currentScript", "scripts",
                 // M4-B-6 document's direct element children.
                 "children",
@@ -3647,7 +3651,8 @@ public:
                 "cookie"};
     }
     std::vector<std::string> writable_property_names() const override {
-        return {"cookie"};
+        // M11-46 cookie jar; M11-47 writable document.title.
+        return {"cookie", "title"};
     }
     std::vector<std::string> method_names() const override {
         // M2-6 document methods + M4-A-1 static queries + M4-A-2 createElement +
@@ -3699,6 +3704,23 @@ public:
                                       const std::string& name) override {
         if (name == "URL") return v8_string(isolate, url_);
         if (name == "title") return v8_string(isolate, title_);
+        // M11-47 document identity aliases. documentURI/baseURI are the current
+        // generation's base URL (the runtime has no <base href> resolution).
+        // defaultView is the single global window; location is the same
+        // LocationHost wrapper installed as the global `location`.
+        if (name == "documentURI" || name == "baseURI") {
+            return v8_string(isolate, url_);
+        }
+        if (name == "defaultView") return context->Global();
+        if (name == "location") {
+            v8::Local<v8::Value> location;
+            if (context->Global()
+                    ->Get(context, v8_string(isolate, "location"))
+                    .ToLocal(&location)) {
+                return location;
+            }
+            return v8::Undefined(isolate);
+        }
         if (name == "readyState") return v8_string(isolate, ready_state_);
         // M11-23: deterministic document metadata (read-only).
         if (name == "characterSet") return v8_string(isolate, "UTF-8");
@@ -3808,7 +3830,10 @@ public:
     void set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
                       const std::string& name,
                       v8::Local<v8::Value> value) override {
-        if (name != "cookie" || page_ == nullptr) {
+        if (name != "cookie" && name != "title") {
+            return;
+        }
+        if (name == "cookie" && page_ == nullptr) {
             return;
         }
         v8::Local<v8::String> str;
@@ -3816,10 +3841,35 @@ public:
             return;
         }
         v8::String::Utf8Value utf8(isolate, str);
-        page_->set_document_cookie(
+        const std::string text =
             *utf8 != nullptr
                 ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
-                : std::string());
+                : std::string();
+        if (name == "cookie") {
+            page_->set_document_cookie(text);
+            return;
+        }
+        // M11-47 title = ...: update the document string and reflect it into the
+        // first parsed <title> element, mirroring element.textContent = ... for
+        // the element-only DOM (detach element children; queue non-empty removals).
+        title_ = text;
+        if (title_node_ == nullptr) {
+            return;
+        }
+        std::vector<DomNode*> removed_children;
+        if (has_mutation_observers()) {
+            removed_children = title_node_->children;
+        }
+        for (DomNode* child : title_node_->children) {
+            child->parent = nullptr;
+        }
+        title_node_->children.clear();
+        title_node_->text_content = text;
+        if (!removed_children.empty()) {
+            std::vector<DomNode*> added_children;
+            queue_child_list(isolate, context, title_node_, added_children,
+                             removed_children, nullptr, nullptr);
+        }
     }
 
     v8::Local<v8::Value> call_method(
@@ -4264,6 +4314,7 @@ private:
     PageState* page_ = nullptr;  // M11-46 cookie jar owner (outlives generations)
     std::string url_;
     std::string title_;
+    DomNode* title_node_ = nullptr;  // M11-47 first parsed <title> (may be null)
     std::string ready_state_ = "complete";  // M3-6 JS document.readyState
     DomNode* current_script_ = nullptr;      // M3-7 document.currentScript backing
     std::vector<std::unique_ptr<DomNode>> pool_;
