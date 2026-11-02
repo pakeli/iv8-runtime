@@ -301,6 +301,11 @@ private:
     // M10-2: same, for globalThis.Object.keys.
     void install_object_keys_hook(v8::Isolate* isolate,
                                   v8::Local<v8::Context> context);
+    // Step 6d: install the explicit has/descriptor query wrappers. This also
+    // ensures the Reflect.has wrapper exists when it has not already been
+    // installed by watch_reflect_has().
+    void install_access_trace_query_hooks(v8::Isolate* isolate,
+                                          v8::Local<v8::Context> context);
 
     // M9-3: request the current Inspector session to pause (the watch-registry
     // pause callback). A no-op when no session is attached, so break_on_hit
@@ -380,6 +385,7 @@ private:
     bool reflect_has_hook_installed_ = false;
     bool reflect_ownkeys_hook_installed_ = false;
     bool object_keys_hook_installed_ = false;  // M10-2
+    bool access_trace_query_hooks_installed_ = false;  // step 6d
 };
 
 }  // namespace iv8

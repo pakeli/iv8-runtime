@@ -160,6 +160,9 @@ def test_thrown_call_and_nested_completion_stay_attached_to_the_event():
         assert add["argument_count"] == 2
         assert add["argument_summaries"] == ["object", "number:1"]
         assert add["outcome"] == "threw"
+        assert add["exception_name"] == "Error"
+        assert "boom" in add["exception_message"]
+        assert add["exception_stack"]
         assert "return_summary" not in add
 
         page.start_access_trace()
@@ -180,7 +183,7 @@ def test_thrown_call_and_nested_completion_stay_attached_to_the_event():
 
 
 @on_only
-def test_native_callbacks_and_probes_have_no_summary_fields():
+def test_native_callbacks_have_summaries_and_probes_do_not():
     with iv8.Page() as page:
         _load(page)
         page.start_access_trace()
@@ -190,9 +193,56 @@ def test_native_callbacks_and_probes_have_no_summary_fields():
                        if event["object_type"] == "performance"][0]
         probe = [event for event in events
                  if event["operation"] == "get_probe"][0]
-        assert "outcome" not in performance
-        assert "return_summary" not in performance
+        assert performance["outcome"] == "returned"
+        assert performance["argument_count"] == 0
+        assert performance["argument_summaries"] == []
+        assert performance["return_summary"].startswith("number:")
         assert "outcome" not in probe
         assert "value_summary" not in probe
         coverage = page.read_access_trace(clear=False)["coverage"]
         assert "summaries" in coverage
+
+
+@on_only
+def test_native_getters_have_value_summaries():
+    with iv8.Page(environment={"innerWidth": 800, "innerHeight": 600}) as page:
+        _load(page)
+        page.start_access_trace()
+        page.eval(
+            "localStorage.length; performance.timeOrigin; window.innerWidth;",
+            name="getters.js"
+        )
+        events = _events(page)
+        storage = [event for event in events
+                   if event["object_type"] == "storage"
+                   and event["member"] == "length"][0]
+        time_origin = [event for event in events
+                       if event["object_type"] == "performance"
+                       and event["member"] == "timeOrigin"][0]
+        width = [event for event in events
+                 if event["object_type"] == "window"
+                 and event["member"] == "innerWidth"][0]
+        assert storage["outcome"] == "returned"
+        assert storage["value_summary"] == "number:0"
+        assert time_origin["outcome"] == "returned"
+        assert time_origin["value_summary"] == "number:0"
+        assert width["outcome"] == "returned"
+        assert width["value_summary"] == "number:800"
+
+
+@on_only
+def test_native_callback_exception_metadata_is_safe_and_attached():
+    with iv8.Page() as page:
+        _load(page)
+        page.start_access_trace()
+        with pytest.raises(iv8.JSError):
+            page.eval("crypto.getRandomValues([]);", name="throw.js")
+        events = _events(page)
+        call = [event for event in events
+                if event["object_type"] == "crypto"
+                and event["operation"] == "call"][0]
+        assert call["outcome"] == "threw"
+        assert call["exception_name"] == "TypeError"
+        assert "getRandomValues" in call["exception_message"]
+        assert call["exception_stack"]
+        assert "return_summary" not in call

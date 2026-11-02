@@ -22,8 +22,10 @@ enum class AccessOperation {
     kCall,
     kGetProbe,
     kGetMethod,
+    kHas,
     kDelete,
     kOwnKeys,
+    kGetOwnPropertyDescriptor,
     kDefineProperty,
 };
 
@@ -35,7 +37,8 @@ struct AccessEvent {
     std::string label;
     std::string member;
     std::string operation;   // get | set | call | get_probe | get_method |
-                             // delete | own_keys | define_property
+                             // has | delete | own_keys |
+                             // get_own_property_descriptor | define_property
     std::string phase;       // "enter"
     std::string resolution;  // non-empty only for get_probe
     std::string resource_name;
@@ -48,6 +51,13 @@ struct AccessEvent {
     std::uint64_t argument_count = 0;
     std::vector<std::string> argument_summaries;  // first 8 arguments
     std::string return_summary;                   // call
+    // Step 6h: best-effort synchronous exception metadata. These fields are
+    // populated only when a traced native entry actually throws; asynchronous
+    // failures may leave them absent.
+    std::string exception_name;
+    std::string exception_message;
+    std::string exception_stack;
+    std::string exception_location;
 };
 
 // Completion data attached to an already-recorded event. Kept separate so the
@@ -59,6 +69,10 @@ struct AccessCompletion {
     std::uint64_t argument_count = 0;
     std::vector<std::string> argument_summaries;
     std::string return_summary;
+    std::string exception_name;
+    std::string exception_message;
+    std::string exception_stack;
+    std::string exception_location;
 };
 
 struct AccessSnapshot {

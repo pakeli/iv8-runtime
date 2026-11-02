@@ -28,6 +28,7 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 #include <unistd.h>
 #endif
 
+#include "iv8/access_summary.h"
 #include "iv8/context_host.h"
 
 // M9-1: V8 Inspector (CDP) attach base. Included after context_host.h so the
@@ -66,9 +67,9 @@ namespace {
 ContextState* state_from_isolate(v8::Isolate* isolate);
 void watch_record(v8::Isolate* isolate, const std::string& receiver,
                   const std::string& method);
-void access_trace_record(v8::Isolate* isolate, const void* identity,
-                         const char* object_type, const char* label,
-                         const char* member, AccessOperation operation);
+std::uint64_t access_trace_record(v8::Isolate* isolate, const void* identity,
+                                  const char* object_type, const char* label,
+                                  const char* member, AccessOperation operation);
 
 // M11-33: OS-backed entropy for crypto.getRandomValues() / randomUUID(). This is
 // deliberately the runtime's ONE non-deterministic surface: supported builds use
@@ -367,8 +368,10 @@ void storage_get_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (store == nullptr) {
         return;
     }
-    access_trace_record(isolate, store, "storage", "storage", "getItem",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, store, "storage", "storage", "getItem",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     const std::string key = storage_string_arg(isolate, context, info[0]);
     const auto it = storage_find(store, key);
     if (it == store->end()) {
@@ -385,8 +388,10 @@ void storage_set_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (store == nullptr) {
         return;
     }
-    access_trace_record(isolate, store, "storage", "storage", "setItem",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, store, "storage", "storage", "setItem",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     const std::string key = storage_string_arg(isolate, context, info[0]);
     const std::string value = storage_string_arg(isolate, context, info[1]);
     const auto it = storage_find(store, key);
@@ -404,8 +409,10 @@ void storage_remove_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (store == nullptr) {
         return;
     }
-    access_trace_record(isolate, store, "storage", "storage", "removeItem",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, store, "storage", "storage", "removeItem",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     const std::string key = storage_string_arg(isolate, context, info[0]);
     const auto it = storage_find(store, key);
     if (it != store->end()) {
@@ -417,8 +424,10 @@ void storage_clear(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     StorageStore* store = storage_store_from(info.Data());
     if (store != nullptr) {
-        access_trace_record(isolate, store, "storage", "storage", "clear",
-                            AccessOperation::kCall);
+        const std::uint64_t seq = access_trace_record(
+            isolate, store, "storage", "storage", "clear",
+            AccessOperation::kCall);
+        AccessCallCompletion completion(isolate, seq, info);
         store->clear();
     }
 }
@@ -430,8 +439,10 @@ void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (store == nullptr) {
         return;
     }
-    access_trace_record(isolate, store, "storage", "storage", "key",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, store, "storage", "storage", "key",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     v8::Local<v8::Uint32> index_value;
     if (!info[0]->ToUint32(context).ToLocal(&index_value)) {
         return;
@@ -453,8 +464,10 @@ void storage_length_getter(v8::Local<v8::Name> property,
     if (store == nullptr) {
         return;
     }
-    access_trace_record(isolate, store, "storage", "storage", "length",
-                        AccessOperation::kGet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, store, "storage", "storage", "length",
+        AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(
         v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size())));
 }
@@ -566,9 +579,10 @@ void storage_manager_estimate_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    access_trace_record(isolate, &kStorageManagerTraceToken, "storage_manager",
-                        "navigator.storage", "estimate",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, &kStorageManagerTraceToken, "storage_manager",
+        "navigator.storage", "estimate", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     v8::Local<v8::Object> estimate = v8::Object::New(isolate);
     (void)estimate->Set(context, v8_string(isolate, "usage"),
                         v8::Integer::New(isolate, 0));
@@ -581,9 +595,10 @@ void storage_manager_persisted_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    access_trace_record(isolate, &kStorageManagerTraceToken, "storage_manager",
-                        "navigator.storage", "persisted",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, &kStorageManagerTraceToken, "storage_manager",
+        "navigator.storage", "persisted", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(
         resolved_promise(isolate, context, v8::Boolean::New(isolate, false)));
 }
@@ -592,9 +607,10 @@ void storage_manager_persist_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    access_trace_record(isolate, &kStorageManagerTraceToken, "storage_manager",
-                        "navigator.storage", "persist",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, &kStorageManagerTraceToken, "storage_manager",
+        "navigator.storage", "persist", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(
         resolved_promise(isolate, context, v8::Boolean::New(isolate, false)));
 }
@@ -668,8 +684,10 @@ void permission_status_name_getter(
     v8::Isolate* isolate = info.GetIsolate();
     const auto* entry = static_cast<const PermissionNameInfo*>(
         info.Data().As<v8::External>()->Value(kPermissionStatusTag));
-    access_trace_record(isolate, entry, "permission_status",
-                        "permissionStatus", "name", AccessOperation::kGet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, entry, "permission_status", "permissionStatus", "name",
+        AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8_string(isolate, entry->key));
 }
 
@@ -679,8 +697,10 @@ void permission_status_state_getter(
     v8::Isolate* isolate = info.GetIsolate();
     const auto* entry = static_cast<const PermissionNameInfo*>(
         info.Data().As<v8::External>()->Value(kPermissionStatusTag));
-    access_trace_record(isolate, entry, "permission_status",
-                        "permissionStatus", "state", AccessOperation::kGet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, entry, "permission_status", "permissionStatus", "state",
+        AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8_string(isolate, "prompt"));
 }
 
@@ -689,9 +709,10 @@ void permission_status_add_listener_callback(
     v8::Isolate* isolate = info.GetIsolate();
     const auto* entry = static_cast<const PermissionNameInfo*>(
         info.Data().As<v8::External>()->Value(kPermissionStatusTag));
-    access_trace_record(isolate, entry, "permission_status",
-                        "permissionStatus", "addEventListener",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, entry, "permission_status", "permissionStatus", "addEventListener",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8::Undefined(isolate));
 }
 
@@ -700,9 +721,10 @@ void permission_status_remove_listener_callback(
     v8::Isolate* isolate = info.GetIsolate();
     const auto* entry = static_cast<const PermissionNameInfo*>(
         info.Data().As<v8::External>()->Value(kPermissionStatusTag));
-    access_trace_record(isolate, entry, "permission_status",
-                        "permissionStatus", "removeEventListener",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, entry, "permission_status", "permissionStatus", "removeEventListener",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8::Undefined(isolate));
 }
 
@@ -711,9 +733,10 @@ void permission_status_dispatch_callback(
     v8::Isolate* isolate = info.GetIsolate();
     const auto* entry = static_cast<const PermissionNameInfo*>(
         info.Data().As<v8::External>()->Value(kPermissionStatusTag));
-    access_trace_record(isolate, entry, "permission_status",
-                        "permissionStatus", "dispatchEvent",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, entry, "permission_status", "permissionStatus", "dispatchEvent",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8::Boolean::New(isolate, false));
 }
 
@@ -758,9 +781,10 @@ void permissions_query_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    access_trace_record(isolate, &kPermissionsTraceToken, "permissions",
-                        "navigator.permissions", "query",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, &kPermissionsTraceToken, "permissions",
+        "navigator.permissions", "query", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     if (info.Length() < 1 || !info[0]->IsObject() || info[0]->IsFunction()) {
         info.GetReturnValue().Set(rejected_type_error_promise(
             isolate, context,
@@ -880,8 +904,10 @@ void make_media_query_list_callback(
     }
     const bool matches = info.Length() >= 2 && info[1]->BooleanValue(isolate);
     HostObject* host = page->media_query_list_host(media, matches);
-    access_trace_record(isolate, host, "media_query_list", "matchMedia",
-                        "matchMedia", AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, host, "media_query_list", "matchMedia", "matchMedia",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     v8::Local<v8::Object> list = make_host_object(isolate, context, host);
     (void)list->Set(context, v8_string(isolate, "onchange").As<v8::String>(),
                     v8::Null(isolate));
@@ -896,8 +922,10 @@ constexpr char kJavaEnabledTraceToken = 0;
 void navigator_java_enabled_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
-    access_trace_record(isolate, &kJavaEnabledTraceToken, "navigator",
-                        "navigator", "javaEnabled", AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        isolate, &kJavaEnabledTraceToken, "navigator", "navigator",
+        "javaEnabled", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8::Boolean::New(isolate, false));
 }
 
@@ -5654,13 +5682,14 @@ static char kPerformanceTraceToken;
 static char kCryptoTraceToken;
 static char kStorageTraceToken;
 
-void access_trace_record(v8::Isolate* isolate, const void* identity,
-                         const char* object_type, const char* label,
-                         const char* member, AccessOperation operation) {
+std::uint64_t access_trace_record(v8::Isolate* isolate, const void* identity,
+                                  const char* object_type, const char* label,
+                                  const char* member, AccessOperation operation) {
     AccessTrace* trace = access_trace_from_isolate(isolate);
     if (trace != nullptr && trace->enabled()) {
-        trace->record(identity, object_type, label, member, operation);
+        return trace->record(identity, object_type, label, member, operation);
     }
+    return 0;
 }
 
 // M11-32: fire the minimal `invalid` event at a control. It is a target-only,
@@ -6577,16 +6606,19 @@ void performance_time_origin_getter(
     v8::Local<v8::Name>,
     const v8::PropertyCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
-    access_trace_record(isolate, &kPerformanceTraceToken, "performance",
-                        "performance", "timeOrigin", AccessOperation::kGet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, &kPerformanceTraceToken, "performance", "performance",
+        "timeOrigin", AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8::Number::New(isolate, 0.0));
 }
 
 void performance_now_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "now");
-    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
-                        "performance", "performance", "now",
-                        AccessOperation::kCall);  // M9-2 style
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kPerformanceTraceToken, "performance",
+        "performance", "now", AccessOperation::kCall);  // M9-2 style
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     ContextState* state = state_from_isolate(info.GetIsolate());
     const double ms = state == nullptr
                           ? 0.0
@@ -6631,9 +6663,10 @@ v8::Local<v8::Array> performance_entries_array(
 void performance_mark_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "mark");
-    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
-                        "performance", "performance", "mark",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kPerformanceTraceToken, "performance",
+        "performance", "mark", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6652,9 +6685,10 @@ void performance_mark_callback(
 void performance_measure_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "measure");
-    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
-                        "performance", "performance", "measure",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kPerformanceTraceToken, "performance",
+        "performance", "measure", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6704,9 +6738,10 @@ void performance_measure_callback(
 void performance_get_entries_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "getEntries");
-    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
-                        "performance", "performance", "getEntries",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kPerformanceTraceToken, "performance",
+        "performance", "getEntries", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6720,9 +6755,10 @@ void performance_get_entries_callback(
 void performance_get_entries_by_name_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "getEntriesByName");
-    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
-                        "performance", "performance", "getEntriesByName",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kPerformanceTraceToken, "performance",
+        "performance", "getEntriesByName", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6736,9 +6772,10 @@ void performance_get_entries_by_name_callback(
 void performance_get_entries_by_type_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "getEntriesByType");
-    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
-                        "performance", "performance", "getEntriesByType",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kPerformanceTraceToken, "performance",
+        "performance", "getEntriesByType", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6763,9 +6800,10 @@ void performance_clear_entries(PerformanceStore* store, const std::string& type,
 void performance_clear_marks_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "clearMarks");
-    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
-                        "performance", "performance", "clearMarks",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kPerformanceTraceToken, "performance",
+        "performance", "clearMarks", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -6777,9 +6815,10 @@ void performance_clear_marks_callback(
 void performance_clear_measures_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "performance", "clearMeasures");
-    access_trace_record(info.GetIsolate(), &kPerformanceTraceToken,
-                        "performance", "performance", "clearMeasures",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kPerformanceTraceToken, "performance",
+        "performance", "clearMeasures", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     PerformanceStore* store = performance_store_from(info);
     if (store == nullptr) {
         return;
@@ -7284,9 +7323,10 @@ bool is_integer_typed_array(v8::Local<v8::Value> value) {
 void crypto_get_random_values_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "crypto", "getRandomValues");
-    access_trace_record(info.GetIsolate(), &kCryptoTraceToken,
-                        "crypto", "crypto", "getRandomValues",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kCryptoTraceToken, "crypto", "crypto", "getRandomValues",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     v8::Isolate* isolate = info.GetIsolate();
     if (info.Length() < 1 || !is_integer_typed_array(info[0])) {
         isolate->ThrowException(v8::Exception::TypeError(
@@ -7337,9 +7377,10 @@ void crypto_get_random_values_callback(
 void crypto_random_uuid_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "crypto", "randomUUID");
-    access_trace_record(info.GetIsolate(), &kCryptoTraceToken,
-                        "crypto", "crypto", "randomUUID",
-                        AccessOperation::kCall);
+    const std::uint64_t seq = access_trace_record(
+        info.GetIsolate(), &kCryptoTraceToken, "crypto", "crypto", "randomUUID",
+        AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), seq, info);
     v8::Isolate* isolate = info.GetIsolate();
     std::uint8_t bytes[16];
     if (!fill_os_random_bytes(bytes, sizeof(bytes))) {
@@ -9017,8 +9058,102 @@ std::string reflect_property_string(v8::Isolate* isolate,
     return std::string();
 }
 
+// Step 6d/6f: target association and safe key text for the access-trace query
+// wrappers. Unlike reflect_property_string(), this must not invoke user
+// conversion hooks while collecting metadata; non-primitive keys are labelled
+// generically.
+struct AccessTargetInfo {
+    HostObject* host = nullptr;
+    std::string type = "unknown";
+    std::string label;
+};
+
+AccessTargetInfo access_target_info(v8::Local<v8::Value> target) {
+    if (target.IsEmpty()) {
+        return {};
+    }
+    HostObject* host = host_object_backing(target);
+    if (host == nullptr) {
+        return {};
+    }
+    return AccessTargetInfo{host, host->trace_object_type(),
+                            host->trace_label()};
+}
+
+std::string access_member_name(v8::Isolate* isolate,
+                               v8::Local<v8::Context> context,
+                               v8::Local<v8::Value> key) {
+    if (key.IsEmpty()) {
+        return std::string();
+    }
+    if (key->IsSymbol()) {
+        v8::Local<v8::Value> desc = key.As<v8::Symbol>()->Description(isolate);
+        std::string inner;
+        if (desc->IsString()) {
+            v8::String::Utf8Value utf8(isolate, desc);
+            if (*utf8 != nullptr) {
+                inner.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+            }
+        }
+        return "Symbol(" + inner + ")";
+    }
+    if (key->IsString()) {
+        v8::String::Utf8Value utf8(isolate, key.As<v8::String>());
+        return *utf8 != nullptr
+                   ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+                   : std::string();
+    }
+    if (key->IsNumber() || key->IsBoolean() || key->IsBigInt() ||
+        key->IsUndefined() || key->IsNull()) {
+        v8::Local<v8::String> str;
+        if (key->ToString(context).ToLocal(&str)) {
+            v8::String::Utf8Value utf8(isolate, str);
+            return *utf8 != nullptr
+                       ? std::string(*utf8,
+                                     static_cast<std::size_t>(utf8.length()))
+                       : std::string();
+        }
+        return std::string();
+    }
+    return "<non-primitive-key>";
+}
+
+std::uint64_t record_access_query(v8::Isolate* isolate,
+                                  const AccessTargetInfo& target,
+                                  const std::string& member,
+                                  AccessOperation operation) {
+    if (target.host == nullptr) {
+        return 0;
+    }
+    return access_trace_record(isolate, target.host, target.type.c_str(),
+                               target.label.c_str(), member.c_str(), operation);
+}
+
+bool call_wrapped_original(const v8::FunctionCallbackInfo<v8::Value>& info,
+                           v8::Local<v8::Context> context,
+                           v8::Local<v8::Value> receiver) {
+    v8::Local<v8::Function> original = info.Data().As<v8::Function>();
+    if (original.IsEmpty()) {
+        return false;
+    }
+    std::vector<v8::Local<v8::Value>> args;
+    args.reserve(static_cast<std::size_t>(info.Length()));
+    for (int i = 0; i < info.Length(); ++i) {
+        args.push_back(info[i]);
+    }
+    v8::Local<v8::Value> result;
+    if (original
+            ->Call(context, receiver, info.Length(), args.data())
+            .ToLocal(&result)) {
+        info.GetReturnValue().Set(result);
+        return true;
+    }
+    return false;
+}
+
 // M9-4: record a Reflect.get hit if reflect-get watching is enabled (else no-op).
 void reflect_record(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                    v8::Local<v8::Value> target,
                     v8::Local<v8::Value> key) {
     ContextState* state = state_from_isolate(isolate);
     if (state == nullptr) {
@@ -9028,7 +9163,9 @@ void reflect_record(v8::Isolate* isolate, v8::Local<v8::Context> context,
     if (registry == nullptr || !registry->reflect_get_enabled()) {
         return;
     }
-    registry->record_reflect_get(reflect_property_string(isolate, context, key));
+    const AccessTargetInfo target_info = access_target_info(target);
+    registry->record_reflect_get(reflect_property_string(isolate, context, key),
+                                 target_info.type, target_info.label);
 }
 
 // M9-4: the Reflect.get hook — records the propertyKey (arg 1), then delegates to
@@ -9039,7 +9176,7 @@ void reflect_get_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     if (info.Length() > 1) {
-        reflect_record(isolate, context, info[1]);
+        reflect_record(isolate, context, info[0], info[1]);
     }
     v8::Local<v8::Function> original = info.Data().As<v8::Function>();
     std::vector<v8::Local<v8::Value>> args;
@@ -9057,18 +9194,27 @@ void reflect_get_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
 }
 
 // M9-5: record a Reflect.has hit if reflect-has watching is enabled (mirrors
-// reflect_record).
-void reflect_has_record(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                        v8::Local<v8::Value> key) {
+// reflect_record). The same wrapper also feeds the access-trace `has` operation
+// when that channel is enabled; the two channels remain independent.
+std::uint64_t reflect_has_record(v8::Isolate* isolate,
+                                 v8::Local<v8::Context> context,
+                                 v8::Local<v8::Value> target,
+                                 v8::Local<v8::Value> key) {
+    const AccessTargetInfo target_info = access_target_info(target);
+    const std::uint64_t seq = record_access_query(
+        isolate, target_info, access_member_name(isolate, context, key),
+        AccessOperation::kHas);
     ContextState* state = state_from_isolate(isolate);
     if (state == nullptr) {
-        return;
+        return seq;
     }
     WatchRegistry* registry = state->watch_registry();
     if (registry == nullptr || !registry->reflect_has_enabled()) {
-        return;
+        return seq;
     }
-    registry->record_reflect_has(reflect_property_string(isolate, context, key));
+    registry->record_reflect_has(reflect_property_string(isolate, context, key),
+                                 target_info.type, target_info.label);
+    return seq;
 }
 
 // M9-5: the Reflect.has hook — records the propertyKey (arg 1), then delegates to
@@ -9076,28 +9222,18 @@ void reflect_has_record(v8::Isolate* isolate, v8::Local<v8::Context> context,
 void reflect_has_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    std::uint64_t seq = 0;
     if (info.Length() > 1) {
-        reflect_has_record(isolate, context, info[1]);
+        seq = reflect_has_record(isolate, context, info[0], info[1]);
     }
-    v8::Local<v8::Function> original = info.Data().As<v8::Function>();
-    std::vector<v8::Local<v8::Value>> args;
-    args.reserve(static_cast<std::size_t>(info.Length()));
-    for (int i = 0; i < info.Length(); i++) {
-        args.push_back(info[i]);
-    }
-    v8::Local<v8::Value> result;
-    if (original
-            ->Call(context, v8::Undefined(isolate), info.Length(), args.data())
-            .ToLocal(&result)) {
-        info.GetReturnValue().Set(result);
-    }
-    // else: the original threw; the pending exception propagates unchanged.
+    AccessCallCompletion completion(isolate, seq, info);
+    (void)call_wrapped_original(info, context, v8::Undefined(isolate));
 }
 
 // M10-1: record a Reflect.ownKeys hit if reflect-ownKeys watching is enabled.
 // Reflect.ownKeys(target) has no propertyKey, so the hit carries only the resource
 // name (recorded inside the registry).
-void reflect_ownkeys_record(v8::Isolate* isolate) {
+void reflect_ownkeys_record(v8::Isolate* isolate, v8::Local<v8::Value> target) {
     ContextState* state = state_from_isolate(isolate);
     if (state == nullptr) {
         return;
@@ -9106,7 +9242,8 @@ void reflect_ownkeys_record(v8::Isolate* isolate) {
     if (registry == nullptr || !registry->reflect_ownkeys_enabled()) {
         return;
     }
-    registry->record_reflect_ownkeys();
+    const AccessTargetInfo target_info = access_target_info(target);
+    registry->record_reflect_ownkeys(target_info.type, target_info.label);
 }
 
 // M10-1: the Reflect.ownKeys hook — records the call, then delegates to the original
@@ -9114,7 +9251,11 @@ void reflect_ownkeys_record(v8::Isolate* isolate) {
 void reflect_ownkeys_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    reflect_ownkeys_record(isolate);
+    v8::Local<v8::Value> target = v8::Undefined(isolate);
+    if (info.Length() > 0) {
+        target = info[0];
+    }
+    reflect_ownkeys_record(isolate, target);
     v8::Local<v8::Function> original = info.Data().As<v8::Function>();
     std::vector<v8::Local<v8::Value>> args;
     args.reserve(static_cast<std::size_t>(info.Length()));
@@ -9163,6 +9304,77 @@ void object_keys_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
         info.GetReturnValue().Set(result);
     }
     // else: the original threw; the pending exception propagates unchanged.
+}
+
+// Step 6d: explicit query wrappers. These are installed only while an access
+// trace session exists (or has existed) on this generation. They record a
+// request event only for HostObject targets; all other targets are left
+// unrecorded. The original function is carried as Data and is always called
+// with the original receiver/arguments.
+std::uint64_t record_query_call(v8::Isolate* isolate,
+                                v8::Local<v8::Context> context,
+                                v8::Local<v8::Value> target,
+                                v8::Local<v8::Value> key,
+                                AccessOperation operation) {
+    const AccessTargetInfo target_info = access_target_info(target);
+    return record_access_query(
+        isolate, target_info, access_member_name(isolate, context, key),
+        operation);
+}
+
+void object_get_own_property_descriptor_wrapper(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::Value> target = v8::Undefined(isolate);
+    v8::Local<v8::Value> key = v8::Undefined(isolate);
+    if (info.Length() > 0) target = info[0];
+    if (info.Length() > 1) key = info[1];
+    const std::uint64_t seq =
+        record_query_call(isolate, context, target, key,
+                          AccessOperation::kGetOwnPropertyDescriptor);
+    AccessCallCompletion completion(isolate, seq, info);
+    (void)call_wrapped_original(info, context, v8::Undefined(isolate));
+}
+
+void reflect_get_own_property_descriptor_wrapper(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::Value> target = v8::Undefined(isolate);
+    v8::Local<v8::Value> key = v8::Undefined(isolate);
+    if (info.Length() > 0) target = info[0];
+    if (info.Length() > 1) key = info[1];
+    const std::uint64_t seq =
+        record_query_call(isolate, context, target, key,
+                          AccessOperation::kGetOwnPropertyDescriptor);
+    AccessCallCompletion completion(isolate, seq, info);
+    (void)call_wrapped_original(info, context, v8::Undefined(isolate));
+}
+
+void object_has_own_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::Value> target = v8::Undefined(isolate);
+    v8::Local<v8::Value> key = v8::Undefined(isolate);
+    if (info.Length() > 0) target = info[0];
+    if (info.Length() > 1) key = info[1];
+    const std::uint64_t seq =
+        record_query_call(isolate, context, target, key,
+                          AccessOperation::kHas);
+    AccessCallCompletion completion(isolate, seq, info);
+    (void)call_wrapped_original(info, context, v8::Undefined(isolate));
+}
+
+void has_own_property_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::Value> key = v8::Undefined(isolate);
+    if (info.Length() > 0) key = info[0];
+    const std::uint64_t seq = record_query_call(
+        isolate, context, info.This(), key, AccessOperation::kHas);
+    AccessCallCompletion completion(isolate, seq, info);
+    (void)call_wrapped_original(info, context, info.This());
 }
 
 }  // namespace
@@ -9342,6 +9554,8 @@ py::list PageState::read_reflect_get_hits() {
         record["property"] = hit.path;  // WatchHit.path carries the propertyKey
         record["resource_name"] = hit.resource_name;
         record["type"] = "Reflect.get";
+        record["target_type"] = hit.target_type;
+        record["target_label"] = hit.target_label;
         out.append(record);
     }
     return out;
@@ -9349,6 +9563,9 @@ py::list PageState::read_reflect_get_hits() {
 
 void PageState::install_reflect_has_hook(v8::Isolate* isolate,
                                          v8::Local<v8::Context> context) {
+    if (reflect_has_hook_installed_) {
+        return;
+    }
     v8::Local<v8::Value> reflect_value;
     if (!context->Global()
              ->Get(context, v8_string(isolate, "Reflect"))
@@ -9393,6 +9610,8 @@ py::list PageState::read_reflect_has_hits() {
         record["property"] = hit.path;
         record["resource_name"] = hit.resource_name;
         record["type"] = "Reflect.has";
+        record["target_type"] = hit.target_type;
+        record["target_label"] = hit.target_label;
         out.append(record);
     }
     return out;
@@ -9444,6 +9663,8 @@ py::list PageState::read_reflect_ownkeys_hits() {
         py::dict record;  // Reflect.ownKeys has no propertyKey -> resource_name only
         record["resource_name"] = hit.resource_name;
         record["type"] = "Reflect.ownKeys";
+        record["target_type"] = hit.target_type;
+        record["target_label"] = hit.target_label;
         out.append(record);
     }
     return out;
@@ -9471,6 +9692,57 @@ void PageState::install_object_keys_hook(v8::Isolate* isolate,
         (void)object_ctor->Set(context, v8_string(isolate, "keys"), wrapper);
         object_keys_hook_installed_ = true;
     }
+}
+
+void PageState::install_access_trace_query_hooks(
+    v8::Isolate* isolate, v8::Local<v8::Context> context) {
+    if (access_trace_query_hooks_installed_) {
+        return;
+    }
+    // Reflect.has is shared with the M9-5 channel; install it once.
+    if (!reflect_has_hook_installed_) {
+        install_reflect_has_hook(isolate, context);
+    }
+    const auto install_wrapper = [&](v8::Local<v8::Object> holder,
+                                     const char* name,
+                                     v8::FunctionCallback callback) {
+        v8::Local<v8::Value> original;
+        if (!holder->Get(context, v8_string(isolate, name)).ToLocal(&original) ||
+            !original->IsFunction()) {
+            return;
+        }
+        v8::Local<v8::Function> wrapper;
+        if (v8::Function::New(context, callback, original).ToLocal(&wrapper)) {
+            (void)holder->Set(context, v8_string(isolate, name), wrapper);
+        }
+    };
+    v8::Local<v8::Value> object_value;
+    if (context->Global()
+            ->Get(context, v8_string(isolate, "Object"))
+            .ToLocal(&object_value) &&
+        object_value->IsObject()) {
+        v8::Local<v8::Object> object_ctor = object_value.As<v8::Object>();
+        install_wrapper(object_ctor, "getOwnPropertyDescriptor",
+                        &object_get_own_property_descriptor_wrapper);
+        install_wrapper(object_ctor, "hasOwn", &object_has_own_wrapper);
+        v8::Local<v8::Value> prototype_value;
+        if (object_ctor->Get(context, v8_string(isolate, "prototype"))
+                .ToLocal(&prototype_value) &&
+            prototype_value->IsObject()) {
+            install_wrapper(prototype_value.As<v8::Object>(), "hasOwnProperty",
+                            &has_own_property_wrapper);
+        }
+    }
+    v8::Local<v8::Value> reflect_value;
+    if (context->Global()
+            ->Get(context, v8_string(isolate, "Reflect"))
+            .ToLocal(&reflect_value) &&
+        reflect_value->IsObject()) {
+        install_wrapper(reflect_value.As<v8::Object>(),
+                        "getOwnPropertyDescriptor",
+                        &reflect_get_own_property_descriptor_wrapper);
+    }
+    access_trace_query_hooks_installed_ = true;
 }
 
 void PageState::watch_object_keys(bool enabled, bool break_on_hit) {
@@ -9507,6 +9779,12 @@ void PageState::start_access_trace(
         throw ContextDisposedError();
     }
     access_trace_.start(max_events, std::move(object_types));
+    // Step 6d: explicit has/descriptor queries need JS wrappers. Install them on
+    // the current generation now; install_page re-installs them after a load.
+    state_->with_scope(
+        [this](v8::Isolate* isolate, v8::Local<v8::Context> context) {
+            install_access_trace_query_hooks(isolate, context);
+        });
 }
 
 void PageState::stop_access_trace() {
@@ -9548,6 +9826,18 @@ py::dict PageState::read_access_trace(bool clear) {
         if (!event.return_summary.empty()) {
             record["return_summary"] = event.return_summary;
         }
+        if (!event.exception_name.empty()) {
+            record["exception_name"] = event.exception_name;
+        }
+        if (!event.exception_message.empty()) {
+            record["exception_message"] = event.exception_message;
+        }
+        if (!event.exception_stack.empty()) {
+            record["exception_stack"] = event.exception_stack;
+        }
+        if (!event.exception_location.empty()) {
+            record["exception_location"] = event.exception_location;
+        }
         if (event.operation == "call") {
             record["argument_count"] = py::cast(event.argument_count);
             py::list argument_summaries;
@@ -9575,7 +9865,8 @@ py::dict PageState::read_access_trace(bool clear) {
 
     py::dict coverage;
     coverage["scope"] =
-        "installed HostObject getter/setter/method callbacks";
+        "installed HostObject callbacks, explicit query wrappers, and traced "
+        "native BOM callbacks";
     py::list object_types;
     for (const std::string& type : AccessTrace::supported_object_types()) {
         object_types.append(type);
@@ -9587,15 +9878,19 @@ py::dict PageState::read_access_trace(bool clear) {
     operations.append("get_method");
     operations.append("call");
     operations.append("get_probe");
+    operations.append("has");
     operations.append("delete");
     operations.append("own_keys");
+    operations.append("get_own_property_descriptor");
     operations.append("define_property");
     coverage["operations"] = operations;
     coverage["phase"] = "enter";
     coverage["summaries"] =
-        "generic HostObject get/set/call: returned/threw outcome, primitive "
-        "value summaries, first 8 argument summaries, call return summaries; "
-        "string content capped at 64 bytes with the original byte length";
+        "generic HostObject and traced native get/set/call plus has/descriptor "
+        "queries: returned/threw outcome, primitive value/argument/return "
+        "summaries, first 8 arguments, safe exception name/message/location/"
+        "stack; string content capped at 64 bytes with the original byte "
+        "length and exception text capped at 4096 bytes";
     py::list not_covered;
     for (const std::string& gap : AccessTrace::not_covered()) {
         not_covered.append(gap);
@@ -9616,8 +9911,9 @@ void window_name_getter(v8::Local<v8::Name>,
     v8::Isolate* isolate = info.GetIsolate();
     auto* page = static_cast<PageState*>(
         info.Data().As<v8::External>()->Value(kWindowNameTag));
-    access_trace_record(isolate, page, "window", "window", "name",
-                        AccessOperation::kGet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, page, "window", "window", "name", AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8_string(isolate, page->window_name()));
 }
 
@@ -9627,8 +9923,9 @@ void window_name_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     auto* page = static_cast<PageState*>(
         info.Data().As<v8::External>()->Value(kWindowNameTag));
-    access_trace_record(isolate, page, "window", "window", "name",
-                        AccessOperation::kSet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, page, "window", "window", "name", AccessOperation::kSet);
+    AccessPropertySetCompletion completion(isolate, seq, info, value);
     v8::Local<v8::String> str;
     if (!value->ToString(context).ToLocal(&str)) {
         return;  // coercion threw; leave the stored name unchanged
@@ -9656,8 +9953,10 @@ void window_alias_getter(v8::Local<v8::Name> property,
     }
     v8::String::Utf8Value utf8(isolate, property);
     const std::string name(*utf8 != nullptr ? *utf8 : "");
-    access_trace_record(isolate, page, "window", "window", name.c_str(),
-                        AccessOperation::kGet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, page, "window", "window", name.c_str(),
+        AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(page->window_alias_value(
         isolate, isolate->GetCurrentContext(), name));
 }
@@ -9673,8 +9972,10 @@ void window_alias_setter(v8::Local<v8::Name> property,
     }
     v8::String::Utf8Value utf8(isolate, property);
     const std::string name(*utf8 != nullptr ? *utf8 : "");
-    access_trace_record(isolate, page, "window", "window", name.c_str(),
-                        AccessOperation::kSet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, page, "window", "window", name.c_str(),
+        AccessOperation::kSet);
+    AccessPropertySetCompletion completion(isolate, seq, info, value);
     page->set_window_alias(isolate, name, value);
 }
 
@@ -9794,8 +10095,10 @@ void window_metadata_getter(v8::Local<v8::Name> property,
         return;
     }
     const std::string name(*utf8, static_cast<std::size_t>(utf8.length()));
-    access_trace_record(isolate, page, "window", "window", name.c_str(),
-                        AccessOperation::kGet);
+    const std::uint64_t seq = access_trace_record(
+        isolate, page, "window", "window", name.c_str(),
+        AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(page->window_metadata_value(isolate, name));
 }
 
@@ -9836,6 +10139,7 @@ void PageState::install_page(const std::string& base_url,
     reflect_has_hook_installed_ = false;
     reflect_ownkeys_hook_installed_ = false;
     object_keys_hook_installed_ = false;  // M10-2
+    access_trace_query_hooks_installed_ = false;  // step 6d
     // M9-2: point the new generation at the Page-level watch registry so its
     // host-method dispatch points can record hits and eval() can stamp the current
     // script's resource name. The registry itself outlives generations.
@@ -10479,6 +10783,11 @@ void PageState::install_page(const std::string& base_url,
             // M10-2: same for Object.keys.
             if (watch_registry_.object_keys_enabled()) {
                 install_object_keys_hook(isolate, context);
+            }
+            // Step 6d: tracing config persists across load, so reinstall the
+            // explicit has/descriptor query wrappers for this generation.
+            if (access_trace_.enabled()) {
+                install_access_trace_query_hooks(isolate, context);
             }
             });
     }

@@ -21,10 +21,14 @@ const char* operation_name(AccessOperation operation) {
             return "get_probe";
         case AccessOperation::kGetMethod:
             return "get_method";
+        case AccessOperation::kHas:
+            return "has";
         case AccessOperation::kDelete:
             return "delete";
         case AccessOperation::kOwnKeys:
             return "own_keys";
+        case AccessOperation::kGetOwnPropertyDescriptor:
+            return "get_own_property_descriptor";
         case AccessOperation::kDefineProperty:
             return "define_property";
     }
@@ -182,6 +186,10 @@ void AccessTrace::complete(std::uint64_t seq,
             it->argument_count = completion.argument_count;
             it->argument_summaries = std::move(completion.argument_summaries);
             it->return_summary = std::move(completion.return_summary);
+            it->exception_name = std::move(completion.exception_name);
+            it->exception_message = std::move(completion.exception_message);
+            it->exception_stack = std::move(completion.exception_stack);
+            it->exception_location = std::move(completion.exception_location);
             return;
         }
     } catch (...) {
@@ -256,9 +264,9 @@ const std::vector<std::string>& AccessTrace::not_covered() {
         "permission-status missing probes/onchange and MediaQueryList onchange/missing probes",
         "arrays and plain values returned by host APIs",
         "user-created plain JS objects",
-        "non-HostObject probes/operations, HasProperty (in/hasOwnProperty), and descriptor query events",
+        "the `in` operator, non-HostObject query targets, and explicit query wrappers cached before tracing started",
         "read-only write attempts",
-        "arguments/returns/stacks",
+        "locations/stacks for non-throwing events and exception metadata from asynchronous sources",
     };
     return gaps;
 }

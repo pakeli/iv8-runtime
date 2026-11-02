@@ -41,8 +41,8 @@ def test_disabled_report_shape():
         coverage = report["coverage"]
         assert coverage["phase"] == "enter"
         assert coverage["operations"] == [
-            "get", "set", "get_method", "call", "get_probe", "delete",
-            "own_keys", "define_property"]
+            "get", "set", "get_method", "call", "get_probe", "has", "delete",
+            "own_keys", "get_own_property_descriptor", "define_property"]
         assert "navigator" in coverage["object_types"]
         assert coverage["not_covered"]
 

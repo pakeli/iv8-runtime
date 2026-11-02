@@ -102,11 +102,13 @@ def test_visual_viewport_read_only_and_missing_probe_behavior():
             name="probe.js"
         ) == "1024|undefined"
         events = _events(page)
-        # The native-data-property descriptor read itself evaluates the getter;
-        # it is indistinguishable from an ordinary read in the trace.
+        # The descriptor wrapper records the query; the native-data-property
+        # descriptor read itself evaluates the getter, then the ordinary read
+        # evaluates it again.
         assert [(event["member"], event["operation"],
                  event.get("resolution"))
                 for event in events] == [
+            ("width", "get_own_property_descriptor", None),
             ("width", "get", None),
             ("width", "get", None),
             ("missing", "get_probe", "missing"),

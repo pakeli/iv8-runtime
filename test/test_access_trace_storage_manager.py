@@ -114,6 +114,7 @@ def test_storage_manager_descriptor_read_evaluates_the_parent_getter():
         assert descriptor == "object|false|true|false|true"
         assert [(event["object_type"], event["member"], event["operation"])
                 for event in _events(page)] == [
+            ("navigator", "storage", "get_own_property_descriptor"),
             ("navigator", "storage", "get"),
             ("navigator", "storage", "get")]
 

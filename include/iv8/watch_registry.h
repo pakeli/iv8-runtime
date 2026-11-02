@@ -13,6 +13,12 @@ namespace iv8 {
 struct WatchHit {
     std::string path;           // the watched "receiver.method" path that was hit
     std::string resource_name;  // the executing script's resource name (may be "")
+    // Step 6f: best-effort target association for the Reflect channels. Host
+    // objects carry their access-trace type/label; everything else is
+    // "unknown" with an empty label. This is deliberately metadata only: no V8
+    // handle is retained.
+    std::string target_type = "unknown";
+    std::string target_label;
 };
 
 // M9-2: a minimal, Page-level record面 for watched host-method calls. Registration
@@ -101,11 +107,14 @@ public:
 
     // Record a Reflect.get hit (`property` is the stringified propertyKey). On a hit
     // in break mode the pause requester is invoked after the lock is released.
-    void record_reflect_get(const std::string& property) {
+    void record_reflect_get(const std::string& property,
+                            const std::string& target_type = "unknown",
+                            const std::string& target_label = {}) {
         std::function<void()> pause;
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            reflect_hits_.push_back(WatchHit{property, current_resource_});
+            reflect_hits_.push_back(WatchHit{property, current_resource_,
+                                             target_type, target_label});
             if (reflect_break_on_hit_) {
                 pause = pause_requester_;
             }
@@ -131,11 +140,14 @@ public:
     bool reflect_has_enabled() const {
         return reflect_has_enabled_.load(std::memory_order_acquire);
     }
-    void record_reflect_has(const std::string& property) {
+    void record_reflect_has(const std::string& property,
+                            const std::string& target_type = "unknown",
+                            const std::string& target_label = {}) {
         std::function<void()> pause;
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            reflect_has_hits_.push_back(WatchHit{property, current_resource_});
+            reflect_has_hits_.push_back(WatchHit{property, current_resource_,
+                                                 target_type, target_label});
             if (reflect_has_break_on_hit_) {
                 pause = pause_requester_;
             }
@@ -162,11 +174,15 @@ public:
     bool reflect_ownkeys_enabled() const {
         return reflect_ownkeys_enabled_.load(std::memory_order_acquire);
     }
-    void record_reflect_ownkeys() {
+    void record_reflect_ownkeys(const std::string& target_type = "unknown",
+                                const std::string& target_label = {}) {
         std::function<void()> pause;
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            reflect_ownkeys_hits_.push_back(WatchHit{std::string(), current_resource_});
+            reflect_ownkeys_hits_.push_back(WatchHit{std::string(),
+                                                    current_resource_,
+                                                    target_type,
+                                                    target_label});
             if (reflect_ownkeys_break_on_hit_) {
                 pause = pause_requester_;
             }

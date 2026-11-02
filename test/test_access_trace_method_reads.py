@@ -91,11 +91,14 @@ def test_method_descriptor_identity_override_and_non_function_read():
         ) == "function|true|true|true|true|number|5"
         events = _events(page)
         assert [(event["member"], event["operation"]) for event in events] == [
+            ("echo", "get_own_property_descriptor"),
             ("echo", "get_method"),
             ("echo", "get_method"),
             ("echo", "get_method"),
             ("echo", "set"),
         ]
-        assert all("outcome" not in event for event in events[:3])
-        assert events[3]["value_summary"] == "number:5"
-        assert events[3]["outcome"] == "returned"
+        assert events[0]["outcome"] == "returned"
+        assert events[0]["return_summary"] == "object"
+        assert all("outcome" not in event for event in events[1:4])
+        assert events[4]["value_summary"] == "number:5"
+        assert events[4]["outcome"] == "returned"
