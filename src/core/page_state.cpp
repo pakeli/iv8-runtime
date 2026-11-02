@@ -9584,6 +9584,7 @@ py::dict PageState::read_access_trace(bool clear) {
     py::list operations;
     operations.append("get");
     operations.append("set");
+    operations.append("get_method");
     operations.append("call");
     operations.append("get_probe");
     coverage["operations"] = operations;

@@ -21,6 +21,7 @@ enum class AccessOperation {
     kSet,
     kCall,
     kGetProbe,
+    kGetMethod,
 };
 
 struct AccessEvent {
@@ -30,7 +31,7 @@ struct AccessEvent {
     std::string object_type;
     std::string label;
     std::string member;
-    std::string operation;   // "get" | "set" | "call" | "get_probe"
+    std::string operation;   // get | set | call | get_probe | get_method
     std::string phase;       // "enter"
     std::string resolution;  // non-empty only for get_probe
     std::string resource_name;
@@ -102,6 +103,12 @@ public:
                          std::string_view label, std::string_view member,
                          AccessOperation operation,
                          std::string_view resolution = {}) noexcept;
+
+    // Promote the immediately preceding get_method event for this host/member
+    // to a call event. Returns the promoted event's seq, or 0 when the last
+    // event is not a matching method read (the caller then records a new call).
+    std::uint64_t promote_last_method_read(const void* identity,
+                                           std::string_view member) noexcept;
 
     // Attach completion data to a retained event. No-op if the seq is no longer
     // present (cleared/stopped between enter and completion). Never throws and

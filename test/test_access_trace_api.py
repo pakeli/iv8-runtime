@@ -40,7 +40,8 @@ def test_disabled_report_shape():
         assert report["filter_object_types"] is None
         coverage = report["coverage"]
         assert coverage["phase"] == "enter"
-        assert coverage["operations"] == ["get", "set", "call", "get_probe"]
+        assert coverage["operations"] == [
+            "get", "set", "get_method", "call", "get_probe"]
         assert "navigator" in coverage["object_types"]
         assert coverage["not_covered"]
 

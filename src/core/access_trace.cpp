@@ -19,6 +19,8 @@ const char* operation_name(AccessOperation operation) {
             return "call";
         case AccessOperation::kGetProbe:
             return "get_probe";
+        case AccessOperation::kGetMethod:
+            return "get_method";
     }
     return "unknown";
 }
@@ -128,6 +130,31 @@ std::uint64_t AccessTrace::record(
     }
 }
 
+std::uint64_t AccessTrace::promote_last_method_read(
+    const void* identity, std::string_view member) noexcept {
+    if (identity == nullptr || !enabled_.load(std::memory_order_acquire)) {
+        return 0;
+    }
+    try {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (events_.empty()) {
+            return 0;
+        }
+        AccessEvent& last = events_.back();
+        if (last.operation != "get_method" || last.member != member) {
+            return 0;
+        }
+        const auto found = object_ids_.find(identity);
+        if (found == object_ids_.end() || last.object_id != found->second) {
+            return 0;
+        }
+        last.operation = "call";
+        return last.seq;
+    } catch (...) {
+        return 0;
+    }
+}
+
 void AccessTrace::complete(std::uint64_t seq,
                            AccessCompletion completion) noexcept {
     if (seq == 0 || completion.outcome.empty()) {
@@ -223,7 +250,6 @@ const std::vector<std::string>& AccessTrace::not_covered() {
         "permission-status missing probes/onchange and MediaQueryList onchange/missing probes",
         "arrays and plain values returned by host APIs",
         "user-created plain JS objects",
-        "method-reference reads",
         "non-HostObject missing-property probes/in/delete/enumeration/descriptors",
         "read-only write attempts",
         "arguments/returns/stacks",

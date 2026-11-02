@@ -311,8 +311,15 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::String::Utf8Value name(isolate, info.Data());
     const std::string key(*name != nullptr ? *name : "");
     AccessTrace* trace = active_trace(isolate);
-    const std::uint64_t seq =
-        record_access(trace, host, key, AccessOperation::kCall);
+    std::uint64_t seq = 0;
+    if (trace != nullptr) {
+        // A method call normally follows its property read; fold that read
+        // into one call event. If other trace events intervened, keep both.
+        seq = trace->promote_last_method_read(host, key);
+        if (seq == 0) {
+            seq = record_access(trace, host, key, AccessOperation::kCall);
+        }
+    }
     AccessCompletion completion;
     if (seq != 0) {
         try {
@@ -333,6 +340,96 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 isolate->HasPendingException() ? "threw" : "returned";
             if (completion.outcome == "returned") {
                 completion.return_summary = summarize_value(isolate, result);
+            }
+            trace->complete(seq, std::move(completion));
+        } catch (...) {
+            // Summaries are best-effort and must never affect JS behavior.
+        }
+    }
+}
+
+// Step 6b: method properties are accessors so a bare method reference is
+// observable. The function is created lazily and cached in a V8 private slot on
+// the holder, preserving identity and writable/overridable behavior. A normal
+// `receiver.method(...)` read is folded into the following call event by
+// method_callback when no other trace event intervenes.
+void method_getter(v8::Local<v8::Name> property,
+                   const v8::PropertyCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Object> holder = info.Holder();
+    HostObject* host = backing_of(holder);
+    if (host == nullptr || !property->IsString()) {
+        return;
+    }
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::Local<v8::String> method_name = property.As<v8::String>();
+    v8::Local<v8::Value> result;
+    if (!info.Data().IsEmpty() && info.Data()->IsPrivate()) {
+        v8::Local<v8::Private> slot = info.Data().As<v8::Private>();
+        v8::Maybe<bool> has = holder->HasPrivate(context, slot);
+        if (has.IsNothing()) {
+            return;
+        }
+        if (has.FromJust()) {
+            if (!holder->GetPrivate(context, slot).ToLocal(&result)) {
+                return;
+            }
+        } else {
+            v8::Local<v8::Function> fn;
+            if (!v8::FunctionTemplate::New(isolate, &method_callback, method_name)
+                     ->GetFunction(context)
+                     .ToLocal(&fn)) {
+                return;
+            }
+            (void)holder->SetPrivate(context, slot, fn);
+            result = fn;
+        }
+    } else {
+        v8::Local<v8::Function> fn;
+        if (!v8::FunctionTemplate::New(isolate, &method_callback, method_name)
+                 ->GetFunction(context)
+                 .ToLocal(&fn)) {
+            return;
+        }
+        result = fn;
+    }
+    // A method-named property whose current value is not a function (script
+    // override) is an ordinary property read, not a method reference.
+    if (result->IsFunction()) {
+        AccessTrace* trace = active_trace(isolate);
+        if (trace != nullptr) {
+            v8::String::Utf8Value utf8(isolate, method_name);
+            const std::string key(*utf8 != nullptr ? *utf8 : "");
+            record_access(trace, host, key, AccessOperation::kGetMethod);
+        }
+    }
+    info.GetReturnValue().Set(result);
+}
+
+void method_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
+                   const v8::PropertyCallbackInfo<void>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Object> holder = info.Holder();
+    HostObject* host = backing_of(holder);
+    if (host == nullptr || !property->IsString()) {
+        return;
+    }
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    v8::String::Utf8Value utf8(isolate, property);
+    const std::string key(*utf8 != nullptr ? *utf8 : "");
+    AccessTrace* trace = active_trace(isolate);
+    const std::uint64_t seq =
+        record_access(trace, host, key, AccessOperation::kSet);
+    if (!info.Data().IsEmpty() && info.Data()->IsPrivate()) {
+        (void)holder->SetPrivate(context, info.Data().As<v8::Private>(), value);
+    }
+    if (seq != 0) {
+        try {
+            AccessCompletion completion;
+            completion.outcome =
+                isolate->HasPendingException() ? "threw" : "returned";
+            if (completion.outcome == "returned") {
+                completion.value_summary = summarize_value(isolate, value);
             }
             trace->complete(seq, std::move(completion));
         } catch (...) {
@@ -381,9 +478,11 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
     }
     for (const std::string& method : host->method_names()) {
         v8::Local<v8::String> mname = v8str(isolate, method);
-        v8::Local<v8::FunctionTemplate> fn =
-            v8::FunctionTemplate::New(isolate, &method_callback, mname);
-        tmpl->Set(mname, fn);
+        v8::Local<v8::Private> slot = v8::Private::New(isolate, mname);
+        tmpl->SetNativeDataProperty(
+            mname, &method_getter, &method_setter,
+            v8::Local<v8::Value>::Cast(slot),
+            v8::PropertyAttribute::None);
     }
 
     v8::Local<v8::Object> object = tmpl->NewInstance(context).ToLocalChecked();

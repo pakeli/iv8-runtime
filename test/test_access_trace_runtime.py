@@ -125,7 +125,9 @@ def test_method_reference_read_is_not_a_call():
         page.start_access_trace()
         page.eval("const fn = document.querySelector; typeof fn;",
                   name="probe.js")
-        assert page.read_access_trace()["events"] == []
+        events = page.read_access_trace()["events"]
+        assert [(event["member"], event["operation"]) for event in events] == [
+            ("querySelector", "get_method")]
 
 
 @on_only
