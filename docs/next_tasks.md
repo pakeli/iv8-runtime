@@ -1184,10 +1184,12 @@ items; each wheel lane: **`1690 passed, 2 skipped`**.
 ### Next
 
 All planned step-5 object groups are complete. Step 6 then added
-value/argument/return summaries (3ag), method-reference reads (3ah), and
-delete/enumeration/define operations (3ai); remaining step-6 work is
-`in`/`hasOwnProperty`, descriptor queries, Reflect target identity, and
-native-callback summaries. The M11-46 selector follow-up remains deferred.
+value/argument/return summaries (3ag), method-reference reads (3ah),
+delete/enumeration/define operations (3ai), and the remaining query/target/
+summary/exception batch (3aj). Step 6 is complete for the traceable HostObject
+surface; `in`, non-HostObject targets, wrapper caching, asynchronous exception
+metadata, and timing remain documented blind spots. The M11-46 selector
+follow-up remains deferred.
 
 ## Priority 3af: macOS arm64 V8-linked release wheels — DONE (`2026-10-30`)
 
@@ -1261,11 +1263,11 @@ This slice passed on its first CI attempt.
 
 ### Next
 
-Continue step 6 with method-reference reads (Priority 3ah), then
-delete/enumeration/define operations (Priority 3ai), then
-`in`/`hasOwnProperty` and descriptor queries. Reflect target identity and
-summaries for independent native callbacks remain after that. The M11-46
-selector follow-up remains deferred.
+Later slices completed method-reference reads (3ah), delete/enumeration/define
+operations (3ai), and explicit queries, Reflect target metadata, native
+summaries, and synchronous exception metadata (3aj). Step 6 is complete for the
+traceable HostObject surface; the `in` operator and documented wrapper blind
+spots remain. The M11-46 selector follow-up remains deferred.
 
 ## Priority 3ah: Host access trace method references (step 6b) — DONE (`2026-11-02`)
 
@@ -1302,9 +1304,10 @@ This slice passed on its first CI attempt.
 
 ### Next
 
-Continue step 6 with `in`/`hasOwnProperty` and descriptor queries (Priority 3ai
-added delete/enumeration/define), Reflect target identity, and summaries for
-independent native callbacks. The M11-46 selector follow-up remains deferred.
+Delete/enumeration/define (3ai) and the remaining query/target/summary/
+exception batch (3aj) completed step 6. The `in` operator, non-HostObject
+targets, cached wrappers, asynchronous exception metadata, and timing remain
+documented blind spots. The M11-46 selector follow-up remains deferred.
 
 ## Priority 3ai: Host access trace delete/enumeration/define operations (step 6c) — DONE (`2026-11-02`)
 
@@ -1345,9 +1348,65 @@ the release-tested `2addf62`):
 
 ### Next
 
-Continue step 6 with `in`/`hasOwnProperty` and descriptor queries (needs a
-non-invasive observation point), Reflect target identity, and summaries for
-independent native callbacks. The M11-46 selector follow-up remains deferred.
+Continue with Priority 3aj below: explicit has/descriptor query wrappers,
+Reflect target metadata, native callback/getter summaries, and synchronous
+exception metadata. The M11-46 selector follow-up remains deferred.
+
+## Priority 3aj: Host access trace queries, Reflect targets, native summaries, exception metadata (step 6d–6h) — DONE (`2026-11-02`)
+
+### What landed
+
+- Step 6d wraps `Object.prototype.hasOwnProperty`, `Object.hasOwn`,
+  `Reflect.has`, `Object.getOwnPropertyDescriptor`, and
+  `Reflect.getOwnPropertyDescriptor` when tracing starts and reinstalls them
+  after `load()`. Events record `has`/`get_own_property_descriptor` only for
+  HostObject targets, with outcome, argument, and return summaries; results,
+  descriptors, and prototypes are unchanged.
+- Step 6f adds `target_type`/`target_label` to the existing
+  `watch_reflect_get` / `has` / `ownKeys` hits; unrecognized targets are marked
+  `"unknown"` with an empty label. The channels remain independent.
+- Step 6g applies the primitive/type-only completion summaries to traced native
+  BOM callbacks and getters (performance, crypto, Storage, storage manager,
+  permissions/status, matchMedia, javaEnabled, and window accessors).
+- Step 6h attaches safe synchronous exception name/message/location/stack to a
+  traced event while rethrowing the original exception unchanged. Collection
+  uses V8 message/stack metadata and does not read a user-defined `stack`
+  property.
+- The `in` operator, non-HostObject query targets, query wrappers cached before
+  tracing starts, asynchronous exception metadata, and general call-site
+  locations/timing remain explicit blind spots. The raw named descriptor
+  callback stays uninstalled because V8 invokes it for internal property
+  bookkeeping.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_queries.py` (5 items),
+`test/test_reflect_target_identity.py` (3 items), and two added
+`test_access_trace_values.py` cases. Full suite collects 1716 items; each wheel
+lane: **`1714 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final code commit `bd148c2` (branch `host-access-queries`; identical tree to
+the release-tested `72c00ed`):
+
+- Linux `release-linux` run `41406392044` — cp311–cp314, each
+  `1714 passed, 2 skipped`;
+- Windows `release-windows` run `41406401506` — Python 3.11–3.14, each
+  `1714 passed, 2 skipped`;
+- macOS arm64 `release-macos` run `41406410844` — cp311–cp314
+  `macosx_11_0_arm64` wheels, each `1714 passed, 2 skipped`.
+
+The first full 6d–6h attempt (`8f8dc23`) failed one query test because the
+`Reflect.getOwnPropertyDescriptor` wrapper was missing its completion scope;
+`bd148c2` fixed it and the three platforms passed.
+
+### Next
+
+Step 6 is complete for the traceable HostObject surface. The next work item is
+step 7 (runtime report/usage workflow). The `in` operator, non-HostObject
+targets, wrapper caching, asynchronous exception metadata, and timing remain
+documented blind spots rather than M11 scope. The M11-46 selector follow-up
+remains deferred.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

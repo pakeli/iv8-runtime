@@ -1006,8 +1006,10 @@ The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and
 window-alias groups, plus the step-6a value/argument/return summaries,
-step-6b method-reference reads, and step-6c delete/enumeration/define
-operations, add
+step-6b method-reference reads, step-6c delete/enumeration/define operations,
+step-6d explicit has/descriptor query wrappers, step-6f Reflect target metadata,
+step-6g native callback/getter summaries, and step-6h synchronous exception
+metadata, add
 ``Page.start_access_trace(max_events=10000, object_types=None)`` /
 ``Page.stop_access_trace()`` / ``Page.read_access_trace(clear=True)``. It records
 native ``HostObject`` property get/set and method-call entries,
@@ -1020,9 +1022,13 @@ events, ``navigator.storage`` parent reads plus manager method calls,
 ``navigator.permissions`` parent/query/status accesses, matchMedia result
 reads/method calls, legacy navigator metadata, window alias get/set events, and
 step-6a completion metadata (``outcome`` plus primitive value/argument/return
-summaries for generic get/set/call and ``get_method`` references with adjacent
-call folding), step-6c ``delete``/``own_keys``/``define_property`` operation
-events (with member-less enumeration events) while leaving results and
+summaries for generic/native get/set/call, query wrappers, and ``get_method``
+references with adjacent call folding), step-6c
+``delete``/``own_keys``/``define_property`` operation events (with member-less
+enumeration events), step-6d ``has``/``get_own_property_descriptor`` query
+events for HostObject targets, step-6f ``target_type``/``target_label`` on
+Reflect watch hits, step-6g native callback/getter summaries, and step-6h
+synchronous exception name/message/location/stack while leaving results and
 descriptors unchanged, with sequence, generation, stable native
 object ID, object type/label, member, operation, resource name, and source kind.
 Visual viewport and matchMedia results use the host-object template prototype
@@ -1030,10 +1036,11 @@ and writable/configurable no-op methods; the storage/permissions managers and
 PermissionStatus objects keep their plain-object shapes. See the boundary
 document for exact descriptor changes. It is a separate,
 default-off monitoring channel; it does not change the five existing watch
-channels, add a JS-visible API, or cover the remaining plain BOM property
-reads/nested objects, user-created objects, ``in``/``hasOwnProperty``,
-descriptor queries, numeric/Symbol probes, native-callback summaries, exception
-messages/stacks, or the rest of step 6 yet. See
+channels or add a JS-visible API. It does not cover the remaining plain BOM
+property reads/nested objects, user-created objects, the ``in`` operator,
+non-HostObject query targets, query wrappers cached before tracing,
+asynchronous exception metadata, numeric/Symbol probes, or general call-site
+location/timing yet. See
 ``docs/host_access_trace.md``.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,

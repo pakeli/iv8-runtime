@@ -79,7 +79,7 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   `visualViewport` + window flags, bounded `matchMedia`, deterministic
   `navigator.storage` and `navigator.permissions`, and empty legacy
   `navigator.plugins` / `mimeTypes` / `javaEnabled`
-- Post-M11 host access trace (steps 1–4 + the complete step-5 object groups):
+- Post-M11 host access trace (steps 1–4, the complete step-5 object groups, and steps 6a–6h):
   `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
   recording native HostObject get/set/call entries, missing string-key
   `get_probe` events, performance/crypto/Storage callback calls, intrinsic
@@ -91,9 +91,12 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   parent/top/frames/opener get/set events, step-6a value/argument/return
   summaries plus returned/threw outcomes for generic HostObject get/set/call,
   method-reference `get_method` events with adjacent-call folding, step-6c
-  `delete`/`own_keys`/`define_property` request events, with generation, object
-  identity, resource, and source attribution; descriptor queries and
-  `in`/`hasOwnProperty` remain pending
+  `delete`/`own_keys`/`define_property` request events, step-6d explicit
+  has/descriptor query events, step-6f Reflect target type/label metadata,
+  step-6g native callback/getter summaries, and step-6h synchronous exception
+  name/message/location/stack, with generation, object identity, resource, and
+  source attribution; `in`, non-HostObject query targets, cached wrappers, and
+  asynchronous exception metadata remain blind spots
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -158,7 +161,12 @@ each wheel lane `1699 passed, 2 skipped`. The step-6c delete/enumeration/define
 operation slice was verified on `host-access-operations` against the tree of
 commit `96c7c00` (release-tested tree `2addf62`) with Linux run `41399273630`,
 Windows run `41399284773`, and macOS arm64 run `41399294680`, each wheel lane
-`1704 passed, 2 skipped`.
+`1704 passed, 2 skipped`. The remaining step-6d–6h batch (explicit queries,
+Reflect target metadata, native summaries, and synchronous exception metadata)
+was verified against the tree of commit `bd148c2` (release-tested tree
+`72c00ed`) with Linux run `41406392044`, Windows run
+`41406401506`, and macOS arm64 run `41406410844`, each wheel lane
+`1714 passed, 2 skipped`.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -412,7 +420,7 @@ Recent implementation sequence from Git history:
 - `M11-41` through `M11-45`: BOM viewport/media/device metadata — visualViewport,
   matchMedia, navigator.storage/permissions, and legacy navigator metadata
   (verified `2026-10-30`)
-- Post-M11 host access trace (steps 1–4 + the complete step-5 object groups):
+- Post-M11 host access trace (steps 1–4, the complete step-5 object groups, and steps 6a–6h):
   native HostObject get/set/call, missing string-key probe,
   performance/crypto/Storage calls, window metadata accessors, nested
   connection/orientation/timeOrigin reads, static visualViewport
@@ -420,9 +428,10 @@ Recent implementation sequence from Git history:
   navigator.permissions query calls plus PermissionStatus accesses, matchMedia
   result reads/method calls, legacy navigator metadata accesses, window
   parent/top/frames/opener get/set events, step-6a value/argument/return
-  summaries with returned/threw outcomes, step-6b method-reference reads, and
-  step-6c `delete`/`own_keys`/`define_property` request events (verified
-  `2026-11-02`)
+  summaries with returned/threw outcomes, step-6b method-reference reads,
+  step-6c `delete`/`own_keys`/`define_property` request events, step-6d explicit
+  has/descriptor query events, step-6f Reflect target metadata, step-6g native
+  summaries, and step-6h synchronous exception metadata (verified `2026-11-02`)
 
 ## 4. Release / Distribution Status
 
@@ -570,12 +579,16 @@ The repository is executing its post-M10 direction:
   verified on real V8 (Linux + Windows + macOS arm64)** on `2026-11-02`;
 - step 6c (delete/enumeration/define request events on HostObject members) is
   **landed and verified on real V8 (Linux + Windows + macOS arm64)** on
-  `2026-11-02`; descriptor queries and `in`/`hasOwnProperty` are deliberately
-  deferred because the interceptor cannot distinguish explicit queries from V8's
-  internal descriptor bookkeeping;
-- the next execution handoff is the rest of step 6: `in`/`hasOwnProperty`,
-  property descriptor queries, target association for the existing Reflect
-  channels, and summaries for independent native callbacks.
+  `2026-11-02`;
+- step 6d (explicit has/descriptor query wrappers), step 6f (Reflect target
+  metadata), step 6g (native callback/getter summaries), and step 6h
+  (synchronous exception metadata) are **landed and verified on real V8 (Linux +
+  Windows + macOS arm64)** on `2026-11-02`;
+- steps 6a–6h are complete for the traceable HostObject surface. The `in`
+  operator, non-HostObject query targets, query wrappers cached before tracing
+  starts, asynchronous exception metadata, and general call-site
+  locations/timing are explicit blind spots;
+- the next execution handoff is step 7 (runtime report/usage workflow).
   The M11 selector follow-up (`M11-46` candidate) and `navigator.userAgentData`
   remain deferred priorities; remaining BOM/DOM gaps are inventoried in
   `docs/dom_bom_gaps.md`.
@@ -589,10 +602,10 @@ These are the questions a new coding session should resolve before major new wor
   settled, landed, and verified; selector pseudo-classes remain the planned
   selector follow-up, while UA-CH is deliberately deferred and the remaining
   candidates come from `docs/dom_bom_gaps.md`.)
-- How should the remaining step 6 represent `in`/`hasOwnProperty` and
-  descriptor queries without folding them into get/set? (Step 6a added
-  value/argument/return summaries, step 6b method-reference reads, and step 6c
-  delete/enumeration/define events; see `docs/host_access_tracing_plan.md` §8.)
+- Should the `in` operator, non-HostObject query targets, or wrapper-cached
+  references ever be covered through a Proxy/AST design, or remain explicit
+  out-of-scope blind spots? (Steps 6a–6h cover the explicit has/descriptor APIs
+  and HostObject surface; see `docs/host_access_trace.md` §4.14/§7.)
 - Should `Page` gain a single frozen contract document, or keep the milestone-doc
   approach? (`docs/decision_log.md` §B — still open. `docs/runtime_surface.md` is an
   *index*, not a contract, so it does not settle this.)
@@ -611,10 +624,14 @@ If you need a one-line answer:
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage
 > manager, navigator-permissions, matchMedia-result, legacy-navigator, and
 > window-alias groups of a post-M11 host access trace, plus step-6a value/
-> argument/return summaries, step-6b method-reference reads, and step-6c
-> delete/enumeration/define request events — all verified on real V8 (Linux +
-> Windows + macOS arm64) on `2026-11-02`. The step-5 object groups are complete;
-> descriptor queries and `in`/`hasOwnProperty` remain for the rest of step 6.
+> argument/return summaries, step-6b method-reference reads, step-6c
+> delete/enumeration/define request events, step-6d explicit has/descriptor
+> queries, step-6f Reflect target metadata, step-6g native callback/getter
+> summaries, and step-6h synchronous exception metadata — all verified on real
+> V8 (Linux + Windows + macOS arm64) on `2026-11-02`. The step-5 object groups
+> and steps 6a–6h are complete for the traceable HostObject surface; `in`,
+> non-HostObject query targets, cached wrappers, and asynchronous exception
+> metadata remain explicit blind spots.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

@@ -137,7 +137,8 @@ If you only remember one thing:
 > step-5 native BOM call, window metadata, nested metadata, static
 > visualViewport, navigator.storage manager, navigator.permissions,
 > matchMedia-result, legacy-navigator, and window-alias groups are also verified
-> (commit `b936307`), completing the step-5 object coverage. Step 6a
-> value/argument/return summaries, step 6b method-reference reads, and step 6c
-> delete/enumeration/define operations are verified at commit `96c7c00`; see
+> (commit `b936307`), completing the step-5 object coverage. Steps 6a–6h
+> (summaries, method references, delete/enumeration/define, explicit
+> has/descriptor query wrappers, Reflect target metadata, native summaries, and
+> synchronous exception metadata) are verified at commit `bd148c2`; see
 > `docs/m11_41_45_report.md` and `docs/host_access_trace.md`.

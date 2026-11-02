@@ -4,11 +4,12 @@ Status: **VERIFIED — HostObject get/set/call + missing-property probes + nativ
 BOM callback calls + window/nested metadata + static visualViewport + navigator
 storage/permissions managers + matchMedia results + legacy navigator metadata +
 window aliases + step-6a value/argument/return summaries + step-6b method
-references + step-6c delete/enumeration/define operations (descriptor queries
-and HasProperty deferred) green on real V8 Linux + Windows + macOS arm64
-(`2026-11-02`)**
+references + step-6c delete/enumeration/define operations + step-6d explicit
+has/descriptor queries + step-6f Reflect target association + step-6g native
+callback/getter summaries + step-6h synchronous exception metadata green on real
+V8 Linux + Windows + macOS arm64 (`2026-11-02`)**
 
-This document freezes steps 1–4, the step-5 object groups, and steps 6a–6c of
+This document freezes steps 1–4, the step-5 object groups, and steps 6a–6h of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
 string-key missing-property probes, call/get coverage for independent native BOM
 callbacks (performance, crypto, Storage), intrinsic window metadata reads,
@@ -18,9 +19,11 @@ manager's parent read plus method calls, `navigator.permissions` parent reads
 plus query calls and returned PermissionStatus accesses, matchMedia result
 objects, legacy navigator metadata, window browsing-context aliases,
 primitive value/argument/return summaries with returned/threw outcomes,
-method-reference reads, and delete/enumeration/define operation events. It is a
-second-layer monitoring feature. It does not change the M1 `JSContext` contract,
-the existing `watch_apis` / Reflect / Object.keys channels, or DOM/BOM
+method-reference reads, delete/enumeration/define operation events, explicit
+has/descriptor query events, Reflect target metadata, native-callback/getter
+summaries, and safe synchronous exception metadata. It is a second-layer
+monitoring feature. It does not change the M1 `JSContext` contract, the existing
+`watch_apis` / Reflect / Object.keys channels, or DOM/BOM
 values/assignment/deletion/enumeration/definition behavior.
 
 ## 1. Entry-point contract
@@ -41,8 +44,18 @@ The only operations covered by this slice are the generic callbacks in
 | `named_property_query` | No-op; keeps `in` / `hasOwnProperty` / descriptor lookup on the normal path and is not recorded. |
 | independent native callbacks | performance/crypto/Storage methods, plus the Storage `length` accessor, record `call`/`get` with native identity tokens. |
 
-The named descriptor callback is intentionally **not** installed; descriptor
-queries remain untraced (see §4.13).
+Step 6d additionally installs JS wrappers around the explicit query APIs
+`Object.prototype.hasOwnProperty`, `Object.hasOwn`, `Reflect.has`,
+`Object.getOwnPropertyDescriptor`, and `Reflect.getOwnPropertyDescriptor`.
+They record `has` / `get_own_property_descriptor` only for HostObject targets;
+`in` operator accesses and non-HostObject targets are not recorded. A reference
+cached before tracing starts bypasses the wrapper. The raw named descriptor
+callback remains uninstalled because V8 invokes it for internal property
+bookkeeping as well as explicit queries (see §4.13/§4.14).
+
+The `Reflect.get` / `Reflect.has` / `Reflect.ownKeys` watch hits now also carry
+`target_type` and `target_label`; unrecognized targets use `"unknown"` and an
+empty label.
 
 This is **not** a V8-wide property-access hook. It proves that a native host
 entry point ran; it does not prove every `obj.x` expression was observed.
@@ -96,7 +109,13 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `Object.keys(navigator)` / `for...in` | records one member-less `own_keys` event per own-key request; keys and order are unchanged |
 | `Object.defineProperty(navigator, 'x', {...})` | records `define_property` when V8 routes the definition through the named definer; the result and property behavior are unchanged |
 | method deletion and redefinition | records `delete` / `define_property`; descriptor materialization may still record `get_method` |
-| `'x' in navigator`, `hasOwnProperty`, descriptor queries | not covered; a descriptor read may still evaluate a getter and record `get`/`get_method` |
+| `navigator.hasOwnProperty('x')` / `Object.hasOwn(navigator, 'x')` / `Reflect.has(navigator, 'x')` | records `has` for the HostObject target, with `return_summary` and `outcome`; the `in` operator itself is not covered |
+| `Object.getOwnPropertyDescriptor(navigator, 'x')` / `Reflect.getOwnPropertyDescriptor(navigator, 'x')` | records `get_own_property_descriptor`; a native data/accessor descriptor read may still emit `get`/`get_method` |
+| query on a non-HostObject target | no access-trace event; the Reflect watch channels label the target `"unknown"` |
+| `Reflect.get` / `Reflect.has` / `Reflect.ownKeys` with watch enabled | hit includes `target_type` / `target_label`; unknown targets use `"unknown"` / `""` |
+| `performance.now()` / `crypto.randomUUID()` with tracing | `call` includes `argument_count`, argument summaries, `return_summary`, and `outcome` |
+| traced native getter (`localStorage.length`, `performance.timeOrigin`, window metadata) | `get` includes `outcome` and `value_summary` |
+| traced synchronous throw | event includes `exception_name`, `exception_message`, `exception_location`, and `exception_stack`; the exception still propagates |
 | `const obj = {x: 1}; obj.x` | not covered; user-created plain objects are a separate project |
 | destructuring/spread | only if it actually executes a covered native getter; no broader syntax guarantee |
 
@@ -174,28 +193,34 @@ Event shape:
 seq, generation, object_id, object_type, label, member,
 operation, phase, resolution?, resource_name, source_kind,
 outcome?, value_summary?, argument_count?, argument_summaries?,
-return_summary?
+return_summary?, exception_name?, exception_message?,
+exception_stack?, exception_location?
 ```
 
 - `member` is the property or method name as registered by the HostObject; it is
   empty for `own_keys`.
-- `operation` is `get`, `set`, `get_method`, `call`, `get_probe`, `delete`,
-  `own_keys`, or `define_property`.
+- `operation` is `get`, `set`, `get_method`, `call`, `get_probe`, `has`,
+  `delete`, `own_keys`, `get_own_property_descriptor`, or `define_property`.
 - `phase` is always `enter` in this slice.
 - `resolution` is present only for `get_probe`; current value is `"missing"`.
   Present/unknown classification is not emitted.
 - `source_kind` is `eval`, `html_script`, `internal`, or `unknown`.
-- Step 6a optional completion fields (generic HostObject `get`/`set`/`call`):
+- Optional completion fields are attached to the same enter event after dispatch
+  (step 6a/6g/6h):
   - `outcome`: `"returned"` or `"threw"` (a pending exception after dispatch;
     the exception is never swallowed);
-  - `value_summary`: for `get` (returned value) and `set` (assigned value) when
-    `outcome` is `"returned"`;
-  - `argument_count`: full argument count for `call`;
-  - `argument_summaries`: first up to 8 argument summaries for `call`;
-  - `return_summary`: for `call` when `outcome` is `"returned"`.
+  - `value_summary`: for traced getters and setters when `outcome` is
+    `"returned"`;
+  - `argument_count`: full argument count for traced calls and query wrappers;
+  - `argument_summaries`: first up to 8 argument summaries;
+  - `return_summary`: for traced calls and query wrappers that return;
+  - `exception_name`, `exception_message`, `exception_location`,
+    `exception_stack`: safe synchronous exception metadata when a traced entry
+    throws.
   These fields are absent on `get_method`, `get_probe`, `delete`, `own_keys`,
-  `define_property`, on independent native callbacks, and when completion was
-  unavailable (e.g. the event was cleared or the trace was stopped).
+  `define_property`, and when completion was unavailable (e.g. the event was
+  cleared, the trace was stopped, or an asynchronous source threw outside a
+  traced synchronous entry).
 
 Report shape:
 
@@ -208,12 +233,13 @@ Report shape:
     "dropped_events": int,
     "filter_object_types": list[str] | None,
     "coverage": {
-        "scope": "installed HostObject getter/setter/method/get_probe callbacks",
+        "scope": "installed HostObject callbacks, explicit query wrappers, and traced native BOM callbacks",
         "object_types": [...],
-        "operations": ["get", "set", "get_method", "call", "get_probe",
-                       "delete", "own_keys", "define_property"],
+        "operations": ["get", "set", "get_method", "call", "get_probe", "has",
+                       "delete", "own_keys", "get_own_property_descriptor",
+                       "define_property"],
         "phase": "enter",
-        "summaries": "generic HostObject get/set/call: returned/threw outcome, ...",
+        "summaries": "generic and traced native get/set/call plus has/descriptor queries: returned/threw outcome, ...",
         "not_covered": [...],
     },
 }
@@ -240,9 +266,10 @@ the script still receives `undefined` (or the normal prototype result). It does
 not create placeholders, proxies, or return values. The current implementation
 emits only `resolution: "missing"`; it does not emit `present` or `unknown`
 events for ordinary successful reads. Numeric indices, Symbols, non-HostObject
-objects, and `in` / `hasOwnProperty` / descriptor queries remain outside this
-slice. Deletion, own-key enumeration, and property definition are covered in
-§4.13.
+objects, and the `in` operator remain outside this slice. Deletion, own-key
+enumeration, and property definition are covered in §4.13; explicit
+`hasOwnProperty` / `Object.hasOwn` / `Reflect.has` and descriptor queries are
+covered by the wrappers in §4.14.
 
 ## 4.2 Independent native BOM callbacks (step 5a)
 
@@ -462,11 +489,12 @@ pending after dispatch and `"threw"` otherwise. Completion is attached by the
 recorded `seq`, so a nested host access during the implementation cannot steal
 it. Summaries are best-effort: allocation failure leaves the enter event intact.
 
-Not covered by step 6a: summaries for independent native callbacks
-(performance/crypto/Storage/permissions-status/matchMedia/visualViewport/window
-metadata), arguments or return values for get/set beyond the summary fields,
-exception messages, stacks, timing, and the other operations listed in §7. The
-generic path's event count is unchanged; only fields are added.
+Step 6a initially covered only the generic HostObject path. Step 6g extends the
+same primitive summaries to traced native callbacks/getters and the explicit
+query wrappers; step 6h adds synchronous exception metadata. General call-site
+locations for non-throwing events, timing, and asynchronous exception metadata
+remain outside this slice. The generic path's event count is unchanged; only
+fields are added.
 
 ## 4.12 Method-reference reads (step 6b)
 
@@ -497,11 +525,13 @@ fn.call(hostProbe, 'x');         // call (not folded)
 ```
 
 Descriptor reads such as `Object.getOwnPropertyDescriptor(host, 'method')`
-materialize the accessor and therefore also produce `get_method`. Detached method
-references are not calls; calling one later with the host receiver can still
-produce a separate `call`. The folding rule is deliberately conservative: it
-never removes a non-adjacent `get_method` event, and no user `toString`/`valueOf`
-or property Get is executed to produce method metadata.
+materialize the accessor and therefore also produce `get_method`; for a
+HostObject target the explicit descriptor wrapper in §4.14 additionally records
+`get_own_property_descriptor`. Detached method references are not calls; calling
+one later with the host receiver can still produce a separate `call`. The
+folding rule is deliberately conservative: it never removes a non-adjacent
+`get_method` event, and no user `toString`/`valueOf` or property Get is executed
+to produce method metadata.
 
 ## 4.13 Delete, enumeration, and define operations (step 6c)
 
@@ -523,7 +553,9 @@ These operations carry only the common event fields; there are no outcome,
 value, argument, or return summaries for them yet. They use the same object
 identity, generation, filter, resource, and source attribution as get/set/call.
 
-Descriptor and HasProperty operations are deliberately deferred:
+Step 6d covers explicit `hasOwnProperty` / `Object.hasOwn` / `Reflect.has` and
+descriptor APIs with wrappers (§4.14). The raw named descriptor callback and
+the `in` operator remain deferred:
 
 - The named descriptor callback is not installed. When it was present (attempt
   `d314256`), V8 also invoked it for internal property bookkeeping, such as
@@ -531,13 +563,94 @@ Descriptor and HasProperty operations are deliberately deferred:
   Those events were indistinguishable from explicit
   `Object.getOwnPropertyDescriptor` calls and polluted ordinary matchMedia
   traces.
-- `in` / `hasOwnProperty` do not have a reliable, non-invasive record point in
-  this interceptor design. The no-op query handler keeps their lookup normal;
-  recording them by returning `kYes`/`kNo` would change semantics.
-- An explicit descriptor read still performs the normal lookup. Reading a native
-  data-property descriptor can evaluate its getter (emitting `get`), and reading
-  a method descriptor can materialize the method accessor (emitting
-  `get_method`); there is simply no `get_own_property_descriptor` event.
+- The named query callback keeps `in` / `hasOwnProperty` / descriptor lookup on
+  the normal path. `in` has no reliable, non-invasive record point without a
+  Proxy or AST instrumentation; the explicit has APIs are wrapped instead.
+- A descriptor read through the wrapper still performs the normal lookup.
+  Reading a native data-property descriptor can evaluate its getter (emitting
+  `get`), and reading a method descriptor can materialize the method accessor
+  (emitting `get_method`).
+
+## 4.14 Explicit has and descriptor queries (step 6d)
+
+When an access-trace session starts, the runtime wraps these context functions:
+
+| API | Recorded operation |
+|---|---|
+| `Object.prototype.hasOwnProperty` | `has` |
+| `Object.hasOwn` (when present) | `has` |
+| `Reflect.has` | `has` |
+| `Object.getOwnPropertyDescriptor` | `get_own_property_descriptor` |
+| `Reflect.getOwnPropertyDescriptor` | `get_own_property_descriptor` |
+
+The wrappers call the original function with the original receiver and arguments
+and preserve return values, throws, prototypes, descriptors, and enumeration.
+They record only when the target is a HostObject, so `navigator`, `screen`,
+`hostProbe`, elements, and other native hosts are covered; plain-object/window
+targets are left unrecorded. The wrappers are reinstalled after every `load()`
+while tracing is configured. Each event also carries `outcome`, the
+argument count/summaries, and a `return_summary` (`boolean:*` for has queries,
+`object`/`undefined` for descriptor queries).
+
+`in` is not covered: the operator cannot be intercepted without a Proxy or AST
+transformation. Function references captured before tracing started are not
+retroactively wrapped, and a script can replace the wrapper afterwards; these
+are explicit blind spots. Replacing the functions changes their identity but
+not their behavior.
+
+## 4.15 Reflect target association (step 6f)
+
+The existing `watch_reflect_get` / `has` / `ownKeys` hits now include two
+metadata fields:
+
+- `target_type`: the target HostObject's access-trace type, or `"unknown"` for
+  every other target;
+- `target_label`: the HostObject label (for example `"navigator"` or
+  `"screen"`), or an empty string for unknown targets.
+
+The fields are best-effort and retain no V8 handle. Two targets of the same
+type and label are not distinguished by these fields; access-trace events
+retain their own stable `object_id` for HostObject identities. The Reflect
+channels remain independent of the access trace and their read-and-clear,
+break-on-hit, resource, and reset behavior is unchanged.
+
+## 4.16 Native callback and getter summaries (step 6g)
+
+The completion summaries previously limited to the generic HostObject path now
+also apply to the traced native callbacks and getters:
+
+- performance methods and `performance.timeOrigin`;
+- crypto methods;
+- Storage methods and `length`;
+- `navigator.storage` manager methods;
+- `navigator.permissions.query`, PermissionStatus `name`/`state` and methods;
+- `matchMedia` result construction;
+- legacy navigator `javaEnabled`;
+- window metadata/name/alias getters and setters;
+- the explicit query wrappers in §4.14.
+
+Calls carry `argument_count`, up to eight `argument_summaries`, and a
+`return_summary` when they return; getters and setters carry `value_summary`.
+All summaries use the primitive/type-only rules in §4.11 and never execute user
+`toString`/`valueOf` or property Gets. A traced callback that throws records
+`outcome: "threw"` and the exception fields in §4.17.
+
+## 4.17 Synchronous exception metadata (step 6h)
+
+When a traced entry actually throws, the runtime attaches:
+
+- `exception_name` — best-effort V8 constructor name;
+- `exception_message` — V8's message text;
+- `exception_location` — script resource plus line/column when available;
+- `exception_stack` — V8 stack frames formatted as text, capped at 4096 bytes.
+
+The metadata is collected while the exception is caught by a temporary V8
+`TryCatch`; the exception is rethrown unchanged, so script-visible error
+objects, messages, and propagation are preserved. The implementation reads
+V8 message/stack metadata and does not read a user-defined `stack` property or
+invoke getters. Metadata is attached only to a trace event that was retained;
+asynchronous failures, failures outside a traced native entry, and timing
+information are not covered.
 
 ## 5. Source attribution
 
@@ -579,43 +692,43 @@ old channel.
   5a/5e); array element reads on `navigator.plugins` / `mimeTypes`,
   MediaQueryList/PermissionStatus `onchange`, and nested `classList` /
   `validity` objects.
-- Summaries for independent native callbacks and for `delete`/`own_keys`/
-  `define_property` (only generic HostObject get/set/call has them in step 6a);
-  exception messages, stacks, and timing.
+- Summaries for `delete`/`own_keys`/`define_property` (the generic and native
+  get/set/call paths in §4.11/§4.16 do carry them); timing and general call-site
+  locations/stacks for non-throwing events.
 - Arrays and other plain values returned from host getters/methods.
 - User-created plain JS objects, object literals, class instances, destructuring
   beyond covered getter execution, Proxy/AST instrumentation, and explicit
   object-level hooks.
-- `in` / `hasOwnProperty`, descriptor queries, non-HostObject deletion /
-  enumeration / definition / dynamic shadowing behavior, and missing-property
+- The `in` operator, non-HostObject query/deletion/enumeration/definition
+  targets, query wrappers cached before tracing started, and missing-property
   probes on non-HostObject objects (including numeric keys and Symbols).
 - Read-only write attempts that V8 rejects before reaching a native setter.
-- Arguments/returns for non-generic trace sources, exception messages, stacks,
-  timing, Inspector pauses / `break_on_hit`, and DevTools evaluation attribution.
+- Asynchronous exception metadata, Inspector pauses / `break_on_hit`, and
+  DevTools evaluation attribution.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The step-5 object groups and step-6a/6b slices are complete. Step 6c adds
-request events for delete, own-key enumeration, and property definition on
-HostObject string members while preserving their results and descriptors.
-Remaining step-6 work: `in`/`hasOwnProperty`, descriptor queries, target
-association for the existing Reflect channels, native-callback summaries, and
-exception messages/stacks/timing. Plain-property/returned-collection gaps
-(onchange, array elements, plain returned values, global binding reads) remain
-explicit non-goals.
+Steps 6a–6h are complete for the traceable surface: get/set/call, method reads,
+delete/enumeration/define, explicit has/descriptor APIs, Reflect target
+association, native callback/getter summaries, and synchronous exception
+metadata. The `in` operator and targets other than HostObjects remain explicit
+blind spots of the wrapper design; the raw named descriptor callback also stays
+uninstalled. Plain-property/returned-collection gaps (onchange, array elements,
+plain returned values, global binding reads), asynchronous exception metadata,
+and timing remain non-goals.
 
 ## 8. Verification
 
-Verified on real V8 against the tree of commit `96c7c00` (branch
-`host-access-operations`; the release runs used the identical tree `2addf62`,
-cleanly re-committed as `96c7c00`):
+Verified on real V8 against the tree of commit `bd148c2` (branch
+`host-access-queries`; the release runs used the identical tree `72c00ed`,
+cleanly re-committed as `bd148c2`):
 
-- Linux `release-linux` run `41399273630` — cp311 / cp312 / cp313 / cp314,
-  each `1704 passed, 2 skipped`;
-- Windows `release-windows` run `41399284773` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1704 passed, 2 skipped`;
-- macOS arm64 `release-macos` run `41399294680` — cp311 / cp312 / cp313 /
-  cp314 `macosx_11_0_arm64` wheels, each `1704 passed, 2 skipped`.
+- Linux `release-linux` run `41406392044` — cp311 / cp312 / cp313 / cp314,
+  each `1714 passed, 2 skipped`;
+- Windows `release-windows` run `41406401506` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1714 passed, 2 skipped`;
+- macOS arm64 `release-macos` run `41406410844` — cp311 / cp312 / cp313 /
+  cp314 `macosx_11_0_arm64` wheels, each `1714 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
@@ -629,10 +742,12 @@ cleanly re-committed as `96c7c00`):
 `test/test_access_trace_match_media.py` (3 items),
 `test/test_access_trace_legacy_navigator.py` (3 items),
 `test/test_access_trace_window_aliases.py` (4 items),
-`test/test_access_trace_values.py` (6 items),
-`test/test_access_trace_method_reads.py` (3 items), and
-`test/test_access_trace_operations.py` (5 items) ran in every lane. The full
-suite collects 1706 items; 1704 pass and 2 are skipped.
+`test/test_access_trace_values.py` (8 items),
+`test/test_access_trace_method_reads.py` (3 items),
+`test/test_access_trace_operations.py` (5 items),
+`test/test_access_trace_queries.py` (5 items), and
+`test/test_reflect_target_identity.py` (3 items) ran in every lane. The full
+suite collects 1716 items; 1714 pass and 2 are skipped.
 
 The step-6a value-summary, step-6b method-reference, and legacy-navigator slices
 passed on their first CI attempts. The first step-6c attempt (`d314256`, Linux
@@ -641,15 +756,19 @@ visualViewport expectations because the named descriptor callback also fired for
 V8's internal property bookkeeping (for example, adding the per-wrapper
 matchMedia `onchange` through native `Set`). The final slice omits that callback,
 records delete/enumeration/define only, and passed Linux, Windows, and macOS on
-the runs above. The first window-alias attempt (`ac4e1f5`) made the writable
-aliases non-configurable, which broke top-level `let frames`; `b936307` keeps
-their configurable attributes and passes. The matchMedia and storage-manager slices also passed on
-their first CI attempts. The permissions slice needed a second CI run only
-because `Array.join` stringifies `null` as an empty field in the descriptor
-assertion; `18e674e` corrected the test expectation. Earlier groups recorded their test-expectation
-corrections in this document; the visual viewport attempt needed a second run
-for descriptor/getter and `Array.join` semantics, and the nested attempt needed
-a second run for repeated parent getters.
+the runs above. The first step-6d–6h full run (`8f8dc23`) failed one query test
+because the `Reflect.getOwnPropertyDescriptor` wrapper did not create its
+completion scope; `bd148c2` fixed it, after which Linux, Windows, and macOS all
+passed on the runs above. The first window-alias attempt (`ac4e1f5`) made the
+writable aliases non-configurable, which broke top-level `let frames`;
+`b936307` keeps their configurable attributes and passes. The matchMedia and
+storage-manager slices also passed on their first CI attempts. The permissions
+slice needed a second CI run only because `Array.join` stringifies `null` as an
+empty field in the descriptor assertion; `18e674e` corrected the test
+expectation. Earlier groups recorded their test-expectation corrections in this
+document; the visual viewport attempt needed a second run for
+descriptor/getter and `Array.join` semantics, and the nested attempt needed a
+second run for repeated parent getters.
 
 The initial probe attempt (`76baaa2`) showed that V8 invokes the named getter
 for query-only operations and some existing-property paths. `8995b89` added the
@@ -667,10 +786,11 @@ Coverage in this slice:
   `get_probe`/`resolution: "missing"` event;
 - own properties with value `undefined`, prototype properties, existing
   properties, `in`, `hasOwnProperty`, `Object.keys`, descriptors, Symbols, and
-  numeric reads do not produce missing probes;
+  numeric reads do not produce missing probes (explicit has/descriptor queries
+  are recorded separately by the wrappers in §4.14);
 - independent native BOM callbacks record performance/crypto/Storage calls and
-  the Storage `length` getter; properties on those plain objects remain
-  untraced in this group;
+  the Storage `length` getter, with primitive argument/return/value summaries;
+  properties on those plain objects remain untraced in this group;
 - window metadata accessors record `get` for the §4.3 fields and `get`/`set`
   for `window.name`; read-only assignment, strict-mode errors, and values are
   unchanged (the geometry/flag data properties are now accessors);
@@ -703,6 +823,18 @@ Coverage in this slice:
   enumeration order/identity, and definition results; the new operations work
   for existing and missing members, native properties, and methods, and obey
   object-type filters;
+- explicit `hasOwnProperty` / `Object.hasOwn` / `Reflect.has` calls record
+  `has`, and `Object`/`Reflect` descriptor APIs record
+  `get_own_property_descriptor` for HostObject targets; results, descriptors,
+  and prototypes are preserved, same-member/different-target events are
+  distinguishable, filters apply, wrappers reinstall after `load()`, and the
+  `in`-operator/cached-wrapper blind spots are asserted;
+- `watch_reflect_get/has/ownKeys` hits carry target type/label, with unknown
+  targets marked explicitly, while their independent channel behavior is
+  unchanged;
+- traced native callbacks/getters carry completion summaries, and synchronous
+  throws carry safe exception name/message/location/stack while the original
+  `JSError` still propagates;
 - read-only writes stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
@@ -713,6 +845,7 @@ Coverage in this slice:
 
 The remaining blind spots are plain-property/returned-collection gaps
 (MediaQueryList/PermissionStatus `onchange`, array elements, plain returned
-values, global binding reads), the rest of step 6 (`in`/`hasOwnProperty`,
-descriptor queries, Reflect target identity, native-callback summaries,
-exception messages/stacks/timing), and step 7 (runtime report/usage flow).
+values, global binding reads), the `in` operator, non-HostObject query targets,
+query wrappers cached before tracing starts, asynchronous exception metadata,
+general call-site locations/timing, and step 7 (runtime report/usage flow).
+Steps 6a–6h are complete for the traceable HostObject surface.

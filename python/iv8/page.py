@@ -1019,16 +1019,23 @@ class Page:
         calls. Summaries are primitive/type-only and never run user
         ``toString``/``valueOf``; string content is capped at 64 bytes with the
         original byte length, and strings over 4096 bytes keep only the length.
-        Native-callback events and ``get_probe`` do not carry these fields yet.
-        Method references record ``get_method``; an adjacent method call folds
-        that event into one ``call``, while intervening accesses keep both.
-        Step 6c records ``delete`` (requested deletion, before V8 decides
-        success), ``own_keys`` (one member-less event per requested own-key
-        enumeration), and ``define_property`` (requested definition) operations
-        on HostObject string members. Enumeration and descriptor results,
-        deletion behavior, and property writes are unchanged. ``onchange``,
-        array elements, global binding reads, ``in``/``hasOwnProperty``,
-        descriptor queries, and exception messages/stacks remain out of scope.
+        Step 6g extends the same summaries to traced native BOM callbacks and
+        getters and to the explicit query wrappers. Step 6h adds safe
+        synchronous ``exception_name`` / ``exception_message`` /
+        ``exception_location`` / ``exception_stack`` fields when a traced entry
+        throws; the original exception still propagates. Method references
+        record ``get_method``; an adjacent method call folds that event into one
+        ``call``, while intervening accesses keep both. Step 6c records
+        ``delete`` (requested deletion, before V8 decides success),
+        ``own_keys`` (one member-less event per requested own-key enumeration),
+        and ``define_property`` (requested definition) operations on HostObject
+        string members. Step 6d wraps ``Object.prototype.hasOwnProperty``,
+        ``Object.hasOwn``, ``Reflect.has``, and the Object/Reflect
+        ``getOwnPropertyDescriptor`` APIs; HostObject targets record ``has`` /
+        ``get_own_property_descriptor``. The ``in`` operator, non-HostObject
+        query targets, wrappers cached before tracing, asynchronous exception
+        metadata, onchange, array elements, global binding reads, and general
+        call-site locations/timing remain out of scope.
 
         ``max_events`` is the retained-event capacity (earliest N retained; later
         events increment ``dropped_events``). It must be a positive ``int``; a
@@ -1079,14 +1086,18 @@ class Page:
         describing this slice's explicit scope. Each event contains ``seq``,
         ``generation``, ``object_id``, ``object_type``, ``label``, ``member``,
         ``operation`` (``get``/``set``/``get_method``/``call``/``get_probe``/
-        ``delete``/``own_keys``/``define_property``), ``phase`` (``enter``),
-        ``resource_name``, and ``source_kind``
-        (``eval``/``html_script``/``internal``/``unknown``). ``get_probe``
-        events also carry ``resolution`` (currently ``"missing"`` for absent
-        HostObject string-key reads). ``own_keys`` events have an empty
-        ``member``. Generic get/set/call events may also carry step-6a
-        ``outcome``, ``value_summary``, ``argument_count``,
-        ``argument_summaries``, and ``return_summary`` fields.
+        ``has``/``delete``/``own_keys``/``get_own_property_descriptor``/
+        ``define_property``), ``phase`` (``enter``), ``resource_name``, and
+        ``source_kind`` (``eval``/``html_script``/``internal``/``unknown``).
+        ``get_probe`` events also carry ``resolution`` (currently ``"missing"``
+        for absent HostObject string-key reads). ``own_keys`` events have an
+        empty ``member``. Generic/native get/set/call, query wrappers, and
+        native getters may also carry ``outcome``, ``value_summary``,
+        ``argument_count``, ``argument_summaries``, and ``return_summary``;
+        synchronous throws may carry ``exception_name``, ``exception_message``,
+        ``exception_location``, and ``exception_stack``. Reflect watch hits
+        carry ``target_type`` / ``target_label`` (``"unknown"`` / ``""`` for
+        unrecognized targets).
 
         ``clear=True`` clears events and ``dropped_events`` but preserves the
         sequence, configuration, generation, and object-ID mappings. Reading never

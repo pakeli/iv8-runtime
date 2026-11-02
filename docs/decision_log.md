@@ -711,6 +711,43 @@ the identical tree `2addf62`, cleanly re-committed as `96c7c00`): Linux
 lane `1704 passed, 2 skipped`. The full suite collects 1706 items (1701 previous
 + 5 operation tests). See `docs/host_access_trace.md`.
 
+### 41. Host access trace query wrappers, target metadata, native summaries, exception metadata (step 6d–6h)
+
+Decided/verified `2026-11-02`.
+
+The remaining step-6 surface is covered without changing the raw named
+interceptor behavior:
+
+- **Explicit query APIs use JS wrappers.** When tracing starts, the runtime
+  wraps `Object.prototype.hasOwnProperty`, `Object.hasOwn`, `Reflect.has`,
+  `Object.getOwnPropertyDescriptor`, and `Reflect.getOwnPropertyDescriptor`.
+  They record `has` / `get_own_property_descriptor` only for HostObject targets,
+  preserve the original receiver/arguments/results/throws, and are reinstalled
+  after `load()`. A cached pre-trace reference, the `in` operator, and
+  non-HostObject targets are documented blind spots. The named descriptor
+  callback remains uninstalled because V8 invokes it for internal property
+  bookkeeping (the lesson from step 6c).
+- **Reflect watch hits gain target metadata.** `Reflect.get` / `has` / `ownKeys`
+  hits carry `target_type` / `target_label`; unknown targets are marked
+  explicitly. This is metadata only and does not merge the independent channels.
+- **Native summaries share one implementation.** Primitive/type-only
+  value/argument/return summaries now cover traced native BOM callbacks and
+  getters as well as the generic HostObject path; no user `toString`/`valueOf`
+  or property get runs.
+- **Exception metadata is synchronous and safe.** A temporary stack `TryCatch`
+  is installed only for retained events. On a throw, V8 message/stack metadata
+  fills `exception_name`, `exception_message`, `exception_location`, and
+  `exception_stack`, then the original exception is rethrown. User-defined
+  `stack` properties are never read. Asynchronous exception metadata, general
+  call-site locations, and timing remain out of scope.
+- **Verification.** First full batch `8f8dc23` failed one query test because the
+  `Reflect.getOwnPropertyDescriptor` wrapper lacked its completion scope. The
+  fixed tree `bd148c2` (cleanly re-committed from the release-tested `72c00ed`)
+  passed Linux `41406392044`, Windows `41406401506`, and macOS arm64
+  `41406410844`, each reporting `1714 passed, 2 skipped` (1716 items).
+
+See `docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
