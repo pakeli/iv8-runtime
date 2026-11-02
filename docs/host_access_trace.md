@@ -3,7 +3,8 @@
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
 BOM callback calls + window/nested metadata + static visualViewport + navigator
 storage/permissions managers + matchMedia results + legacy navigator metadata +
-window aliases green on real V8 Linux + Windows (`2026-10-30`)**
+window aliases + step-6a value/argument/return summaries green on real V8 Linux
++ Windows (`2026-11-02`)**
 
 This document freezes steps 1–4 and the first groups of step 5 of
 `docs/host_access_tracing_plan.md`: native HostObject get/set/call tracing,
@@ -36,7 +37,9 @@ entry point ran; it does not prove every `obj.x` expression was observed.
 
 The event is written before the concrete host implementation runs. Its
 `phase` is therefore `"enter"`; a later implementation error or an ignored
-setter does not retroactively remove the event.
+setter does not retroactively remove the event. Step 6a attaches optional
+completion fields (`outcome`, value/argument/return summaries) to that same
+enter event after dispatch; it does not create a second event or change `seq`.
 
 ### Acceptance table
 
@@ -64,6 +67,10 @@ setter does not retroactively remove the event.
 | `m.onchange` reads/writes | not covered; it stays a per-wrapper plain property |
 | `navigator.plugins` / `navigator.mimeTypes` | records a navigator `get`; array element reads are not traced |
 | `navigator.javaEnabled()` | records a navigator `get` plus `call`; returns `false` |
+| `hostProbe.answer` / `element.textContent` reads | record `get` with `value_summary` and `outcome` |
+| `element.textContent = 'x'` | records `set` with the assigned `value_summary` |
+| `hostProbe.add(2, 3)` | records `call` with `argument_count`, up to 8 `argument_summaries`, `return_summary`, and `outcome` |
+| method that throws | records `call` with `outcome: "threw"` (no return summary), exception still propagates |
 | other plain property reads on native BOM objects | not covered yet |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
 | `window.innerWidth` / `outerWidth` / `innerHeight` | records `get` from the window metadata accessor |
@@ -146,7 +153,9 @@ Event shape:
 
 ```text
 seq, generation, object_id, object_type, label, member,
-operation, phase, resolution?, resource_name, source_kind
+operation, phase, resolution?, resource_name, source_kind,
+outcome?, value_summary?, argument_count?, argument_summaries?,
+return_summary?
 ```
 
 - `member` is the property or method name as registered by the HostObject.
@@ -155,6 +164,17 @@ operation, phase, resolution?, resource_name, source_kind
 - `resolution` is present only for `get_probe`; current value is `"missing"`.
   Present/unknown classification is not emitted.
 - `source_kind` is `eval`, `html_script`, `internal`, or `unknown`.
+- Step 6a optional completion fields (generic HostObject `get`/`set`/`call`):
+  - `outcome`: `"returned"` or `"threw"` (a pending exception after dispatch;
+    the exception is never swallowed);
+  - `value_summary`: for `get` (returned value) and `set` (assigned value) when
+    `outcome` is `"returned"`;
+  - `argument_count`: full argument count for `call`;
+  - `argument_summaries`: first up to 8 argument summaries for `call`;
+  - `return_summary`: for `call` when `outcome` is `"returned"`.
+  These fields are absent on `get_probe`, on independent native callbacks, and
+  when completion was unavailable (e.g. the event was cleared or the trace was
+  stopped).
 
 Report shape:
 
@@ -171,6 +191,7 @@ Report shape:
         "object_types": [...],
         "operations": ["get", "set", "call", "get_probe"],
         "phase": "enter",
+        "summaries": "generic HostObject get/set/call: returned/threw outcome, ...",
         "not_covered": [...],
     },
 }
@@ -395,6 +416,35 @@ traced native accessors:
 - replacements reset on `load()`; descriptor reads evaluate the getters and
   therefore also emit `get` events.
 
+## 4.11 Step 6a value/argument/return summaries
+
+The generic HostObject `get`, `set`, and `call` path now attaches completion
+metadata to the existing enter event. Summaries are deliberately primitive-only
+and never execute user code (`toString`/`valueOf`, property Gets, or JSON
+serialization are not used):
+
+| Summary | Meaning |
+|---|---|
+| `undefined` / `null` | The primitive value. |
+| `boolean:true` / `boolean:false` | Boolean primitive. |
+| `number:<value>` | Number formatted with `%.17g` (including `nan`/`inf`). |
+| `string:<utf8-byte-length>:<content>` | UTF-8 string. Content is capped at 64 bytes (rounded down to a complete UTF-8 sequence); longer content gets a trailing `...`. If the source is over 4096 bytes, content is omitted and only the length plus `...` is stored. `\`, newline, CR, tab, and other control bytes are escaped. |
+| `bigint` / `symbol` | Primitive type only; no value/description conversion. |
+| `function` / `array` / `host_object` / `object` | Type-only summary. |
+
+`call` arguments are summarized for the first 8 positions; `argument_count`
+always carries the full count. `outcome` is `"returned"` when no exception was
+pending after dispatch and `"threw"` otherwise. Completion is attached by the
+recorded `seq`, so a nested host access during the implementation cannot steal
+it. Summaries are best-effort: allocation failure leaves the enter event intact.
+
+Not covered by step 6a: summaries for independent native callbacks
+(performance/crypto/Storage/permissions-status/matchMedia/visualViewport/window
+metadata), arguments or return values for get/set beyond the summary fields,
+exception messages, stacks, timing, method-reference reads, and the other
+operations listed in §7. The generic path's event count is unchanged; only
+fields are added.
+
 ## 5. Source attribution
 
 - `eval` — `Page.eval`, direct context evaluation, and host-provided
@@ -435,6 +485,8 @@ old channel.
   5a/5e); array element reads on `navigator.plugins` / `mimeTypes`,
   MediaQueryList/PermissionStatus `onchange`, and nested `classList` /
   `validity` objects.
+- Summaries for independent native callbacks (only generic HostObject get/set/
+  call has them in step 6a); exception messages, stacks, and timing.
 - Arrays and other plain values returned from host getters/methods.
 - User-created plain JS objects, object literals, class instances, destructuring
   beyond covered getter execution, Proxy/AST instrumentation, and explicit
@@ -444,26 +496,27 @@ old channel.
   and missing-property probes on non-HostObject objects (including numeric keys
   and Symbols).
 - Read-only write attempts that V8 rejects before reaching a native setter.
-- Arguments, return values, stacks, timing, Inspector pauses /
-  `break_on_hit`, and DevTools evaluation attribution.
+- Arguments/returns for non-generic trace sources, exception messages, stacks,
+  timing, Inspector pauses / `break_on_hit`, and DevTools evaluation attribution.
 - Any JS-visible global or new top-level Python export; any M1 `JSContext`
   behavior change.
 
-The step-5 object groups are now complete. Remaining plain-property/returned-
-collection gaps (onchange, array elements, plain returned values, global binding
-reads) are explicitly out of scope; step 6 adds method-reference reads, `in`,
-delete, enumeration, descriptors, and value/argument/return summaries. None is
-implied by this slice.
+The step-5 object groups are complete. Step 6a now adds primitive value,
+argument, and return summaries plus returned/threw outcomes for the generic
+HostObject get/set/call path. Remaining step-6 work: method-reference reads,
+`in`, delete, enumeration, descriptors, target association for existing Reflect
+channels, and summaries for independent native callbacks. Plain-property/
+returned-collection gaps (onchange, array elements, plain returned values,
+global binding reads) remain explicit non-goals.
 
 ## 8. Verification
 
-Verified on real V8 at commit `b936307` (branch
-`host-access-window-aliases`):
+Verified on real V8 at commit `4d0800b` (branch `host-access-values`):
 
-- Linux `release-linux` run `41035577072` — cp311 / cp312 / cp313 / cp314,
-  each `1690 passed, 2 skipped`;
-- Windows `release-windows` run `41035582564` — Python 3.11 / 3.12 / 3.13 /
-  3.14, each `1690 passed, 2 skipped`.
+- Linux `release-linux` run `41383785169` — cp311 / cp312 / cp313 / cp314,
+  each `1696 passed, 2 skipped`;
+- Windows `release-windows` run `41383788221` — Python 3.11 / 3.12 / 3.13 /
+  3.14, each `1696 passed, 2 skipped`.
 
 `test/test_access_trace_api.py` (9 items),
 `test/test_access_trace_runtime.py` (11 items),
@@ -475,14 +528,15 @@ Verified on real V8 at commit `b936307` (branch
 `test/test_access_trace_storage_manager.py` (4 items),
 `test/test_access_trace_permissions.py` (5 items),
 `test/test_access_trace_match_media.py` (3 items),
-`test/test_access_trace_legacy_navigator.py` (3 items), and
-`test/test_access_trace_window_aliases.py` (4 items) ran in every lane. The full
-suite collects 1692 items; 1690 pass and 2 are skipped.
+`test/test_access_trace_legacy_navigator.py` (3 items),
+`test/test_access_trace_window_aliases.py` (4 items), and
+`test/test_access_trace_values.py` (6 items) ran in every lane. The full suite
+collects 1698 items; 1696 pass and 2 are skipped.
 
-The legacy-navigator slice passed on its first CI attempt. The first
-window-alias attempt (`ac4e1f5`) made the writable aliases non-configurable,
-which broke top-level `let frames`; `b936307` keeps their configurable
-attributes and passes. The matchMedia and storage-manager slices also passed on
+The step-6a value-summary slice and the legacy-navigator slice passed on their
+first CI attempts. The first window-alias attempt (`ac4e1f5`) made the writable
+aliases non-configurable, which broke top-level `let frames`; `b936307` keeps
+their configurable attributes and passes. The matchMedia and storage-manager slices also passed on
 their first CI attempts. The permissions slice needed a second CI run only
 because `Array.join` stringifies `null` as an empty field in the descriptor
 assertion; `18e674e` corrected the test expectation. Earlier groups recorded their test-expectation
@@ -530,6 +584,9 @@ Coverage in this slice:
   array/function identity and read-only behavior;
 - window parent/top/frames/opener get/set events preserve replaceable,
   read-only, delete, and lexical-declaration behavior across loads;
+- generic HostObject get/set/call completion records returned/threw outcomes,
+  primitive value and return summaries, 8-argument summaries with full counts,
+  UTF-8-safe string truncation, and nested-completion attachment by seq;
 - read-only writes and method-reference reads stay untraced;
 - source attribution: `eval`, inline HTML script, internal bootstrap, and
   unknown (timer/Promise callback) evidence;
@@ -540,5 +597,6 @@ Coverage in this slice:
 
 The remaining blind spots are plain-property/returned-collection gaps
 (MediaQueryList/PermissionStatus `onchange`, array elements, plain returned
-values, global binding reads) and step 6 (remaining operations and values); both
-remain intentionally out of scope.
+values, global binding reads), the rest of step 6 (method references,
+`in`/delete/enumeration/descriptors, Reflect target identity, native-callback
+summaries), and step 7 (runtime report/usage flow).

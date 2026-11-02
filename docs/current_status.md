@@ -87,9 +87,10 @@ Windows run `41000186396`, both on commit `61abc3b`, each wheel lane reporting
   reads, static `visualViewport` metadata/handler/method accesses,
   `navigator.storage` manager method calls, `navigator.permissions` query calls
   plus PermissionStatus accesses, matchMedia result reads/method calls, legacy
-  navigator plugins/mimeTypes/javaEnabled accesses, and window
-  parent/top/frames/opener get/set events with generation, object identity,
-  resource, and source attribution
+  navigator plugins/mimeTypes/javaEnabled accesses, window
+  parent/top/frames/opener get/set events, and step-6a value/argument/return
+  summaries plus returned/threw outcomes for generic HostObject get/set/call,
+  with generation, object identity, resource, and source attribution
 
 M11-5 is verified and merged into `master` on the fork (`pakeli/iv8-runtime`,
 merge point `6f4f6dc`). M11-6 through M11-10 were verified as one five-slice
@@ -144,7 +145,10 @@ matchMedia result group was verified on `host-access-match-media` (commit
 wheel lane `1683 passed, 2 skipped`. The legacy navigator metadata and window
 alias groups were verified together on `host-access-window-aliases` (final
 commit `b936307`) with Linux run `41035577072` and Windows run `41035582564`,
-each wheel lane `1690 passed, 2 skipped`.
+each wheel lane `1690 passed, 2 skipped`. The step-6a value/argument/return
+summary slice was verified on `host-access-values` (commit `4d0800b`) with
+Linux run `41383785169` and Windows run `41383788221`, each wheel lane
+`1696 passed, 2 skipped`.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -404,8 +408,9 @@ Recent implementation sequence from Git history:
   connection/orientation/timeOrigin reads, static visualViewport
   metadata/handler/method accesses, navigator.storage manager method calls,
   navigator.permissions query calls plus PermissionStatus accesses, matchMedia
-  result reads/method calls, legacy navigator metadata accesses, and window
-  parent/top/frames/opener get/set events (verified `2026-10-30`)
+  result reads/method calls, legacy navigator metadata accesses, window
+  parent/top/frames/opener get/set events, and step-6a value/argument/return
+  summaries with returned/threw outcomes (verified `2026-11-02`)
 
 ## 4. Release / Distribution Status
 
@@ -545,12 +550,15 @@ The repository is executing its post-M10 direction:
   `2026-10-30`;
 - the legacy navigator metadata and window parent/top/frames/opener groups are
   **landed and verified on real V8 (Linux + Windows)** on `2026-10-30`;
-- all planned step-5 object groups are now complete. The remaining plain-
-  property/returned-collection gaps are explicit non-goals for this phase; the
-  next execution handoff is step 6 (method-reference reads, `in`, delete,
-  enumeration, descriptors, and value/argument/return summaries). The M11
-  selector follow-up (`M11-46` candidate) and `navigator.userAgentData` remain
-  deferred priorities; remaining BOM/DOM gaps are inventoried in
+- all planned step-5 object groups are now complete;
+- step 6a (primitive value/argument/return summaries and returned/threw
+  outcomes for generic HostObject get/set/call) is **landed and verified on real
+  V8 (Linux + Windows)** on `2026-11-02`;
+- the next execution handoff is the rest of step 6: method-reference reads,
+  `in`, delete, enumeration, property descriptors, target association for the
+  existing Reflect channels, and summaries for independent native callbacks.
+  The M11 selector follow-up (`M11-46` candidate) and `navigator.userAgentData`
+  remain deferred priorities; remaining BOM/DOM gaps are inventoried in
   `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
@@ -582,8 +590,9 @@ If you need a one-line answer:
 > line through M11-41..M11-45, and has landed steps 1–4 plus the native-BOM-call,
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage
 > manager, navigator-permissions, matchMedia-result, legacy-navigator, and
-> window-alias groups of a post-M11 host access trace — all verified on real V8
-> (Linux + Windows) on `2026-10-30`. The step-5 object groups are complete.
+> window-alias groups of a post-M11 host access trace, plus step-6a value/
+> argument/return summaries — all verified on real V8 (Linux + Windows) on
+> `2026-11-02`. The step-5 object groups are complete.
 
 For the surface behind that verdict, read `docs/runtime_surface.md`.
 

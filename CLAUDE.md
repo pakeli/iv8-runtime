@@ -38,17 +38,18 @@ git log --oneline --decorate -n 20
   plus the step-5 native BOM call, window metadata, nested metadata, static
   visualViewport, navigator.storage manager, navigator.permissions,
   matchMedia-result, legacy-navigator, and window-alias groups — the complete
-  step-5 object coverage**
+  step-5 object coverage — plus step-6a value/argument/return summaries**
   (`Page.start_access_trace` / `stop_access_trace` / `read_access_trace`, native
   get/set/call, HostObject missing-string-key `get_probe`,
   performance/crypto/Storage callback calls, window metadata accessors,
   connection/orientation/timeOrigin reads, visualViewport metadata/methods,
   navigator.storage parent reads plus manager calls, permissions query plus
   PermissionStatus accesses, matchMedia result reads/method calls, legacy
-  navigator metadata, and window alias get/set events), green on real V8 at
-  commit `b936307`; step 5 object coverage is complete and step 6
-  (method-reference reads, `in`, delete, enumeration, descriptors,
-  values/arguments/returns) remains pending.
+  navigator metadata, window alias get/set events, and step-6a value/argument/
+  return summaries with returned/threw outcomes), green on real V8 at commit
+  `4d0800b`; step 5 object coverage and step 6a summaries are complete, while
+  the rest of step 6 (method-reference reads, `in`, delete, enumeration,
+  descriptors, native-callback summaries) remains pending.
 - Do not assume `docs/api_contract.md` describes the full current product surface;
   it is still the source of truth for the original M1 `JSContext` contract.
 - `docs/runtime_surface.md` is the overview of what exists now, with a milestone map
@@ -124,8 +125,8 @@ Answer roughly as follows:
     calls, window metadata/alias accessors, connection/orientation/timeOrigin,
     visualViewport metadata/methods, navigator.storage parent reads plus manager
     calls, permissions query/status accesses, matchMedia result accesses,
-    plugins/mimeTypes/javaEnabled, and parent/top/frames/opener get/set; see
-    `docs/host_access_trace.md`).
+    plugins/mimeTypes/javaEnabled, parent/top/frames/opener get/set, and
+    step-6a value/argument/return summaries; see `docs/host_access_trace.md`).
 
 ## Handoff Discipline
 

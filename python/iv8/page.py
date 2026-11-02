@@ -992,9 +992,10 @@ class Page:
         generic HostObject property getter/setter or method trampoline; it is not
         a V8-wide property hook. It covers ``connection``, ``console``,
         ``crypto``, ``document``, ``element``, ``host_object``, ``host_probe``,
-        ``location``, ``navigator``, ``orientation``, ``performance``,
-        ``screen``, ``storage``, ``storage_manager``, ``visual_viewport``, and
-        ``window``. Missing string-key reads on the HostObject hosts produce
+        ``location``, ``media_query_list``, ``navigator``, ``orientation``,
+        ``performance``, ``permission_status``, ``permissions``, ``screen``,
+        ``storage``, ``storage_manager``, ``visual_viewport``, and ``window``.
+        Missing string-key reads on the HostObject hosts produce
         ``get_probe``/``resolution: "missing"`` events. The step-5 groups also
         record ``performance`` / ``crypto`` native method calls, Storage method
         calls and its ``length`` getter, traced window metadata accessors
@@ -1010,13 +1011,18 @@ class Page:
         matchMedia results are host objects, so they use the template prototype
         and writable/configurable no-op methods; the storage/permissions
         managers and PermissionStatus objects keep their plain-object shapes.
-        Plain ``onchange``, array elements, and global binding reads are not
-        covered.
-        ``parent`` / ``top`` / ``frames`` / ``opener``, the remaining plain BOM
-        property reads and nested objects, returned plain objects/arrays,
-        non-HostObject missing probes, ``in``, delete, enumeration, descriptors,
-        method-reference reads, and user-created plain objects are not covered
-        yet.
+
+        Step 6a adds optional completion fields to generic HostObject
+        ``get``/``set``/``call`` events: ``outcome`` (``returned``/``threw``),
+        ``value_summary`` for get/set, ``argument_count`` plus up to eight
+        ``argument_summaries`` for calls, and ``return_summary`` for returned
+        calls. Summaries are primitive/type-only and never run user
+        ``toString``/``valueOf``; string content is capped at 64 bytes with the
+        original byte length, and strings over 4096 bytes keep only the length.
+        Native-callback events and ``get_probe`` do not carry these fields yet.
+        ``onchange``, array elements, global binding reads, method-reference
+        reads, ``in``, delete, enumeration, descriptors, and exception
+        messages/stacks remain out of scope.
 
         ``max_events`` is the retained-event capacity (earliest N retained; later
         events increment ``dropped_events``). It must be a positive ``int``; a

@@ -137,5 +137,6 @@ If you only remember one thing:
 > step-5 native BOM call, window metadata, nested metadata, static
 > visualViewport, navigator.storage manager, navigator.permissions,
 > matchMedia-result, legacy-navigator, and window-alias groups are also verified
-> (commit `b936307`), completing the step-5 object coverage; see
+> (commit `b936307`), completing the step-5 object coverage. Step 6a
+> value/argument/return summaries are verified at commit `4d0800b`; see
 > `docs/m11_41_45_report.md` and `docs/host_access_trace.md`.

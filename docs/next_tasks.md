@@ -1125,8 +1125,8 @@ This slice passed on its first CI attempt.
 
 Continue step 5 with the legacy navigator metadata (Priority 3ad below) and
 window aliases (Priority 3ae), completing the planned object groups. Then move to
-step 6 (method references, `in`, delete, enumeration, descriptors,
-value/argument/return summaries). The M11-46 selector follow-up remains deferred.
+step 6 (starting with value/argument/return summaries, Priority 3ag). The M11-46
+selector follow-up remains deferred.
 
 ## Priority 3ad: Host access trace legacy navigator metadata — DONE (`2026-10-30`)
 
@@ -1183,9 +1183,53 @@ items; each wheel lane: **`1690 passed, 2 skipped`**.
 
 ### Next
 
-All planned step-5 object groups are complete. Move to step 6: method-reference
-reads, `in`, delete, enumeration, descriptor queries, and value/argument/return
-summaries. The M11-46 selector follow-up remains deferred.
+All planned step-5 object groups are complete. Continue with step 6: the
+value/argument/return summary slice (Priority 3ag below), then method-reference
+reads, `in`, delete, enumeration, and descriptor queries. The M11-46 selector
+follow-up remains deferred.
+
+## Priority 3ag: Host access trace value/argument/return summaries (step 6a) — DONE (`2026-11-02`)
+
+### What landed
+
+- Generic HostObject `get`/`set`/`call` events now carry completion metadata on
+  the same enter event:
+  - `outcome: "returned" | "threw"` after dispatch (exceptions are never
+    swallowed);
+  - `value_summary` for get/set;
+  - `argument_count` plus up to 8 `argument_summaries` for calls;
+  - `return_summary` for calls that return.
+- Summaries are primitive/type-only and never execute user code: `undefined`,
+  `null`, boolean, number, UTF-8 string (64-byte display cap with original byte
+  length, 4096-byte conversion guard), bigint, symbol, function, array,
+  host_object, object.
+- Completion is attached by `seq`, so nested host accesses during the
+  implementation cannot steal it. Allocation failures are best-effort and do
+  not affect JS.
+- Event count is unchanged; only optional fields are added. Independent native
+  callbacks, get_probe, method references, `in`/delete/enumeration/descriptors,
+  and exception messages/stacks remain for the rest of step 6.
+
+Boundary/verification: `docs/host_access_trace.md`. Tests:
+`test/test_access_trace_values.py` (6 items). Full suite collects 1698 items;
+each wheel lane: **`1696 passed, 2 skipped`**.
+
+### Verification — passed
+
+Final commit `4d0800b` (branch `host-access-values`):
+
+- Linux `release-linux` run `41383785169` — cp311–cp314, each
+  `1696 passed, 2 skipped`;
+- Windows `release-windows` run `41383788221` — Python 3.11–3.14, each
+  `1696 passed, 2 skipped`.
+
+This slice passed on its first CI attempt.
+
+### Next
+
+Continue step 6 with method-reference reads, `in`, delete, enumeration,
+descriptor queries, Reflect target identity, and summaries for independent
+native callbacks. The M11-46 selector follow-up remains deferred.
 
 ## Priority 3af: macOS arm64 V8-linked release wheels — DONE (`2026-10-30`)
 

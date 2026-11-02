@@ -634,6 +634,28 @@ The first build (`41040030305`) failed in `allocator_shim_apple.cc`; disabling
 `iv8-0.0.1-cp3xx-cp3xx-macosx_11_0_arm64.whl`, V8 `15.0.245.19`, each lane
 `1690 passed, 2 skipped` (full suite 1692).
 
+### 38. Host access trace value/argument/return summaries (step 6a)
+
+Decided/verified `2026-11-02`.
+
+The generic HostObject get/set/call path now attaches completion metadata to the
+existing enter event: `outcome` (`returned`/`threw`), `value_summary` for get/set,
+`argument_count` plus up to eight `argument_summaries` for calls, and
+`return_summary` for returned calls. Completion is keyed by `seq`, so nested
+accesses during the implementation cannot steal it. Summaries inspect primitive
+types only and never run user `toString`/`valueOf` or property Gets; strings are
+UTF-8, capped at 64 display bytes with the original length, and skip conversion
+above 4096 bytes. Event counts and `phase: "enter"` are unchanged.
+
+The slice is intentionally partial for step 6: native-callback summaries,
+method-reference reads, `in`/delete/enumeration/descriptors, Reflect target
+identity, exception messages, stacks, and timing remain pending.
+
+Verified on real V8 at commit `4d0800b`: Linux `41383785169`, Windows
+`41383788221`, each wheel lane `1696 passed, 2 skipped`. The full suite collects
+1698 items (1692 previous + 6 value-summary tests). See
+`docs/host_access_trace.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
