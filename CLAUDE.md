@@ -54,7 +54,7 @@ git log --oneline --decorate -n 20
   HostObject surface; step 7 is verified at commit `c678ede` (release-tested
   tree `62af2e6`) with `Page.access_trace_report()` and the workflow in
   `docs/host_access_trace_workflow.md` (Linux/Windows release lanes plus a
-  macOS arm64 full-suite overlay). The `in` operator, non-HostObject query
+  macos-14 fallback macOS arm64 release build). The `in` operator, non-HostObject query
   targets, cached wrappers, asynchronous exception metadata, and general
   call-site timing remain documented blind spots.
 - Do not assume `docs/api_contract.md` describes the full current product surface;

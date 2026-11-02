@@ -1440,11 +1440,11 @@ the release-tested `62af2e6`):
   `1720 passed, 2 skipped`;
 - Windows `release-windows` run `41426817304` — Python 3.11–3.14, each
   `1720 passed, 2 skipped`;
-- macOS arm64 full-suite overlay run `41431606189` (`macos-14`) — downloaded
-  the verified step-6 `macosx_11_0_arm64` wheel, overlaid the step-7 Python
-  facade, and ran the full suite: `1720 passed, 2 skipped`. Step 7 adds no
-  native code; the fresh `release-macos` run `41426828872` was cancelled while
-  queued by macos-15 runner availability and produced no test failure.
+- macOS arm64 fallback run `41466841016` (`macos-14`) — built cp311–cp314
+  `macosx_11_0_arm64` wheels from the cached V8 monolith and ran the full suite:
+  each lane `1720 passed, 2 skipped`. The official macos-15 runner was
+  unavailable (`release-macos` run `41426828872` cancelled while queued), so the
+  release steps ran on macos-14 with deployment target 11.0.
 
 The first attempt (`3fcc156`) failed one stopped-report warning expectation
 because capacity warnings persist with retained events; `c678ede` corrected the

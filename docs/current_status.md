@@ -170,10 +170,9 @@ was verified against the tree of commit `bd148c2` (release-tested tree
 `1714 passed, 2 skipped`. The step-7 aggregated report was verified against the tree of commit
 `c678ede` (release-tested tree `62af2e6`) with Linux run `41426804187` and
 Windows run `41426817304`, each wheel lane `1720 passed, 2 skipped`. macOS arm64
-full-suite overlay run `41431606189` (macos-14, verified step-6 wheel plus the
-step-7 Python facade) also reported `1720 passed, 2 skipped`; the fresh
-`release-macos` run `41426828872` was cancelled while queued by macos-15 runner
-availability and produced no test failure.
+macOS arm64 fallback release run `41466841016` (macos-14, cached V8 monolith,
+`macosx_11_0_arm64` wheels) also reported `1720 passed, 2 skipped`; the official
+macos-15 run `41426828872` was cancelled while queued by runner availability.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -601,7 +600,7 @@ The repository is executing its post-M10 direction:
   starts, asynchronous exception metadata, and general call-site
   locations/timing are explicit blind spots;
 - step 7 (aggregated usage report and workflow) is **landed and verified on real
-  V8 (Linux + Windows release lanes; macOS arm64 full-suite overlay)** on
+  V8 (Linux + Windows release lanes; macOS arm64 macos-14 fallback release)** on
   `2026-11-02`; see `docs/host_access_trace_workflow.md`;
 - the next execution handoff is selecting `M11-46` from the selector follow-up
   or the remaining BOM/DOM gaps. `navigator.userAgentData` remains deliberately

@@ -142,5 +142,6 @@ If you only remember one thing:
 > has/descriptor query wrappers, Reflect target metadata, native summaries, and
 > synchronous exception metadata) are verified at commit `bd148c2`; step 7
 > (`Page.access_trace_report()` and the usage workflow) is verified at commit
-> `c678ede` (release-tested tree `62af2e6`); see `docs/m11_41_45_report.md`, `docs/host_access_trace.md`, and
-> `docs/host_access_trace_workflow.md`.
+> `c678ede` (release-tested tree `62af2e6`), including a macos-14 fallback
+> macOS arm64 wheel build; see `docs/m11_41_45_report.md`,
+> `docs/host_access_trace.md`, and `docs/host_access_trace_workflow.md`.

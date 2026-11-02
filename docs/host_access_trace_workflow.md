@@ -1,8 +1,8 @@
 # Host Access Trace Usage Workflow
 
 Status: **VERIFIED — aggregated `Page.access_trace_report()` workflow green on
-real V8 Linux + Windows release lanes and a macOS arm64 full-suite overlay
-(`2026-11-02`)**
+real V8 Linux + Windows release lanes and a macOS arm64 release build on the
+macos-14 fallback runner (`2026-11-02`)**
 
 This document freezes step 7 of `docs/host_access_tracing_plan.md`: turning the
 raw host-access event log into an actionable dynamic-run report. It builds on
@@ -175,20 +175,21 @@ Guidance:
 ## 6. Verification
 
 Verified on real V8 on `2026-11-02` against the tree of code commit `c678ede`
-(the release/overlay runs used the identical tree `62af2e6`, cleanly
+(the release runs used the identical tree `62af2e6`, cleanly
 re-committed as `c678ede`):
 
 - Linux `release-linux` run `41426804187` — cp311 / cp312 / cp313 / cp314,
   each `1720 passed, 2 skipped`;
 - Windows `release-windows` run `41426817304` — Python 3.11 / 3.12 / 3.13 /
   3.14, each `1720 passed, 2 skipped`;
-- macOS arm64 overlay run `41431606189` (`macos-14`) — downloaded the verified
-  step-6 `macosx_11_0_arm64` wheel from run `41406410844`, overlaid the step-7
-  Python facade, and ran the full suite: `1720 passed, 2 skipped`. Step 7 adds
-  no native code, so this exercises the same Python layer against real V8 on
-  arm64. The fresh `release-macos` run `41426828872` was cancelled while queued
-  (twice) by macos-15 runner availability; it reported no test failure and did
-  not produce a wheel.
+- macOS arm64 fallback run `41466841016` (`macos-14`) — built cp311–cp314
+  `macosx_11_0_arm64` wheels and ran the full suite: each lane `1720 passed,
+  2 skipped`. The V8 monolith was restored from the existing macos-arm64 cache;
+  the official macos-15 runner was unavailable (`release-macos` run
+  `41426828872` was cancelled while queued), so the same release steps ran on
+  macos-14 with deployment target 11.0. Artifacts:
+  cp3.11 `13153386446`, cp3.12 `13153186853`, cp3.13 `13153201862`, cp3.14
+  `13153935120`.
 
 `test/test_access_trace_report.py` (6 items) ran in every lane. The full suite
 collects 1722 items; 1720 pass and 2 are skipped. The first attempt (`3fcc156`)

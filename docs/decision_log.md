@@ -775,10 +775,10 @@ The boundary/report shape and recommended workflow are frozen in
 failed one stopped-report warning expectation because capacity warnings persist
 with retained events; `c678ede` (identical tree to the tested `62af2e6`) corrected it. The full
 suite then collected 1722 items; Linux `41426804187` and Windows `41426817304`
-each reported `1720 passed, 2 skipped`. macOS arm64 full-suite overlay
-`41431606189` (verified step-6 wheel plus the step-7 Python facade) also
-reported `1720 passed, 2 skipped`; the fresh macos-15 release run was cancelled
-while queued and produced no test failure.
+each reported `1720 passed, 2 skipped`. A macOS arm64 fallback release build
+(`41466841016`, macos-14, cached V8 monolith, `macosx_11_0_arm64` wheels) also
+reported `1720 passed, 2 skipped`; the official macos-15 runner run was
+cancelled while queued and produced no test failure.
 
 The next work item is selecting `M11-46` from the selector follow-up or the
 ranked BOM/DOM gaps.
