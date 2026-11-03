@@ -1,9 +1,9 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-11-03` · Baseline: **M11-51** (Window event handler
-attributes and M11-50 Window scroll/focus/UI completion are verified on Linux +
-Windows + macOS arm64 `2026-11-03`. Window is prioritized above Document
-continuation.)
+Last reviewed: `2026-11-03` · Baseline: **M11-52** (Window messaging implemented
+`2026-11-03`; verification pending. M11-51 Window event handler attributes and
+M11-50 Window scroll/focus/UI completion are verified on Linux + Windows +
+macOS arm64. Window is prioritized above Document continuation.)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
 > are **not implemented** as of M11-41..M11-45. It is not a contract and not a
@@ -30,7 +30,8 @@ continuation.)
 | `XMLHttpRequest`, `WebSocket`, `EventSource`, `navigator.sendBeacon` | **excluded** |
 | `location.assign` / `replace` / `reload`; URL-driven navigation | **excluded** |
 | `history` (`pushState` / `replaceState` / `back` / `forward` / `go`), `hashchange` / `popstate` | **excluded** |
-| `window.open` / `close`, `postMessage` | **excluded** |
+| `window.open` / `close` | **excluded** |
+| `window.postMessage` / `MessageEvent` | **partially implemented** — M11-52 single-window self-messaging: structured clone at send, bounded target origins, async FIFO timer delivery, and a `MessageEvent` constructor. No iframes, workers, transferables/`MessagePort`, cross-window delivery, `postMessage(message, options)`, messageerror, or full target-origin parsing |
 | `frames` / `parent` / `top` / `opener` as real browsing contexts | **implemented as single-context aliases** — M11-39 (`parent` / `frames` replaceable, `top` unforgeable read-only, `opener` writable, no child contexts) |
 | `beforeunload` / `unload` / `pageshow` / `pagehide` lifecycle events | **excluded** |
 

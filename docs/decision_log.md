@@ -1178,6 +1178,17 @@ direction alone.
   handler key while dispatch looked up `<type>`; `34b119b` normalized the key.
   Document `write`/import-adopt remain later.
 
+- `M11-52` — **Window messaging** — selected on `2026-11-03` as the next
+  Window-first slice: `window.postMessage` with synchronous structured cloning,
+  bounded target origins (own origin / `*` / `/`; other values drop),
+  asynchronous FIFO delivery through the timer queue, and a `MessageEvent`
+  subclass (`data` / `origin` / `lastEventId` / `source` / `ports`). The
+  bootstrap captures the original `structuredClone` / `MessageEvent` /
+  `setTimeout` and deletes its hidden natives; calls are watchable. No
+  iframes, workers, transferables, or cross-window delivery. Boundary:
+  `docs/m11_52_window_messaging.md`. Verification is pending real V8; see
+  `docs/m11_52_report.md`.
+
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /
 `run_idle_callbacks`). M11-29 composed timers + microtasks, M11-30 added rAF/idle,

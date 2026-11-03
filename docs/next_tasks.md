@@ -10,10 +10,10 @@ task queue for Claude after chat-history loss.
 At the user's direction, **Window now has higher priority than Document**:
 
 1. **Active — Window continuation.** M11-51 (Window event handler attributes;
-   Priority 3aq below) is verified. Continue with the remaining Window gaps:
-   M11-52 is a Window messaging (`postMessage`/`MessageEvent`) design or a
-   deterministic focus/visibility model (`getComputedStyle` only if a CSS model
-   is approved) before returning to Document work.
+   Priority 3aq below) is verified. M11-52 is Window messaging
+   (`postMessage` + `MessageEvent`; Priority 3ar below). After it, continue
+   with a deterministic focus/visibility model (`getComputedStyle` only if a
+   CSS model is approved) before returning to Document work.
 2. **Later — Document continuation.** `document.write`/`writeln`/`open`/`close`
    and `importNode`/`adoptNode` move behind the Window slices. `document.all`
    and DOM prototype chains remain deferred.
@@ -1776,9 +1776,50 @@ normalized the key with no test changes. The temporary macos-14 workflow's
 
 ### Next
 
-Continue Window-first with M11-52: a Window messaging
-(`postMessage`/`MessageEvent`) design or a deterministic focus/visibility
-model; Document `write`/import work is explicitly later.
+Window messaging was taken next as Priority 3ar below. A deterministic
+focus/visibility model can follow; Document `write`/import work is explicitly
+later.
+
+## Priority 3ar: Window messaging (`postMessage` + `MessageEvent`) — M11-52 — IMPLEMENTED (`2026-11-03`)
+
+### Goal
+
+Add the single-context Window messaging surface without introducing iframes,
+workers, transferables, or network behavior.
+
+### What landed
+
+- `window.postMessage(message, targetOrigin?, transfer?)` as a writable global
+  function. The message is structured-cloned synchronously at send time;
+  uncloneable values throw `TypeError`.
+- Bounded target origins: omitted/`undefined`, `*`, `/`, the page origin, and
+  the page origin with a trailing slash deliver; other values silently drop.
+  Non-empty transfer lists throw `TypeError`.
+- Asynchronous FIFO delivery through the timer queue (`Page.run_timers()` or a
+  facade turn, not `run_jobs`). Delivery uses the ordinary window event path,
+  so `addEventListener('message')` runs before the M11-51 `onmessage` handler.
+- `MessageEvent` subclass of `Event` with `data` / `origin` / `lastEventId` /
+  `source` / `ports`; constructor defaults, copied ports, and `new`-only
+  construction.
+- `event.origin` is the page origin, `source` is the same window, `ports` is a
+  fresh empty array.
+- Bootstrap captures the original `structuredClone`, `MessageEvent`, and
+  `setTimeout`, so later page overrides do not affect `postMessage`; hidden
+  natives are deleted. Calls are watchable as `window.postMessage`.
+- No Python API or environment key changes.
+
+Boundary: `docs/m11_52_window_messaging.md`. Tests:
+`test/test_m11_52_window_messaging.py` (10 items).
+
+### Verification
+
+Pending real-V8 Linux + Windows + macOS arm64 lanes. Evidence will be recorded
+in `docs/m11_52_report.md`.
+
+### Next
+
+Continue Window-first with a deterministic focus/visibility model; Document
+`write`/import work remains later.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

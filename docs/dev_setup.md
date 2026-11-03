@@ -135,12 +135,14 @@ If you only remember one thing:
 > install/replace/clear, post-listener invocation, `return false` cancellation,
 > per-generation reset), green on real V8 (Linux + Windows + macOS arm64) on
 > `2026-11-03` and merged to `master` on the fork (`pakeli/iv8-runtime`);
-> upstream sync is out of scope. It follows M11-50 (Window scroll/focus/UI
-> completion), M11-49 (HTML string APIs and variadic tree methods), M11-48
-> (Node foundation), M11-47 (Document identity), M11-46 (`document.cookie`),
-> and M11-41..M11-45 (BOM viewport/media/device metadata, verified on
-> `2026-10-30`). **Window is prioritized above Document**; Document
-> `write`/import-adopt are later.
+> upstream sync is out of scope. M11-52 (Window messaging — `postMessage` with
+> structured clone, bounded target origins, async FIFO timer delivery, and
+> `MessageEvent`) is implemented and awaiting verification. It follows M11-50
+> (Window scroll/focus/UI completion), M11-49 (HTML string APIs and variadic
+> tree methods), M11-48 (Node foundation), M11-47 (Document identity), M11-46
+> (`document.cookie`), and M11-41..M11-45 (BOM viewport/media/device metadata,
+> verified on `2026-10-30`). **Window is prioritized above Document**;
+> Document `write`/import-adopt are later.
 > The post-M11 host access trace steps 1–4 plus the
 > step-5 native BOM call, window metadata, nested metadata, static
 > visualViewport, navigator.storage manager, navigator.permissions,

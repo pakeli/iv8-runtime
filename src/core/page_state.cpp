@@ -9320,6 +9320,78 @@ void focus_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
                     related_target);
 }
 
+// M11-52: MessageEvent. Event fields come from event_constructor; the init
+// dictionary adds data / origin / lastEventId / source / ports. ports is copied
+// into a fresh array (no transferables or frozen-array semantics). No cloning
+// happens here: window.postMessage clones before constructing the event.
+void message_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "MessageEvent")) {
+        return;
+    }
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    event_constructor(info);
+
+    v8::Local<v8::Value> data;
+    if (!event_init_field(context, info, "data", &data)) {
+        return;
+    }
+    if (data->IsUndefined()) {
+        data = v8::Null(isolate);
+    }
+    set_event_field(isolate, context, info.This(), "data", data);
+
+    v8::Local<v8::Value> origin_value;
+    if (!event_init_field(context, info, "origin", &origin_value)) {
+        return;
+    }
+    std::string origin;
+    if (!event_string_field(context, isolate, origin_value, &origin)) {
+        return;
+    }
+    set_event_field(isolate, context, info.This(), "origin",
+                    v8_string(isolate, origin));
+
+    v8::Local<v8::Value> last_event_id_value;
+    if (!event_init_field(context, info, "lastEventId", &last_event_id_value)) {
+        return;
+    }
+    std::string last_event_id;
+    if (!event_string_field(context, isolate, last_event_id_value,
+                            &last_event_id)) {
+        return;
+    }
+    set_event_field(isolate, context, info.This(), "lastEventId",
+                    v8_string(isolate, last_event_id));
+
+    v8::Local<v8::Value> source;
+    if (!event_init_field(context, info, "source", &source)) {
+        return;
+    }
+    if (source->IsUndefined()) {
+        source = v8::Null(isolate);
+    }
+    set_event_field(isolate, context, info.This(), "source", source);
+
+    v8::Local<v8::Value> ports_value;
+    if (!event_init_field(context, info, "ports", &ports_value)) {
+        return;
+    }
+    v8::Local<v8::Array> ports = v8::Array::New(isolate);
+    if (ports_value->IsArray()) {
+        v8::Local<v8::Array> source_ports = ports_value.As<v8::Array>();
+        const std::uint32_t length = source_ports->Length();
+        for (std::uint32_t i = 0; i < length; ++i) {
+            v8::Local<v8::Value> item;
+            if (!source_ports->Get(context, i).ToLocal(&item) ||
+                ports->Set(context, i, item).IsEmpty()) {
+                return;
+            }
+        }
+    }
+    set_event_field(isolate, context, info.This(), "ports", ports);
+}
+
 // Tag for the External carrying the WindowEventTarget* in the window event
 // functions' Data. V8 15.0 requires an ExternalPointerTypeTag on External::New /
 // External::Value; the default suffices for this single pointer type and MUST
@@ -9400,6 +9472,94 @@ void window_event_handler_setter(
     target->set_event_handler(isolate, window_handler_name(isolate, property),
                               value);
 }
+
+// M11-52: window.postMessage is a JS bootstrap wrapper around these hidden
+// natives. The wrapper validates/coerces arguments, clones the message with the
+// captured structuredClone, builds a MessageEvent, and schedules the dispatch
+// on the captured setTimeout queue. dispatch() itself runs from that timer task
+// and uses the ordinary window event-target path (listeners + onmessage).
+void window_post_message_dispatch(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    if (info.Length() < 1 || !info[0]->IsObject()) {
+        return;
+    }
+    auto* target = static_cast<EventTargetHost*>(
+        info.Data().As<v8::External>()->Value(kWindowEventsTag));
+    target->dispatch_event(isolate, context, info[0].As<v8::Object>(),
+                           context->Global());
+}
+
+void window_post_message_record(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "postMessage");
+}
+
+// The bootstrap captures and deletes the hidden natives, then exposes a normal
+// writable global function. Using captured originals keeps postMessage working
+// if page scripts later replace structuredClone / MessageEvent / setTimeout.
+// Target origins are bounded: "*", "/", the page origin, or the origin plus a
+// trailing slash deliver; every other value is silently dropped. A non-empty
+// transfer list throws TypeError. Delivery is a timer task, so it runs on
+// Page.run_timers() (or a facade turn), not Page.run_jobs().
+constexpr char kWindowPostMessageBootstrap[] = R"JS(
+(function () {
+  'use strict';
+
+  var dispatch = globalThis.__iv8PostMessageDispatch;
+  var recordCall = globalThis.__iv8PostMessageRecord;
+  delete globalThis.__iv8PostMessageDispatch;
+  delete globalThis.__iv8PostMessageRecord;
+
+  var scheduleTask = globalThis.setTimeout;
+  var clone = globalThis.structuredClone;
+  var MessageEventCtor = globalThis.MessageEvent;
+  var windowOrigin = String(globalThis.origin);
+
+  function normalizeTargetOrigin(targetOrigin) {
+    if (targetOrigin === undefined) return '/';
+    var text = String(targetOrigin);
+    if (text === '*') return '*';
+    if (text === '/' || text === windowOrigin ||
+        text === windowOrigin + '/') {
+      return windowOrigin;
+    }
+    return null;
+  }
+
+  function postMessage(message, targetOrigin, transfer) {
+    if (arguments.length < 1) {
+      throw new TypeError('postMessage: message is required');
+    }
+    recordCall();
+    if (transfer !== undefined && transfer !== null) {
+      if (typeof transfer.length !== 'number' || transfer.length !== 0) {
+        throw new TypeError('postMessage: transfer lists are not supported');
+      }
+    }
+    if (normalizeTargetOrigin(targetOrigin) === null) {
+      return;  // target origin mismatch: silently drop
+    }
+    var data = clone(message);
+    var event = new MessageEventCtor('message', {
+      data: data,
+      origin: windowOrigin,
+      lastEventId: '',
+      source: globalThis,
+      ports: []
+    });
+    scheduleTask(function () { dispatch(event); }, 0);
+  }
+
+  Object.defineProperty(globalThis, 'postMessage', {
+    value: postMessage,
+    writable: true,
+    enumerable: true,
+    configurable: true
+  });
+})();
+)JS";
 
 // M8-1 TextEncoder / TextDecoder — a minimal UTF-8-only encoding surface. The actual
 // UTF-8 conversion is delegated to V8 itself (String::Utf8Value for encode,
@@ -12563,6 +12723,8 @@ void PageState::install_page(const std::string& base_url,
                 "KeyboardEvent", &keyboard_event_constructor);
             const auto focus_event_template =
                 make_event_subclass("FocusEvent", &focus_event_constructor);
+            const auto message_event_template =
+                make_event_subclass("MessageEvent", &message_event_constructor);
             (void)global->Set(
                 context, v8_string(isolate, "Event"),
                 event_template->GetFunction(context).ToLocalChecked());
@@ -12577,6 +12739,7 @@ void PageState::install_page(const std::string& base_url,
             install_event_subclass("MouseEvent", mouse_event_template);
             install_event_subclass("KeyboardEvent", keyboard_event_template);
             install_event_subclass("FocusEvent", focus_event_template);
+            install_event_subclass("MessageEvent", message_event_template);
             // M3-4: window becomes an event target. window is the intrinsic global
             // object, so its three event methods are bare globals whose External
             // data points at window_events_ (created above). They therefore share
@@ -12608,6 +12771,47 @@ void PageState::install_page(const std::string& base_url,
                     &window_event_handler_getter,
                     &window_event_handler_setter, window_data,
                     v8::PropertyAttribute::None);
+            }
+            // M11-52: hidden natives used by the postMessage bootstrap. The
+            // wrapper captures and removes them, so page scripts only see the
+            // normal window.postMessage function.
+            {
+                v8::Local<v8::Function> dispatch_fn =
+                    v8::FunctionTemplate::New(isolate,
+                                              &window_post_message_dispatch,
+                                              window_data)
+                        ->GetFunction(context)
+                        .ToLocalChecked();
+                (void)global->Set(
+                    context,
+                    v8::String::NewFromUtf8Literal(
+                        isolate, "__iv8PostMessageDispatch"),
+                    dispatch_fn);
+                install_global_function(isolate, context, global,
+                                        "__iv8PostMessageRecord",
+                                        &window_post_message_record);
+                v8::TryCatch try_catch(isolate);
+                v8::Local<v8::String> source = v8::String::NewFromUtf8(
+                    isolate, kWindowPostMessageBootstrap,
+                    v8::NewStringType::kNormal,
+                    static_cast<int>(sizeof(kWindowPostMessageBootstrap) - 1))
+                    .ToLocalChecked();
+                v8::Local<v8::Script> script;
+                if (v8::Script::Compile(context, source).ToLocal(&script)) {
+                    (void)script->Run(context);
+                }
+                if (try_catch.HasCaught()) {
+                    try_catch.Reset();  // fixed bootstrap; never poison install
+                }
+                // Defensive cleanup if the bootstrap failed before its deletes.
+                (void)global->Delete(
+                    context,
+                    v8::String::NewFromUtf8Literal(
+                        isolate, "__iv8PostMessageDispatch"));
+                (void)global->Delete(
+                    context,
+                    v8::String::NewFromUtf8Literal(
+                        isolate, "__iv8PostMessageRecord"));
             }
 
             // M8-1 TextEncoder / TextDecoder (UTF-8 only): constructor functions with

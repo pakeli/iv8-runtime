@@ -37,12 +37,15 @@ git log --oneline --decorate -n 20
   install/replace/clear, post-listener invocation, `return false`
   cancellation, per-generation reset), green on real V8 Linux + Windows +
   macOS arm64 (tree `34b119b`, merged to `master` on the fork; upstream sync
-  out of scope). It follows **M11-50** (Window scroll/focus/UI completion, tree
-  `6d2250e`), **M11-49** (HTML string APIs and variadic tree methods, tree
-  `52bafab`), **M11-48** (Node foundation, tree `3f4940f`), **M11-47**
-  (Document identity, tree `cc1c47d`), **M11-46** (`document.cookie`, tree
-  `18f1f4b`), and **M11-41..M11-45** (BOM viewport/media/device metadata,
-  commit `61abc3b`). The M11 line is compatibility-first.
+  out of scope). **M11-52** (Window messaging — `postMessage` with structured
+  clone and bounded target origins, async FIFO timer delivery, and
+  `MessageEvent`) is implemented and awaiting real-V8 verification. M11-51
+  follows **M11-50** (Window scroll/focus/UI completion, tree `6d2250e`),
+  **M11-49** (HTML string APIs and variadic tree methods, tree `52bafab`),
+  **M11-48** (Node foundation, tree `3f4940f`), **M11-47** (Document identity,
+  tree `cc1c47d`), **M11-46** (`document.cookie`, tree `18f1f4b`), and
+  **M11-41..M11-45** (BOM viewport/media/device metadata, commit `61abc3b`).
+  The M11 line is compatibility-first.
 - A post-M11 monitoring slice is also verified: **host access trace steps 1–4
   plus the step-5 native BOM call, window metadata, nested metadata, static
   visualViewport, navigator.storage manager, navigator.permissions,
@@ -117,7 +120,7 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-51`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-52`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
     Storage, Blob/File/FileReader, event cancellation,
     `classList`/`toggleAttribute`, event capture + listener options, element
@@ -135,10 +138,11 @@ Answer roughly as follows:
     deterministic `document.cookie` jar (M11-46), Document identity (M11-47),
     the M11-48 node foundation (Text/Comment/DocumentFragment, live text), the
     M11-49 HTML string/variadic DOM APIs, the M11-50 Window scroll/focus/UI
-    stubs, and the M11-51 Window event handler attributes — verified on real
-    V8 Linux + Windows + macOS arm64; latest verification `2026-11-03`;
+    stubs, the M11-51 Window event handler attributes, and the M11-52 Window
+    messaging surface — M11-51 and earlier verified on real V8 Linux + Windows
+    + macOS arm64; M11-52 implemented, verification pending;
   - latest implemented and verified compatibility feature: M11-51 (Window event
-    handler attributes);
+    handler attributes); latest implemented: M11-52 (Window messaging);
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

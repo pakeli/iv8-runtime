@@ -1073,6 +1073,19 @@ element ``on*`` attributes, automatic error events, and the legacy ``onerror``
 signature remain absent. No Python API or environment key changes. See
 ``docs/m11_51_window_event_handlers.md``.
 
+M11-52 adds single-context Window messaging. ``window.postMessage(message,
+targetOrigin?, transfer?)`` structured-clones the message synchronously (with
+the existing clone rules), accepts ``*`` / ``/`` / the page origin as target
+origins and silently drops mismatches, and schedules an asynchronous FIFO
+timer task (``Page.run_timers()`` or a facade turn, not ``run_jobs()``). The
+delivered ``MessageEvent`` exposes ``data`` / ``origin`` / ``lastEventId`` /
+``source`` / ``ports``; ``source`` is the same window and ``ports`` is empty.
+The bootstrap captures the original ``structuredClone`` / ``MessageEvent`` /
+``setTimeout`` so later page overrides do not affect delivery. There are no
+iframes, workers, transferables, cross-window delivery, or ``MessagePort``, and
+no Python API or environment key changes. See
+``docs/m11_52_window_messaging.md``.
+
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and

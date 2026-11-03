@@ -1,6 +1,7 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-11-03` · Latest verified milestone: **M11-51**
+Last reviewed: `2026-11-03` · Latest verified milestone: **M11-51** · M11-52
+(Window messaging) implemented, verification pending
 (HTML string APIs and variadic tree methods), verified on real V8 (Linux +
 Windows + macOS arm64). It follows **M11-48** (Node foundation — Text/Comment/
 DocumentFragment nodes, live `textContent`, active `characterData` records),
@@ -232,6 +233,14 @@ Installed per generation by `install_page`:
   read-only `clientInformation` alias of `navigator`. All ten methods are
   watchable through `watch_apis`. No layout, scroll events, focus machinery,
   navigation, or OS window management;
+- **window messaging** (M11-52) — `window.postMessage(message, targetOrigin?,
+  transfer?)` for the single window. The message is structured-cloned at send
+  time; target origins are bounded to `*` / `/` / the page origin (other values
+  drop); delivery is an asynchronous FIFO timer task observed by
+  `Page.run_timers()` or a facade turn, not `run_jobs()`. `MessageEvent`
+  extends `Event` with `data` / `origin` / `lastEventId` / `source` / `ports`;
+  `source` is the same window and `ports` is empty. No iframes, workers,
+  transferables, cross-window delivery, or `MessagePort`. Calls are watchable;
 - **matchMedia** (M11-42) — a static MediaQueryList-shaped result for a bounded
   query language (media types, comma lists, `not` / `only` / `and`,
   width/height, orientation, and fixed desktop capabilities). Listener methods
@@ -582,6 +591,7 @@ clock.
 | M11-49 | HTML string APIs and variadic tree methods — innerHTML/outerHTML/insertAdjacent*, append/prepend/before/after/replaceWith/replaceChildren, entity decoding — verified 2026-11-03 | `docs/m11_49_html_strings.md`, `docs/m11_49_report.md` |
 | M11-50 | Window scroll/focus/UI completion — scrollX/scrollY/pageXOffset/pageYOffset (0), no-op scroll/focus/blur/move/resize/stop, writable `status`, BarProps, `clientInformation` alias — verified 2026-11-03 | `docs/m11_50_window_completion.md`, `docs/m11_50_report.md` |
 | M11-51 | Window event handler attributes — bounded `window.on*` accessors, install/replace/clear, at-target/bubbling invocation, `return false` cancellation, per-generation reset — verified 2026-11-03 | `docs/m11_51_window_event_handlers.md`, `docs/m11_51_report.md` |
+| M11-52 | Window messaging — `postMessage` with structured clone, bounded target origins, async FIFO timer delivery, `MessageEvent` (`data`/`origin`/`source`/`ports`) — implemented 2026-11-03, verification pending | `docs/m11_52_window_messaging.md`, `docs/m11_52_report.md` |
 | Post-M11 host access trace (steps 1–4 + complete step-5 object groups + steps 6a–7) | native HostObject get/set/call trace + missing-property probes + `get_method` references + `delete`/`own_keys`/`define_property` request events + explicit `has`/`get_own_property_descriptor` query events + Reflect target metadata + performance/crypto/Storage/permissions/matchMedia/window callbacks and getters + window metadata/alias accessors + nested/visualViewport accessors and methods + navigator.storage manager calls + navigator.permissions query/status accesses + matchMedia result accesses + legacy navigator metadata + primitive value/argument/return summaries + synchronous exception metadata + step-7 aggregated report (`start_access_trace` / `stop_access_trace` / `read_access_trace` / `access_trace_report`) — verified 2026-11-02 | `docs/host_access_trace.md`, `docs/host_access_trace_workflow.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
