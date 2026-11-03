@@ -3701,7 +3701,7 @@ public:
 
     v8::Local<v8::Value> get_event_handler(v8::Isolate* isolate,
                                            const std::string& name) {
-        auto it = event_handlers_.find(name);
+        auto it = event_handlers_.find(event_type_for_handler(name));
         if (it == event_handlers_.end() || it->second.IsEmpty()) {
             return v8::Null(isolate);
         }
@@ -3710,7 +3710,8 @@ public:
 
     void set_event_handler(v8::Isolate* isolate, const std::string& name,
                            v8::Local<v8::Value> value) {
-        auto it = event_handlers_.find(name);
+        const std::string type = event_type_for_handler(name);
+        auto it = event_handlers_.find(type);
         if (!value->IsFunction()) {
             // WebIDL EventHandler? treats non-callable (including null and
             // undefined) as null.
@@ -3723,7 +3724,7 @@ public:
         v8::Local<v8::Function> callback = value.As<v8::Function>();
         if (it == event_handlers_.end()) {
             event_handlers_.emplace(
-                name, v8::Global<v8::Function>(isolate, callback));
+                type, v8::Global<v8::Function>(isolate, callback));
         } else {
             it->second.Reset(isolate, callback);
         }
@@ -3770,6 +3771,16 @@ protected:
     }
 
 private:
+    // Handler accessors are named `on<type>`; dispatch looks handlers up by the
+    // bare event type (`load`, `message`, ...). Normalize at the get/set boundary
+    // so both paths share one key space.
+    static std::string event_type_for_handler(const std::string& name) {
+        if (name.size() > 2 && name[0] == 'o' && name[1] == 'n') {
+            return name.substr(2);
+        }
+        return name;
+    }
+
     std::unordered_map<std::string, v8::Global<v8::Function>> event_handlers_;
 };
 

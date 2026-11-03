@@ -1754,7 +1754,7 @@ properties, without changing Document or element priorities.
 - No Python API or environment key changes.
 
 Boundary: `docs/m11_51_window_event_handlers.md`. Tests:
-`test/test_m11_51_window_event_handlers.py` (10 items).
+`test/test_m11_51_window_event_handlers.py` (11 items).
 
 ### Verification
 
