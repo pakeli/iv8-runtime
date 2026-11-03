@@ -131,16 +131,16 @@ Then scan recent commits and only after that start code changes.
 If you only remember one thing:
 
 > `HEAD` is not an M1-only repository; verified implementation is through
-> M11-50 (Window scroll/focus/UI completion — scroll position metadata, no-op
-> scroll/focus/blur/move/resize/stop, writable `window.status`, BarProps,
-> `clientInformation`), green on real V8 (Linux + Windows + macOS arm64) on
+> M11-51 (Window event handler attributes — bounded `window.on*` accessors,
+> install/replace/clear, post-listener invocation, `return false` cancellation,
+> per-generation reset), green on real V8 (Linux + Windows + macOS arm64) on
 > `2026-11-03` and merged to `master` on the fork (`pakeli/iv8-runtime`);
-> upstream sync is out of scope. M11-51 (Window event handler attributes) is
-> implemented and awaiting real-V8 verification. **Window is prioritized above
-> Document**; Document `write`/import-adopt are later. M11-50 follows M11-49
-> (HTML string APIs and variadic tree methods), M11-48 (Node foundation),
-> M11-47 (Document identity), M11-46 (`document.cookie`), and M11-41..M11-45
-> (BOM viewport/media/device metadata, verified on `2026-10-30`).
+> upstream sync is out of scope. It follows M11-50 (Window scroll/focus/UI
+> completion), M11-49 (HTML string APIs and variadic tree methods), M11-48
+> (Node foundation), M11-47 (Document identity), M11-46 (`document.cookie`),
+> and M11-41..M11-45 (BOM viewport/media/device metadata, verified on
+> `2026-10-30`). **Window is prioritized above Document**; Document
+> `write`/import-adopt are later.
 > The post-M11 host access trace steps 1–4 plus the
 > step-5 native BOM call, window metadata, nested metadata, static
 > visualViewport, navigator.storage manager, navigator.permissions,
@@ -154,6 +154,7 @@ If you only remember one thing:
 > macOS arm64 wheel build; see `docs/m11_41_45_report.md`,
 > `docs/m11_46_report.md`, `docs/m11_47_report.md`,
 > `docs/m11_48_report.md`, `docs/m11_49_report.md`,
-> `docs/m11_50_report.md`, `docs/host_access_trace.md`, and
-> `docs/host_access_trace_workflow.md`. The full suite collects 1768 items;
-> each release lane reports `1766 passed, 2 skipped`.
+> `docs/m11_50_report.md`, `docs/m11_51_report.md`,
+> `docs/host_access_trace.md`, and `docs/host_access_trace_workflow.md`. The
+> full suite collects 1779 items; each release lane reports
+> `1777 passed, 2 skipped`.

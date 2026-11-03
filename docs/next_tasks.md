@@ -9,11 +9,11 @@ task queue for Claude after chat-history loss.
 
 At the user's direction, **Window now has higher priority than Document**:
 
-1. **Active — Window continuation.** M11-51 is Window event handler attributes
-   (`window.onload` etc.; Priority 3aq below). Continue with the remaining
-   Window gaps (Window messaging/`postMessage` design, a deterministic
-   focus/visibility model, `getComputedStyle` only if a CSS model is approved)
-   before returning to Document work.
+1. **Active — Window continuation.** M11-51 (Window event handler attributes;
+   Priority 3aq below) is verified. Continue with the remaining Window gaps:
+   M11-52 is a Window messaging (`postMessage`/`MessageEvent`) design or a
+   deterministic focus/visibility model (`getComputedStyle` only if a CSS model
+   is approved) before returning to Document work.
 2. **Later — Document continuation.** `document.write`/`writeln`/`open`/`close`
    and `importNode`/`adoptNode` move behind the Window slices. `document.all`
    and DOM prototype chains remain deferred.
@@ -1727,7 +1727,7 @@ Window was raised above Document at the user's direction. M11-51 is Window
 event handler attributes (Priority 3aq below); `document.write`/`writeln`/
 `open`/`close` and `importNode`/`adoptNode` move to a later milestone.
 
-## Priority 3aq: Window event handler attributes — M11-51 — IMPLEMENTED (`2026-11-03`)
+## Priority 3aq: Window event handler attributes — M11-51 — DONE (`2026-11-03`)
 
 ### Goal
 
@@ -1754,18 +1754,31 @@ properties, without changing Document or element priorities.
 - No Python API or environment key changes.
 
 Boundary: `docs/m11_51_window_event_handlers.md`. Tests:
-`test/test_m11_51_window_event_handlers.py` (11 items).
+`test/test_m11_51_window_event_handlers.py` (11 items). The full suite collects
+1779 items; each wheel lane: **`1777 passed, 2 skipped`**.
 
-### Verification
+### Verification — passed
 
-Pending real-V8 Linux + Windows + macOS arm64 lanes. Evidence will be recorded
-in `docs/m11_51_report.md`.
+Tree `34b119b` (branch `m11-51-window-event-handlers`):
+
+- Linux `release-linux` run `41612087122` — cp311–cp314, each
+  `1777 passed, 2 skipped`;
+- Windows `release-windows` run `41612092772` — Python 3.11–3.14, each
+  `1777 passed, 2 skipped`;
+- macOS arm64 fallback run `41613300180` (`macos-14`, cached V8 monolith,
+  `macosx_11_0_arm64` wheels) — cp311–cp314, each `1777 passed, 2 skipped`.
+  Artifact IDs are in `docs/m11_51_report.md`.
+
+The first attempt (`2924367`) failed 6 of the 11 new tests because handlers
+were keyed by `on<type>` while dispatch looked them up by `<type>`; `34b119b`
+normalized the key with no test changes. The temporary macos-14 workflow's
+`macos-release` branch was restored to `3f01d7c` afterward.
 
 ### Next
 
-Continue Window-first with a Window messaging (`postMessage`/`MessageEvent`)
-design or a deterministic focus/visibility model; Document `write`/import work
-is explicitly later.
+Continue Window-first with M11-52: a Window messaging
+(`postMessage`/`MessageEvent`) design or a deterministic focus/visibility
+model; Document `write`/import work is explicitly later.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

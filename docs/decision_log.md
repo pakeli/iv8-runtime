@@ -1171,8 +1171,12 @@ direction alone.
   names), install/replace/clear semantics, post-listener invocation at target
   and during bubbling, `return false` cancellation, swallowed handler
   exceptions, and generation-scoped teardown. Boundary:
-  `docs/m11_51_window_event_handlers.md`. Verification is pending real V8; see
-  `docs/m11_51_report.md`. Document `write`/import-adopt remain later.
+  `docs/m11_51_window_event_handlers.md`. Verified on real V8 (Linux
+  `41612087122`, Windows `41612092772`, macOS arm64 fallback `41613300180`,
+  tree `34b119b`, each wheel lane `1777 passed, 2 skipped`); see
+  `docs/m11_51_report.md`. The first attempt (`2924367`) used `on<type>` as the
+  handler key while dispatch looked up `<type>`; `34b119b` normalized the key.
+  Document `write`/import-adopt remain later.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

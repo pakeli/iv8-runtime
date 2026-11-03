@@ -1,6 +1,6 @@
 # M11-51 — Window event handler attributes
 
-Status: **IMPLEMENTED — real-V8 verification pending**
+Status: **VERIFIED — real V8 green on Linux + Windows + macOS arm64 (`2026-11-03`)**
 
 This slice continues the Window-first common-API track after M11-50. It adds a
 bounded set of IDL event handler attributes on `window` (`window.onload = fn`,
@@ -79,3 +79,11 @@ dispatch, at-target and bubbling handler invocation, `false` return
 cancellation, swallowed exceptions, `stopImmediatePropagation` versus
 `stopPropagation`, generation resets, and the bounded-name behavior
 (`window.onclick` stays inert).
+
+## Verification
+
+Real V8 is green for tree `34b119b` on Linux, Windows, and macOS arm64; every
+wheel lane reports `1777 passed, 2 skipped` and all 11 new tests execute. The
+first attempt (`2924367`) stored handlers under `on<type>` while dispatch looked
+them up by `<type>`; `34b119b` normalized the key. Run IDs, artifact IDs, and
+fallback details are in `docs/m11_51_report.md`.

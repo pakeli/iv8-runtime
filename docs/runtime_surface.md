@@ -1,7 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-11-03` · Latest verified milestone: **M11-50** · M11-51
-(Window event handler attributes) implemented, verification pending
+Last reviewed: `2026-11-03` · Latest verified milestone: **M11-51**
 (HTML string APIs and variadic tree methods), verified on real V8 (Linux +
 Windows + macOS arm64). It follows **M11-48** (Node foundation — Text/Comment/
 DocumentFragment nodes, live `textContent`, active `characterData` records),
@@ -582,7 +581,7 @@ clock.
 | M11-48 | Node foundation — Text/Comment/DocumentFragment nodes, live `textContent`, `characterData` mutation records — verified 2026-11-03 | `docs/m11_48_node_foundation.md`, `docs/m11_48_report.md` |
 | M11-49 | HTML string APIs and variadic tree methods — innerHTML/outerHTML/insertAdjacent*, append/prepend/before/after/replaceWith/replaceChildren, entity decoding — verified 2026-11-03 | `docs/m11_49_html_strings.md`, `docs/m11_49_report.md` |
 | M11-50 | Window scroll/focus/UI completion — scrollX/scrollY/pageXOffset/pageYOffset (0), no-op scroll/focus/blur/move/resize/stop, writable `status`, BarProps, `clientInformation` alias — verified 2026-11-03 | `docs/m11_50_window_completion.md`, `docs/m11_50_report.md` |
-| M11-51 | Window event handler attributes — bounded `window.on*` accessors, install/replace/clear, at-target/bubbling invocation, `return false` cancellation, per-generation reset — implemented 2026-11-03, verification pending | `docs/m11_51_window_event_handlers.md`, `docs/m11_51_report.md` |
+| M11-51 | Window event handler attributes — bounded `window.on*` accessors, install/replace/clear, at-target/bubbling invocation, `return false` cancellation, per-generation reset — verified 2026-11-03 | `docs/m11_51_window_event_handlers.md`, `docs/m11_51_report.md` |
 | Post-M11 host access trace (steps 1–4 + complete step-5 object groups + steps 6a–7) | native HostObject get/set/call trace + missing-property probes + `get_method` references + `delete`/`own_keys`/`define_property` request events + explicit `has`/`get_own_property_descriptor` query events + Reflect target metadata + performance/crypto/Storage/permissions/matchMedia/window callbacks and getters + window metadata/alias accessors + nested/visualViewport accessors and methods + navigator.storage manager calls + navigator.permissions query/status accesses + matchMedia result accesses + legacy navigator metadata + primitive value/argument/return summaries + synchronous exception metadata + step-7 aggregated report (`start_access_trace` / `stop_access_trace` / `read_access_trace` / `access_trace_report`) — verified 2026-11-02 | `docs/host_access_trace.md`, `docs/host_access_trace_workflow.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the
