@@ -722,7 +722,9 @@ If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
 > hosted runtime, the M9–M10 monitoring extensions, and the M11 compatibility
-> line through M11-41..M11-45, and has landed steps 1–4 plus the native-BOM-call,
+> line through M11-50 (Document cookie/identity, node foundation, HTML string
+> APIs, and Window scroll/focus/UI completion), and has landed steps 1–4 plus
+> the native-BOM-call,
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage
 > manager, navigator-permissions, matchMedia-result, legacy-navigator, and
 > window-alias groups of a post-M11 host access trace, plus step-6a value/
@@ -731,7 +733,8 @@ If you need a one-line answer:
 > queries, step-6f Reflect target metadata, step-6g native callback/getter
 > summaries, and step-6h synchronous exception metadata, plus the step-7
 > `Page.access_trace_report()` aggregated usage report — all verified on real
-> V8 (Linux + Windows + macOS arm64) on `2026-11-02`. The step-5 object groups
+> V8 (Linux + Windows + macOS arm64) through `2026-11-03`. The step-5 object
+> groups
 > and steps 6a–6h are complete for the traceable HostObject surface; `in`,
 > non-HostObject query targets, cached wrappers, and asynchronous exception
 > metadata remain explicit blind spots.
