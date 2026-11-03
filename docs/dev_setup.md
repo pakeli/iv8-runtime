@@ -130,14 +130,16 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; implementation is through M11-49 (HTML
-> string APIs and variadic tree methods — innerHTML/outerHTML/insertAdjacent*,
-> append/prepend/before/after/replaceWith/replaceChildren, bounded entity
-> decoding, deterministic serialization), verified on real V8 (Linux + Windows
-> + macOS arm64) on `2026-11-03` and merged to `master` on the fork
-> (`pakeli/iv8-runtime`); upstream sync is out of scope. It follows M11-48
-> (Node foundation), M11-47 (Document identity), M11-46 (`document.cookie`), and
-> M11-41..M11-45 (BOM viewport/media/device metadata, verified on `2026-10-30`).
+> `HEAD` is not an M1-only repository; verified implementation is through
+> M11-49 (HTML string APIs and variadic tree methods — innerHTML/outerHTML/
+> insertAdjacent*, append/prepend/before/after/replaceWith/replaceChildren,
+> bounded entity decoding, deterministic serialization), green on real V8
+> (Linux + Windows + macOS arm64) on `2026-11-03` and merged to `master` on the
+> fork (`pakeli/iv8-runtime`); upstream sync is out of scope. M11-50 (Window
+> scroll/focus/UI completion) is implemented on `2026-11-03`; its real-V8
+> verification is pending. M11-49 follows M11-48 (Node foundation), M11-47
+> (Document identity), M11-46 (`document.cookie`), and M11-41..M11-45 (BOM
+> viewport/media/device metadata, verified on `2026-10-30`).
 > The post-M11 host access trace steps 1–4 plus the
 > step-5 native BOM call, window metadata, nested metadata, static
 > visualViewport, navigator.storage manager, navigator.permissions,

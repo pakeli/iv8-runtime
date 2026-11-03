@@ -1659,10 +1659,46 @@ from the first run aside from intentional guard updates.
 
 ### Next
 
-M11-50: `document.write`/`writeln`/`open`/`close` and
-`importNode`/`adoptNode`, then the remaining headless-browser gaps
-(context-sensitive parsing, selector pseudo-classes, additional document
-surfaces). DOM prototype chains are deferred to a later stage.
+The Window slice was taken next at the user's direction and is Priority 3ap
+below. `document.write`/`writeln`/`open`/`close` and import/adopt move to
+M11-51, then the remaining headless-browser gaps (context-sensitive parsing,
+selector pseudo-classes, additional document surfaces). DOM prototype chains
+are deferred to a later stage.
+
+## Priority 3ap: Window scroll / focus / UI completion — M11-50 — IMPLEMENTED (`2026-11-03`)
+
+### Goal
+
+Complete the deterministic `Window` surface that page scripts commonly probe
+or call without layout, real focus, navigation, or OS window management.
+
+### What landed
+
+- Read-only `window.scrollX` / `scrollY` (always `0`) and the
+  `pageXOffset` / `pageYOffset` aliases, all access-traced.
+- No-op `scroll` / `scrollTo` / `scrollBy` accepting any arguments; no-op
+  `focus` / `blur` (with `document.hasFocus()` still `false`), `moveBy` /
+  `moveTo` / `resizeBy` / `resizeTo`, and `stop`.
+- Writable `window.status` (ordinary `ToString`, reset on every `load()`,
+  isolated per `Page`) with access-traced `get`/`set`.
+- Read-only BarProp metadata (`locationbar`, `menubar`, `personalbar`,
+  `scrollbars`, `statusbar`, `toolbar`), each `{visible: true}`.
+- Read-only `window.clientInformation` alias of `navigator`.
+- All ten new methods are visible to `watch_apis` as `window.<name>` calls.
+- No Python API or environment change.
+
+Boundary: `docs/m11_50_window_completion.md`. Tests:
+`test/test_m11_50_window_completion.py` (10 items).
+
+### Verification
+
+Pending real-V8 Linux + Windows + macOS arm64 lanes. Evidence will be recorded
+in `docs/m11_50_report.md`.
+
+### Next
+
+M11-51: `document.write`/`writeln`/`open`/`close` and
+`importNode`/`adoptNode`, then the remaining headless-browser gaps.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

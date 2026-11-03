@@ -35,10 +35,14 @@ git log --oneline --decorate -n 20
   append/prepend/before/after/replaceWith/replaceChildren, bounded entity
   decoding, deterministic serialization), green on real V8 Linux + Windows +
   macOS arm64 (tree `52bafab`, merged to `master` on the fork; upstream sync out
-  of scope). It follows **M11-48** (Node foundation, tree `3f4940f`), **M11-47**
-  (Document identity, tree `cc1c47d`), **M11-46** (`document.cookie`, tree
-  `18f1f4b`), and **M11-41..M11-45** (BOM viewport/media/device metadata,
-  commit `61abc3b`). The M11 line is compatibility-first.
+  of scope). **M11-50** (Window scroll/focus/UI completion: scroll position
+  metadata, no-op scroll/focus/blur/move/resize/stop, writable `window.status`,
+  BarProps, `clientInformation`) is implemented on `2026-11-03` and awaiting
+  real-V8 verification. M11-49 follows **M11-48** (Node foundation, tree
+  `3f4940f`), **M11-47** (Document identity, tree `cc1c47d`), **M11-46**
+  (`document.cookie`, tree `18f1f4b`), and **M11-41..M11-45** (BOM
+  viewport/media/device metadata, commit `61abc3b`). The M11 line is
+  compatibility-first.
 - A post-M11 monitoring slice is also verified: **host access trace steps 1–4
   plus the step-5 native BOM call, window metadata, nested metadata, static
   visualViewport, navigator.storage manager, navigator.permissions,
@@ -111,7 +115,7 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-49`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-50`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
     Storage, Blob/File/FileReader, event cancellation,
     `classList`/`toggleAttribute`, event capture + listener options, element
@@ -123,15 +127,18 @@ Answer roughly as follows:
     rAF timestamps, minimal form validation, OS-backed Crypto random, the CSS
     selector engine, deterministic BOM metadata, the BOM completion batch
     (deterministic dialogs, performance entry timeline, `structuredClone`,
-    single-context window metadata, `scheduler.postTask`), and the BOM
+    single-context window metadata, `scheduler.postTask`), the BOM
     viewport/media/device batch (`visualViewport`, bounded `matchMedia`,
-    `navigator.storage` / `permissions`, legacy navigator metadata), and the
+    `navigator.storage` / `permissions`, legacy navigator metadata), the
     deterministic `document.cookie` jar (M11-46), Document identity (M11-47),
-    the M11-48 node foundation (Text/Comment/DocumentFragment, live text), and
-    the M11-49 HTML string/variadic DOM APIs — verified on real V8 Linux +
-    Windows + macOS arm64; latest verification `2026-11-03`;
+    the M11-48 node foundation (Text/Comment/DocumentFragment, live text), the
+    M11-49 HTML string/variadic DOM APIs, and the M11-50 Window
+    scroll/focus/UI stubs — M11-49 and earlier verified on real V8 Linux +
+    Windows + macOS arm64; M11-50 implemented `2026-11-03`, verification
+    pending;
   - latest implemented and verified compatibility feature: M11-49 (HTML string
-    APIs + variadic tree methods);
+    APIs + variadic tree methods); latest implemented: M11-50 (Window
+    scroll/focus/UI completion);
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

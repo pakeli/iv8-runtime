@@ -1050,6 +1050,18 @@ pinned. Context-sensitive HTML5 fragment parsing, the full entity table,
 No Python API or environment key changes. See
 ``docs/m11_49_html_strings.md``.
 
+M11-50 completes the deterministic Window scroll/focus/UI surface without
+adding layout, focus, navigation, or OS window management. ``scrollX`` /
+``scrollY`` and the legacy ``pageXOffset`` / ``pageYOffset`` aliases are
+read-only, access-traced ``0``; ``scroll`` / ``scrollTo`` / ``scrollBy``,
+``focus`` / ``blur``, ``moveBy`` / ``moveTo`` / ``resizeBy`` / ``resizeTo``,
+and ``stop`` are no-ops (``document.hasFocus()`` stays ``false`` and window
+geometry is unchanged). ``window.status`` is a writable per-document string
+(``ToString``, reset on ``load()``), the six BarProp globals are read-only
+``{visible: true}`` metadata, and ``window.clientInformation === navigator``.
+All ten methods participate in the watch channel. No Python API or environment
+key changes. See ``docs/m11_50_window_completion.md``.
+
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and

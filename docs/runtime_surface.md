@@ -207,8 +207,9 @@ Installed per generation by `install_page`:
   configured via `Page(environment=...)`; M11-35 adds mutable `window.name`,
   read-only `window.length` (0), `screenLeft` / `screenTop`, and
   `isSecureContext` derived from the base URL. `screen.orientation` is a
-  read-only `{type, angle}` derived from width/height with no events or lock; no
-  scroll and these dimensions feed no layout engine. M11-39 adds
+  read-only `{type, angle}` derived from width/height with no events or lock;
+  these dimensions feed no layout engine (see the M11-50 scroll stubs below).
+  M11-39 adds
   the single-context browsing metadata: replaceable `window.parent` / `frames`,
   unforgeable read-only `window.top`, and writable `window.opener` (initially
   `null`), with no child frames, popups, or `postMessage`;
@@ -221,6 +222,16 @@ Installed per generation by `install_page`:
   `crossOriginIsolated` (`false`), `closed` (`false`), and `frameElement`
   (`null`). The window `parent`/`top`/`frames`/`opener` aliases are traced
   accessors under step 5i with unchanged replaceable/read-only behavior;
+- **window scroll / focus / UI completion** (M11-50) — read-only, access-traced
+  `scrollX` / `scrollY` (always `0`) and `pageXOffset` / `pageYOffset`
+  aliases; no-op `scroll` / `scrollTo` / `scrollBy`, `focus` / `blur` (with
+  `document.hasFocus()` still `false`), `moveBy` / `moveTo` / `resizeBy` /
+  `resizeTo`, and `stop`; writable `status` (ToString, reset per `load()`);
+  read-only BarProp metadata (`locationbar` / `menubar` / `personalbar` /
+  `scrollbars` / `statusbar` / `toolbar`, each `{visible: true}`); and a
+  read-only `clientInformation` alias of `navigator`. All ten methods are
+  watchable through `watch_apis`. No layout, scroll events, focus machinery,
+  navigation, or OS window management;
 - **matchMedia** (M11-42) — a static MediaQueryList-shaped result for a bounded
   query language (media types, comma lists, `not` / `only` / `and`,
   width/height, orientation, and fixed desktop capabilities). Listener methods
@@ -562,6 +573,7 @@ clock.
 | M11-47 | Document identity — writable `document.title` + `documentURI` / `baseURI` / `defaultView` / `location` aliases — verified 2026-11-02 | `docs/m11_47_document_identity.md`, `docs/m11_47_report.md` |
 | M11-48 | Node foundation — Text/Comment/DocumentFragment nodes, live `textContent`, `characterData` mutation records — verified 2026-11-03 | `docs/m11_48_node_foundation.md`, `docs/m11_48_report.md` |
 | M11-49 | HTML string APIs and variadic tree methods — innerHTML/outerHTML/insertAdjacent*, append/prepend/before/after/replaceWith/replaceChildren, entity decoding — verified 2026-11-03 | `docs/m11_49_html_strings.md`, `docs/m11_49_report.md` |
+| M11-50 | Window scroll/focus/UI completion — scrollX/scrollY/pageXOffset/pageYOffset (0), no-op scroll/focus/blur/move/resize/stop, writable `status`, BarProps, `clientInformation` alias — implemented 2026-11-03 | `docs/m11_50_window_completion.md`, `docs/m11_50_report.md` |
 | Post-M11 host access trace (steps 1–4 + complete step-5 object groups + steps 6a–7) | native HostObject get/set/call trace + missing-property probes + `get_method` references + `delete`/`own_keys`/`define_property` request events + explicit `has`/`get_own_property_descriptor` query events + Reflect target metadata + performance/crypto/Storage/permissions/matchMedia/window callbacks and getters + window metadata/alias accessors + nested/visualViewport accessors and methods + navigator.storage manager calls + navigator.permissions query/status accesses + matchMedia result accesses + legacy navigator metadata + primitive value/argument/return summaries + synchronous exception metadata + step-7 aggregated report (`start_access_trace` / `stop_access_trace` / `read_access_trace` / `access_trace_report`) — verified 2026-11-02 | `docs/host_access_trace.md`, `docs/host_access_trace_workflow.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the

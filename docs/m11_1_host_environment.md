@@ -1,5 +1,10 @@
 # M11-1 — configurable host-environment baseline
 
+> **Scope note.** The supported-key set and the out-of-scope list below describe
+> M11-1. Later milestones added `outerWidth` / `outerHeight` / `screenX` /
+> `screenY` (M11-26) and the M11-50 scroll/focus/OS-window stubs. The
+> construction-time, read-only environment contract itself is unchanged.
+
 M11-1 is the first implementation slice under the compatibility-first M11 line (see
 `docs/m11_compatibility_plan.md`). It makes the page's read-only host-environment
 surface **configurable at construction** instead of hard-coded, and adds the `screen`

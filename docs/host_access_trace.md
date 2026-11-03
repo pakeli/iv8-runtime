@@ -107,8 +107,8 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | method that throws | records `call` with `outcome: "threw"` (no return summary), exception still propagates |
 | other plain property reads on native BOM objects | not covered yet |
 | assignment to a read-only host property | no event; original write behavior/error unchanged |
-| `window.innerWidth` / `outerWidth` / `innerHeight` | records `get` from the window metadata accessor |
-| `window.name` | records `get` and `set` |
+| `window.innerWidth` / `outerWidth` / `innerHeight` / `scrollX` / `scrollY` / `pageXOffset` / `pageYOffset` | records `get` from the window metadata accessor |
+| `window.name` / `window.status` | records `get` and `set` |
 | `window.origin` / `isSecureContext` / `crossOriginIsolated` / `closed` / `frameElement` | records `get`; read-only behavior unchanged |
 | `window.parent` / `top` / `frames` / `opener` | records `get`; parent/frames/opener also record `set`, top stays read-only |
 | `delete navigator.userAgent` | records `delete` before V8 applies the deletion; the return value (including `false` for a non-configurable property) is unchanged |
@@ -308,10 +308,12 @@ property name:
 
 `devicePixelRatio`, `innerWidth`, `innerHeight`, `outerWidth`, `outerHeight`,
 `screenX`, `screenY`, `screenLeft`, `screenTop`, `length`, `isSecureContext`,
-`origin`, `crossOriginIsolated`, `closed`, and `frameElement`.
+`origin`, `crossOriginIsolated`, `closed`, `frameElement`, and the M11-50
+`scrollX` / `scrollY` / `pageXOffset` / `pageYOffset` (all `0`).
 
-`window.name` records `get` and `set` through its existing accessor. Values and
-read-only assignment behavior are unchanged. The data-property-to-accessor
+`window.name` and (since M11-50) `window.status` record `get` and `set` through
+their accessors. Values and read-only assignment behavior are unchanged. The
+data-property-to-accessor
 change is intentional for these traceable fields; `parent` / `top` / `frames` /
 `opener` keep their prior descriptors and remain untraced in this group. Missing
 global-property probes and value/argument/return capture are not included.
@@ -812,8 +814,9 @@ Coverage in this slice:
 - independent native BOM callbacks record performance/crypto/Storage calls and
   the Storage `length` getter, with primitive argument/return/value summaries;
   properties on those plain objects remain untraced in this group;
-- window metadata accessors record `get` for the §4.3 fields and `get`/`set`
-  for `window.name`; read-only assignment, strict-mode errors, and values are
+- window metadata accessors record `get` for the §4.3 fields (including the
+  M11-50 scroll coordinates) and `get`/`set` for `window.name` and
+  `window.status`; read-only assignment, strict-mode errors, and values are
   unchanged (the geometry/flag data properties are now accessors);
 - nested connection/orientation properties and `performance.timeOrigin` record
   reads, including repeated parent getter accesses and nested missing probes;

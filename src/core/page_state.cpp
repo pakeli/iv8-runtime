@@ -8055,6 +8055,57 @@ void print_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(info.GetIsolate(), "window", "print");
 }
 
+// --- M11-50 deterministic window scroll / focus / OS-window stubs ------------
+//
+// The runtime has no layout engine, no focus/navigation machinery, and no OS
+// window it could move or resize. These methods are compatibility no-ops: they
+// accept any arguments, change no state, and return undefined. scrollX/scrollY
+// and the pageXOffset/pageYOffset aliases consequently stay 0 (see
+// window_metadata_value). Each call still participates in the M9-2 watch channel.
+void window_scroll_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "scroll");
+}
+
+void window_scroll_to_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "scrollTo");
+}
+
+void window_scroll_by_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "scrollBy");
+}
+
+void window_focus_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "focus");
+}
+
+void window_blur_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "blur");
+}
+
+void window_move_by_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "moveBy");
+}
+
+void window_move_to_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "moveTo");
+}
+
+void window_resize_by_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "resizeBy");
+}
+
+void window_resize_to_callback(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "resizeTo");
+}
+
+void window_stop_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "stop");
+}
+
 // --- M11-31/M11-37 virtual performance timeline ------------------------------
 //
 // performance.now() reports the M11-29/M11-30 facade's virtual clock. This is not
@@ -11630,6 +11681,40 @@ void window_name_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
             : std::string());
 }
 
+// M11-50: window.status is a writable string that resets with each generation.
+// It shares window.name's coercion and trace shape, but is PageState state that
+// install_page() clears on every new document.
+void window_status_getter(v8::Local<v8::Name>,
+                          const v8::PropertyCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kWindowNameTag));
+    const std::uint64_t seq = access_trace_record(
+        isolate, page, "window", "window", "status", AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, seq, info);
+    info.GetReturnValue().Set(v8_string(isolate, page->window_status()));
+}
+
+void window_status_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
+                          const v8::PropertyCallbackInfo<void>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    auto* page = static_cast<PageState*>(
+        info.Data().As<v8::External>()->Value(kWindowNameTag));
+    const std::uint64_t seq = access_trace_record(
+        isolate, page, "window", "window", "status", AccessOperation::kSet);
+    AccessPropertySetCompletion completion(isolate, seq, info, value);
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return;  // coercion threw; leave the stored status unchanged
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    page->set_window_status(
+        *utf8 != nullptr
+            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+            : std::string());
+}
+
 // Step 5i: window.parent / top / frames / opener are traced accessors.
 // parent/frames/opener are replaceable (the setter stores the new value per
 // generation); top stays read-only. Values and assignment results are unchanged.
@@ -11731,6 +11816,12 @@ v8::Local<v8::Value> PageState::window_metadata_value(
     if (name == "frameElement") {
         return v8::Null(isolate);
     }
+    // M11-50: there is no layout engine, so the viewport never scrolls; the
+    // legacy pageXOffset/pageYOffset names alias scrollX/scrollY.
+    if (name == "scrollX" || name == "pageXOffset" ||
+        name == "scrollY" || name == "pageYOffset") {
+        return v8::Integer::New(isolate, 0);
+    }
     return v8::Undefined(isolate);
 }
 
@@ -11817,6 +11908,8 @@ HostObject* PageState::media_query_list_host(const std::u16string& media,
 void PageState::install_page(const std::string& base_url,
                              const std::string& html) {
     bootstrap_ = PageBootstrap{html, base_url};
+    // M11-50: window.status is per-document state; every generation starts "".
+    window_status_.clear();
 
     state_ = std::make_shared<ContextState>();
     // Host-access tracing is Page-level. Each generation starts with fresh
@@ -11906,6 +11999,12 @@ void PageState::install_page(const std::string& base_url,
                 context, v8::String::NewFromUtf8Literal(isolate, "name"),
                 &window_name_getter, &window_name_setter,
                 v8::External::New(isolate, this, kWindowNameTag));
+            // M11-50: writable window.status, reset per generation (see
+            // install_page). It follows the same ToString + trace shape as name.
+            (void)global->SetNativeDataProperty(
+                context, v8::String::NewFromUtf8Literal(isolate, "status"),
+                &window_status_getter, &window_status_setter,
+                v8::External::New(isolate, this, kWindowNameTag));
             // M2-4 JS-visible timers (manual-pump; see PageState::run_timers).
             install_global_function(isolate, context, global, "setTimeout",
                                     &set_timeout_callback);
@@ -11946,6 +12045,28 @@ void PageState::install_page(const std::string& base_url,
                                     &prompt_callback);
             install_global_function(isolate, context, global, "print",
                                     &print_callback);
+            // M11-50 deterministic scroll / focus / OS-window stubs. No layout,
+            // focus, or window-manager integration; all return undefined.
+            install_global_function(isolate, context, global, "scroll",
+                                    &window_scroll_callback);
+            install_global_function(isolate, context, global, "scrollTo",
+                                    &window_scroll_to_callback);
+            install_global_function(isolate, context, global, "scrollBy",
+                                    &window_scroll_by_callback);
+            install_global_function(isolate, context, global, "focus",
+                                    &window_focus_callback);
+            install_global_function(isolate, context, global, "blur",
+                                    &window_blur_callback);
+            install_global_function(isolate, context, global, "moveBy",
+                                    &window_move_by_callback);
+            install_global_function(isolate, context, global, "moveTo",
+                                    &window_move_to_callback);
+            install_global_function(isolate, context, global, "resizeBy",
+                                    &window_resize_by_callback);
+            install_global_function(isolate, context, global, "resizeTo",
+                                    &window_resize_to_callback);
+            install_global_function(isolate, context, global, "stop",
+                                    &window_stop_callback);
             // M11-38 bounded structured clone.
             install_global_function(isolate, context, global, "structuredClone",
                                     &structured_clone_callback);
@@ -12075,6 +12196,14 @@ void PageState::install_page(const std::string& base_url,
                 define_traced_readonly("crossOriginIsolated");
                 define_traced_readonly("closed");
                 define_traced_readonly("frameElement");
+                // M11-50: no layout engine, so the viewport never scrolls.
+                // scrollX/scrollY are always 0 and the legacy pageXOffset /
+                // pageYOffset names alias them; scroll()/scrollTo()/scrollBy()
+                // are no-ops (installed above with the other global stubs).
+                define_traced_readonly("scrollX");
+                define_traced_readonly("scrollY");
+                define_traced_readonly("pageXOffset");
+                define_traced_readonly("pageYOffset");
                 // M11-39: this runtime has exactly one top-level browsing
                 // context. parent/top/frames alias the window itself; there is
                 // no opener and no child frame collection. parent and frames are
@@ -12106,6 +12235,43 @@ void PageState::install_page(const std::string& base_url,
                 define_traced_alias("top", false);
                 define_traced_alias("frames", true);
                 define_traced_alias("opener", true);
+                // M11-50: browser-chrome BarProp metadata. There is no browser
+                // UI, but the reported desktop window is complete: every bar is
+                // a fresh read-only {visible: true} object. These are plain
+                // metadata, not traced HostObjects.
+                const auto define_bar_prop = [&](const char* name) {
+                    v8::Local<v8::Object> bar = v8::Object::New(isolate);
+                    (void)bar->DefineOwnProperty(
+                        context,
+                        v8::String::NewFromUtf8Literal(isolate, "visible"),
+                        v8::True(isolate),
+                        static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                           v8::DontDelete));
+                    (void)global->DefineOwnProperty(
+                        context,
+                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
+                        bar,
+                        static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                           v8::DontDelete));
+                };
+                define_bar_prop("locationbar");
+                define_bar_prop("menubar");
+                define_bar_prop("personalbar");
+                define_bar_prop("scrollbars");
+                define_bar_prop("statusbar");
+                define_bar_prop("toolbar");
+                // M11-50: legacy alias required by older feature detection.
+                v8::Local<v8::Value> navigator_value;
+                if (global->Get(context, v8_string(isolate, "navigator"))
+                        .ToLocal(&navigator_value)) {
+                    (void)global->DefineOwnProperty(
+                        context,
+                        v8::String::NewFromUtf8Literal(isolate,
+                                                       "clientInformation"),
+                        navigator_value,
+                        static_cast<v8::PropertyAttribute>(v8::ReadOnly |
+                                                           v8::DontDelete));
+                }
             }
             // M11-40 scheduler.postTask bootstrap. Compiled after setTimeout and
             // Promise are available; scheduler tasks therefore use the existing

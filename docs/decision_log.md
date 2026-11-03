@@ -1141,7 +1141,20 @@ direction alone.
   `docs/m11_49_html_strings.md`. Verified on real V8 (Linux `41577570846`,
   Windows `41577574466`, macOS arm64 fallback `41578427318`, tree `52bafab`,
   each wheel lane `1756 passed, 2 skipped`); see `docs/m11_49_report.md`.
-  M11-50 (`document.write` + import/adopt) is next.
+  At the user's direction, `document.write` + import/adopt was moved to M11-51
+  in favor of the Window slice below.
+
+- `M11-50` — **Window scroll / focus / UI completion** — selected on
+  `2026-11-03` after the user paused Document work and asked for Window API
+  completion. Deterministic, layout-free surface only: read-only
+  `scrollX`/`scrollY`/`pageXOffset`/`pageYOffset` (always `0`), no-op
+  `scroll`/`scrollTo`/`scrollBy`, `focus`/`blur`, `moveBy`/`moveTo`/
+  `resizeBy`/`resizeTo`, and `stop`, writable per-document `window.status`,
+  read-only BarProp `{visible: true}` metadata, and the `clientInformation`
+  alias of `navigator`. The scroll/stubs deliberately do not introduce a
+  virtual scroll position or layout engine. Boundary:
+  `docs/m11_50_window_completion.md`. Verification is pending real V8; see
+  `docs/m11_50_report.md`.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

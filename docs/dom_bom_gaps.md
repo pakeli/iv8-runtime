@@ -1,7 +1,7 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-10-30` · Baseline: **M11-41..M11-45** (BOM
-viewport/media/device metadata verified `2026-10-30`)
+Last reviewed: `2026-11-03` · Baseline: **M11-50** (Window scroll/focus/UI
+completion implemented `2026-11-03`; real-V8 verification pending)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
 > are **not implemented** as of M11-41..M11-45. It is not a contract and not a
@@ -61,7 +61,9 @@ viewport/media/device metadata verified `2026-10-30`)
 | `alert` / `confirm` / `prompt`, `window.print` | **implemented as deterministic stubs** — M11-36 returns fixed values and never blocks or renders UI; no Python callback bridge |
 | Fullscreen API | **absent** |
 | `visualViewport` | **implemented as static metadata** — M11-41 derives width/height from the reported viewport with zero offsets, scale 1, no-op listeners, and no scroll/zoom/resize events |
-| Scroll APIs (`scroll` / `scrollTo` / `scrollBy` / `scrollX` / `scrollY`) | **absent** — no layout |
+| Scroll APIs (`scroll` / `scrollTo` / `scrollBy` / `scrollX` / `scrollY` / `pageXOffset` / `pageYOffset`) | **implemented as deterministic stubs** — M11-50: positions are always `0`; methods accept any arguments and do nothing; no layout, clamping, smooth scrolling, or scroll events |
+| `window.focus` / `blur`, `moveBy` / `moveTo`, `resizeBy` / `resizeTo`, `stop` | **implemented as no-ops** — M11-50; `document.hasFocus()` stays `false`, and window geometry is unchanged |
+| Event handler attributes (`window.onload`, `window.onerror`, `element.onclick`, …) | **absent** — assignments create ordinary properties and never dispatch; `onchange` on MediaQueryList/PermissionStatus is likewise inert |
 | `matchMedia` | **partially implemented** — M11-42 adds a bounded static evaluator for media types, comma lists, `not`/`only`/`and`, width/height, orientation, and fixed desktop capabilities; no dynamic viewport changes or `change` events |
 
 ### 1.5 Device and platform APIs
@@ -83,6 +85,7 @@ viewport/media/device metadata verified `2026-10-30`)
 | `window.name` / `length` | **implemented** — M11-35 (`name` mutable/Page-persistent; `length` is always 0) |
 | `window.parent` / `top` / `frames` / `opener` | **implemented** — M11-39 single-context aliases (`parent` / `frames` replaceable, `top` unforgeable read-only, `opener` writable; no child frames or popups) |
 | `window.visualViewport` / `origin` / `crossOriginIsolated` / `closed` / `frameElement` | **implemented** — M11-41 static read-only metadata; visualViewport has no scroll/zoom/resize events |
+| `window.status` / BarProps (`locationbar` / `menubar` / `personalbar` / `scrollbars` / `statusbar` / `toolbar`) / `clientInformation` | **implemented** — M11-50: `status` is a writable per-document string; each BarProp is a read-only `{visible: true}` metadata object; `clientInformation === navigator` |
 | `navigator.plugins` / `mimeTypes` / `javaEnabled()` | **implemented as empty metadata** — M11-45 frozen empty arrays and `javaEnabled() === false`; no plugin objects or Java support |
 
 Implemented for contrast: `screen.width` / `height` / `availWidth` /

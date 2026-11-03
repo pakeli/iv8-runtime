@@ -157,6 +157,11 @@ public:
     std::string window_name() const { return window_name_; }
     void set_window_name(const std::string& name) { window_name_ = name; }
 
+    // M11-50: window.status. Unlike name, it resets on every install_page()
+    // (a new document), matching the browser's per-document status text.
+    std::string window_status() const { return window_status_; }
+    void set_window_status(const std::string& status) { window_status_ = status; }
+
     // M11-46: Page-level deterministic in-memory document.cookie jar. It survives
     // load() generations, is isolated per Page, and is never persisted.
     std::string document_cookie() const;
@@ -349,6 +354,8 @@ private:
     std::unique_ptr<MediaQueryListStore> media_query_lists_;
     // M11-35: window.name survives load() generations of this Page.
     std::string window_name_;
+    // M11-50: window.status resets whenever a new generation is installed.
+    std::string window_status_;
     // M11-46: deterministic document.cookie entries, insertion/update ordered.
     std::vector<std::pair<std::string, std::string>> document_cookies_;
     // Step 5i: per-generation replaced window aliases (parent/frames/opener).
