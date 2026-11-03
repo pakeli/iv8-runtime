@@ -65,10 +65,12 @@ def test_js_document_surface_not_exceeded():
             assert page.eval(f"typeof document.{member}") == "function"
         # ... and nothing beyond them leaked. (document.forms/images/links/anchors/
         # embeds/applets arrived in M4-B-7..12; plugins / all stay out.)
-        for member in ("createElementNS", "createTextNode", "createComment",
-                       "createDocumentFragment", "importNode", "adoptNode",
+        for member in ("createElementNS", "importNode", "adoptNode",
                        "write", "plugins", "all"):
             assert page.eval(f"typeof document.{member}") == "undefined"
+        for member in ("createTextNode", "createComment",
+                       "createDocumentFragment"):
+            assert page.eval(f"typeof document.{member}") == "function"
         # A query collection is a plain Array — no HTMLCollection extras.
         assert page.eval("Array.isArray(document.querySelectorAll('div'))") is True
         for member in ("item", "namedItem"):
@@ -299,14 +301,13 @@ def test_repeated_failed_dispose_contract():
         p.eval("1")
 
 
-# --- (6) approved textContent boundary: structural-live, aggregate NOT re-derived
+# --- (6) live textContent boundary (M11-48 supersedes the element-only rule)
 
 @on_only
 def test_text_content_boundary_pinned():
-    # M4-A-3 approved boundary (docs/m4_a_summary.md §7): appendChild / removeChild
-    # update the STRUCTURAL surface immediately, but do NOT recompute a container's
-    # aggregate textContent. This pins the current口径 — it does not re-open the
-    # text-node model.
+    # M11-48 supersedes the M4-A "aggregate is not re-derived" boundary: textContent
+    # is computed live from text-node descendants, so structural edits that add or
+    # remove text are reflected immediately.
     html = ("<html><body><div id='root'>TEXT"
             "<span id='a'></span><span id='b'></span></div></body></html>")
     with iv8.Page() as page:
@@ -318,6 +319,7 @@ def test_text_content_boundary_pinned():
               const before = root.textContent;
               const extra = document.createElement('span');
               extra.setAttribute('id', 'extra');
+              extra.appendChild(document.createTextNode('X'));
               root.appendChild(extra);
               const idsAfterAppend = Array.from(root.children).map(e => e.id).join('|');
               const tcAfterAppend = root.textContent;
@@ -326,8 +328,8 @@ def test_text_content_boundary_pinned():
               const tcAfterRemove = root.textContent;
               return [idsAfterAppend,               // structure IS live
                       idsAfterRemove,
-                      before === tcAfterAppend,      // aggregate NOT re-derived
-                      before === tcAfterRemove].join(';');
+                      before === tcAfterAppend,      // live text added -> changed
+                      tcAfterAppend === tcAfterRemove].join(';');
             })();
             """
-        ) == "a|b|extra;b|extra;true;true"
+        ) == "a|b|extra;b|extra;false;true"

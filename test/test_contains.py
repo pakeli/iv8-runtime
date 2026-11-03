@@ -1,9 +1,9 @@
 """M4-B-2 acceptance tests: element.contains(node) — minimal containment.
 
-`a.contains(b)` is true iff b is an element in the current tree that is a itself or
-a descendant of a (walking parentNode upward), else false. A non-element argument
-(null / undefined / primitive / plain object / document / window / Event) returns
-false, no type error. Purely structural over the live tree (reflects M4-A-3 edits),
+`a.contains(b)` is true iff b is this node or a descendant of it (walking
+parentNode upward), else false. M11-48 accepts text/comment/fragment node
+arguments; primitives, plain objects, document, window, and Event return false
+without a type error. Purely structural over the live tree (reflects M4-A-3 edits),
 independent of isConnected (a detached parent contains its detached child). JS-side
 only; no new Python surface, no document.contains / compareDocumentPosition /
 getRootNode.

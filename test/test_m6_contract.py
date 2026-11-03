@@ -211,7 +211,7 @@ def test_repeated_failed_dispose_contract():
         p.eval("document.getElementById('f').reset()")
 
 
-# --- (6) approved textContent boundary did not regress --------------------------
+# --- (6) live textContent after M11-48 ------------------------------------------
 
 @on_only
 def test_text_content_boundary_not_regressed():
@@ -224,9 +224,11 @@ def test_text_content_boundary_not_regressed():
             (() => {
               const root = document.getElementById('root');
               const before = root.textContent;
-              root.appendChild(document.createElement('span'));   // structural edit
+              const extra = document.createElement('span');
+              extra.appendChild(document.createTextNode('X'));
+              root.appendChild(extra);                            // structural edit
               return [root.childElementCount === 2,                // structure live
-                      root.textContent === before].join(',');      // aggregate NOT re-derived
+                      root.textContent !== before].join(',');      // textContent live
             })();
             """
         ) == "true,true"

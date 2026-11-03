@@ -1,11 +1,22 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
 #include "iv8/v8_headers.h"
 
 namespace iv8 {
+
+// M11-48: DOM node kinds. Numeric values match the DOM Node.nodeType values the
+// runtime exposes; None marks a host object that is not a DOM node.
+enum class NodeKind : std::uint8_t {
+    None = 0,
+    Element = 1,
+    Text = 3,
+    Comment = 8,
+    DocumentFragment = 11,
+};
 
 // M2-1 Host Object Framework — reusable base for a native-backed JS object.
 //
@@ -64,11 +75,12 @@ public:
     // context/isolate are torn down. Must be noexcept (teardown never throws).
     virtual void release_v8_handles() noexcept {}
 
-    // M4-A-3: whether this host is an element host object. Lets a host method that
-    // receives another host object as an argument (tree editing) identify element
-    // arguments without RTTI/dynamic_cast (which V8-linked builds may compile with
-    // -fno-rtti). Default false; ElementHost overrides to true.
-    virtual bool is_element() const { return false; }
+    // M11-48: whether this host backs a DOM node, and which kind. Lets a host
+    // method that receives another host object as an argument (tree editing)
+    // identify node arguments without RTTI/dynamic_cast (which V8-linked builds
+    // may compile with -fno-rtti). Default: not a node.
+    virtual bool is_node() const { return false; }
+    virtual NodeKind node_kind() const { return NodeKind::None; }
 
     // Host-access trace metadata (native only; no JS-visible properties). The
     // default is used for abstract/never-installed hosts; concrete hosts override

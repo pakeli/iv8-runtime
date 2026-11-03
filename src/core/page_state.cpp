@@ -1387,42 +1387,13 @@ std::string ascii_upper(std::string s) {
     return s;
 }
 
-// Inner text of the first <title>...</title> (case-insensitive tags), else "".
-std::string extract_title(const std::string& html) {
-    const std::string lower = ascii_lower(html);
-    const std::size_t open = lower.find("<title>");
-    if (open == std::string::npos) {
-        return std::string();
-    }
-    const std::size_t inner = open + 7;  // strlen("<title>")
-    const std::size_t close = lower.find("</title>", inner);
-    if (close == std::string::npos) {
-        return std::string();
-    }
-    return html.substr(inner, close - inner);
-}
-
-// Naive tag strip (drop every <...> span). Used for the M2-7 textContent
-// aggregate. No entity decoding / script-style handling / whitespace norm.
-std::string strip_tags(const std::string& s) {
-    std::string out;
-    out.reserve(s.size());
-    bool in_tag = false;
-    for (char c : s) {
-        if (c == '<') {
-            in_tag = true;
-        } else if (c == '>') {
-            in_tag = false;
-        } else if (!in_tag) {
-            out.push_back(c);
-        }
-    }
-    return out;
-}
-
-// A minimal HTML element node. Only what M2-6/M2-7 queries need — no full DOM.
+// A minimal HTML node. Only what M2-6/M2-7 queries need — no full DOM.
 struct DomNode {
-    std::string tag;                   // lowercased tag name
+    // M11-48: node kind. Elements are the default; Text/Comment use `data` as
+    // their character data; DocumentFragment is a detached container.
+    NodeKind kind = NodeKind::Element;
+    std::string tag;                   // lowercased tag name (element only)
+    std::string data;                  // M11-48 Text/Comment character data
     std::string id;                    // id attribute value, or ""
     bool has_id = false;               // whether an id attribute was present
     std::string class_name;            // raw class attribute value, or ""
@@ -1435,7 +1406,6 @@ struct DomNode {
     // id/class, which keep their dedicated fields (getAttribute routes those to
     // the fields, everything else to this table). Duplicate names: last wins.
     std::unordered_map<std::string, std::string> attributes;
-    std::string text_content;          // M2-7 aggregate text (precomputed)
     // M5-3/M5-4 <input>/<textarea>.value runtime slot. Initialized ONCE at
     // parse/create time (<input> from the `value` attribute, <textarea> from its
     // text content), then decoupled: value = ... writes here only. Only meaningful
@@ -1493,11 +1463,97 @@ struct DomNode {
     std::string initial_value;
     bool initial_selected = false;
     bool initial_checked = false;
-    DomNode* parent = nullptr;         // owning parent element, or null (root)
+    DomNode* parent = nullptr;         // owning parent node, or null (root)
     std::vector<DomNode*> children;    // owned by the DocumentHost node pool
-    std::size_t content_start = 0;     // [start,end) of inner HTML in the source
-    std::size_t content_end = 0;
 };
+
+// M11-48: node-kind helpers shared by the parser, hosts, selectors, and mutation
+// records. `text_content_of` is the live DOM textContent: Text nodes contribute
+// their data, Element/Fragment nodes concatenate descendant Text data in tree
+// order, and Comment data is excluded from a parent's aggregate (but returned
+// for the comment node itself).
+bool is_element_node(const DomNode* node) {
+    return node != nullptr && node->kind == NodeKind::Element;
+}
+bool is_character_data_node(const DomNode* node) {
+    return node != nullptr && (node->kind == NodeKind::Text ||
+                               node->kind == NodeKind::Comment);
+}
+std::string text_content_of(const DomNode* node) {
+    if (node == nullptr) {
+        return std::string();
+    }
+    if (node->kind == NodeKind::Text || node->kind == NodeKind::Comment) {
+        return node->data;
+    }
+    std::string text;
+    for (const DomNode* child : node->children) {
+        if (child->kind == NodeKind::Text) {
+            text += child->data;
+        } else if (child->kind == NodeKind::Element ||
+                   child->kind == NodeKind::DocumentFragment) {
+            text += text_content_of(child);
+        }
+    }
+    return text;
+}
+std::vector<DomNode*> element_children_of(const DomNode* node) {
+    std::vector<DomNode*> out;
+    if (node == nullptr) {
+        return out;
+    }
+    for (DomNode* child : node->children) {
+        if (child->kind == NodeKind::Element) {
+            out.push_back(child);
+        }
+    }
+    return out;
+}
+DomNode* sibling_node(const DomNode* node, int direction) {
+    if (node == nullptr || node->parent == nullptr) {
+        return nullptr;
+    }
+    const std::vector<DomNode*>& siblings = node->parent->children;
+    for (std::size_t i = 0; i < siblings.size(); ++i) {
+        if (siblings[i] != node) {
+            continue;
+        }
+        if (direction < 0 && i > 0) {
+            return siblings[i - 1];
+        }
+        if (direction > 0 && i + 1 < siblings.size()) {
+            return siblings[i + 1];
+        }
+        return nullptr;
+    }
+    return nullptr;
+}
+DomNode* element_sibling_node(const DomNode* node, int direction) {
+    if (node == nullptr || node->parent == nullptr) {
+        return nullptr;
+    }
+    const std::vector<DomNode*>& siblings = node->parent->children;
+    for (std::size_t i = 0; i < siblings.size(); ++i) {
+        if (siblings[i] != node) {
+            continue;
+        }
+        if (direction < 0) {
+            for (std::size_t j = i; j > 0; --j) {
+                if (siblings[j - 1]->kind == NodeKind::Element) {
+                    return siblings[j - 1];
+                }
+            }
+            return nullptr;
+        }
+        for (std::size_t j = i + 1; j < siblings.size(); ++j) {
+            if (siblings[j]->kind == NodeKind::Element) {
+                return siblings[j];
+            }
+        }
+        return nullptr;
+    }
+    return nullptr;
+}
 
 // M3-5 script descriptor extracted from HTML in document order. An inline script
 // has has_src == false and its JS source in `code`; a `<script src>` has
@@ -1594,34 +1650,95 @@ void parse_attributes(const std::string& attrs, DomNode& node) {
     }
 }
 
-// Find the next case-insensitive "</script" at or after `from`, or npos. Used to
-// treat <script> as a raw-text element (its body is not tag-parsed), so inline JS
-// containing '<' / '>' is captured verbatim.
-std::size_t find_script_close(const std::string& html, std::size_t from) {
-    static const char kNeedle[] = "</script";
-    const std::size_t needle_len = sizeof(kNeedle) - 1;
+// Find the next case-insensitive "</tag" whose name is followed by whitespace
+// or '>', at or after `from`; npos when absent. Used for raw-text and RCDATA
+// elements so their bodies are not tag-parsed.
+std::size_t find_raw_text_close(const std::string& html, std::size_t from,
+                                const std::string& tag) {
     const std::size_t n = html.size();
-    for (std::size_t p = from; p + needle_len <= n; ++p) {
+    const std::size_t tag_len = tag.size();
+    for (std::size_t p = from; p + 2 + tag_len <= n; ++p) {
+        if (html[p] != '<' || html[p + 1] != '/') {
+            continue;
+        }
         bool match = true;
-        for (std::size_t q = 0; q < needle_len; ++q) {
-            const char c = static_cast<char>(
-                std::tolower(static_cast<unsigned char>(html[p + q])));
-            if (c != kNeedle[q]) {
+        for (std::size_t q = 0; q < tag_len; ++q) {
+            const char c = static_cast<char>(std::tolower(
+                static_cast<unsigned char>(html[p + 2 + q])));
+            if (c != tag[q]) {
                 match = false;
                 break;
             }
         }
-        if (match) {
+        if (!match) {
+            continue;
+        }
+        const std::size_t after = p + 2 + tag_len;
+        if (after >= n || html[after] == '>' ||
+            std::isspace(static_cast<unsigned char>(html[after]))) {
             return p;
         }
     }
     return std::string::npos;
 }
 
-// Minimal tag-stack HTML parse into a node forest. Text/comments/doctype are
-// skipped; only start/end tags build structure. NOT HTML5-conformant. M3-5:
-// <script> is handled as a raw-text element (its body is captured verbatim, not
-// tag-parsed) and every script is appended to `scripts` in document order.
+// Attach a freshly created node to the current parse position (top level when
+// the stack is empty, otherwise the innermost open element).
+DomNode* attach_parsed_node(std::vector<std::unique_ptr<DomNode>>& pool,
+                            std::vector<DomNode*>& roots,
+                            std::vector<DomNode*>& stack,
+                            std::unique_ptr<DomNode> node) {
+    DomNode* raw = node.get();
+    pool.push_back(std::move(node));
+    if (stack.empty()) {
+        roots.push_back(raw);
+    } else {
+        raw->parent = stack.back();
+        stack.back()->children.push_back(raw);
+    }
+    return raw;
+}
+
+// M11-48: emit a parsed Text node, merging with an immediately preceding Text
+// sibling so adjacent raw runs do not produce multiple text nodes.
+void append_parsed_text(std::vector<std::unique_ptr<DomNode>>& pool,
+                        std::vector<DomNode*>& roots,
+                        std::vector<DomNode*>& stack,
+                        const std::string& text) {
+    if (text.empty()) {
+        return;
+    }
+    DomNode* last = nullptr;
+    if (stack.empty()) {
+        if (!roots.empty()) last = roots.back();
+    } else if (!stack.back()->children.empty()) {
+        last = stack.back()->children.back();
+    }
+    if (last != nullptr && last->kind == NodeKind::Text) {
+        last->data += text;
+        return;
+    }
+    auto node = std::make_unique<DomNode>();
+    node->kind = NodeKind::Text;
+    node->data = text;
+    (void)attach_parsed_node(pool, roots, stack, std::move(node));
+}
+
+void append_parsed_comment(std::vector<std::unique_ptr<DomNode>>& pool,
+                           std::vector<DomNode*>& roots,
+                           std::vector<DomNode*>& stack,
+                           const std::string& text) {
+    auto node = std::make_unique<DomNode>();
+    node->kind = NodeKind::Comment;
+    node->data = text;
+    (void)attach_parsed_node(pool, roots, stack, std::move(node));
+}
+
+// Minimal tag-stack HTML parse into a node forest. M11-48: text and comment
+// nodes are emitted in source order; doctype/other declarations are skipped.
+// NOT HTML5-conformant. M3-5: <script> (and M11-48 <style>/<title>/<textarea>)
+// are raw-text/RCDATA elements whose bodies are captured verbatim, and every
+// script is appended to `scripts` in document order.
 void parse_html(const std::string& html,
                 std::vector<std::unique_ptr<DomNode>>& pool,
                 std::vector<DomNode*>& roots,
@@ -1631,13 +1748,19 @@ void parse_html(const std::string& html,
     std::size_t i = 0;
     while (i < n) {
         if (html[i] != '<') {
-            i++;
+            const std::size_t next = html.find('<', i);
+            const std::size_t end = (next == std::string::npos) ? n : next;
+            append_parsed_text(pool, roots, stack,
+                               html.substr(i, end - i));
+            i = end;
             continue;
         }
-        if (i + 1 >= n) break;
+        if (i + 1 >= n) {
+            append_parsed_text(pool, roots, stack, "<");
+            break;
+        }
         const char c1 = html[i + 1];
         if (c1 == '/') {  // end tag
-            const std::size_t end_tag_start = i;  // '<' of the closing tag
             std::size_t j = i + 2;
             const std::size_t ns = j;
             while (j < n && html[j] != '>' &&
@@ -1649,18 +1772,40 @@ void parse_html(const std::string& html,
             i = j;
             for (std::size_t k = stack.size(); k-- > 0;) {
                 if (stack[k]->tag == name) {
-                    stack[k]->content_end = end_tag_start;  // inner HTML range end
                     stack.resize(k);
                     break;
                 }
             }
             continue;
         }
-        if (c1 == '!') {  // comment / doctype
+        if (c1 == '!') {  // comment / doctype / other declaration
+            if (html.compare(i, 4, "<!--") == 0) {
+                const std::size_t close = html.find("-->", i + 4);
+                const std::size_t data_end =
+                    (close == std::string::npos) ? n : close;
+                append_parsed_comment(
+                    pool, roots, stack,
+                    html.substr(i + 4, data_end - (i + 4)));
+                i = (close == std::string::npos) ? n : close + 3;
+                continue;
+            }
             std::size_t j = i + 2;
             while (j < n && html[j] != '>') j++;
             if (j < n) j++;
             i = j;
+            continue;
+        }
+        if (c1 == '?') {  // processing-instruction-like; skip as a bogus comment
+            std::size_t j = i + 2;
+            while (j < n && html[j] != '>') j++;
+            if (j < n) j++;
+            i = j;
+            continue;
+        }
+        if (!std::isalpha(static_cast<unsigned char>(c1))) {
+            // A literal '<' that cannot start a tag is text (e.g. "a < b").
+            append_parsed_text(pool, roots, stack, "<");
+            i++;
             continue;
         }
         // start tag
@@ -1681,8 +1826,6 @@ void parse_html(const std::string& html,
 
         auto node = std::make_unique<DomNode>();
         node->tag = tag;
-        node->content_start = i;   // just past '>'
-        node->content_end = i;     // default empty; set when the end tag closes it
         parse_attributes(body, *node);
         // M5-3 / M5-6: seed <input>/<button>.value once from the parsed `value`
         // attribute (absent -> ""). Thereafter the runtime .value slot is decoupled
@@ -1705,32 +1848,36 @@ void parse_html(const std::string& html,
             node->checked =
                 node->attributes.find("checked") != node->attributes.end();
         }
-        DomNode* raw = node.get();
-        pool.push_back(std::move(node));
-        if (stack.empty()) {
-            roots.push_back(raw);
-        } else {
-            raw->parent = stack.back();
-            stack.back()->children.push_back(raw);
-        }
+        DomNode* raw = attach_parsed_node(pool, roots, stack, std::move(node));
 
-        // M3-5: <script> is a raw-text element. Consume its body verbatim up to
-        // </script> (so inline JS with '<'/'>' is not mis-parsed as tags), record
-        // the script in document order, and do NOT push it on the stack. A
-        // self-closing <script/> carries no body and no script is recorded.
-        if (tag == "script" && !self_closing) {
-            const std::size_t close = find_script_close(html, i);
-            const std::size_t content_end = (close == std::string::npos) ? n : close;
-            raw->content_end = content_end;
-            ScriptRecord record;
-            record.has_src = raw->has_src;
-            record.src = raw->src;
-            record.node = raw;  // M3-7: backing node for document.currentScript
-            if (!raw->has_src) {  // inline: capture the raw JS source
-                record.code = html.substr(i, content_end - i);
+        // M3-5/M11-48: raw-text (script, style) and RCDATA (title, textarea)
+        // elements consume their body verbatim. A Text child represents the
+        // content; the elements are not pushed on the tag stack.
+        if (!self_closing &&
+            (tag == "script" || tag == "style" || tag == "title" ||
+             tag == "textarea")) {
+            const std::size_t close = find_raw_text_close(html, i, tag);
+            const std::size_t content_end =
+                (close == std::string::npos) ? n : close;
+            if (content_end > i) {
+                auto text = std::make_unique<DomNode>();
+                text->kind = NodeKind::Text;
+                text->data = html.substr(i, content_end - i);
+                text->parent = raw;
+                raw->children.push_back(text.get());
+                pool.push_back(std::move(text));
             }
-            scripts.push_back(std::move(record));
-            // Advance past the </script ...> end tag.
+            if (tag == "script") {
+                ScriptRecord record;
+                record.has_src = raw->has_src;
+                record.src = raw->src;
+                record.node = raw;  // M3-7: backing node for document.currentScript
+                if (!raw->has_src) {  // inline: capture the raw JS source
+                    record.code = html.substr(i, content_end - i);
+                }
+                scripts.push_back(std::move(record));
+            }
+            // Advance past the </tag ...> end tag.
             std::size_t k = (close == std::string::npos) ? n : close;
             while (k < n && html[k] != '>') k++;
             if (k < n) k++;
@@ -1743,17 +1890,11 @@ void parse_html(const std::string& html,
         }
     }
 
-    // Precompute textContent for every node: inner-HTML range with tags stripped
-    // (a naive aggregate; see docs). Void/self-closing/unclosed -> empty.
+    // M5-4: seed <textarea>.value once from its initial text content (empty ->
+    // ""). Thereafter the runtime .value slot is decoupled from textContent.
     for (const std::unique_ptr<DomNode>& node : pool) {
-        if (node->content_end > node->content_start) {
-            node->text_content = strip_tags(html.substr(
-                node->content_start, node->content_end - node->content_start));
-        }
-        // M5-4: seed <textarea>.value once from its initial text content (empty ->
-        // ""). Thereafter the runtime .value slot is decoupled from textContent.
-        if (node->tag == "textarea") {
-            node->value = node->text_content;
+        if (node->kind == NodeKind::Element && node->tag == "textarea") {
+            node->value = text_content_of(node.get());
         }
     }
 }
@@ -1824,7 +1965,7 @@ std::string option_value_of(const DomNode* option) {
     if (it != option->attributes.end()) {
         return it->second;
     }
-    return option->text_content;
+    return text_content_of(option);
 }
 
 // M7-3: minimal <form>.method normalization. ASCII-lowercase the raw string; if it
@@ -2533,6 +2674,9 @@ bool selector_match_attribute(const DomNode* node,
 
 bool selector_match_compound(const DomNode* node,
                              const SelectorCompound& selector) {
+    if (!is_element_node(node)) {  // M11-48: selectors match elements only
+        return false;
+    }
     if (!selector.tag.empty() && node->tag != selector.tag) {
         return false;
     }
@@ -2562,7 +2706,13 @@ const DomNode* selector_previous_sibling(const DomNode* node) {
     const std::vector<DomNode*>& siblings = node->parent->children;
     for (std::size_t i = 1; i < siblings.size(); i++) {
         if (siblings[i] == node) {
-            return siblings[i - 1];
+            // M11-48: sibling combinators skip Text/Comment nodes.
+            for (std::size_t j = i; j > 0; --j) {
+                if (is_element_node(siblings[j - 1])) {
+                    return siblings[j - 1];
+                }
+            }
+            return nullptr;
         }
     }
     return nullptr;
@@ -2638,10 +2788,13 @@ std::function<bool(const DomNode*)> selector_predicate(const std::string& raw) {
 // getElementsByTagName predicate: ASCII case-insensitive tag; "*" = every element.
 std::function<bool(const DomNode*)> tag_predicate(const std::string& raw) {
     if (raw == "*") {
-        return [](const DomNode*) { return true; };
+        // M11-48: tag queries and the universal selector only match elements.
+        return [](const DomNode* n) { return is_element_node(n); };
     }
     const std::string tag = ascii_lower(raw);
-    return [tag](const DomNode* n) { return n->tag == tag; };
+    return [tag](const DomNode* n) {
+        return n->kind == NodeKind::Element && n->tag == tag;
+    };
 }
 
 // M4-A-3: unlink `child` from its current parent's children (if any) and clear
@@ -2722,7 +2875,7 @@ class DocumentHost;  // ElementHost holds a back-pointer to its document
 // generation (DocumentHost's pools are never reallocated); the JS MutationRecord
 // object is built at delivery/takeRecords() time.
 struct MutationRecordData {
-    enum class Type { ChildList, Attributes };
+    enum class Type { ChildList, Attributes, CharacterData };
     Type type = Type::ChildList;
     DomNode* target = nullptr;
     std::vector<DomNode*> added;
@@ -2741,6 +2894,8 @@ struct MutationObserverRegistration {
     bool attributes = false;
     bool subtree = false;
     bool attribute_old_value = false;
+    bool character_data = false;
+    bool character_data_old_value = false;
     bool has_attribute_filter = false;
     std::vector<std::string> attribute_filter;
 };
@@ -3271,27 +3426,50 @@ struct ClassListBinding {
     DomNode* node = nullptr;
 };
 
+// M11-48: common base for every JS wrapper that backs a DomNode (element,
+// text/comment character data, document fragment). Node arguments are identified
+// without RTTI through is_node(); node() is public for DocumentHost helpers.
+class NodeHost : public EventTargetHost {
+public:
+    NodeHost(DomNode* node, DocumentHost* document)
+        : node_(node), document_(document) {}
+
+    bool is_node() const override { return true; }
+    NodeKind node_kind() const override { return node_->kind; }
+    DomNode* node() const { return node_; }
+    DocumentHost* document() const { return document_; }
+
+    // Recover the backing DomNode* from any node-host argument, or nullptr.
+    static DomNode* node_of_arg(v8::Local<v8::Value> value) {
+        HostObject* host = host_object_backing(value);
+        if (host == nullptr || !host->is_node()) {
+            return nullptr;
+        }
+        return static_cast<NodeHost*>(host)->node_;
+    }
+
+protected:
+    DomNode* node_;            // owned by document_ (lives for the page generation)
+    DocumentHost* document_;
+};
+
 // M2-6/M2-7 element host object. Read-only, minimal node/element surface:
 // tagName / nodeName / nodeType / id / className / textContent + parentNode /
 // childNodes / children + getAttribute / hasAttribute. No mutation, no full
 // Node/Element layer. parent/child accessors wrap related nodes back through the
 // owning DocumentHost. Methods are defined out-of-line (below DocumentHost).
-class ElementHost : public EventTargetHost {
+class ElementHost : public NodeHost {
 public:
     ElementHost(DomNode* node, DocumentHost* document)
-        : node_(node), document_(document) {}
+        : NodeHost(node, document) {}
 
     std::string global_name() const override { return std::string(); }  // never global
-    bool is_element() const override { return true; }  // M4-A-3 arg identification
     std::string trace_object_type() const override { return "element"; }
     std::string trace_label() const override { return node_->tag; }
 
-    // M11-5: read-only accessors used by the MutationObserver argument checks.
-    DomNode* node() const { return node_; }
-    DocumentHost* document() const { return document_; }
     std::vector<std::string> property_names() const override {
         std::vector<std::string> names = {
-            "tagName",     "nodeName",   "nodeType",   "id",
+            "tagName",     "nodeName",   "nodeType",   "nodeValue", "id",
             "className",   "textContent", "parentNode", "childNodes",
             "children",
             // M4-A-6 connectivity / element-sibling navigation.
@@ -3523,21 +3701,92 @@ public:
                         v8::Local<v8::Object> receiver) override;
 
 private:
-    // M4-A-3: recover the backing DomNode* from a JS element-host argument, or
-    // nullptr if it is not an element host object (a non-element host object such
-    // as document, a plain JS value, etc.). Uses is_element() (no RTTI); the
-    // static_cast is safe because only ElementHost returns is_element()==true.
-    // Same-class access reads node_.
+    // M4-A-3/M11-48: shared node-argument helper lives in NodeHost::node_of_arg.
     DomNode* node_of_arg(v8::Local<v8::Value> value) {
-        HostObject* host = host_object_backing(value);
-        if (host == nullptr || !host->is_element()) {
-            return nullptr;
-        }
-        return static_cast<ElementHost*>(host)->node_;
+        return NodeHost::node_of_arg(value);
+    }
+};
+
+// M11-48: Text/Comment host. Both kinds share the character-data surface; the
+// backing node's kind selects the DOM nodeType/nodeName and trace labels.
+class CharacterDataHost : public NodeHost {
+public:
+    CharacterDataHost(DomNode* node, DocumentHost* document)
+        : NodeHost(node, document) {}
+
+    std::string global_name() const override { return std::string(); }
+    std::string trace_object_type() const override {
+        return node_->kind == NodeKind::Text ? "text" : "comment";
+    }
+    std::string trace_label() const override {
+        return node_->kind == NodeKind::Text ? "#text" : "#comment";
+    }
+    std::vector<std::string> property_names() const override {
+        return {"nodeType",       "nodeName",     "nodeValue",
+                "textContent",    "data",         "length",
+                "parentNode",     "parentElement", "previousSibling",
+                "nextSibling",    "childNodes",   "firstChild",
+                "lastChild",      "ownerDocument", "isConnected"};
+    }
+    std::vector<std::string> writable_property_names() const override {
+        return {"nodeValue", "textContent", "data"};
+    }
+    std::vector<std::string> method_names() const override {
+        return {"remove",     "cloneNode", "isSameNode", "isEqualNode",
+                "contains",   "hasChildNodes"};
     }
 
-    DomNode* node_;            // owned by document_ (lives for the page generation)
-    DocumentHost* document_;
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context> context,
+                                      const std::string& name) override;
+    void set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                      const std::string& name,
+                      v8::Local<v8::Value> value) override;
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args) override;
+};
+
+// M11-48: detached DocumentFragment host. It owns children like an element but
+// is never attached itself; inserting it moves its children into the target.
+class DocumentFragmentHost : public NodeHost {
+public:
+    DocumentFragmentHost(DomNode* node, DocumentHost* document)
+        : NodeHost(node, document) {}
+
+    std::string global_name() const override { return std::string(); }
+    std::string trace_object_type() const override { return "document_fragment"; }
+    std::string trace_label() const override { return "#document-fragment"; }
+    std::vector<std::string> property_names() const override {
+        return {"nodeType",        "nodeName",        "nodeValue",
+                "textContent",     "childNodes",      "children",
+                "parentNode",      "parentElement",   "firstChild",
+                "lastChild",       "firstElementChild", "lastElementChild",
+                "childElementCount", "previousSibling", "nextSibling",
+                "ownerDocument",   "isConnected"};
+    }
+    std::vector<std::string> writable_property_names() const override {
+        return {"textContent"};
+    }
+    std::vector<std::string> method_names() const override {
+        return {"appendChild",      "removeChild",    "insertBefore",
+                "replaceChild",     "remove",         "hasChildNodes",
+                "cloneNode",        "isSameNode",     "isEqualNode",
+                "contains",         "querySelector",  "querySelectorAll",
+                "getElementById"};
+    }
+
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context> context,
+                                      const std::string& name) override;
+    void set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                      const std::string& name,
+                      v8::Local<v8::Value> value) override;
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args) override;
 };
 
 // M2-6 document host object (M2-7 hands out node-capable elements). Owns the
@@ -3546,11 +3795,13 @@ private:
 class DocumentHost : public EventTargetHost {
 public:
     DocumentHost(const std::string& html, std::string url, PageState* page)
-        : page_(page), url_(std::move(url)), title_(extract_title(html)) {
+        : page_(page), url_(std::move(url)) {
         parse_html(html, pool_, roots_, scripts_);
-        // M11-47: reflect document.title writes into the first parsed <title>
-        // element (never create one; see docs/m11_47_document_identity.md).
+        // M11-47/M11-48: title reflects the first parsed <title> element live;
+        // title_ remains the fallback for documents without a title element.
         title_node_ = find_tag("title");
+        title_ = title_node_ != nullptr ? text_content_of(title_node_)
+                                        : std::string();
         // M5-5: deterministic initial single-select — within each <select>, keep
         // only the document-order-first pre-selected <option>, clearing the rest.
         // (No auto-select when none is pre-selected: select.value is then "".)
@@ -3660,6 +3911,9 @@ public:
         std::vector<std::string> names = {"getElementById", "querySelector",
                                           "querySelectorAll", "getElementsByTagName",
                                           "createElement",
+                                          // M11-48 node creation.
+                                          "createTextNode", "createComment",
+                                          "createDocumentFragment",
                                           // M4-B-13 / M11-19 class query.
                                           "getElementsByClassName",
                                           // M11-20 name query.
@@ -3671,13 +3925,13 @@ public:
         return names;
     }
 
-    // Release the document's own listener handles AND every wrapped element's
-    // (the ElementHosts are owned here, not in PageState::host_objects_, so the
+    // Release the document's own listener handles AND every wrapped node host's
+    // (node hosts are owned here, not in PageState::host_objects_, so the
     // teardown hook only reaches them through the document).
     void release_v8_handles() noexcept override {
         EventTargetHost::release_v8_handles();
-        for (const std::unique_ptr<ElementHost>& element : elements_) {
-            element->release_v8_handles();
+        for (const std::unique_ptr<NodeHost>& host : node_hosts_) {
+            host->release_v8_handles();
         }
         // M11-5: reset observer-backed persistent handles before isolate disposal.
         for (const std::unique_ptr<MutationObserverState>& observer : observers_) {
@@ -3703,7 +3957,11 @@ public:
                                       v8::Local<v8::Context> context,
                                       const std::string& name) override {
         if (name == "URL") return v8_string(isolate, url_);
-        if (name == "title") return v8_string(isolate, title_);
+        if (name == "title") {
+            return v8_string(isolate, title_node_ != nullptr
+                                          ? text_content_of(title_node_)
+                                          : title_);
+        }
         // M11-47 document identity aliases. documentURI/baseURI are the current
         // generation's base URL (the runtime has no <base href> resolution).
         // defaultView is the single global window; location is the same
@@ -3737,10 +3995,10 @@ public:
                                                        : std::string());
         }
         if (name == "activeElement") {
-            return wrap_element(isolate, context, find_tag("body"));
+            return wrap_node(isolate, context, find_tag("body"));
         }
         if (name == "currentScript") {  // M3-7: element while a HTML script runs, else null
-            return wrap_element(isolate, context, current_script_);
+            return wrap_node(isolate, context, current_script_);
         }
         if (name == "scripts") {  // M3-9: current tree's <script> elements, document order
             std::vector<DomNode*> nodes;
@@ -3751,26 +4009,25 @@ public:
                 v8::Array::New(isolate, static_cast<int>(nodes.size()));
             for (std::size_t k = 0; k < nodes.size(); ++k) {
                 (void)array->Set(context, static_cast<std::uint32_t>(k),
-                                 wrap_element(isolate, context, nodes[k]));
+                                 wrap_node(isolate, context, nodes[k]));
             }
             return array;
         }
         if (name == "documentElement") {
-            return wrap_element(isolate, context, find_tag("html"));
+            return wrap_node(isolate, context, find_tag("html"));
         }
         if (name == "head") {  // M4-A-1: first <head> in the current tree, or null
-            return wrap_element(isolate, context, find_tag("head"));
+            return wrap_node(isolate, context, find_tag("head"));
         }
         if (name == "body") {
-            return wrap_element(isolate, context, find_tag("body"));
+            return wrap_node(isolate, context, find_tag("body"));
         }
         if (name == "children") {  // M4-B-6: document's direct element children
-            // roots_ are the top-level parsed nodes (all elements in this text-node-
-            // free model), in document order — the document's direct children. A
-            // blank generation has none -> []. Reuses the same plain-Array wrapping
-            // as document.scripts / query collections (no HTMLCollection, no
-            // identity guarantee).
-            return elements_array(isolate, context, roots_);
+            // M11-48: roots_ may include top-level Text/Comment nodes; document
+            // children stay element-only, in document order. A blank generation
+            // has none -> []. Same plain-Array wrapping as other collections.
+            return elements_array(isolate, context,
+                                  element_children_of_roots());
         }
         if (name == "forms") {  // M4-B-7: all <form> elements in the current tree
             // Same live-tree collection + plain-Array wrapping as
@@ -3849,26 +4106,12 @@ public:
             page_->set_document_cookie(text);
             return;
         }
-        // M11-47 title = ...: update the document string and reflect it into the
-        // first parsed <title> element, mirroring element.textContent = ... for
-        // the element-only DOM (detach element children; queue non-empty removals).
+        // M11-47/M11-48 title = ...: update the document string and reflect it
+        // into the first parsed <title> element through the shared textContent
+        // setter (which creates/removes Text children and queues the record).
         title_ = text;
-        if (title_node_ == nullptr) {
-            return;
-        }
-        std::vector<DomNode*> removed_children;
-        if (has_mutation_observers()) {
-            removed_children = title_node_->children;
-        }
-        for (DomNode* child : title_node_->children) {
-            child->parent = nullptr;
-        }
-        title_node_->children.clear();
-        title_node_->text_content = text;
-        if (!removed_children.empty()) {
-            std::vector<DomNode*> added_children;
-            queue_child_list(isolate, context, title_node_, added_children,
-                             removed_children, nullptr, nullptr);
+        if (title_node_ != nullptr) {
+            set_text_content(isolate, context, title_node_, text);
         }
     }
 
@@ -3891,10 +4134,10 @@ public:
             }
         }
         if (name == "getElementById") {
-            return wrap_element(isolate, context, find_id(arg));
+            return wrap_node(isolate, context, find_id(arg));
         }
         if (name == "querySelector") {
-            return wrap_element(isolate, context, query(arg));
+            return wrap_node(isolate, context, query(arg));
         }
         if (name == "querySelectorAll") {  // M4-A-1: all matches, document order
             return elements_array(isolate, context, query_all(arg));
@@ -3932,7 +4175,26 @@ public:
             node->tag = ascii_lower(arg);  // arg == String(tag); tagName is UPPER
             DomNode* raw = node.get();
             detached_pool_.push_back(std::move(node));
-            return wrap_element(isolate, context, raw);
+            return wrap_node(isolate, context, raw);
+        }
+        // M11-48: detached Text/Comment nodes and DocumentFragments. The backing
+        // node is owned by the generation's detached pool until inserted (or for
+        // the fragment itself, until the generation ends).
+        if (name == "createTextNode" || name == "createComment") {
+            auto node = std::make_unique<DomNode>();
+            node->kind = name == "createTextNode" ? NodeKind::Text
+                                                  : NodeKind::Comment;
+            node->data = arg;
+            DomNode* raw = node.get();
+            detached_pool_.push_back(std::move(node));
+            return wrap_node(isolate, context, raw);
+        }
+        if (name == "createDocumentFragment") {
+            auto node = std::make_unique<DomNode>();
+            node->kind = NodeKind::DocumentFragment;
+            DomNode* raw = node.get();
+            detached_pool_.push_back(std::move(node));
+            return wrap_node(isolate, context, raw);
         }
         return v8::Undefined(isolate);
     }
@@ -3942,6 +4204,8 @@ public:
     DomNode* clone_detached(DomNode* source, bool deep) {
         auto clone = std::make_unique<DomNode>();
         DomNode* raw = clone.get();
+        raw->kind = source->kind;
+        raw->data = source->data;
         raw->tag = source->tag;
         raw->id = source->id;
         raw->has_id = source->has_id;
@@ -3951,7 +4215,6 @@ public:
         raw->src = source->src;
         raw->has_src = source->has_src;
         raw->attributes = source->attributes;
-        raw->text_content = source->text_content;
         raw->value = source->value;
         raw->selected = source->selected;
         raw->checked = source->checked;
@@ -3963,8 +4226,6 @@ public:
         raw->initial_value = source->initial_value;
         raw->initial_selected = source->initial_selected;
         raw->initial_checked = source->initial_checked;
-        raw->content_start = source->content_start;
-        raw->content_end = source->content_end;
         if (deep) {
             for (DomNode* child : source->children) {
                 DomNode* child_clone = clone_detached(child, true);
@@ -3984,12 +4245,12 @@ public:
         if (a == nullptr || b == nullptr) {
             return false;
         }
-        if (a->tag != b->tag || a->id != b->id || a->has_id != b->has_id ||
+        if (a->kind != b->kind || a->data != b->data || a->tag != b->tag ||
+            a->id != b->id || a->has_id != b->has_id ||
             a->class_name != b->class_name ||
             a->has_class != b->has_class || a->classes != b->classes ||
             a->src != b->src || a->has_src != b->has_src ||
-            a->attributes != b->attributes ||
-            a->text_content != b->text_content || a->value != b->value ||
+            a->attributes != b->attributes || a->value != b->value ||
             a->selected != b->selected || a->checked != b->checked ||
             a->method != b->method || a->action != b->action ||
             a->enctype != b->enctype || a->target != b->target ||
@@ -4010,43 +4271,105 @@ public:
         return true;
     }
 
-    // M11-32: ensure the ElementHost for a node (the same cached host used by
-    // wrap_element), so form-level validation can dispatch invalid events through
-    // that control's listeners even if JS never wrapped it.
-    ElementHost* ensure_element_host(DomNode* node) {
+    // M11-48: one cached host per backing DomNode, dispatched by node kind.
+    NodeHost* ensure_node_host(DomNode* node) {
         const auto it = wrappers_.find(node);
         if (it != wrappers_.end()) {
             return it->second;
         }
-        auto element = std::make_unique<ElementHost>(node, this);
-        ElementHost* host = element.get();
-        elements_.push_back(std::move(element));
+        std::unique_ptr<NodeHost> created;
+        switch (node->kind) {
+            case NodeKind::Text:
+            case NodeKind::Comment:
+                created = std::make_unique<CharacterDataHost>(node, this);
+                break;
+            case NodeKind::DocumentFragment:
+                created = std::make_unique<DocumentFragmentHost>(node, this);
+                break;
+            case NodeKind::Element:
+            default:
+                created = std::make_unique<ElementHost>(node, this);
+                break;
+        }
+        NodeHost* host = created.get();
+        node_hosts_.push_back(std::move(created));
         wrappers_.emplace(node, host);
         return host;
     }
 
-    // Wrap a node as a JS element host object (JS null for nullptr). Public so
-    // ElementHost can wrap parents/children. Wrappers are cached + owned here.
-    v8::Local<v8::Value> wrap_element(v8::Isolate* isolate,
-                                      v8::Local<v8::Context> context,
-                                      DomNode* node) {
-        if (node == nullptr) return v8::Null(isolate);
-        return make_host_object(isolate, context, ensure_element_host(node));
+    // M11-32: ensure the ElementHost for an element (the same cached host used by
+    // node wrapping), so form-level validation can dispatch invalid events through
+    // that control's listeners even if JS never wrapped it.
+    ElementHost* ensure_element_host(DomNode* node) {
+        NodeHost* host = ensure_node_host(node);
+        return static_cast<ElementHost*>(host);
     }
 
-    // Build a plain JS Array of element host objects for `nodes` (same wrapping as
-    // document.scripts — no NodeList/HTMLCollection, no identity guarantee). Public
-    // so ElementHost's M4-A-5 subtree queries reuse it.
-    v8::Local<v8::Array> elements_array(v8::Isolate* isolate,
-                                        v8::Local<v8::Context> context,
-                                        const std::vector<DomNode*>& nodes) {
+    // Wrap a DOM node as its JS host object (JS null for nullptr). Public so node
+    // hosts can wrap parents/children; wrappers are cached + owned here.
+    v8::Local<v8::Value> wrap_node(v8::Isolate* isolate,
+                                   v8::Local<v8::Context> context,
+                                   DomNode* node) {
+        if (node == nullptr) return v8::Null(isolate);
+        return make_host_object(isolate, context, ensure_node_host(node));
+    }
+
+    // Build a plain JS Array of host objects for arbitrary `nodes` (same wrapping
+    // as document.scripts — no NodeList/HTMLCollection, no identity guarantee).
+    v8::Local<v8::Array> nodes_array(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     const std::vector<DomNode*>& nodes) {
         v8::Local<v8::Array> array =
             v8::Array::New(isolate, static_cast<int>(nodes.size()));
         for (std::size_t k = 0; k < nodes.size(); ++k) {
             (void)array->Set(context, static_cast<std::uint32_t>(k),
-                             wrap_element(isolate, context, nodes[k]));
+                             wrap_node(isolate, context, nodes[k]));
         }
         return array;
+    }
+
+    // Element-only collection array. Kept as a separate name so callers that
+    // expect element results stay explicit; the inputs are already element-filtered.
+    v8::Local<v8::Array> elements_array(v8::Isolate* isolate,
+                                        v8::Local<v8::Context> context,
+                                        const std::vector<DomNode*>& nodes) {
+        return nodes_array(isolate, context, nodes);
+    }
+
+    // M11-48: DOM textContent assignment. Replaces all children with zero or one
+    // Text node and queues one childList record (removed old children + the new
+    // Text). Shared by ElementHost, DocumentFragmentHost, and document.title.
+    void set_text_content(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                          DomNode* node, const std::string& text) {
+        if (node == nullptr) {
+            return;
+        }
+        std::vector<DomNode*> removed;
+        if (has_mutation_observers()) {
+            removed = node->children;
+        }
+        for (DomNode* child : node->children) {
+            child->parent = nullptr;
+        }
+        node->children.clear();
+        DomNode* added_text = nullptr;
+        if (!text.empty()) {
+            auto text_node = std::make_unique<DomNode>();
+            text_node->kind = NodeKind::Text;
+            text_node->data = text;
+            text_node->parent = node;
+            added_text = text_node.get();
+            node->children.push_back(added_text);
+            detached_pool_.push_back(std::move(text_node));
+        }
+        if (!removed.empty() || added_text != nullptr) {
+            std::vector<DomNode*> added;
+            if (added_text != nullptr) {
+                added.push_back(added_text);
+            }
+            queue_child_list(isolate, context, node, added, removed, nullptr,
+                             nullptr);
+        }
     }
 
     // M11-5 MutationObserver: per-generation registry. The constructor stores a
@@ -4063,6 +4386,9 @@ public:
     void queue_attribute(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          DomNode* target, const std::string& name,
                          bool has_old_value, const std::string& old_value);
+    void queue_character_data(v8::Isolate* isolate,
+                              v8::Local<v8::Context> context, DomNode* target,
+                              const std::string& old_value);
     v8::Local<v8::Array> build_records_array(
         v8::Isolate* isolate, v8::Local<v8::Context> context,
         const std::vector<MutationRecordData>& records);
@@ -4227,6 +4553,14 @@ public:
         finish_dispatch(isolate, context, event);
     }
 
+    // M11-48: shared Node methods (remove / hasChildNodes / cloneNode /
+    // isSameNode / isEqualNode / contains and the tree-edit methods). Returns
+    // true when `name` was handled and writes the JS result to `out`.
+    bool call_node_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                          DomNode* target, const std::string& name,
+                          const v8::FunctionCallbackInfo<v8::Value>& args,
+                          v8::Local<v8::Value>& out);
+
 private:
     // M11-5: create/enqueue the one pending microtask delivery for `state`.
     void schedule_mutation_delivery(v8::Isolate* isolate,
@@ -4239,7 +4573,7 @@ private:
     void fire_element_hop(v8::Isolate* isolate, v8::Local<v8::Context> context,
                           v8::Local<v8::Object> event, DomNode* node,
                           bool capture) {
-        v8::Local<v8::Value> js = wrap_element(isolate, context, node);
+        v8::Local<v8::Value> js = wrap_node(isolate, context, node);
         if (!js->IsObject()) {
             return;
         }
@@ -4273,6 +4607,17 @@ private:
     DomNode* find_tag(const std::string& tag) const {
         return find_first(roots_,
                           [&](const DomNode* n) { return n->tag == tag; });
+    }
+    // M11-48: roots_ may contain top-level Text/Comment nodes; document.children
+    // stays element-only.
+    std::vector<DomNode*> element_children_of_roots() const {
+        std::vector<DomNode*> out;
+        for (DomNode* root : roots_) {
+            if (root->kind == NodeKind::Element) {
+                out.push_back(root);
+            }
+        }
+        return out;
     }
     DomNode* find_id(const std::string& id) const {
         if (id.empty()) return nullptr;
@@ -4324,8 +4669,8 @@ private:
     // invisible to find_*/collect_* (queries, document.scripts) and to the tree.
     std::vector<std::unique_ptr<DomNode>> detached_pool_;
     std::vector<ScriptRecord> scripts_;  // M3-5 scripts in document order
-    std::vector<std::unique_ptr<ElementHost>> elements_;
-    std::unordered_map<DomNode*, ElementHost*> wrappers_;
+    std::vector<std::unique_ptr<NodeHost>> node_hosts_;
+    std::unordered_map<DomNode*, NodeHost*> wrappers_;
     // M11-5: per-generation MutationObserver state (Globals released through the
     // isolate-alive teardown hook in release_v8_handles()).
     std::vector<std::unique_ptr<MutationObserverState>> observers_;
@@ -4482,6 +4827,52 @@ void DocumentHost::queue_attribute(v8::Isolate* isolate,
     }
 }
 
+void DocumentHost::queue_character_data(v8::Isolate* isolate,
+                                        v8::Local<v8::Context> context,
+                                        DomNode* target,
+                                        const std::string& old_value) {
+    if (observers_.empty()) {
+        return;
+    }
+    for (const std::unique_ptr<MutationObserverState>& observer : observers_) {
+        if (!observer->alive) {
+            continue;
+        }
+        bool matched = false;
+        for (const MutationObserverRegistration& registration :
+             observer->registrations) {
+            if (!registration.character_data) {
+                continue;
+            }
+            bool target_matches = false;
+            if (registration.target_is_document) {
+                target_matches = registration.subtree && is_in_tree(target);
+            } else {
+                target_matches =
+                    registration.target == target ||
+                    (registration.subtree &&
+                     is_self_or_ancestor(registration.target, target));
+            }
+            if (!target_matches) {
+                continue;
+            }
+            MutationRecordData record;
+            record.type = MutationRecordData::Type::CharacterData;
+            record.target = target;
+            record.has_old_value = registration.character_data_old_value;
+            if (record.has_old_value) {
+                record.old_value = old_value;
+            }
+            observer->pending.push_back(std::move(record));
+            matched = true;
+            break;
+        }
+        if (matched) {
+            schedule_mutation_delivery(isolate, context, observer.get());
+        }
+    }
+}
+
 v8::Local<v8::Array> DocumentHost::build_records_array(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
     const std::vector<MutationRecordData>& records) {
@@ -4491,27 +4882,32 @@ v8::Local<v8::Array> DocumentHost::build_records_array(
         const MutationRecordData& record = records[i];
         const bool child_list =
             record.type == MutationRecordData::Type::ChildList;
+        const bool attributes =
+            record.type == MutationRecordData::Type::Attributes;
         v8::Local<v8::Object> object = v8::Object::New(isolate);
         (void)object->Set(
             context, v8_string(isolate, "type"),
-            v8_string(isolate, child_list ? "childList" : "attributes"));
+            v8_string(isolate, child_list
+                                  ? "childList"
+                                  : (attributes ? "attributes"
+                                                : "characterData")));
         (void)object->Set(context, v8_string(isolate, "target"),
-                          wrap_element(isolate, context, record.target));
+                          wrap_node(isolate, context, record.target));
         (void)object->Set(context, v8_string(isolate, "addedNodes"),
-                          elements_array(isolate, context, record.added));
+                          nodes_array(isolate, context, record.added));
         (void)object->Set(context, v8_string(isolate, "removedNodes"),
-                          elements_array(isolate, context, record.removed));
+                          nodes_array(isolate, context, record.removed));
         (void)object->Set(context, v8_string(isolate, "previousSibling"),
-                          wrap_element(isolate, context,
+                          wrap_node(isolate, context,
                                        record.previous_sibling));
         (void)object->Set(context, v8_string(isolate, "nextSibling"),
-                          wrap_element(isolate, context, record.next_sibling));
-        if (child_list) {
-            (void)object->Set(context, v8_string(isolate, "attributeName"),
-                              v8::Null(isolate));
-        } else {
+                          wrap_node(isolate, context, record.next_sibling));
+        if (attributes) {
             (void)object->Set(context, v8_string(isolate, "attributeName"),
                               v8_string(isolate, record.attribute_name));
+        } else {
+            (void)object->Set(context, v8_string(isolate, "attributeName"),
+                              v8::Null(isolate));
         }
         (void)object->Set(context, v8_string(isolate, "attributeNamespace"),
                           v8::Null(isolate));
@@ -4645,16 +5041,16 @@ void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (state->owner != nullptr &&
         static_cast<HostObject*>(state->owner) == host) {
         target_is_document = true;
-    } else if (host->is_element()) {
-        ElementHost* element = static_cast<ElementHost*>(host);
-        if (element->document() != state->owner) {
+    } else if (host->is_node()) {
+        NodeHost* node_host = static_cast<NodeHost*>(host);
+        if (node_host->document() != state->owner) {
             throw_mo_type_error(isolate, "observe: target is from another page");
             return;
         }
-        target_node = element->node();
+        target_node = node_host->node();
     } else {
         throw_mo_type_error(isolate,
-                            "observe: target must be an element or document");
+                            "observe: target must be a node or document");
         return;
     }
     if (info.Length() < 2 || !info[1]->IsObject()) {
@@ -4749,6 +5145,8 @@ void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
     registration.attributes = attributes;
     registration.subtree = subtree;
     registration.attribute_old_value = attribute_old_value;
+    registration.character_data = character_data;
+    registration.character_data_old_value = character_data_old_value;
     registration.has_attribute_filter = has_filter;
     registration.attribute_filter = std::move(filter);
     bool replaced = false;
@@ -5105,6 +5503,503 @@ v8::Local<v8::Value> make_class_list(v8::Isolate* isolate,
     return list;
 }
 
+// M11-48: shared Node/tree methods used by every node host. The receiver is a
+// plain DomNode*; argument validation accepts any node kind. DocumentFragment
+// arguments insert/move their children instead of the fragment itself.
+bool DocumentHost::call_node_method(
+    v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* target,
+    const std::string& name, const v8::FunctionCallbackInfo<v8::Value>& args,
+    v8::Local<v8::Value>& out) {
+    const auto type_error = [&](const char* message) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8_string(isolate, message).As<v8::String>()));
+        out = v8::Undefined(isolate);
+        return true;
+    };
+    const auto arg = [&](int index) {
+        return args.Length() > index ? args[index] : v8::Local<v8::Value>();
+    };
+    if (name == "hasChildNodes") {
+        out = v8::Boolean::New(isolate, !target->children.empty());
+        return true;
+    }
+    if (name == "cloneNode") {
+        const bool deep = args.Length() > 0 && args[0]->BooleanValue(isolate);
+        out = wrap_node(isolate, context, clone_detached(target, deep));
+        return true;
+    }
+    if (name == "isSameNode" || name == "isEqualNode") {
+        DomNode* other = NodeHost::node_of_arg(arg(0));
+        if (other == nullptr) {
+            out = v8::False(isolate);
+            return true;
+        }
+        out = v8::Boolean::New(
+            isolate, name == "isSameNode" ? other == target
+                                          : nodes_equal(target, other));
+        return true;
+    }
+    if (name == "contains") {
+        DomNode* other = NodeHost::node_of_arg(arg(0));
+        bool result = false;
+        for (DomNode* n = other; n != nullptr; n = n->parent) {
+            if (n == target) {
+                result = true;
+                break;
+            }
+        }
+        out = v8::Boolean::New(isolate, result);
+        return true;
+    }
+    if (name == "remove") {
+        DomNode* parent = target->parent;
+        if (parent != nullptr) {
+            DomNode* previous = nullptr;
+            DomNode* next = nullptr;
+            siblings_of(target, &previous, &next);
+            detach_from_parent(target);
+            std::vector<DomNode*> added;
+            std::vector<DomNode*> removed = {target};
+            queue_child_list(isolate, context, parent, added, removed, previous,
+                             next);
+        }
+        out = v8::Undefined(isolate);
+        return true;
+    }
+    if (name != "appendChild" && name != "removeChild" &&
+        name != "insertBefore" && name != "replaceChild") {
+        return false;
+    }
+
+    DomNode* child = NodeHost::node_of_arg(arg(0));
+    if (name == "replaceChild") {
+        DomNode* old_child = NodeHost::node_of_arg(arg(1));
+        if (child == nullptr || old_child == nullptr) {
+            return type_error("replaceChild: arguments must be nodes");
+        }
+        if (old_child->parent != target) {
+            return type_error(
+                "replaceChild: oldChild is not a child of this node");
+        }
+        if (child == old_child) {
+            out = args[1];
+            return true;
+        }
+        if (is_self_or_ancestor(child, target)) {
+            return type_error(
+                "replaceChild: cannot insert a node into its own subtree");
+        }
+        if (child->kind == NodeKind::DocumentFragment) {
+            const auto old_it =
+                std::find(target->children.begin(), target->children.end(),
+                          old_child);
+            const std::size_t index = static_cast<std::size_t>(
+                std::distance(target->children.begin(), old_it));
+            std::vector<DomNode*> moved = child->children;
+            DomNode* old_previous = nullptr;
+            DomNode* old_next = nullptr;
+            siblings_of(old_child, &old_previous, &old_next);
+            if (!moved.empty()) {
+                for (DomNode* moved_child : moved) {
+                    moved_child->parent = nullptr;
+                }
+                child->children.clear();
+                std::vector<DomNode*> none;
+                queue_child_list(isolate, context, child, none, moved, nullptr,
+                                 nullptr);
+            }
+            detach_from_parent(old_child);
+            std::vector<DomNode*> none;
+            std::vector<DomNode*> old_removed = {old_child};
+            queue_child_list(isolate, context, target, none, old_removed,
+                             old_previous, old_next);
+            if (!moved.empty()) {
+                std::size_t insert_at =
+                    index > target->children.size() ? target->children.size()
+                                                    : index;
+                DomNode* previous =
+                    insert_at > 0 ? target->children[insert_at - 1] : nullptr;
+                DomNode* next = insert_at < target->children.size()
+                                    ? target->children[insert_at]
+                                    : nullptr;
+                for (std::size_t k = 0; k < moved.size(); ++k) {
+                    moved[k]->parent = target;
+                    target->children.insert(
+                        target->children.begin() +
+                            static_cast<std::ptrdiff_t>(insert_at + k),
+                        moved[k]);
+                }
+                queue_child_list(isolate, context, target, moved, none, previous,
+                                 next);
+            }
+            out = args[1];
+            return true;
+        }
+        if (child->parent != nullptr) {
+            DomNode* old_parent = child->parent;
+            DomNode* previous = nullptr;
+            DomNode* next = nullptr;
+            siblings_of(child, &previous, &next);
+            detach_from_parent(child);
+            std::vector<DomNode*> added;
+            std::vector<DomNode*> removed = {child};
+            queue_child_list(isolate, context, old_parent, added, removed,
+                             previous, next);
+        }
+        DomNode* old_previous = nullptr;
+        DomNode* old_next = nullptr;
+        siblings_of(old_child, &old_previous, &old_next);
+        std::size_t index = 0;
+        const auto old_it =
+            std::find(target->children.begin(), target->children.end(),
+                      old_child);
+        if (old_it != target->children.end()) {
+            index = static_cast<std::size_t>(
+                std::distance(target->children.begin(), old_it));
+        }
+        detach_from_parent(old_child);
+        std::vector<DomNode*> added;
+        std::vector<DomNode*> removed = {old_child};
+        queue_child_list(isolate, context, target, added, removed, old_previous,
+                         old_next);
+        if (index > target->children.size()) {
+            index = target->children.size();
+        }
+        child->parent = target;
+        target->children.insert(
+            target->children.begin() + static_cast<std::ptrdiff_t>(index),
+            child);
+        DomNode* new_previous = nullptr;
+        DomNode* new_next = nullptr;
+        siblings_of(child, &new_previous, &new_next);
+        added = {child};
+        removed.clear();
+        queue_child_list(isolate, context, target, added, removed, new_previous,
+                         new_next);
+        out = args[1];
+        return true;
+    }
+
+    if (child == nullptr) {
+        return type_error("argument is not a node");
+    }
+    if (name == "removeChild") {
+        if (child->parent != target) {
+            return type_error("removeChild: not a child of this node");
+        }
+        DomNode* previous = nullptr;
+        DomNode* next = nullptr;
+        siblings_of(child, &previous, &next);
+        detach_from_parent(child);
+        std::vector<DomNode*> added;
+        std::vector<DomNode*> removed = {child};
+        queue_child_list(isolate, context, target, added, removed, previous,
+                         next);
+        out = args[0];
+        return true;
+    }
+    // appendChild / insertBefore: resolve ref (insertBefore only; null = end).
+    DomNode* ref = nullptr;
+    if (name == "insertBefore") {
+        const bool ref_is_null =
+            args.Length() > 1 && (args[1]->IsNull() || args[1]->IsUndefined());
+        if (!ref_is_null) {
+            ref = NodeHost::node_of_arg(arg(1));
+            if (ref == nullptr) {
+                return type_error("insertBefore: ref is not a node");
+            }
+            if (ref->parent != target) {
+                return type_error(
+                    "insertBefore: ref is not a child of this node");
+            }
+            if (child == ref) {
+                out = args[0];  // stable no-op
+                return true;
+            }
+        }
+    }
+    if (is_self_or_ancestor(child, target)) {
+        return type_error("cannot insert a node into its own subtree");
+    }
+    if (child->kind == NodeKind::DocumentFragment) {
+        std::vector<DomNode*> moved = child->children;
+        std::size_t insert_at = target->children.size();
+        if (ref != nullptr) {
+            const auto pos =
+                std::find(target->children.begin(), target->children.end(),
+                          ref);
+            insert_at = static_cast<std::size_t>(
+                std::distance(target->children.begin(), pos));
+        }
+        if (moved.empty()) {
+            out = args[0];
+            return true;
+        }
+        DomNode* previous =
+            insert_at > 0 ? target->children[insert_at - 1] : nullptr;
+        DomNode* next = ref;
+        for (DomNode* moved_child : moved) {
+            moved_child->parent = nullptr;
+        }
+        child->children.clear();
+        std::vector<DomNode*> none;
+        queue_child_list(isolate, context, child, none, moved, nullptr,
+                         nullptr);
+        for (std::size_t k = 0; k < moved.size(); ++k) {
+            moved[k]->parent = target;
+            target->children.insert(
+                target->children.begin() +
+                    static_cast<std::ptrdiff_t>(insert_at + k),
+                moved[k]);
+        }
+        queue_child_list(isolate, context, target, moved, none, previous, next);
+        out = args[0];
+        return true;
+    }
+    DomNode* old_parent = child->parent;
+    DomNode* old_previous = nullptr;
+    DomNode* old_next = nullptr;
+    if (old_parent != nullptr) {
+        siblings_of(child, &old_previous, &old_next);
+    }
+    detach_from_parent(child);
+    child->parent = target;
+    if (ref == nullptr) {
+        target->children.push_back(child);  // append
+    } else {
+        const auto pos =
+            std::find(target->children.begin(), target->children.end(), ref);
+        target->children.insert(pos, child);
+    }
+    DomNode* new_previous = nullptr;
+    DomNode* new_next = nullptr;
+    siblings_of(child, &new_previous, &new_next);
+    if (old_parent != nullptr) {
+        std::vector<DomNode*> added;
+        std::vector<DomNode*> removed = {child};
+        queue_child_list(isolate, context, old_parent, added, removed,
+                         old_previous, old_next);
+    }
+    std::vector<DomNode*> added = {child};
+    std::vector<DomNode*> removed;
+    queue_child_list(isolate, context, target, added, removed, new_previous,
+                     new_next);
+    out = args[0];
+    return true;
+}
+
+// --- M11-48 character-data host ------------------------------------------------
+
+v8::Local<v8::Value> CharacterDataHost::get_property(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const std::string& name) {
+    if (name == "nodeType") {
+        return v8::Integer::New(isolate, static_cast<int>(node_->kind));
+    }
+    if (name == "nodeName") {
+        return v8_string(isolate, node_->kind == NodeKind::Text ? "#text"
+                                                               : "#comment");
+    }
+    if (name == "nodeValue" || name == "textContent" || name == "data") {
+        return v8_string(isolate, node_->data);
+    }
+    if (name == "length") {
+        return v8::Integer::New(
+            isolate, static_cast<std::int32_t>(utf16_length(node_->data)));
+    }
+    if (name == "parentNode") {
+        return document_->wrap_node(isolate, context, node_->parent);
+    }
+    if (name == "parentElement") {
+        return document_->wrap_node(
+            isolate, context, is_element_node(node_->parent) ? node_->parent
+                                                             : nullptr);
+    }
+    if (name == "previousSibling" || name == "nextSibling") {
+        return document_->wrap_node(
+            isolate, context,
+            sibling_node(node_, name == "previousSibling" ? -1 : 1));
+    }
+    if (name == "childNodes") {
+        return v8::Array::New(isolate, 0);  // character data has no children
+    }
+    if (name == "firstChild" || name == "lastChild") {
+        return v8::Null(isolate);
+    }
+    if (name == "ownerDocument") {
+        v8::Local<v8::Value> doc;
+        if (context->Global()
+                ->Get(context, v8_string(isolate, "document"))
+                .ToLocal(&doc)) {
+            return doc;
+        }
+        return v8::Null(isolate);
+    }
+    if (name == "isConnected") {
+        return v8::Boolean::New(isolate, document_->is_in_tree(node_));
+    }
+    return v8::Undefined(isolate);
+}
+
+void CharacterDataHost::set_property(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     const std::string& name,
+                                     v8::Local<v8::Value> value) {
+    if (name != "nodeValue" && name != "textContent" && name != "data") {
+        return;
+    }
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return;
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    const std::string text =
+        *utf8 != nullptr
+            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+            : std::string();
+    const std::string old_value = node_->data;
+    node_->data = text;
+    document_->queue_character_data(isolate, context, node_, old_value);
+}
+
+v8::Local<v8::Value> CharacterDataHost::call_method(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const std::string& name,
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+    v8::Local<v8::Value> result;
+    if (document_->call_node_method(isolate, context, node_, name, args,
+                                    result)) {
+        return result;
+    }
+    return v8::Undefined(isolate);
+}
+
+// --- M11-48 DocumentFragment host ----------------------------------------------
+
+v8::Local<v8::Value> DocumentFragmentHost::get_property(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const std::string& name) {
+    if (name == "nodeType") {
+        return v8::Integer::New(isolate,
+                                static_cast<int>(NodeKind::DocumentFragment));
+    }
+    if (name == "nodeName") return v8_string(isolate, "#document-fragment");
+    if (name == "nodeValue") return v8::Null(isolate);
+    if (name == "textContent") {
+        return v8_string(isolate, text_content_of(node_));
+    }
+    if (name == "childNodes") {
+        return document_->nodes_array(isolate, context, node_->children);
+    }
+    if (name == "children") {
+        return document_->elements_array(isolate, context,
+                                         element_children_of(node_));
+    }
+    if (name == "parentNode" || name == "parentElement" ||
+        name == "previousSibling" || name == "nextSibling") {
+        return v8::Null(isolate);
+    }
+    if (name == "firstChild" || name == "lastChild") {
+        if (node_->children.empty()) {
+            return v8::Null(isolate);
+        }
+        return document_->wrap_node(isolate, context,
+                                    name == "firstChild"
+                                        ? node_->children.front()
+                                        : node_->children.back());
+    }
+    if (name == "firstElementChild" || name == "lastElementChild") {
+        const std::vector<DomNode*> children = element_children_of(node_);
+        if (children.empty()) {
+            return v8::Null(isolate);
+        }
+        return document_->wrap_node(isolate, context,
+                                    name == "firstElementChild"
+                                        ? children.front()
+                                        : children.back());
+    }
+    if (name == "childElementCount") {
+        return v8::Integer::New(
+            isolate,
+            static_cast<std::int32_t>(element_children_of(node_).size()));
+    }
+    if (name == "ownerDocument") {
+        v8::Local<v8::Value> doc;
+        if (context->Global()
+                ->Get(context, v8_string(isolate, "document"))
+                .ToLocal(&doc)) {
+            return doc;
+        }
+        return v8::Null(isolate);
+    }
+    if (name == "isConnected") {
+        return v8::Boolean::New(isolate, document_->is_in_tree(node_));
+    }
+    return v8::Undefined(isolate);
+}
+
+void DocumentFragmentHost::set_property(v8::Isolate* isolate,
+                                        v8::Local<v8::Context> context,
+                                        const std::string& name,
+                                        v8::Local<v8::Value> value) {
+    if (name != "textContent") {
+        return;
+    }
+    v8::Local<v8::String> str;
+    if (!value->ToString(context).ToLocal(&str)) {
+        return;
+    }
+    v8::String::Utf8Value utf8(isolate, str);
+    document_->set_text_content(
+        isolate, context, node_,
+        *utf8 != nullptr
+            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+            : std::string());
+}
+
+v8::Local<v8::Value> DocumentFragmentHost::call_method(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const std::string& name,
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+    v8::Local<v8::Value> result;
+    if (document_->call_node_method(isolate, context, node_, name, args,
+                                    result)) {
+        return result;
+    }
+    const auto arg_string = [&](int index) {
+        std::string text;
+        if (args.Length() > index) {
+            v8::String::Utf8Value utf8(isolate, args[index]);
+            if (*utf8 != nullptr) {
+                text.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+            }
+        }
+        return text;
+    };
+    if (name == "querySelector") {
+        return document_->wrap_node(
+            isolate, context,
+            find_first(node_->children, selector_predicate(arg_string(0))));
+    }
+    if (name == "querySelectorAll") {
+        std::vector<DomNode*> out;
+        collect_matching(node_, selector_predicate(arg_string(0)), out);
+        return document_->elements_array(isolate, context, out);
+    }
+    if (name == "getElementById") {
+        const std::string id = arg_string(0);
+        if (id.empty()) {
+            return v8::Null(isolate);
+        }
+        return document_->wrap_node(
+            isolate, context,
+            find_first(node_->children, [&id](const DomNode* n) {
+                return is_element_node(n) && n->has_id && n->id == id;
+            }));
+    }
+    return v8::Undefined(isolate);
+}
+
 v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
                                                v8::Local<v8::Context> context,
                                                const std::string& name) {
@@ -5204,7 +6099,7 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
         const auto it = node_->attributes.find("label");
         return v8_string(isolate,
                          it != node_->attributes.end() ? it->second
-                                                       : node_->text_content);
+                                                       : text_content_of(node_));
     }
     if (name == "index" && node_->tag == "option") {
         DomNode* select = node_->parent;
@@ -5262,38 +6157,37 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     if (name == "firstChild") {
         return node_->children.empty()
                    ? v8::Null(isolate)
-                   : document_->wrap_element(isolate, context,
+                   : document_->wrap_node(isolate, context,
                                              node_->children.front());
     }
     if (name == "lastChild") {
         return node_->children.empty()
                    ? v8::Null(isolate)
-                   : document_->wrap_element(isolate, context,
+                   : document_->wrap_node(isolate, context,
                                              node_->children.back());
     }
     if (name == "previousSibling" || name == "nextSibling") {
         DomNode* previous = nullptr;
         DomNode* next = nullptr;
         siblings_of(node_, &previous, &next);
-        return document_->wrap_element(isolate, context,
+        return document_->wrap_node(isolate, context,
                                        name == "previousSibling" ? previous
                                                                  : next);
     }
-    if (name == "textContent") return v8_string(isolate, node_->text_content);
-    if (name == "parentNode") {
-        return document_->wrap_element(isolate, context, node_->parent);
+    if (name == "textContent") {
+        return v8_string(isolate, text_content_of(node_));
     }
-    // childNodes == children here: the minimal tree has no text nodes, so both
-    // return this element's child elements in document order.
-    if (name == "childNodes" || name == "children") {
-        v8::Local<v8::Array> array =
-            v8::Array::New(isolate, static_cast<int>(node_->children.size()));
-        for (std::size_t k = 0; k < node_->children.size(); ++k) {
-            (void)array->Set(
-                context, static_cast<std::uint32_t>(k),
-                document_->wrap_element(isolate, context, node_->children[k]));
-        }
-        return array;
+    if (name == "nodeValue") return v8::Null(isolate);  // Element nodes have no value
+    if (name == "parentNode") {
+        return document_->wrap_node(isolate, context, node_->parent);
+    }
+    // M11-48: childNodes includes every node kind; children filters elements.
+    if (name == "childNodes") {
+        return document_->nodes_array(isolate, context, node_->children);
+    }
+    if (name == "children") {
+        return document_->elements_array(isolate, context,
+                                         element_children_of(node_));
     }
     // M4-A-6 connectivity / element-sibling navigation (based on the live tree).
     if (name == "ownerDocument") {
@@ -5311,50 +6205,33 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
         return v8::Boolean::New(isolate, document_->is_in_tree(node_));
     }
     if (name == "previousElementSibling" || name == "nextElementSibling") {
-        DomNode* parent = node_->parent;
-        if (parent == nullptr) {
-            return v8::Null(isolate);  // no parent -> no siblings
-        }
-        const std::vector<DomNode*>& kids = parent->children;
-        const auto it = std::find(kids.begin(), kids.end(), node_);
-        if (it == kids.end()) {
-            return v8::Null(isolate);
-        }
-        if (name == "previousElementSibling") {
-            if (it == kids.begin()) {
-                return v8::Null(isolate);
-            }
-            return document_->wrap_element(isolate, context, *(it - 1));
-        }
-        const auto next = it + 1;
-        if (next == kids.end()) {
-            return v8::Null(isolate);
-        }
-        return document_->wrap_element(isolate, context, *next);
+        return document_->wrap_node(
+            isolate, context,
+            element_sibling_node(node_, name == "previousElementSibling" ? -1
+                                                                        : 1));
     }
-    // M4-B-1 structural navigation (element-only tree, live). parentElement is the
-    // element parent (in this model parent is always an element, so it matches
-    // parentNode); first/lastElementChild are the ends of the children sequence;
-    // childElementCount is children.size() (== childNodes.length here, but stated
-    // as element-only). All reflect M4-A-3 tree edits at once.
+    // M11-48 structural navigation over all node kinds: parentElement is null
+    // when the parent is not an element; the *ElementChild/Count and element
+    // sibling variants skip Text/Comment nodes.
     if (name == "parentElement") {
-        return document_->wrap_element(isolate, context, node_->parent);
+        return document_->wrap_node(
+            isolate, context, is_element_node(node_->parent) ? node_->parent
+                                                             : nullptr);
     }
-    if (name == "firstElementChild") {
-        if (node_->children.empty()) {
+    if (name == "firstElementChild" || name == "lastElementChild") {
+        const std::vector<DomNode*> children = element_children_of(node_);
+        if (children.empty()) {
             return v8::Null(isolate);
         }
-        return document_->wrap_element(isolate, context, node_->children.front());
-    }
-    if (name == "lastElementChild") {
-        if (node_->children.empty()) {
-            return v8::Null(isolate);
-        }
-        return document_->wrap_element(isolate, context, node_->children.back());
+        return document_->wrap_node(isolate, context,
+                                    name == "firstElementChild"
+                                        ? children.front()
+                                        : children.back());
     }
     if (name == "childElementCount") {
-        return v8::Integer::New(isolate,
-                                static_cast<std::int32_t>(node_->children.size()));
+        return v8::Integer::New(
+            isolate,
+            static_cast<std::int32_t>(element_children_of(node_).size()));
     }
     // M5-1: form.elements — the form-control descendants of this <form>, in document
     // order (exposed only on <form>, see property_names). Minimal control set:
@@ -5383,7 +6260,7 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
         for (DomNode* ancestor = node_->parent; ancestor != nullptr;
              ancestor = ancestor->parent) {
             if (ancestor->tag == "form") {
-                return document_->wrap_element(isolate, context, ancestor);
+                return document_->wrap_node(isolate, context, ancestor);
             }
         }
         return v8::Null(isolate);
@@ -5440,7 +6317,7 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     // on <option>; live, so it follows textContent writes). Unlike option.value it
     // ignores the `value` attribute and always reflects the text.
     if (name == "text") {
-        return v8_string(isolate, node_->text_content);
+        return v8_string(isolate, text_content_of(node_));
     }
     // M7-3: form.method — the current normalized submission method ("get"/"post"),
     // read-write, exposed only on <form>. Decoupled from the `method` attribute:
@@ -5722,22 +6599,9 @@ void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> cont
         node_->value = str_value;
         return;
     }
-    // M2-8: textContent = ... replaces all children with the given text.
-    // M11-5: capture the childList mutation before detaching the children.
-    std::vector<DomNode*> removed_children;
-    if (document_->has_mutation_observers()) {
-        removed_children = node_->children;
-    }
-    for (DomNode* child : node_->children) {
-        child->parent = nullptr;
-    }
-    node_->children.clear();
-    node_->text_content = str_value;
-    if (!removed_children.empty()) {
-        std::vector<DomNode*> added_children;
-        document_->queue_child_list(isolate, context, node_, added_children,
-                                    removed_children, nullptr, nullptr);
-    }
+    // M2-8/M11-48: textContent = ... replaces all children with zero or one Text
+    // node (shared helper also used by fragments and document.title).
+    document_->set_text_content(isolate, context, node_, str_value);
 }
 
 // M9-2: record a host-method call hit if the "receiver.method" path is watched.
@@ -5823,7 +6687,7 @@ bool ElementHost::validate_form(v8::Isolate* isolate,
         }
         ElementHost* host = document_->ensure_element_host(control);
         v8::Local<v8::Object> receiver =
-            document_->wrap_element(isolate, context, control).As<v8::Object>();
+            document_->wrap_node(isolate, context, control).As<v8::Object>();
         if (!host->validate_control(isolate, context, receiver)) {
             valid = false;
         }
@@ -5841,6 +6705,13 @@ v8::Local<v8::Value> ElementHost::call_method(
     v8::Local<v8::Value> event_result;
     if (handle_event_method(isolate, context, name, args, event_result)) {
         return event_result;
+    }
+    // M11-48: shared Node methods (remove, clone, equality, contains, and all
+    // tree edits) accept every node kind, including DocumentFragment insertion.
+    v8::Local<v8::Value> node_result;
+    if (document_->call_node_method(isolate, context, node_, name, args,
+                                    node_result)) {
+        return node_result;
     }
     // M11-32: checkValidity()/reportValidity() on a form aggregates its controls;
     // on a control they validate just that control. reportValidity has no UI in
@@ -6061,199 +6932,12 @@ v8::Local<v8::Value> ElementHost::call_method(
         }
         return v8::Boolean::New(isolate, should_exist);
     }
-    // M4-A-3 minimal tree editing. child/ref must be element host objects (ref may
-    // be null for insertBefore). Errors throw a JS TypeError (via the eval
-    // TryCatch this surfaces as iv8.JSError name "TypeError"). Mutations touch the
-    // live DomNode parent/children, so document-level queries reflect them at once.
-    // NOTE: textContent is NOT recomputed here — it stays the M2-7 stored aggregate
-    // (this minimal tree has no text nodes; see docs/m4_a_3_tree_editing.md).
-    const auto throw_type_error = [&](const char* message) -> v8::Local<v8::Value> {
-        isolate->ThrowException(v8::Exception::TypeError(v8_string(isolate, message)
-                                                            .As<v8::String>()));
-        return v8::Undefined(isolate);
-    };
-    // M11-13: detach this element from its parent.
-    if (name == "remove") {
-        DomNode* parent = node_->parent;
-        if (parent != nullptr) {
-            DomNode* previous = nullptr;
-            DomNode* next = nullptr;
-            siblings_of(node_, &previous, &next);
-            detach_from_parent(node_);
-            std::vector<DomNode*> added;
-            std::vector<DomNode*> removed = {node_};
-            document_->queue_child_list(isolate, context, parent, added,
-                                        removed, previous, next);
-        }
-        return v8::Undefined(isolate);
-    }
-    if (name == "hasChildNodes") {
-        return v8::Boolean::New(isolate, !node_->children.empty());
-    }
-    // M11-14: detached shallow/deep clone and node identity/equality.
-    if (name == "cloneNode") {
-        const bool deep =
-            args.Length() > 0 && args[0]->BooleanValue(isolate);
-        DomNode* clone = document_->clone_detached(node_, deep);
-        return document_->wrap_element(isolate, context, clone);
-    }
-    if (name == "isSameNode" || name == "isEqualNode") {
-        DomNode* other =
-            node_of_arg(args.Length() > 0 ? args[0]
-                                          : v8::Local<v8::Value>());
-        if (other == nullptr) {
-            return v8::False(isolate);
-        }
-        return v8::Boolean::New(
-            isolate, name == "isSameNode"
-                         ? other == node_
-                         : document_->nodes_equal(node_, other));
-    }
-    // M11-13: replace a direct child with another element node.
-    if (name == "replaceChild") {
-        DomNode* new_child = node_of_arg(args.Length() > 0
-                                             ? args[0]
-                                             : v8::Local<v8::Value>());
-        DomNode* old_child = node_of_arg(args.Length() > 1
-                                             ? args[1]
-                                             : v8::Local<v8::Value>());
-        if (new_child == nullptr || old_child == nullptr) {
-            return throw_type_error("replaceChild: arguments must be elements");
-        }
-        if (old_child->parent != node_) {
-            return throw_type_error(
-                "replaceChild: oldChild is not a child of this node");
-        }
-        if (new_child == old_child) {
-            return args[1];
-        }
-        if (is_self_or_ancestor(new_child, node_)) {
-            return throw_type_error(
-                "replaceChild: cannot insert a node into its own subtree");
-        }
-        if (new_child->parent != nullptr) {
-            DomNode* old_parent = new_child->parent;
-            DomNode* previous = nullptr;
-            DomNode* next = nullptr;
-            siblings_of(new_child, &previous, &next);
-            detach_from_parent(new_child);
-            std::vector<DomNode*> added;
-            std::vector<DomNode*> removed = {new_child};
-            document_->queue_child_list(isolate, context, old_parent, added,
-                                        removed, previous, next);
-        }
-        DomNode* old_previous = nullptr;
-        DomNode* old_next = nullptr;
-        siblings_of(old_child, &old_previous, &old_next);
-        std::size_t index = 0;
-        const auto old_it =
-            std::find(node_->children.begin(), node_->children.end(), old_child);
-        if (old_it != node_->children.end()) {
-            index = static_cast<std::size_t>(
-                std::distance(node_->children.begin(), old_it));
-        }
-        detach_from_parent(old_child);
-        std::vector<DomNode*> added;
-        std::vector<DomNode*> removed = {old_child};
-        document_->queue_child_list(isolate, context, node_, added, removed,
-                                    old_previous, old_next);
-        if (index > node_->children.size()) {
-            index = node_->children.size();
-        }
-        new_child->parent = node_;
-        node_->children.insert(node_->children.begin() + index, new_child);
-        DomNode* new_previous = nullptr;
-        DomNode* new_next = nullptr;
-        siblings_of(new_child, &new_previous, &new_next);
-        added = {new_child};
-        removed.clear();
-        document_->queue_child_list(isolate, context, node_, added, removed,
-                                    new_previous, new_next);
-        return old_child == nullptr ? v8::Undefined(isolate) : args[1];
-    }
-    if (name == "appendChild" || name == "removeChild" ||
-        name == "insertBefore") {
-        DomNode* child = node_of_arg(args.Length() > 0 ? args[0]
-                                                       : v8::Local<v8::Value>());
-        if (child == nullptr) {
-            return throw_type_error("argument is not an element");
-        }
-        if (name == "removeChild") {
-            if (child->parent != node_) {
-                return throw_type_error("removeChild: not a child of this node");
-            }
-            DomNode* previous = nullptr;
-            DomNode* next = nullptr;
-            siblings_of(child, &previous, &next);
-            detach_from_parent(child);
-            // M11-5: childList removal record, siblings captured before detach.
-            std::vector<DomNode*> added;
-            std::vector<DomNode*> removed = {child};
-            document_->queue_child_list(isolate, context, node_, added,
-                                        removed, previous, next);
-            return args[0];
-        }
-        // appendChild / insertBefore: resolve ref (insertBefore only; null = end).
-        DomNode* ref = nullptr;
-        if (name == "insertBefore") {
-            const bool ref_is_null =
-                args.Length() > 1 && (args[1]->IsNull() || args[1]->IsUndefined());
-            if (!ref_is_null) {
-                ref = node_of_arg(args.Length() > 1 ? args[1]
-                                                    : v8::Local<v8::Value>());
-                if (ref == nullptr) {
-                    return throw_type_error("insertBefore: ref is not an element");
-                }
-                if (ref->parent != node_) {
-                    return throw_type_error(
-                        "insertBefore: ref is not a child of this node");
-                }
-                if (child == ref) {
-                    return args[0];  // stable no-op
-                }
-            }
-        }
-        if (is_self_or_ancestor(child, node_)) {
-            return throw_type_error("cannot insert a node into its own subtree");
-        }
-        // M11-5: capture the old parent's siblings before a possible move.
-        DomNode* old_parent = child->parent;
-        DomNode* old_previous = nullptr;
-        DomNode* old_next = nullptr;
-        if (old_parent != nullptr) {
-            siblings_of(child, &old_previous, &old_next);
-        }
-        detach_from_parent(child);
-        child->parent = node_;
-        if (ref == nullptr) {
-            node_->children.push_back(child);  // append
-        } else {
-            const auto pos =
-                std::find(node_->children.begin(), node_->children.end(), ref);
-            node_->children.insert(pos, child);
-        }
-        DomNode* new_previous = nullptr;
-        DomNode* new_next = nullptr;
-        siblings_of(child, &new_previous, &new_next);
-        // M11-5: a move queues removal (old parent) before addition (new parent).
-        if (old_parent != nullptr) {
-            std::vector<DomNode*> added;
-            std::vector<DomNode*> removed = {child};
-            document_->queue_child_list(isolate, context, old_parent, added,
-                                        removed, old_previous, old_next);
-        }
-        std::vector<DomNode*> added = {child};
-        std::vector<DomNode*> removed;
-        document_->queue_child_list(isolate, context, node_, added, removed,
-                                    new_previous, new_next);
-        return args[0];
-    }
     // M4-A-5 subtree queries: same minimal selector subset / tag rules as the
     // document-level ones, but scoped to THIS element's current subtree (the
     // element itself + its descendants, so the root may match). Plain JS Array
     // for the *All / by-tag forms; null / first-match for querySelector.
     if (name == "querySelector") {
-        return document_->wrap_element(
+        return document_->wrap_node(
             isolate, context, dfs_find(node_, selector_predicate(arg_string(0))));
     }
     if (name == "querySelectorAll") {
@@ -6296,39 +6980,22 @@ v8::Local<v8::Value> ElementHost::call_method(
             if (index < 0 || index >= static_cast<int>(options.size())) {
                 return v8::Null(isolate);
             }
-            return document_->wrap_element(
+            return document_->wrap_node(
                 isolate, context, options[static_cast<std::size_t>(index)]);
         }
         const std::string wanted = arg_string(0);
         for (DomNode* option : options) {
             if (option->id == wanted) {
-                return document_->wrap_element(isolate, context, option);
+                return document_->wrap_node(isolate, context, option);
             }
             const auto it = option->attributes.find("name");
             if (it != option->attributes.end() && it->second == wanted) {
-                return document_->wrap_element(isolate, context, option);
+                return document_->wrap_node(isolate, context, option);
             }
         }
         return v8::Null(isolate);
     }
-    // M4-B-2 minimal ancestor/containment: true iff the argument is an element in
-    // this tree that is this node itself or a descendant of it. A non-element
-    // argument (null / undefined / primitive / plain object / document / window /
-    // Event) yields nullptr from node_of_arg -> the walk never starts -> false.
-    // Purely structural over the current tree (reflects M4-A-3 edits at once);
-    // independent of isConnected (a detached parent contains its detached child).
-    if (name == "contains") {
-        DomNode* other =
-            node_of_arg(args.Length() > 0 ? args[0] : v8::Local<v8::Value>());
-        bool result = false;
-        for (DomNode* n = other; n != nullptr; n = n->parent) {
-            if (n == node_) {
-                result = true;  // self (n == node_ on the first step) or ancestor
-                break;
-            }
-        }
-        return v8::Boolean::New(isolate, result);
-    }
+    // M4-B-2 contains() is handled by the shared Node method before this point.
     // M4-B-3 single-node selector match: apply the SAME minimal selector predicate
     // used by document/element querySelector[All] (#id / .class / tagname) to this
     // node only. A complex/empty/unsupported selector yields a match-nothing
@@ -6350,7 +7017,7 @@ v8::Local<v8::Value> ElementHost::call_method(
             selector_predicate(arg_string(0));
         for (DomNode* n = node_; n != nullptr; n = n->parent) {
             if (pred(n)) {
-                return document_->wrap_element(isolate, context, n);
+                return document_->wrap_node(isolate, context, n);
             }
         }
         return v8::Null(isolate);

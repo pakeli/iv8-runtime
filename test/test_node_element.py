@@ -78,8 +78,8 @@ def test_child_nodes_and_children():
         assert page.eval("document.documentElement.children[1].tagName") == "BODY"
         assert page.eval("document.getElementById('main').children.length") == 1
         assert page.eval("document.getElementById('main').children[0].tagName") == "P"
-        # No text nodes in the minimal tree: childNodes == children.
-        assert page.eval("document.getElementById('main').childNodes.length") == 1
+        # M11-48: childNodes includes the surrounding text nodes; children does not.
+        assert page.eval("document.getElementById('main').childNodes.length") == 3
         assert page.eval("document.getElementById('para').children.length") == 0
 
 

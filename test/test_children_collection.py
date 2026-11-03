@@ -6,10 +6,10 @@ namedItem(), and neither the array nor the element wrappers carry an identity
 guarantee. It is live (reflects M4-A-3 edits), readable on a detached subtree, and
 self-consistent with childElementCount / firstElementChild / lastElementChild.
 
-NOTE: `element.children` has existed since M2-6 (childNodes == children in this
-text-node-free model). M4-B-5 adds no runtime capability — this suite pins the
-approved contract. Tests avoid wrapper/collection identity; they use .id / .tagName
-/ .length only.
+NOTE: `element.children` is the element-only child collection introduced in
+M2-6 and now distinguished from `childNodes` after M11-48 added text/comment
+nodes. Tests avoid wrapper/collection identity; they use .id / .tagName / .length
+only.
 """
 
 import pytest

@@ -22,6 +22,12 @@ globalThis.obsLog = [];
 globalThis.obsRecords = [];
 globalThis.obsArgSame = null;
 globalThis.obsThisSame = null;
+function obsLabel(n) {
+    if (!n) return '';
+    if (n.nodeType === 3) return '#text:' + n.data;
+    if (n.nodeType === 8) return '#comment:' + n.data;
+    return n.id || n.tagName;
+}
 globalThis.obs = new MutationObserver(function (records, observer) {
     globalThis.obsRecords.push(records);
     globalThis.obsArgSame = (observer === globalThis.obs);
@@ -29,20 +35,14 @@ globalThis.obs = new MutationObserver(function (records, observer) {
     var summaries = [];
     for (var i = 0; i < records.length; i++) {
         var r = records[i];
-        var added = Array.prototype.map.call(r.addedNodes, function (n) {
-            return n.id || n.tagName;
-        }).join('+');
-        var removed = Array.prototype.map.call(r.removedNodes, function (n) {
-            return n.id || n.tagName;
-        }).join('+');
-        var prev = r.previousSibling
-            ? (r.previousSibling.id || r.previousSibling.tagName) : '';
-        var next = r.nextSibling
-            ? (r.nextSibling.id || r.nextSibling.tagName) : '';
+        var added = Array.prototype.map.call(r.addedNodes, obsLabel).join('+');
+        var removed = Array.prototype.map.call(r.removedNodes, obsLabel).join('+');
+        var prev = obsLabel(r.previousSibling);
+        var next = obsLabel(r.nextSibling);
         var old = (r.oldValue === null) ? 'null' : String(r.oldValue);
         var ns = (r.attributeNamespace === null)
             ? 'null' : String(r.attributeNamespace);
-        summaries.push([r.type, r.target.id || r.target.tagName, added, removed,
+        summaries.push([r.type, obsLabel(r.target), added, removed,
                         prev, next, r.attributeName || '', old, ns].join('|'));
     }
     globalThis.obsLog.push(summaries.join(';'));
@@ -276,7 +276,7 @@ def test_text_content_removes_all_children():
         page.run_jobs()
         record = _records(page)[0]
         assert record[TARGET] == "root"
-        assert record[ADDED] == ""
+        assert record[ADDED] == "#text:x"
         assert record[REMOVED] == "a+c1"
         assert record[PREV] == ""
         assert record[NEXT] == ""
@@ -284,17 +284,21 @@ def test_text_content_removes_all_children():
 
 
 @on_only
-def test_text_content_without_children_has_no_record():
+def test_text_content_on_empty_element_adds_a_text_record():
     with iv8.Page() as page:
         _setup(page)
         page.eval("""
             var c = document.createElement('b');
             c.setAttribute('id', 'c1');
-            obs.observe(root, {childList: true});
+            obs.observe(c, {childList: true});
             c.textContent = 'x';
         """)
         page.run_jobs()
-        assert _record_count(page) == 0
+        assert _record_count(page) == 1
+        record = _records(page)[0]
+        assert record[TYPE] == "childList"
+        assert record[ADDED] == "#text:x"
+        assert record[REMOVED] == ""
 
 
 # --- attribute records --------------------------------------------------------
@@ -399,15 +403,22 @@ def test_attribute_filter_is_case_insensitive_and_can_be_empty():
 
 
 @on_only
-def test_character_data_option_is_inert():
+def test_character_data_records_are_active():
     with iv8.Page() as page:
         _setup(page)
         page.eval("""
-            obs.observe(root, {characterData: true});
-            root.textContent = 'x';
+            var text = document.getElementById('a').firstChild;
+            obs.observe(text, {characterData: true, characterDataOldValue: true});
+            text.data = 'B';
         """)
         page.run_jobs()
-        assert _record_count(page) == 0
+        assert _record_count(page) == 1
+        record = _records(page)[0]
+        assert record[TYPE] == "characterData"
+        assert record[TARGET] == "#text:B"
+        assert record[ADDED] == ""
+        assert record[REMOVED] == ""
+        assert record[OLD] == "A"
 
 
 # --- subtree / document -------------------------------------------------------

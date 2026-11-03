@@ -175,8 +175,10 @@ def test_stale_after_dispose():
 def test_no_out_of_scope_creation_or_tree_surface():
     with iv8.Page() as page:
         page.load(html="<html><body><div id='d'></div></body></html>", base_url=BASE)
-        for member in ("createElementNS", "createTextNode", "createComment"):
-            assert page.eval(f"typeof document.{member}") == "undefined"
+        assert page.eval("typeof document.createElementNS") == "undefined"
+        for member in ("createTextNode", "createComment",
+                       "createDocumentFragment"):
+            assert page.eval(f"typeof document.{member}") == "function"
         # (M4-A-3 adds appendChild/removeChild/insertBefore; M4-A-4 adds
         # removeAttribute; M4-A-5 adds element querySelector[All]/
         # getElementsByTagName; M4-A-6 adds ownerDocument/isConnected/

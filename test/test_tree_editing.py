@@ -1,13 +1,14 @@
 """M4-A-3 acceptance tests: minimal tree editing.
 
 element.appendChild(child) / removeChild(child) / insertBefore(child, ref) operate
-on the live minimal tree (element children only; ref may be null = append). They
-move/attach/detach element nodes so document-level queries reflect the change at
-once. A <script> inserted into the tree appears in document.scripts but is still
-NOT executed. Invalid operations throw a JS TypeError. textContent stays the M2-7
-stored aggregate (not recomputed on tree edit). JS-side only; no new Python
-surface; no document.appendChild face. (replaceChild / remove / raw sibling
-aliases arrived later in M11-13, cloneNode in M11-14.)
+on the live node tree (element, text, comment, and DocumentFragment insertion;
+ref may be null = append). They move/attach/detach nodes so document-level
+queries reflect the change at once. A <script> inserted into the tree appears in
+document.scripts but is still NOT executed. Invalid operations throw a JS
+TypeError. M11-48 replaced the stored aggregate with live textContent over text
+nodes. JS-side only; no new Python surface; no document.appendChild face.
+(replaceChild / remove / raw sibling aliases arrived later in M11-13, cloneNode
+in M11-14.)
 """
 
 import pytest

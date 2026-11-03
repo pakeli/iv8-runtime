@@ -97,9 +97,11 @@ def test_frozen_items_absent():
                 assert page.eval(f"typeof document.{coll}.{extra}") == "undefined"
         assert page.eval("typeof document.getElementsByClassName('x').item") == "undefined"
         # No document.all / plugins / other collections not yet added.
-        for member in ("all", "plugins", "createElementNS",
-                       "createTextNode", "write"):
+        for member in ("all", "plugins", "createElementNS", "write"):
             assert page.eval(f"typeof document.{member}") == "undefined"
+        for member in ("createTextNode", "createComment",
+                       "createDocumentFragment"):
+            assert page.eval(f"typeof document.{member}") == "function"
         # M11-20 adds getElementsByName; M11-19 adds the element-level class query.
         assert page.eval("typeof document.getElementsByName") == "function"
         assert page.eval(
@@ -258,13 +260,12 @@ def test_repeated_failed_dispose_contract():
         p.eval("document.children.length")
 
 
-# --- (6) approved textContent boundary did not regress --------------------------
+# --- (6) live textContent after M11-48 ------------------------------------------
 
 @on_only
 def test_text_content_boundary_not_regressed():
-    # M4-A-3 approved boundary (docs/m4_a_summary.md §7): structural edits update the
-    # structure but do NOT re-derive a container's aggregate textContent. M4-B must
-    # not have changed this — verify (do not re-open the text-node model).
+    # M11-48 supersedes the M4-A element-only aggregate: textContent is live, so a
+    # structural edit that adds text changes the container's text immediately.
     html = ("<html><body><div id='root'>TEXT"
             "<span id='a'></span></div></body></html>")
     with iv8.Page() as page:
@@ -274,10 +275,12 @@ def test_text_content_boundary_not_regressed():
             (() => {
               const root = document.getElementById('root');
               const before = root.textContent;
-              root.appendChild(document.createElement('span'));   // structural edit
+              const extra = document.createElement('span');
+              extra.appendChild(document.createTextNode('X'));
+              root.appendChild(extra);                            // structural edit
               const idsGrew = root.childElementCount === 2;        // structure live
-              const tcSame = root.textContent === before;          // aggregate NOT re-derived
-              return [idsGrew, tcSame].join(',');
+              const tcChanged = root.textContent !== before;       // textContent live
+              return [idsGrew, tcChanged].join(',');
             })();
             """
         ) == "true,true"
