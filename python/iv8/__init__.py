@@ -1037,6 +1037,19 @@ environment key, or top-level export changes; Document-as-Node, CDATA/doctype
 nodes, and HTML string APIs remain later work. See
 ``docs/m11_48_node_foundation.md``.
 
+M11-49 adds the common HTML-string and variadic DOM manipulation APIs:
+writable Element ``innerHTML`` / ``outerHTML`` (fragment parsing with inert
+scripts and initialized controls), ``insertAdjacentHTML`` /
+``insertAdjacentElement`` / ``insertAdjacentText``, and ``append`` /
+``prepend`` / ``replaceChildren`` on Element and DocumentFragment plus
+``before`` / ``after`` / ``replaceWith`` on Element/Text/Comment. Serialization
+is deterministic and character references are decoded for a bounded common set
+(named + numeric) in text, RCDATA, and attributes. Mutation-record behavior is
+pinned. Context-sensitive HTML5 fragment parsing, the full entity table,
+``document.write``, import/adopt, and DOM prototype chains remain future work.
+No Python API or environment key changes. See
+``docs/m11_49_html_strings.md``.
+
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and

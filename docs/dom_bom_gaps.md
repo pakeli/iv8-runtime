@@ -143,11 +143,11 @@ Implemented for contrast: M11-19 added multi-token `getElementsByClassName`
 
 | Missing | Status |
 |---|---|
-| `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **absent** |
+| `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **implemented** — M11-49 (minimal fragment parser/serializer; bounded entity decoding; context-sensitive table/select parsing absent) |
 | `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
 | `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
 | Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **partially implemented (M11-18)** — form-control subset only; other reflections **absent** |
-| `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **absent** — M11-48 supplied the text/fragment foundation; string/variadic semantics remain a later slice |
+| `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **implemented** — M11-49 (nodes or strings; fragments move children; adjacent Text nodes are not auto-merged) |
 | Specialized `HTML*Element` classes | **excluded** |
 | Shadow DOM (`attachShadow`, `ShadowRoot`, slots), Custom Elements, `<template>` | **absent** |
 | SVG / MathML namespaces (`createElementNS`) | **absent** |
@@ -213,7 +213,7 @@ is a non-live snapshot.
 | MIME sniffing and script load/error events (`onload` / `onerror`) | **absent** |
 | Subresource loading: CSS, images, fonts, `<iframe>` | **excluded** |
 | `DOMParser`, `XMLSerializer` | **absent** |
-| Full HTML5 parser (foster parenting, tables, entities, error recovery) | **absent** — a minimal static element parser only |
+| Full HTML5 parser (foster parenting, tables, full named entities, error recovery) | **absent** — a minimal static element parser with bounded named/numeric entity decoding (M11-49) |
 
 Implemented for contrast: inline and classic external `<script>` execution,
 `resources` pre-resolution, `document.currentScript`, `document.scripts`,

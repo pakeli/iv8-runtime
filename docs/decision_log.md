@@ -908,6 +908,51 @@ The next planned slice is M11-49: HTML string APIs (`innerHTML` / `outerHTML` /
 `insertAdjacentHTML`) and variadic string tree methods, enabled by this
 foundation.
 
+### 46. HTML string APIs and variadic tree methods — M11-49
+
+Decided/verified `2026-11-03`.
+
+The common-API track added the HTML-string and variadic DOM manipulation
+surface on top of the M11-48 node foundation.
+
+- **innerHTML/outerHTML.** Writable Element properties. Fragment insertion uses
+  the existing parser with scripts kept inert and parsed controls initialized
+  (values, select normalization, reset baselines). outerHTML on a parentless
+  element is a no-op. No document-level innerHTML/outerHTML or `<template>`
+  content model.
+- **Serialization.** Deterministic: lowercase tags, id/class first, remaining
+  attributes ASCII-sorted, double-quoted escaped values, void elements without
+  end tags, comments as `<!--data-->`, script/style text raw, other text escaped.
+- **Entities.** Bounded decoding (`amp`, `lt`, `gt`, `quot`, `apos`, `nbsp`,
+  decimal/hex numeric) in normal text, RCDATA, and attributes; unknown names
+  stay literal and invalid numeric references become U+FFFD. The full HTML
+  named-entity table and full HTML5 parsing remain out of scope.
+- **Adjacent APIs.** `insertAdjacentHTML`/`Element`/`Text` with four positions;
+  invalid position → SyntaxError; missing required parent → TypeError;
+  `insertAdjacentElement` accepts Element only.
+- **Variadic methods.** `append`/`prepend`/`replaceChildren` on Element and
+  DocumentFragment; `before`/`after`/`replaceWith` on Element/Text/Comment.
+  Node arguments preserve identity; other values are stringified to Text nodes;
+  fragment arguments move their children. Adjacent runtime Text nodes are not
+  auto-merged (documented deviation).
+- **Mutation records.** Replace-all operations queue one childList record with
+  removed+added; append/prepend/before/after queue one addition record;
+  replaceWith/outerHTML queue removal + addition.
+
+The full suite collects 1758 items. Linux `41577570846`, Windows `41577574466`,
+and macOS arm64 fallback `41578427318` each reported `1756 passed, 2 skipped` on
+tree `52bafab`; the 12 new tests ran in every lane. The first attempt
+(`e9af2c6`) failed 7 new tests because innerHTML/outerHTML were missing from the
+ElementHost setter's early name guard; `8739b1a` fixed the routing. `52bafab`
+corrected two test expectations (innerHTML is children-only; Array.join renders
+null as empty). Historical tests passed from the first run aside from the
+intentional guard updates. See `docs/m11_49_html_strings.md` and
+`docs/m11_49_report.md`.
+
+The next planned slice is M11-50: `document.write`/`writeln`/`open`/`close`
+plus `importNode`/`adoptNode`, followed by remaining headless-browser gaps. DOM
+prototype chains are deferred to a later stage.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
@@ -1088,6 +1133,15 @@ direction alone.
   `41563750355`, tree `3f4940f`, each wheel lane `1744 passed, 2 skipped`); see
   `docs/m11_48_report.md`. M11-49 (HTML string APIs + variadic string tree
   methods) is next.
+
+- `M11-49` — **HTML string APIs and variadic tree methods** — selected/approved
+  on `2026-11-03`: writable `innerHTML`/`outerHTML`, `insertAdjacent*`,
+  `append`/`prepend`/`before`/`after`/`replaceWith`/`replaceChildren`, bounded
+  entity decoding, and deterministic serialization. Boundary:
+  `docs/m11_49_html_strings.md`. Verified on real V8 (Linux `41577570846`,
+  Windows `41577574466`, macOS arm64 fallback `41578427318`, tree `52bafab`,
+  each wheel lane `1756 passed, 2 skipped`); see `docs/m11_49_report.md`.
+  M11-50 (`document.write` + import/adopt) is next.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

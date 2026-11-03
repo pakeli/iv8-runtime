@@ -78,6 +78,8 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `document.documentURI` / `baseURI` / `defaultView` / `location` | records `get`; `document.location` preserves identity with the global `location` |
 | `document.createTextNode('x').nodeType` / `.data` / `data = 'y'` | records `get` / `get` / `set` with `object_type: "text"` |
 | `document.createDocumentFragment().nodeName` | records `get` with `object_type: "document_fragment"` |
+| `el.innerHTML` / `el.innerHTML = '...'` | records `get` / `set` on the element (serialization/parsing runs inside the accessor) |
+| `el.append('x')` / `el.before(node)` / `insertAdjacentHTML(...)` | records `call` on the element method trampoline |
 | `const fn = document.querySelector` | records `get_method`; it is not a `call` |
 | `navigator.someMissingProperty` | records `get_probe` with `resolution: "missing"` for a HostObject string key |
 | `performance.now()` / `crypto.randomUUID()` | records `call` |

@@ -8,15 +8,17 @@ Last reviewed: `2026-11-03`
 implementation in `master` has progressed well beyond the original M1 boundary.
 
 As of `2026-11-03`, the latest implemented and verified M11 milestone is
-**M11-48** (Node foundation: first-class Text/Comment/DocumentFragment nodes,
-live `textContent`, and `characterData` MutationObserver records). Real-V8 CI is
-green on Linux, Windows, and macOS arm64 — Linux run `41562778133`, Windows run
-`41562781320`, macOS arm64 fallback run `41563750355`, each wheel lane reporting
-`1744 passed, 2 skipped` on tree `3f4940f`. It builds on **M11-47** (Document identity, tree `cc1c47d`,
-`1731 passed, 2 skipped`), **M11-46** (`document.cookie`, tree `18f1f4b`,
-`1725 passed, 2 skipped`), and **M11-41..M11-45** (BOM viewport / media /
-device metadata), verified on commit `61abc3b` with `1626 passed, 2 skipped`
-per lane:
+**M11-49** (HTML string APIs and variadic tree methods: `innerHTML` /
+`outerHTML` / `insertAdjacent*`, `append` / `prepend` / `before` / `after` /
+`replaceWith` / `replaceChildren`, bounded entity decoding, and deterministic
+serialization). Real-V8 CI is green on Linux, Windows, and macOS arm64 — Linux
+run `41577570846`, Windows run `41577574466`, macOS arm64 fallback run
+`41578427318`, each wheel lane reporting `1756 passed, 2 skipped` on tree
+`52bafab`. It builds on **M11-48** (Node foundation, tree `3f4940f`,
+`1744 passed, 2 skipped`), **M11-47** (Document identity, tree `cc1c47d`),
+**M11-46** (`document.cookie`, tree `18f1f4b`), and **M11-41..M11-45** (BOM
+viewport / media / device metadata), verified on commit `61abc3b` with
+`1626 passed, 2 skipped` per lane:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -97,6 +99,11 @@ per lane:
   `children`, node-kind-aware tree editing/clone/equality/contains, fragment
   child-moving insertion, element-only selectors/collections, and active
   `characterData` MutationObserver records
+- `M11-49`: HTML string APIs and variadic tree methods — writable `innerHTML` /
+  `outerHTML`, `insertAdjacentHTML` / `Element` / `Text`, `append` / `prepend` /
+  `before` / `after` / `replaceWith` / `replaceChildren` with node-or-string
+  arguments, bounded entity decoding, deterministic serialization, and pinned
+  mutation-record behavior
 - Post-M11 host access trace (steps 1–4, the complete step-5 object groups, steps 6a–6h, and step 7):
   `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
   recording native HostObject get/set/call entries, missing string-key
@@ -210,7 +217,11 @@ run `41562778133` and Windows run `41562781320`, each wheel lane `1744 passed,
 `document.contains`, and a Python int/str comparison), corrected without runtime
 changes. macOS arm64 fallback run `41563750355` (macos-14, cached V8 monolith,
 `macosx_11_0_arm64` wheels) also reported `1744 passed, 2 skipped` per lane;
-artifact IDs are in `docs/m11_48_report.md`.
+artifact IDs are in `docs/m11_48_report.md`. M11-49 (HTML string APIs) was
+verified on `m11-49-html-strings` (tree `52bafab`) with Linux run `41577570846`,
+Windows run `41577574466`, and macOS arm64 fallback run `41578427318`, each
+wheel lane `1756 passed, 2 skipped`; the first attempts fixed a missing setter
+name guard and two test expectations, with no remaining runtime issues.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -653,23 +664,27 @@ The repository is executing its post-M10 direction:
   `characterData` observers) is **landed and verified on real V8 (Linux +
   Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_48_node_foundation.md` and `docs/m11_48_report.md`;
-- the next execution handoff is M11-49: HTML string APIs (`innerHTML` /
-  `outerHTML` / `insertAdjacentHTML`) and the variadic string tree methods
-  (`append` / `prepend` / `before` / `after` / `replaceWith` /
-  `replaceChildren`), built on the M11-48 node foundation. The unassigned
-  selector follow-up remains deferred, and `navigator.userAgentData` remains
-  deliberately deferred. Gaps are inventoried in `docs/dom_bom_gaps.md`.
+- M11-49 (HTML string APIs and variadic tree methods) is **landed and verified
+  on real V8 (Linux + Windows + macOS arm64)** on `2026-11-03`; see
+  `docs/m11_49_html_strings.md` and `docs/m11_49_report.md`;
+- the next execution handoff is M11-50: `document.write`/`writeln`/`open`/
+  `close` and `importNode`/`adoptNode`, then the remaining headless-browser
+  gaps (context-sensitive parsing, selector pseudo-classes, additional document
+  surfaces). Prototype chains are explicitly deferred to a later stage. The
+  unassigned selector follow-up and `navigator.userAgentData` remain deferred.
+  Gaps are inventoried in `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete surface should become `M11-49` next on the object-oriented
-  common-API track? (`docs/decision_log.md` §A — `M11-1` through `M11-48` are
-  settled, landed, and verified. The planned next slice is HTML string APIs +
-  variadic string tree methods, enabled by M11-48; the unassigned selector
+- Which concrete surface should become `M11-50` next on the object-oriented
+  common-API track? (`docs/decision_log.md` §A — `M11-1` through `M11-49` are
+  settled, landed, and verified. The planned next slice is `document.write` +
+  import/adopt, followed by remaining headless-browser gaps; DOM prototype
+  chains are explicitly deferred to a later stage, the unassigned selector
   pseudo-class follow-up remains deferred, UA-CH is deliberately deferred, and
-  the remaining candidates come from `docs/dom_bom_gaps.md`.)
+  candidates come from `docs/dom_bom_gaps.md`.)
 - Should the `in` operator, non-HostObject query targets, or wrapper-cached
   references ever be covered through a Proxy/AST design, or remain explicit
   out-of-scope blind spots? (Steps 6a–6h cover the explicit has/descriptor APIs

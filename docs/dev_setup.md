@@ -130,13 +130,14 @@ Then scan recent commits and only after that start code changes.
 
 If you only remember one thing:
 
-> `HEAD` is not an M1-only repository; implementation is through M11-48 (Node
-> foundation — Text/Comment/DocumentFragment nodes, live `textContent`, and
-> active `characterData` MutationObserver records), verified on real V8 (Linux +
-> Windows + macOS arm64) on `2026-11-03` and merged to `master` on the fork
-> (`pakeli/iv8-runtime`); upstream sync is out of scope. It follows M11-47
-> (Document identity), M11-46 (`document.cookie`), and M11-41..M11-45 (BOM
-> viewport/media/device metadata, verified on `2026-10-30`).
+> `HEAD` is not an M1-only repository; implementation is through M11-49 (HTML
+> string APIs and variadic tree methods — innerHTML/outerHTML/insertAdjacent*,
+> append/prepend/before/after/replaceWith/replaceChildren, bounded entity
+> decoding, deterministic serialization), verified on real V8 (Linux + Windows
+> + macOS arm64) on `2026-11-03` and merged to `master` on the fork
+> (`pakeli/iv8-runtime`); upstream sync is out of scope. It follows M11-48
+> (Node foundation), M11-47 (Document identity), M11-46 (`document.cookie`), and
+> M11-41..M11-45 (BOM viewport/media/device metadata, verified on `2026-10-30`).
 > The post-M11 host access trace steps 1–4 plus the
 > step-5 native BOM call, window metadata, nested metadata, static
 > visualViewport, navigator.storage manager, navigator.permissions,
@@ -149,6 +150,7 @@ If you only remember one thing:
 > `c678ede` (release-tested tree `62af2e6`), including a macos-14 fallback
 > macOS arm64 wheel build; see `docs/m11_41_45_report.md`,
 > `docs/m11_46_report.md`, `docs/m11_47_report.md`,
-> `docs/m11_48_report.md`, `docs/host_access_trace.md`, and
-> `docs/host_access_trace_workflow.md`. The full suite collects 1746 items;
-> each release lane reports `1744 passed, 2 skipped`.
+> `docs/m11_48_report.md`, `docs/m11_49_report.md`,
+> `docs/host_access_trace.md`, and `docs/host_access_trace_workflow.md`. The
+> full suite collects 1758 items; each release lane reports
+> `1756 passed, 2 skipped`.

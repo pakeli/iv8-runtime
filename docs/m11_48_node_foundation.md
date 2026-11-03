@@ -1,5 +1,9 @@
 # M11-48 — Node foundation: text/comment nodes, DocumentFragment, live textContent
 
+> **Delivered later (`2026-11-03`).** M11-49 implemented the HTML string APIs
+> and variadic tree methods listed as non-goals below; see
+> `docs/m11_49_html_strings.md`. The M11-48 node semantics remain current.
+
 Status: **VERIFIED — real V8 green on Linux + Windows + macOS arm64 (`2026-11-03`)**
 
 This is the foundational slice of the object-oriented common-API track's

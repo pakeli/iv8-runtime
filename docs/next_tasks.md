@@ -1609,10 +1609,60 @@ tests were updated intentionally for live text and node creation.
 
 ### Next
 
-M11-49: HTML string APIs (`innerHTML` / `outerHTML` / `insertAdjacentHTML`)
-and variadic string tree methods (`append` / `prepend` / `before` / `after` /
-`replaceWith` / `replaceChildren`), using the M11-48 parser/host foundation.
-`document.write` and import/adopt follow later.
+The HTML string API slice was completed as Priority 3ao below.
+
+## Priority 3ao: HTML string APIs and variadic tree methods — M11-49 — DONE (`2026-11-03`)
+
+### Goal
+
+Turn the M11-48 node foundation into the common DOM manipulation surface needed
+for a usable headless browser.
+
+### What landed
+
+- Writable Element `innerHTML` / `outerHTML` with fragment parsing (scripts
+  stay inert; parsed controls are initialized) and deterministic serialization
+  (id/class first, remaining attributes sorted, escaping, void elements,
+  comments, raw script/style text).
+- Bounded entity decoding in text, RCDATA, and attributes (common named
+  references plus decimal/hex numeric references).
+- `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` with
+  four positions, SyntaxError/TypeError validation, and Element-only insertion.
+- `append` / `prepend` / `replaceChildren` on Element and DocumentFragment;
+  `before` / `after` / `replaceWith` on Element, Text, and Comment. Node args
+  keep identity; strings/non-nodes become Text nodes; fragments move and empty.
+- Pinned mutation records: replace-all = one childList record with
+  removed+added; append/prepend/before/after = one addition record;
+  replaceWith/outerHTML = removal + addition.
+
+Boundary: `docs/m11_49_html_strings.md`. Tests:
+`test/test_m11_49_html_strings.py` (12 items). The full suite collects 1758
+items; each wheel lane: **`1756 passed, 2 skipped`**.
+
+### Verification — passed
+
+Tree `52bafab` (branch `m11-49-html-strings`):
+
+- Linux `release-linux` run `41577570846` — cp311–cp314, each
+  `1756 passed, 2 skipped`;
+- Windows `release-windows` run `41577574466` — Python 3.11–3.14, each
+  `1756 passed, 2 skipped`;
+- macOS arm64 fallback run `41578427318` (`macos-14`, cached V8 monolith,
+  `macosx_11_0_arm64` wheels) — cp311–cp314, each `1756 passed, 2 skipped`.
+  Artifact IDs are in `docs/m11_49_report.md`.
+
+The first attempt (`e9af2c6`) failed 7 new tests because innerHTML/outerHTML
+were writable but missing from the setter's early name guard; `8739b1a` fixed
+the routing. `52bafab` corrected two test expectations (innerHTML is
+children-only; `Array.join` renders null as empty). Historical tests passed
+from the first run aside from intentional guard updates.
+
+### Next
+
+M11-50: `document.write`/`writeln`/`open`/`close` and
+`importNode`/`adoptNode`, then the remaining headless-browser gaps
+(context-sensitive parsing, selector pseudo-classes, additional document
+surfaces). DOM prototype chains are deferred to a later stage.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 
