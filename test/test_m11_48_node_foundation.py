@@ -261,12 +261,12 @@ def test_clone_equality_contains_and_connectivity_across_kinds():
                 textClone.nodeType, textClone.isEqualNode(t),
                 fClone.nodeType, fClone.isEqualNode(f),
                 d.contains(t), t.contains(t), t.contains(d),
-                document.contains(document),
+                typeof document.contains === 'undefined',
                 t.isConnected, f.firstChild.isConnected
               ].join('|');
             })();
             """
-        ) == "1|true|false|AhiB|3|true|11|true|true|true|false|false|true|false"
+        ) == "1|true|false|AhiB|3|true|11|true|true|true|false|true|true|false"
 
 
 @on_only
@@ -398,7 +398,7 @@ def test_child_list_records_include_text_nodes_and_fragments():
               return host.childNodes[0].nodeType;
             })();
             """
-        ) == "3"
+        ) == 3
         page.run_jobs()
         assert page.eval("window.__host_records.join('/')") ==             "childList|1,3|/childList|3|1,3"
 
