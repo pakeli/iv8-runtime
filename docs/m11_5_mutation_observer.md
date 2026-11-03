@@ -1,5 +1,11 @@
 # M11-5 — `MutationObserver` (manual microtask delivery)
 
+> **Extended boundary (`2026-11-03`).** M11-48 makes Text/Comment nodes real
+> and activates the `characterData` / `characterDataOldValue` MutationObserver
+> records that this document freezes as inert. See
+> `docs/m11_48_node_foundation.md` for the current mutation-record contract.
+
+
 M11-5 is the fifth implementation slice under the compatibility-first M11 line.
 It adds a minimal, deterministic `MutationObserver` whose records are delivered
 by the existing `Page.run_jobs()` microtask checkpoint. It adds no new Python
@@ -47,8 +53,9 @@ Installed per generation by `install_page`:
   a JS `Array`; each entry is `String()`-converted and ASCII-lowercased. An
   empty filter matches no attributes; an absent filter matches all.
 - `characterDataOldValue: true` without `characterData: true` → `TypeError`.
-- `characterData` is accepted but inert: this DOM is element-only, so no
-  characterData records can ever be produced.
+- M11-5 accepted `characterData` but produced none (the DOM was element-only).
+  M11-48 activates it for real Text/Comment nodes; see
+  `docs/m11_48_node_foundation.md` for the current record contract.
 - Re-observing the same `(observer, target)` replaces the old options; pending
   records are not cleared by that replacement.
 - Calling `observe` / `disconnect` / `takeRecords` on a non-MutationObserver
@@ -171,7 +178,7 @@ The runtime still has exactly four manual pumps.
 M11-5 deliberately does **not** add:
 
 - a Python API, a fifth pump, or an automatic event loop;
-- `characterData` / text-node mutation records (this DOM has no text nodes);
+- CharacterData mutation helpers; Text/Comment *event-target* methods;
 - a `MutationRecord` constructor/global;
 - `id` / `className` property setters (existing read-only behavior at M11-5;
   M11-12 later added them);

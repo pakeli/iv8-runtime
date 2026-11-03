@@ -1,5 +1,11 @@
 # M4-B Summary — approved extended-DOM-behaviour boundary
 
+> **Superseded boundary (`2026-11-03`).** M11-48 distinguishes `childNodes`
+> from `children`, adds text/comment nodes, and makes `textContent` live. See
+> `docs/m11_48_node_foundation.md`; this summary remains the historical M4-B
+> boundary.
+
+
 > **Scope note (`2026-10-29`).** M11-34 expands the selector subset used by
 > `matches` / `closest` below to selector lists, compound selectors, combinators,
 > attribute selectors, and `*`. The statements here remain the historical M4-B

@@ -107,15 +107,17 @@ formatting, stack, or nesting state.
 
 | Missing | Status |
 |---|---|
-| Text, comment, and CDATA nodes; `createTextNode` / `createComment` / `createCDATASection` | **excluded** — the DOM is element-only |
-| `DocumentFragment` and `createDocumentFragment` | **absent** |
-| Live re-aggregation of `textContent` after structural edits | **excluded** — `textContent` is a parse-time/write-time aggregate |
+| Text and comment nodes; `createTextNode` / `createComment` | **implemented** — M11-48 parser emits text (including whitespace/top-level) and comments; CharacterData hosts expose `nodeValue` / `data` / `length` |
+| CDATA nodes / `createCDATASection` | **absent** |
+| `DocumentFragment` and `createDocumentFragment` | **implemented** — M11-48 detached container; inserting it moves its children |
+| Live `textContent` after structural edits | **implemented** — M11-48 computes text live from text descendants; comments excluded from parents |
 | `importNode`, `adoptNode`, `normalize`, `compareDocumentPosition`, `getRootNode` | **absent** |
 | `Range`, `Selection`, `TreeWalker`, `NodeIterator` | **absent** |
 
 Implemented for contrast: M11-13 added raw `firstChild` / `lastChild` /
-`previousSibling` / `nextSibling` / `hasChildNodes()` (element-only aliases);
-M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
+`previousSibling` / `nextSibling` / `hasChildNodes()`; M11-48 makes them span all
+node kinds and adds `childNodes` vs `children` plus Text/Comment/DocumentFragment
+hosts. M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
 
 ### 2.2 Collections
 
@@ -145,7 +147,7 @@ Implemented for contrast: M11-19 added multi-token `getElementsByClassName`
 | `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
 | `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
 | Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **partially implemented (M11-18)** — form-control subset only; other reflections **absent** |
-| `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **absent** — need text-node/string semantics |
+| `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **absent** — M11-48 supplied the text/fragment foundation; string/variadic semantics remain a later slice |
 | Specialized `HTML*Element` classes | **excluded** |
 | Shadow DOM (`attachShadow`, `ShadowRoot`, slots), Custom Elements, `<template>` | **absent** |
 | SVG / MathML namespaces (`createElementNS`) | **absent** |
@@ -166,7 +168,8 @@ Implemented for contrast: M11-12 added writable `id` / `className`,
 | Native event generation and default actions (`click()`, `submit` / `reset` / `input` / `change`, media events) | **excluded** |
 | Additional lifecycle events (`beforeunload` / `unload` / `pageshow` / `pagehide` / `visibilitychange`) | **absent** |
 | `document.createEvent` | **absent** |
-| `MutationRecord` global; `characterData` mutation records | **excluded** — records are plain objects; the DOM has no text nodes |
+| `MutationRecord` global | **excluded** — records are plain objects |
+| `characterData` mutation records | **implemented** — M11-48 Text/Comment data writes produce records (oldValue per option) |
 | `document`-target `childList` records without `subtree` | **excluded** — no JS API mutates the document node itself |
 
 Implemented for contrast: `Event(type, {bubbles})`, `target` / `currentTarget`,

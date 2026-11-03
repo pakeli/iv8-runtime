@@ -1,5 +1,11 @@
 # M11-12..M11-17 — DOM / Web Platform Completeness Batch
 
+> **Extended boundary (`2026-11-03`).** M11-48 makes the raw
+> `firstChild`/`lastChild`/`previousSibling`/`nextSibling` aliases cover all
+> node kinds (Element, Text, Comment). See
+> `docs/m11_48_node_foundation.md`.
+
+
 Six bounded slices developed on one branch and verified together against the
 warmed master V8 cache. Each section freezes one milestone's scope.
 

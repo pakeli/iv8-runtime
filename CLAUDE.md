@@ -30,14 +30,14 @@ git log --oneline --decorate -n 20
   `tools/build_v8_macos.sh` + `.github/workflows/release-macos.yml`) all build
   and test V8-linked wheels. macOS wheels are tagged `macosx_11_0_arm64`;
   Intel/x64 and universal2 are not built.
-- As of `2026-11-02`, the latest verified milestone is **M11-47** (Document
-  identity — writable `document.title` plus `documentURI` / `baseURI` /
-  `defaultView` / `location` aliases, the second slice of the object-oriented
-  common-API completion track), green on real V8 Linux + Windows + macOS arm64
-  (tree `cc1c47d`, merged to `master` on the fork; upstream sync out of scope).
-  It follows **M11-46** (`document.cookie`, tree `18f1f4b`) and
-  **M11-41..M11-45** (BOM viewport/media/device metadata, commit `61abc3b`).
-  The M11 line is compatibility-first.
+- As of `2026-11-03`, the latest verified milestone is **M11-48** (Node
+  foundation — Text/Comment/DocumentFragment nodes, live `textContent`, and
+  active `characterData` MutationObserver records), green on real V8 Linux +
+  Windows + macOS arm64 (tree `3f4940f`, merged to `master` on the fork; upstream
+  sync out of scope). It follows **M11-47** (Document identity, tree `cc1c47d`),
+  **M11-46** (`document.cookie`, tree `18f1f4b`), and **M11-41..M11-45** (BOM
+  viewport/media/device metadata, commit `61abc3b`). The M11 line is
+  compatibility-first.
 - A post-M11 monitoring slice is also verified: **host access trace steps 1–4
   plus the step-5 native BOM call, window metadata, nested metadata, static
   visualViewport, navigator.storage manager, navigator.permissions,
@@ -110,7 +110,7 @@ Answer roughly as follows:
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
-  - M11 compatibility slices through `M11-47`: host environment, rAF, idle
+  - M11 compatibility slices through `M11-48`: host environment, rAF, idle
     callbacks, `queueMicrotask`, `MutationObserver`, event subclasses, Web
     Storage, Blob/File/FileReader, event cancellation,
     `classList`/`toggleAttribute`, event capture + listener options, element
@@ -125,12 +125,12 @@ Answer roughly as follows:
     single-context window metadata, `scheduler.postTask`), and the BOM
     viewport/media/device batch (`visualViewport`, bounded `matchMedia`,
     `navigator.storage` / `permissions`, legacy navigator metadata), and the
-    deterministic `document.cookie` jar (M11-46), and Document identity —
-    writable `document.title` + `documentURI` / `baseURI` / `defaultView` /
-    `location` aliases (M11-47) — verified on real V8 Linux + Windows + macOS
-    arm64; latest verification `2026-11-02`;
-  - latest implemented and verified compatibility feature: M11-47 (Document
-    identity, second Document slice of the common-API track);
+    deterministic `document.cookie` jar (M11-46), Document identity (M11-47),
+    and the M11-48 node foundation — Text/Comment/DocumentFragment nodes, live
+    `textContent`, and active `characterData` mutation records — verified on
+    real V8 Linux + Windows + macOS arm64; latest verification `2026-11-03`;
+  - latest implemented and verified compatibility feature: M11-48 (Node
+    foundation: text/comment/fragment nodes + live textContent);
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

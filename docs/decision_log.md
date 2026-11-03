@@ -117,7 +117,8 @@ Decided/verified `2026-10-28`.
 fifth pump, no `MutationRecord` global, no `id` / `className` property setters,
 and no cross-generation observer state. Records cover `childList` and
 `attributes` (with `subtree` / `attributeOldValue` / `attributeFilter`);
-`characterData` is accepted but inert because the DOM is element-only. The
+`characterData` is accepted but inert because the DOM is element-only. (M11-48
+later activated `characterData` for real Text/Comment nodes; see entry 45.) The
 missing `id` / `className` setters were later added by M11-12; those writes now
 queue the same attribute records as `setAttribute`.
 
@@ -858,6 +859,55 @@ tree `cc1c47d`; the six new tests ran in every lane and all lanes passed on the
 first attempt. See `docs/m11_47_document_identity.md` and
 `docs/m11_47_report.md`.
 
+### 45. Text-node architecture — M11-48 node foundation
+
+Decided/verified `2026-11-03`.
+
+The user approved replacing the element-only DOM boundary with a browser-style
+node model before continuing the common-API track. This supersedes the M2-7
+stored `textContent` aggregate and the M11-5 "characterData is inert" decision.
+
+- **Node model.** `DomNode` gains a `NodeKind` (Element 1 / Text 3 / Comment 8 /
+  DocumentFragment 11) and character `data`. The parser emits Text nodes for
+  all character runs (including whitespace and top-level text) and Comment
+  nodes; adjacent text merges. `script`/`style` are raw text and
+  `title`/`textarea` are RCDATA. Entity decoding and full HTML5 parsing remain
+  out of scope.
+- **Live text.** `textContent` is computed from Text descendants in tree order
+  (comments excluded) and assignment replaces children with zero or one Text
+  node. The stored aggregate and source ranges are removed.
+- **Hosts and wrappers.** `NodeHost` is the shared base; `ElementHost` is
+  refit, and `CharacterDataHost` (Text/Comment) plus `DocumentFragmentHost` are
+  added. The host cache/wrapper path dispatches by node kind; DOM argument
+  helpers accept any node. Text/Comment expose nodeValue/data/length and raw
+  navigation but not EventTarget or tree-editing methods. Fragment insertion
+  moves children and empties the fragment.
+- **Navigation/selectors.** `childNodes` includes all kinds; `children`,
+  element child/sibling variants, document collections, and selector results
+  stay element-only. `+`/`~` skip Text/Comment siblings.
+- **Observer.** `characterData`/`characterDataOldValue` are active for
+  Text/Comment targets and subtree/document observation; childList arrays wrap
+  nodes by kind.
+- **Trace.** New object types `text`, `comment`, `document_fragment` are valid
+  filters and coverage entries.
+- **Deviations.** Document is not a Node (`document.childNodes` absent);
+  Text/Comment/Fragment event methods and CharacterData helpers are deferred;
+  fragment mutation-record ordering is the documented runtime contract.
+- **Title/textarea.** `document.title` uses a real title Text child and keeps
+  the M11-47 no-title-element extension; textarea seeds and option text/value/
+  label fallbacks use live text.
+
+The full suite collects 1746 items. Linux `41562778133`, Windows `41562781320`,
+and macOS arm64 fallback `41563750355` each reported `1744 passed, 2 skipped` on
+tree `3f4940f`; the 13 new tests ran in every lane. The first attempt failed
+only two new-test expectations (absent `document.contains`, int/str comparison)
+and was corrected without runtime changes. See
+`docs/m11_48_node_foundation.md` and `docs/m11_48_report.md`.
+
+The next planned slice is M11-49: HTML string APIs (`innerHTML` / `outerHTML` /
+`insertAdjacentHTML`) and variadic string tree methods, enabled by this
+foundation.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
@@ -1029,6 +1079,15 @@ direction alone.
   `docs/m11_47_document_identity.md`. Verified on real V8 (Linux `41483937440`,
   Windows `41483943983`, macOS arm64 fallback `41485210986`, tree `cc1c47d`,
   each wheel lane `1731 passed, 2 skipped`); see `docs/m11_47_report.md`.
+
+- `M11-48` — **Node foundation** — selected/approved on `2026-11-03`: first-
+  class Text/Comment/DocumentFragment nodes, live `textContent`, node-kind-aware
+  navigation/tree editing/selectors, and active `characterData` MutationObserver
+  records. Boundary: `docs/m11_48_node_foundation.md`. Verified on real V8
+  (Linux `41562778133`, Windows `41562781320`, macOS arm64 fallback
+  `41563750355`, tree `3f4940f`, each wheel lane `1744 passed, 2 skipped`); see
+  `docs/m11_48_report.md`. M11-49 (HTML string APIs + variadic string tree
+  methods) is next.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

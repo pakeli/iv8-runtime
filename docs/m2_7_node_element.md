@@ -1,5 +1,11 @@
 # M2-7 — Minimal Node / Element
 
+> **Superseded boundary (`2026-11-03`).** The element-only tree, the stored
+> `textContent` aggregate, and the `childNodes == children` identity described
+> here were replaced by M11-48 (text/comment nodes, live `textContent`). See
+> `docs/m11_48_node_foundation.md`; the statements here remain historical.
+
+
 Scope of this phase only. On top of the M2-6 minimal `document`/`element`, M2-7
 adds a **read-only** node/element surface. It is still **not** a DOM: no
 mutation, no query expansion, no full attribute system. M2-8 is not started.

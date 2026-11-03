@@ -76,6 +76,8 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `document.cookie = 'a=1'` / `document.cookie` | records `set` / `get` on the writable `cookie` property |
 | `document.title = 'x'` / `document.title` | records `set` / `get`; the value is reflected into the first parsed `<title>` |
 | `document.documentURI` / `baseURI` / `defaultView` / `location` | records `get`; `document.location` preserves identity with the global `location` |
+| `document.createTextNode('x').nodeType` / `.data` / `data = 'y'` | records `get` / `get` / `set` with `object_type: "text"` |
+| `document.createDocumentFragment().nodeName` | records `get` with `object_type: "document_fragment"` |
 | `const fn = document.querySelector` | records `get_method`; it is not a `call` |
 | `navigator.someMissingProperty` | records `get_probe` with `resolution: "missing"` for a HostObject string key |
 | `performance.now()` / `crypto.randomUUID()` | records `call` |
@@ -139,6 +141,8 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `location` | `LocationHost` | Installed as a global; `toString()` is its only method. |
 | `document` | `DocumentHost` | Installed as a global; property getters, the writable `cookie` (M11-46) and `title` (M11-47) properties, and methods. |
 | element wrappers | `ElementHost` | Lazily created and cached per backing `DomNode`; not a global. Fresh JS wrappers can represent the same native backing. |
+| text / comment wrappers | `CharacterDataHost` | M11-48; lazily created per Text/Comment `DomNode`; properties and `data`/`nodeValue` writes are traced. |
+| fragment wrappers | `DocumentFragmentHost` | M11-48; lazily created per `DomNode` of kind DocumentFragment; created by `document.createDocumentFragment()`. |
 | — | `EventTargetHost` | Abstract/base plumbing. |
 | — | `WindowEventTarget` | Listener store only; never installed. |
 | — | `FileReaderEvents` | Listener store only; never installed. |
@@ -158,11 +162,12 @@ listed as not covered.
 - `object_type` is the native category: `host_probe`, `console`, `navigator`,
   `screen`, `location`, `document`, `element`, `connection`, `orientation`,
   `performance`, `permission_status`, `permissions`, `media_query_list`,
-  `crypto`, `storage`, `storage_manager`, `visual_viewport`, `window`, or the
-  fallback `host_object`.
+  `crypto`, `storage`, `storage_manager`, `visual_viewport`, `window`,
+  `text`, `comment`, `document_fragment`, or the fallback `host_object`.
 - `label` is a display hint. Global hosts use their global name; elements use
-  their native HTML tag only. Labels must not be built by reading JS `id`,
-  text, attributes, or other properties.
+  their native HTML tag only; Text/Comment use `#text`/`#comment`; fragments use
+  `#document-fragment`. Labels must not be built by reading JS `id`, text,
+  attributes, or other properties.
 
 ## 4. Public API and report
 

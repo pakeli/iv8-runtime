@@ -179,8 +179,9 @@ was chosen before the ranked compatibility matrix existed; Priority 4 below now 
 `observe(target, options)` / `disconnect()` / `takeRecords()`. Records cover
 `childList` and `attributes` (including `subtree`, `attributeOldValue`,
 `attributeFilter`), are queued in mutation order, and are delivered only by the
-existing `Page.run_jobs()` microtask checkpoint. Element and document targets are
-accepted; `characterData` is accepted but inert because the DOM is element-only.
+existing `Page.run_jobs()` microtask checkpoint. Element and document targets
+are accepted; `characterData` was accepted but inert in M11-5's element-only
+model (M11-48 later activated it for Text/Comment nodes).
 There is no new Python API, no fifth pump, no `MutationRecord` global, and no
 cross-generation observer state.
 
@@ -1553,10 +1554,65 @@ Tree `cc1c47d` (branch `m11-47-document-identity`):
 
 ### Next
 
-Continue with the next commonly used Document surface, then the next browser
-object. `document.createEvent` is the most direct remaining common method; the
-excluded text-node/DocumentFragment architecture and `document.write` need an
-explicit scope decision. The selector follow-up remains unassigned.
+The text-node/DocumentFragment architecture was approved and landed as M11-48
+(Priority 3an below). HTML string APIs and document.write build on it later.
+
+## Priority 3an: Text-node architecture — M11-48 node foundation — DONE (`2026-11-03`)
+
+### Goal
+
+Replace the element-only DOM and stored `textContent` aggregate with
+browser-style Text/Comment/DocumentFragment nodes and live text, unblocking the
+remaining common DOM APIs.
+
+### What landed
+
+- `NodeKind` values (Element 1 / Text 3 / Comment 8 / DocumentFragment 11);
+  the parser emits text (including whitespace and top-level text) and comments
+  in source order, treats `script`/`style` as raw text and `title`/`textarea` as
+  RCDATA, and no longer computes a stored aggregate.
+- `document.createTextNode` / `createComment` / `createDocumentFragment`;
+  CharacterData hosts expose `nodeValue` / `data` / UTF-16 `length`; fragments
+  expose child/navigation/query/tree-edit surface.
+- Live `textContent` (comments excluded; assignment replaces children with zero
+  or one Text node), `nodeValue`/`data` writes, and `characterData`
+  MutationObserver records (`characterDataOldValue` supported).
+- `childNodes` vs element `children`, raw sibling/child aliases vs element
+  variants, node-kind-aware clone/equality/contains/connectivity.
+- Tree editing accepts all node kinds; fragment insertion moves children and
+  empties the fragment with pinned mutation-record ordering.
+- Selectors, `document.children`, and collections stay element-only; universal
+  and sibling combinators ignore Text/Comment nodes.
+- Access-trace object types `text`, `comment`, `document_fragment` are valid
+  filters and appear in coverage.
+- No Python API or environment change.
+
+Boundary: `docs/m11_48_node_foundation.md`. Tests:
+`test/test_m11_48_node_foundation.py` (13 items). The full suite collects 1746
+items; each wheel lane: **`1744 passed, 2 skipped`**.
+
+### Verification — passed
+
+Tree `3f4940f` (branch `m11-48-node-foundation`):
+
+- Linux `release-linux` run `41562778133` — cp311–cp314, each
+  `1744 passed, 2 skipped`;
+- Windows `release-windows` run `41562781320` — Python 3.11–3.14, each
+  `1744 passed, 2 skipped`;
+- macOS arm64 fallback run `41563750355` (`macos-14`, cached V8 monolith,
+  `macosx_11_0_arm64` wheels) — cp311–cp314, each `1744 passed, 2 skipped`.
+  Artifact IDs are in `docs/m11_48_report.md`.
+
+The first attempt failed only two new-test expectations (document.contains is
+intentionally absent; eval returned an int). Historical element-only boundary
+tests were updated intentionally for live text and node creation.
+
+### Next
+
+M11-49: HTML string APIs (`innerHTML` / `outerHTML` / `insertAdjacentHTML`)
+and variadic string tree methods (`append` / `prepend` / `before` / `after` /
+`replaceWith` / `replaceChildren`), using the M11-48 parser/host foundation.
+`document.write` and import/adopt follow later.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

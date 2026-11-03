@@ -1,5 +1,11 @@
 # M4-A Summary — approved converged-DOM boundary
 
+> **Superseded boundary (`2026-11-03`).** M11-48 replaces the element-only
+> tree and the stored `textContent` aggregate with text/comment nodes and live
+> text. See `docs/m11_48_node_foundation.md`; this summary remains the
+> historical M4-A boundary.
+
+
 > **Scope note (`2026-10-29`).** M11-34 expands the selector subset described
 > below to selector lists, compound selectors, combinators, attribute selectors,
 > and `*`. The statements here remain the historical M4-A boundary; see

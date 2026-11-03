@@ -8,17 +8,15 @@ Last reviewed: `2026-11-03`
 implementation in `master` has progressed well beyond the original M1 boundary.
 
 As of `2026-11-03`, the latest implemented and verified M11 milestone is
-**M11-47** (writable `document.title` plus the `documentURI` / `baseURI` /
-`defaultView` / `location` identity aliases — the second Document slice of the
-object-oriented common-API completion track). Real-V8 CI is green on Linux,
-Windows, and macOS arm64 — Linux run `41483937440`, Windows run `41483943983`,
-macOS arm64 fallback run `41485210986`, all on tree `cc1c47d`, each wheel lane
-reporting `1731 passed, 2 skipped`. It builds on **M11-46** (`document.cookie`
-as a deterministic per-Page in-memory jar), verified on tree `18f1f4b` with
-`1725 passed, 2 skipped`, and on **M11-41..M11-45** (BOM viewport / media /
-device metadata: `visualViewport`, `matchMedia`, `navigator.storage`,
-`navigator.permissions`, and legacy navigator metadata), verified on commit
-`61abc3b` with `1626 passed, 2 skipped` per lane:
+**M11-48** (Node foundation: first-class Text/Comment/DocumentFragment nodes,
+live `textContent`, and `characterData` MutationObserver records). Real-V8 CI is
+green on Linux, Windows, and macOS arm64 — Linux run `41562778133`, Windows run
+`41562781320`, macOS arm64 fallback run `41563750355`, each wheel lane reporting
+`1744 passed, 2 skipped` on tree `3f4940f`. It builds on **M11-47** (Document identity, tree `cc1c47d`,
+`1731 passed, 2 skipped`), **M11-46** (`document.cookie`, tree `18f1f4b`,
+`1725 passed, 2 skipped`), and **M11-41..M11-45** (BOM viewport / media /
+device metadata), verified on commit `61abc3b` with `1626 passed, 2 skipped`
+per lane:
 
 - `M10-1`: `Page.watch_reflect_ownkeys()` / `read_reflect_ownkeys_hits()`
 - `M10-2`: `Page.watch_object_keys()` / `read_object_keys_hits()`
@@ -93,6 +91,12 @@ device metadata: `visualViewport`, `matchMedia`, `navigator.storage`,
   first parsed `<title>`, plus read-only `documentURI` / `baseURI` (the current
   base URL), single-context `defaultView` (`=== window`), and `location`
   (the same object as the global `location`); all access-traced
+- `M11-48`: Node foundation — parser-emitted text/comments (`nodeType` 3/8),
+  `createTextNode` / `createComment` / `createDocumentFragment`, live
+  `textContent`, white-space-preserving child order, `childNodes` vs element
+  `children`, node-kind-aware tree editing/clone/equality/contains, fragment
+  child-moving insertion, element-only selectors/collections, and active
+  `characterData` MutationObserver records
 - Post-M11 host access trace (steps 1–4, the complete step-5 object groups, steps 6a–6h, and step 7):
   `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
   recording native HostObject get/set/call entries, missing string-key
@@ -199,7 +203,14 @@ M11-47 (Document identity) was verified on `m11-47-document-identity` (tree
 `cc1c47d`) with Linux run `41483937440`, Windows run `41483943983`, and macOS
 arm64 fallback run `41485210986` (macos-14, cached V8 monolith,
 `macosx_11_0_arm64` wheels), each wheel lane `1731 passed, 2 skipped` and the
-six new tests present; all lanes passed on the first attempt.
+six new tests present; all lanes passed on the first attempt. M11-48 (Node
+foundation) was verified on `m11-48-node-foundation` (tree `3f4940f`) with Linux
+run `41562778133` and Windows run `41562781320`, each wheel lane `1744 passed,
+2 skipped`; the first attempt failed only two new-test expectations (absent
+`document.contains`, and a Python int/str comparison), corrected without runtime
+changes. macOS arm64 fallback run `41563750355` (macos-14, cached V8 monolith,
+`macosx_11_0_arm64` wheels) also reported `1744 passed, 2 skipped` per lane;
+artifact IDs are in `docs/m11_48_report.md`.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -311,8 +322,9 @@ Implemented and present at `HEAD`:
   `observe(target, options)` / `disconnect()` / `takeRecords()`. Records cover
   `childList` and `attributes` (including `subtree`, `attributeOldValue`,
   `attributeFilter`), are queued in mutation order, and are delivered only by the
-  existing `Page.run_jobs()` microtask checkpoint. Element and document targets are
-  accepted; `characterData` is accepted but inert because the DOM is element-only.
+  existing `Page.run_jobs()` microtask checkpoint. Element and document targets
+  are accepted; M11-5 accepted `characterData` but was inert in the element-only
+  model (M11-48 later activated it for Text/Comment nodes).
   There is no new Python API, no fifth pump, and no `MutationRecord` global;
   observer state is per generation. Verified on real V8 (Linux + Windows) on
   `2026-10-28`; see `docs/m11_5_mutation_observer.md` and `docs/m11_5_report.md`.
@@ -637,20 +649,25 @@ The repository is executing its post-M10 direction:
   `defaultView` / `location` aliases) is **landed and verified on real V8
   (Linux + Windows + macOS arm64)** on `2026-11-02`; see
   `docs/m11_47_document_identity.md` and `docs/m11_47_report.md`;
-- the next execution handoff continues the object-oriented common-API track
-  with the next commonly used Document surface (event creation /
-  `createEvent`, or a scoped `document.write` decision), then moves to the next
-  commonly used object. The unassigned selector follow-up remains deferred, and
-  `navigator.userAgentData` remains deliberately deferred. Gaps are inventoried
-  in `docs/dom_bom_gaps.md`.
+- M11-48 (Node foundation: text/comment/fragment nodes, live `textContent`,
+  `characterData` observers) is **landed and verified on real V8 (Linux +
+  Windows + macOS arm64)** on `2026-11-03`; see
+  `docs/m11_48_node_foundation.md` and `docs/m11_48_report.md`;
+- the next execution handoff is M11-49: HTML string APIs (`innerHTML` /
+  `outerHTML` / `insertAdjacentHTML`) and the variadic string tree methods
+  (`append` / `prepend` / `before` / `after` / `replaceWith` /
+  `replaceChildren`), built on the M11-48 node foundation. The unassigned
+  selector follow-up remains deferred, and `navigator.userAgentData` remains
+  deliberately deferred. Gaps are inventoried in `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete Document API slice should become `M11-48` next on the
-  object-oriented common-API track? (`docs/decision_log.md` §A — `M11-1`
-  through `M11-47` are settled, landed, and verified; the unassigned selector
+- Which concrete surface should become `M11-49` next on the object-oriented
+  common-API track? (`docs/decision_log.md` §A — `M11-1` through `M11-48` are
+  settled, landed, and verified. The planned next slice is HTML string APIs +
+  variadic string tree methods, enabled by M11-48; the unassigned selector
   pseudo-class follow-up remains deferred, UA-CH is deliberately deferred, and
   the remaining candidates come from `docs/dom_bom_gaps.md`.)
 - Should the `in` operator, non-HostObject query targets, or wrapper-cached

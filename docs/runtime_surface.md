@@ -1,14 +1,11 @@
 # iv8-runtime Runtime Surface Index
 
-Last reviewed: `2026-11-03` · Latest verified milestone: **M11-47**
-(writable `document.title` plus `documentURI` / `baseURI` / `defaultView` /
-`location` identity aliases — the second slice of the object-oriented
-common-API completion track), verified on real V8 (Linux + Windows + macOS
-arm64) on `2026-11-02`. It follows **M11-46** (`document.cookie` — deterministic
-per-Page in-memory jar, verified `2026-11-02`) and **M11-41..M11-45** (BOM
-viewport/media/device metadata: `visualViewport`, `matchMedia`,
-`navigator.storage`, `navigator.permissions`, and legacy navigator metadata),
-verified on `2026-10-30`. The post-M11 host access
+Last reviewed: `2026-11-03` · Latest verified milestone: **M11-48**
+(Node foundation — Text/Comment/DocumentFragment nodes, live `textContent`, and
+`characterData` mutation records), verified on real V8 (Linux + Windows + macOS
+arm64). It follows **M11-47** (Document identity), **M11-46** (`document.cookie`)
+and **M11-41..M11-45** (BOM viewport/media/device metadata). The post-M11 host
+access
 trace steps 1–4 plus the step-5 BOM-callback, window metadata, nested metadata,
 static visualViewport, navigator-storage-manager, navigator-permissions,
 matchMedia-result, legacy-navigator, and window-alias groups, plus step-6a
@@ -284,9 +281,10 @@ Installed per generation by `install_page`:
   `observe(target, options)` / `disconnect()` / `takeRecords()`. Records cover
   `childList` + `attributes` (with `subtree` / `attributeOldValue` /
   `attributeFilter`), are queued in mutation order, and are delivered only by
-  `Page.run_jobs()`; element and document targets are accepted. `characterData`
-  is accepted but inert (element-only DOM); records are plain objects (no
-  `MutationRecord` global); observer state is per generation;
+  `Page.run_jobs()`; element, Text/Comment, DocumentFragment, and document
+  targets are accepted. M11-48 activates `characterData` /
+  `characterDataOldValue`; records are plain objects (no `MutationRecord`
+  global); observer state is per generation;
 - **event subclasses** (M11-6) — `CustomEvent` (`detail`), `MouseEvent`
   (`clientX` / `clientY` / `button` / `buttons`), `KeyboardEvent` (`key` /
   `code` / `repeat`), and `FocusEvent` (`relatedTarget`), each inheriting
@@ -320,10 +318,22 @@ Installed per generation by `install_page`:
   (they update the dedicated fields and queue attribute records like
   `setAttribute`), `hasAttributes()`, and `getAttributeNames()` (id/class first,
   then the remaining raw names ASCII-sorted);
-- **tree editing + node navigation** (M11-13) — `replaceChild()`, `remove()`,
-  `hasChildNodes()`, and raw `firstChild` / `lastChild` / `previousSibling` /
-  `nextSibling` aliases. The tree is element-only, so the raw aliases equal the
-  element variants;
+- **tree editing + node navigation** (M11-13, extended M11-48) —
+  `replaceChild()`, `remove()`, `hasChildNodes()`, and raw `firstChild` /
+  `lastChild` / `previousSibling` / `nextSibling` aliases. M11-48 makes the raw
+  aliases span Element/Text/Comment nodes and adds `childNodes` (all kinds) vs
+  `children` (elements); DocumentFragment insertion moves the fragment's
+  children and empties it;
+- **node creation** (M11-48) — `document.createTextNode(data)` /
+  `document.createComment(data)` return CharacterData nodes (`nodeType`
+  3/8, `nodeName` `#text`/`#comment`, writable `data`/`nodeValue`/`textContent`,
+  UTF-16 `length`, empty `childNodes`, raw sibling navigation);
+  `document.createDocumentFragment()` returns a detached container with
+  `childNodes` / `children` / first/last members, live `textContent`, tree
+  editing, and `querySelector` / `querySelectorAll` / `getElementById`.
+  `textContent` is live over Text descendants (comments excluded); assignment
+  replaces children with zero or one Text node. Text/Comment/Fragment do not
+  expose EventTarget methods in this slice;
 - **clone / equality** (M11-14) — detached `cloneNode(deep?)`, identity
   `isSameNode()`, and structural `isEqualNode()`;
 - **URL.searchParams** (M11-15) — a `URLSearchParams` snapshot of the URL's
@@ -387,14 +397,18 @@ Installed per generation by `install_page`:
   `body` / `currentScript` / `scripts` / `children` / `forms` / `images` / `links` /
   `anchors` / `embeds` / `applets`, the M11-23 metadata (`characterSet` /
   `contentType` / `compatMode` / `referrer` / `domain` / `visibilityState` /
-  `hidden` / `activeElement` / `hasFocus()`), and `getElementById` /
+  `hidden` / `activeElement` / `hasFocus()`), `getElementById` /
   `querySelector` / `querySelectorAll` / `getElementsByTagName` /
-  `getElementsByClassName` / `getElementsByName` / `createElement`;
+  `getElementsByClassName` / `getElementsByName` / `createElement`, and the
+  M11-48 `createTextNode` / `createComment` / `createDocumentFragment`;
+  `document.children` stays element-only and `document.childNodes` remains
+  absent (Document is not a Node);
 - **elements** — the minimal node surface (`tagName` / `nodeName` / `nodeType` /
-  `id` / `className` / `textContent` / `parentNode` / `childNodes` / `children`),
-  connectivity and structural navigation (`ownerDocument` / `isConnected` /
-  `parentElement` / sibling and first/last child members / `childElementCount`,
-  plus raw `firstChild` / `lastChild` / `previousSibling` / `nextSibling` and
+  `nodeValue` (null) / `id` / `className` / live `textContent` / `parentNode` /
+  `childNodes` / `children`), connectivity and structural navigation
+  (`ownerDocument` / `isConnected` / `parentElement` / element sibling and
+  first/last element-child members / `childElementCount`, plus raw
+  `firstChild` / `lastChild` / `previousSibling` / `nextSibling` and
   `hasChildNodes()` since M11-13), attributes (`getAttribute` /
   `hasAttribute` / `setAttribute` / `removeAttribute`, plus writable
   `id` / `className`, `hasAttributes()`, and `getAttributeNames()` since
@@ -427,9 +441,12 @@ Installed per generation by `install_page`:
 
 `hostProbe` is M2-1 framework infrastructure, not a stable API.
 
-Deliberate shape of this DOM: it is **element-only** (no text / comment / fragment
-nodes), collections are plain JS `Array`s (not `HTMLCollection` / `NodeList`, no
-`item()` / `namedItem()`, no identity guarantee), selectors support the M11-34
+Deliberate shape of this DOM (M11-48): Element, Text, Comment, and
+DocumentFragment nodes share one live tree; `textContent` is computed live and
+whitespace text nodes are preserved; XML CDATA, doctype nodes, Document-as-Node,
+and Node constructors remain absent. Collections are plain JS `Array`s (not
+`HTMLCollection` / `NodeList`, no `item()` / `namedItem()`, no identity
+guarantee); selectors match elements only and support the M11-34
 subset (lists, compound selectors, combinators, attribute selectors, `*`) but not
 pseudo-classes/elements, escapes, namespaces, or `i`/`s` flags, there are no
 specialized `HTML*Element` classes or
@@ -444,7 +461,7 @@ the milestone summary before assuming any wider behavior.
 
 Never implemented at any milestone so far: networking (`fetch` / XHR / WebSocket /
 resource loading), navigation and history, JavaScript→Python callbacks, a Python-side
-DOM or event API (`Page.document`), text/comment nodes, live collections, and layout
+DOM or event API (`Page.document`), CDATA/doctype nodes, live collections, layout
 or geometry. `iv8` also exports no browser symbol at module level —
 `test/test_scope_exclusions.py` guards this.
 
@@ -532,6 +549,7 @@ clock.
 | M11-41..M11-45 | BOM viewport/media/device metadata (visualViewport, matchMedia, navigator.storage/permissions, legacy navigator metadata) — verified 2026-10-30 | `docs/m11_41_45_bom_extras.md`, `docs/m11_41_45_report.md` |
 | M11-46 | `document.cookie` — deterministic per-Page in-memory jar, access-traced, first Document slice of the common-API track — verified 2026-11-02 | `docs/m11_46_document_cookie.md`, `docs/m11_46_report.md` |
 | M11-47 | Document identity — writable `document.title` + `documentURI` / `baseURI` / `defaultView` / `location` aliases — verified 2026-11-02 | `docs/m11_47_document_identity.md`, `docs/m11_47_report.md` |
+| M11-48 | Node foundation — Text/Comment/DocumentFragment nodes, live `textContent`, `characterData` mutation records — verified 2026-11-03 | `docs/m11_48_node_foundation.md`, `docs/m11_48_report.md` |
 | Post-M11 host access trace (steps 1–4 + complete step-5 object groups + steps 6a–7) | native HostObject get/set/call trace + missing-property probes + `get_method` references + `delete`/`own_keys`/`define_property` request events + explicit `has`/`get_own_property_descriptor` query events + Reflect target metadata + performance/crypto/Storage/permissions/matchMedia/window callbacks and getters + window metadata/alias accessors + nested/visualViewport accessors and methods + navigator.storage manager calls + navigator.permissions query/status accesses + matchMedia result accesses + legacy navigator metadata + primitive value/argument/return summaries + synchronous exception metadata + step-7 aggregated report (`start_access_trace` / `stop_access_trace` / `read_access_trace` / `access_trace_report`) — verified 2026-11-02 | `docs/host_access_trace.md`, `docs/host_access_trace_workflow.md` |
 
 Each milestone summary ends with an explicit *frozen out* list. That list is the

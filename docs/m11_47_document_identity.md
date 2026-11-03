@@ -1,5 +1,10 @@
 # M11-47 — Document identity: title, URL aliases, and view/location
 
+> **Extended boundary (`2026-11-03`).** M11-48 uses a real Text child for the
+> title element; `document.title` remains live over it. See
+> `docs/m11_48_node_foundation.md`.
+
+
 Status: **VERIFIED — real V8 green on Linux + Windows + macOS arm64 (`2026-11-02`)**
 
 This slice continues the object-oriented common-API track with the remaining

@@ -1,5 +1,11 @@
 # M4-A-3 — minimal tree editing (`appendChild` / `removeChild` / `insertBefore`)
 
+> **Superseded boundary (`2026-11-03`).** M11-48 generalizes tree editing to
+> every node kind, adds DocumentFragment insertion, and makes `textContent`
+> live. See `docs/m11_48_node_foundation.md`; the element-only statements here
+> remain historical.
+
+
 Third phase of **M4-A**. It adds minimal tree-editing methods on JS-side
 **elements**, operating on the existing minimal tree model. Element nodes only;
 document-level queries reflect edits at once. It does **not** add text nodes,

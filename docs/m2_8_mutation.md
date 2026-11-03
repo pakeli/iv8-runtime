@@ -1,5 +1,11 @@
 # M2-8 — Targeted DOM Mutation
 
+> **Superseded boundary (`2026-11-03`).** M11-48 replaced the stored
+> `textContent` aggregate with live text over Text nodes, so `textContent = ...`
+> now creates/removes Text children. See `docs/m11_48_node_foundation.md`; the
+> statements here remain historical.
+
+
 Scope of this phase only, and the **end of M2** — no new phase/product layer is
 opened. On top of the M2-7 read-only node/element surface, M2-8 adds a **very
 small, targeted** set of write operations on the minimal internal tree.

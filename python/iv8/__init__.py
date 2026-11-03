@@ -1023,6 +1023,20 @@ All are access-traced; strict assignment to the aliases throws. No navigation,
 multi-window behavior, Python API, or environment key is added. See
 ``docs/m11_47_document_identity.md``.
 
+M11-48 replaces the element-only DOM with first-class Text (nodeType 3),
+Comment (8), and DocumentFragment (11) nodes. ``document.createTextNode`` /
+``createComment`` / ``createDocumentFragment`` create detached nodes; the parser
+emits text (including whitespace and top-level text) and comments in source
+order, treats ``script``/``style`` as raw text and ``title``/``textarea`` as
+RCDATA, and ``textContent`` is now computed live over Text descendants
+(comments excluded). ``childNodes`` includes every node kind while
+``children``, selectors, and document collections stay element-only; tree
+editing accepts text/comment/fragment nodes and fragment insertion moves its
+children. MutationObserver ``characterData`` records are active. No Python API,
+environment key, or top-level export changes; Document-as-Node, CDATA/doctype
+nodes, and HTML string APIs remain later work. See
+``docs/m11_48_node_foundation.md``.
+
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and

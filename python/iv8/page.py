@@ -991,11 +991,12 @@ class Page:
         This is a structured, Page-level trace independent of :meth:`watch_apis`
         and the Reflect/Object.keys channels. It records operations that enter the
         generic HostObject property getter/setter or method trampoline; it is not
-        a V8-wide property hook. It covers ``connection``, ``console``,
-        ``crypto``, ``document``, ``element``, ``host_object``, ``host_probe``,
-        ``location``, ``media_query_list``, ``navigator``, ``orientation``,
-        ``performance``, ``permission_status``, ``permissions``, ``screen``,
-        ``storage``, ``storage_manager``, ``visual_viewport``, and ``window``.
+        a V8-wide property hook. It covers ``comment``, ``connection``,
+        ``console``, ``crypto``, ``document``, ``document_fragment``,
+        ``element``, ``host_object``, ``host_probe``, ``location``,
+        ``media_query_list``, ``navigator``, ``orientation``, ``performance``,
+        ``permission_status``, ``permissions``, ``screen``, ``storage``,
+        ``storage_manager``, ``text``, ``visual_viewport``, and ``window``.
         Missing string-key reads on the HostObject hosts produce
         ``get_probe``/``resolution: "missing"`` events. The step-5 groups also
         record ``performance`` / ``crypto`` native method calls, Storage method
