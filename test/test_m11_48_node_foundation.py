@@ -470,3 +470,23 @@ def test_node_hosts_are_access_traced():
             ("document_fragment", "nodeName", "get"),
         ]
         assert node_events[2]["value_summary"] == "string:1:y"
+
+        # The new node kinds are valid object-type filters and appear in the
+        # coverage list.
+        page.start_access_trace(object_types=["text"])
+        assert page.eval(
+            """
+            (() => {
+              const t = document.createTextNode('z');
+              t.nodeType;
+              document.body.nodeType;
+              return t.data;
+            })();
+            """
+        ) == "z"
+        filtered = page.read_access_trace()
+        assert [event["object_type"] for event in filtered["events"]] == [
+            "text", "text"]
+        assert [event["member"] for event in filtered["events"]] == [
+            "nodeType", "data"]
+        assert "text" in filtered["coverage"]["object_types"]
