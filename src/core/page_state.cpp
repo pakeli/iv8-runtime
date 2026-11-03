@@ -7262,9 +7262,10 @@ void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> cont
         node_->no_validate = value->BooleanValue(isolate);
         return;
     }
-    if (name != "textContent" && name != "value" && name != "method" &&
+    if (name != "textContent" && name != "innerHTML" &&
+        name != "outerHTML" && name != "value" && name != "method" &&
         name != "action" && name != "enctype" && name != "target") {
-        return;  // textContent + value + method/action/enctype/target (M7-3..6)
+        return;  // textContent/innerHTML/outerHTML + value + form slots
     }
     std::string str_value;
     v8::Local<v8::String> str;
