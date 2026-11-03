@@ -42,6 +42,19 @@ This file defines project-specific guidance for the `iv8-runtime` repository.
 - Store tests under `test/`.
 - Store generated caches, downloaded archives, V8 source trees, and build outputs under `data/` or ignored build directories.
 
+## Documentation Rules
+
+- Keep the handoff set in sync after every milestone: the boundary doc and
+  report, `docs/current_status.md`, `docs/next_tasks.md`,
+  `docs/decision_log.md`, `docs/runtime_surface.md`, and `CLAUDE.md`.
+- Distinguish **latest verified** from **latest implemented, verification
+  pending**. Mark a milestone verified only after every release lane is green,
+  and record trees, run IDs, artifact IDs, and passed/skipped counts.
+- Update test counts from actual output, use absolute dates, and sweep stale
+  `next`/`pending`/numbering references before committing.
+- Use path-limited commits; never include user-owned files or environment
+  directories.
+
 ## Testing Rules
 
 - Use pytest for Python-facing behavior.

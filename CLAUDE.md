@@ -157,10 +157,32 @@ Answer roughly as follows:
 
 ## Handoff Discipline
 
-After completing meaningful work, update at least one of:
+After completing meaningful work, keep the handoff set coherent. A verified
+milestone should update **all** of the applicable files below, not just one:
 
-- `docs/current_status.md`
-- `docs/next_tasks.md`
-- `docs/decision_log.md`
+- the milestone boundary doc and `docs/m<major>_<n>_report.md` (verification
+  evidence: trees, run IDs, artifact IDs, lane counts);
+- `docs/current_status.md` (latest verified vs latest implemented/pending,
+  test counts, run IDs, open questions, practical verdict);
+- `docs/next_tasks.md` (current execution order and the completed priority
+  section, including the next handoff);
+- `docs/decision_log.md` (scope decision, priority changes, verification);
+- `docs/runtime_surface.md` (surface index and milestone map);
+- `CLAUDE.md` (reality check and “what stage is the project in” answers);
+- `python/iv8/__init__.py` docstring plus `docs/dom_bom_gaps.md`,
+  `docs/host_access_trace.md`, and `docs/dev_setup.md` when the slice touches
+  those surfaces.
+
+Rules:
+
+- Only mark a milestone **verified** after every release lane is green; record
+  the exact tree, run IDs, artifact IDs, and `passed/skipped` counts.
+- Separate **latest verified** from **latest implemented, verification
+  pending**; never let a pending slice read as verified.
+- Update test-item counts only from actual collected/passed output.
+- Before committing, sweep for stale `next`, `pending`, old milestone
+  numbering, and superseded counts in the files above.
+- Use path-limited commits and never include user-owned files
+  (`test_dev_tool.py`, `.venv-iv8/`, `demo.py`, or untracked wheels).
 
 This prevents the next machine or model from losing context again.

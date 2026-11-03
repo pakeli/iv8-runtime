@@ -267,7 +267,7 @@ verified on `m11-52-window-messaging` (tree `bc00040`) with Linux run
 the first attempt.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
-report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
+report documents (`docs/m11_6_report.md` … `docs/m11_52_report.md`) and
 `docs/host_access_trace.md`.
 
 This means the project is no longer only a `JSContext` kernel. It now includes a

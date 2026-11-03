@@ -951,8 +951,9 @@ intentional guard updates. See `docs/m11_49_html_strings.md` and
 
 At the user's direction the next slice became M11-50 Window completion (see
 §A); `document.write`/`writeln`/`open`/`close` plus `importNode`/`adoptNode`
-move to M11-51, followed by remaining headless-browser gaps. DOM prototype
-chains are deferred to a later stage.
+were deferred behind the Window-first slices that followed (M11-51/M11-52),
+then the remaining headless-browser gaps. DOM prototype chains are deferred to
+a later stage.
 
 ## Pending Decisions
 
@@ -1142,8 +1143,8 @@ direction alone.
   `docs/m11_49_html_strings.md`. Verified on real V8 (Linux `41577570846`,
   Windows `41577574466`, macOS arm64 fallback `41578427318`, tree `52bafab`,
   each wheel lane `1756 passed, 2 skipped`); see `docs/m11_49_report.md`.
-  At the user's direction, `document.write` + import/adopt was moved to M11-51
-  in favor of the Window slice below.
+  At the user's direction, `document.write` + import/adopt was deferred behind
+  the Window slice below.
 
 - `M11-50` — **Window scroll / focus / UI completion** — selected on
   `2026-11-03` after the user paused Document work and asked for Window API

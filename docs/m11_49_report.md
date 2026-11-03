@@ -73,6 +73,7 @@ macOS wheel artifacts: `13204463364` (cp311), `13204892158` (cp312),
 
 ## Outcome
 
-M11-49 is verified and merged to fork `master`. The next common-API slice is
-M11-50: `document.write`/`writeln`/`open`/`close` plus
-`importNode`/`adoptNode`, followed by the remaining headless-browser gaps.
+M11-49 is verified and merged to fork `master`. At the user's direction the
+next slice became M11-50 Window completion; `document.write`/`writeln`/
+`open`/`close` plus `importNode`/`adoptNode` were deferred behind the
+Window-first slices that followed.

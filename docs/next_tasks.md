@@ -1675,10 +1675,11 @@ from the first run aside from intentional guard updates.
 ### Next
 
 The Window slice was taken next at the user's direction and is Priority 3ap
-below. `document.write`/`writeln`/`open`/`close` and import/adopt move to
-M11-51, then the remaining headless-browser gaps (context-sensitive parsing,
-selector pseudo-classes, additional document surfaces). DOM prototype chains
-are deferred to a later stage.
+below. `document.write`/`writeln`/`open`/`close` and import/adopt were deferred
+behind the Window-first slices (M11-51/M11-52), then the remaining
+headless-browser gaps (context-sensitive parsing, selector pseudo-classes,
+additional document surfaces). DOM prototype chains are deferred to a later
+stage.
 
 ## Priority 3ap: Window scroll / focus / UI completion — M11-50 — DONE (`2026-11-03`)
 

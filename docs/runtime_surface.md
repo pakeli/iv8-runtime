@@ -212,7 +212,8 @@ Installed per generation by `install_page`:
   M11-39 adds
   the single-context browsing metadata: replaceable `window.parent` / `frames`,
   unforgeable read-only `window.top`, and writable `window.opener` (initially
-  `null`), with no child frames, popups, or `postMessage`;
+  `null`), with no child frames or popups (same-window `postMessage` arrives in
+  M11-52 below);
 - **visual viewport + window flags** (M11-41) — read-only
   `visualViewport` (`width` / `height` from `innerWidth` / `innerHeight`,
   zero offsets, `scale=1`) with no-op listeners and no scroll/zoom/resize
