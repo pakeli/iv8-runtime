@@ -7,20 +7,19 @@ Last reviewed: `2026-11-03`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-11-03`, the latest implemented M11 milestone is **M11-50** (Window
-scroll / focus / UI completion: read-only `scrollX` / `scrollY` /
-`pageXOffset` / `pageYOffset`, no-op `scroll` / `scrollTo` / `scrollBy` /
-`focus` / `blur` / `move*` / `resize*` / `stop`, writable per-document
-`window.status`, BarProp metadata, and the `clientInformation` alias). Its
-real-V8 Linux / Windows / macOS arm64 verification is **pending**. The latest
-implemented and verified milestone remains **M11-49** (HTML string APIs and
-variadic tree methods: `innerHTML` / `outerHTML` / `insertAdjacent*`,
-`append` / `prepend` / `before` / `after` / `replaceWith` /
-`replaceChildren`, bounded entity decoding, and deterministic serialization).
-Real-V8 CI is green on Linux, Windows, and macOS arm64 — Linux run
-`41577570846`, Windows run `41577574466`, macOS arm64 fallback run
-`41578427318`, each wheel lane reporting `1756 passed, 2 skipped` on tree
-`52bafab`. It builds on **M11-48** (Node foundation, tree `3f4940f`,
+As of `2026-11-03`, the latest implemented and verified M11 milestone is
+**M11-50** (Window scroll / focus / UI completion: read-only `scrollX` /
+`scrollY` / `pageXOffset` / `pageYOffset`, no-op `scroll` / `scrollTo` /
+`scrollBy` / `focus` / `blur` / `move*` / `resize*` / `stop`, writable
+per-document `window.status`, BarProp metadata, and the `clientInformation`
+alias). Real-V8 CI is green on Linux, Windows, and macOS arm64 — Linux run
+`41597535300`, Windows run `41597541345`, macOS arm64 fallback run
+`41598354469`, each wheel lane reporting `1766 passed, 2 skipped` on tree
+`6d2250e`. It follows **M11-49** (HTML string APIs and variadic tree methods:
+`innerHTML` / `outerHTML` / `insertAdjacent*`, `append` / `prepend` /
+`before` / `after` / `replaceWith` / `replaceChildren`, bounded entity
+decoding, and deterministic serialization; tree `52bafab`, `1756 passed,
+2 skipped`), and builds on **M11-48** (Node foundation, tree `3f4940f`,
 `1744 passed, 2 skipped`), **M11-47** (Document identity, tree `cc1c47d`),
 **M11-46** (`document.cookie`, tree `18f1f4b`), and **M11-41..M11-45** (BOM
 viewport / media / device metadata), verified on commit `61abc3b` with
@@ -110,12 +109,12 @@ viewport / media / device metadata), verified on commit `61abc3b` with
   `before` / `after` / `replaceWith` / `replaceChildren` with node-or-string
   arguments, bounded entity decoding, deterministic serialization, and pinned
   mutation-record behavior
-- `M11-50` (implemented; verification pending): Window scroll/focus/UI
-  completion — access-traced `scrollX` / `scrollY` / `pageXOffset` /
-  `pageYOffset` (always `0`), no-op `scroll` / `scrollTo` / `scrollBy`,
-  `focus` / `blur`, `moveBy` / `moveTo` / `resizeBy` / `resizeTo`, and
-  `stop`, writable per-document `status`, read-only BarProp metadata, and the
-  `clientInformation` alias of `navigator`
+- `M11-50`: Window scroll/focus/UI completion — access-traced `scrollX` /
+  `scrollY` / `pageXOffset` / `pageYOffset` (always `0`), no-op `scroll` /
+  `scrollTo` / `scrollBy`, `focus` / `blur`, `moveBy` / `moveTo` /
+  `resizeBy` / `resizeTo`, and `stop`, writable per-document `status`,
+  read-only BarProp metadata, and the `clientInformation` alias of
+  `navigator`
 - Post-M11 host access trace (steps 1–4, the complete step-5 object groups, steps 6a–6h, and step 7):
   `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
   recording native HostObject get/set/call entries, missing string-key
@@ -233,7 +232,11 @@ artifact IDs are in `docs/m11_48_report.md`. M11-49 (HTML string APIs) was
 verified on `m11-49-html-strings` (tree `52bafab`) with Linux run `41577570846`,
 Windows run `41577574466`, and macOS arm64 fallback run `41578427318`, each
 wheel lane `1756 passed, 2 skipped`; the first attempts fixed a missing setter
-name guard and two test expectations, with no remaining runtime issues.
+name guard and two test expectations, with no remaining runtime issues. M11-50
+(Window scroll/focus/UI completion) was verified on
+`m11-50-window-completion` (tree `6d2250e`) with Linux run `41597535300`,
+Windows run `41597541345`, and macOS arm64 fallback run `41598354469`, each
+wheel lane `1766 passed, 2 skipped`; all lanes passed on the first attempt.
 Upstream `investforever/iv8-runtime` remains at M11-3;
 upstream sync is out of scope and the fork is the working master. See the
 report documents (`docs/m11_6_report.md` … `docs/m11_41_45_report.md`) and
@@ -679,10 +682,9 @@ The repository is executing its post-M10 direction:
 - M11-49 (HTML string APIs and variadic tree methods) is **landed and verified
   on real V8 (Linux + Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_49_html_strings.md` and `docs/m11_49_report.md`;
-- M11-50 (Window scroll/focus/UI completion) is **implemented on `2026-11-03`
-  and awaiting real-V8 verification**; see
-  `docs/m11_50_window_completion.md` and (after the lanes run)
-  `docs/m11_50_report.md`;
+- M11-50 (Window scroll/focus/UI completion) is **landed and verified on real
+  V8 (Linux + Windows + macOS arm64)** on `2026-11-03`; see
+  `docs/m11_50_window_completion.md` and `docs/m11_50_report.md`;
 - the next execution handoff is M11-51: `document.write`/`writeln`/`open`/
   `close` and `importNode`/`adoptNode`, then the remaining headless-browser
   gaps (context-sensitive parsing, selector pseudo-classes, additional document
@@ -695,9 +697,9 @@ The repository is executing its post-M10 direction:
 These are the questions a new coding session should resolve before major new work:
 
 - Which concrete surface should become `M11-51` next on the object-oriented
-  common-API track? (`docs/decision_log.md` §A — `M11-1` through `M11-49` are
-  settled, landed, and verified; `M11-50` is implemented and awaiting
-  verification. The planned next slice is `document.write` + import/adopt,
+  common-API track? (`docs/decision_log.md` §A — `M11-1` through `M11-50` are
+  settled, landed, and verified. The planned next slice is `document.write` +
+  import/adopt,
   followed by remaining headless-browser gaps; DOM prototype chains are
   explicitly deferred to a later stage, the unassigned selector pseudo-class
   follow-up remains deferred, UA-CH is deliberately deferred, and candidates

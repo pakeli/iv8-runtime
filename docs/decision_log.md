@@ -949,9 +949,10 @@ null as empty). Historical tests passed from the first run aside from the
 intentional guard updates. See `docs/m11_49_html_strings.md` and
 `docs/m11_49_report.md`.
 
-The next planned slice is M11-50: `document.write`/`writeln`/`open`/`close`
-plus `importNode`/`adoptNode`, followed by remaining headless-browser gaps. DOM
-prototype chains are deferred to a later stage.
+At the user's direction the next slice became M11-50 Window completion (see
+§A); `document.write`/`writeln`/`open`/`close` plus `importNode`/`adoptNode`
+move to M11-51, followed by remaining headless-browser gaps. DOM prototype
+chains are deferred to a later stage.
 
 ## Pending Decisions
 
@@ -1153,8 +1154,9 @@ direction alone.
   read-only BarProp `{visible: true}` metadata, and the `clientInformation`
   alias of `navigator`. The scroll/stubs deliberately do not introduce a
   virtual scroll position or layout engine. Boundary:
-  `docs/m11_50_window_completion.md`. Verification is pending real V8; see
-  `docs/m11_50_report.md`.
+  `docs/m11_50_window_completion.md`. Verified on real V8 (Linux `41597535300`,
+  Windows `41597541345`, macOS arm64 fallback `41598354469`, tree `6d2250e`,
+  each wheel lane `1766 passed, 2 skipped`); see `docs/m11_50_report.md`.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

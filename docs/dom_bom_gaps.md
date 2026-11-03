@@ -1,7 +1,7 @@
 # DOM / BOM Gap Inventory
 
 Last reviewed: `2026-11-03` · Baseline: **M11-50** (Window scroll/focus/UI
-completion implemented `2026-11-03`; real-V8 verification pending)
+completion verified on Linux + Windows + macOS arm64 `2026-11-03`)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
 > are **not implemented** as of M11-41..M11-45. It is not a contract and not a

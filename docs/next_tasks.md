@@ -1665,7 +1665,7 @@ M11-51, then the remaining headless-browser gaps (context-sensitive parsing,
 selector pseudo-classes, additional document surfaces). DOM prototype chains
 are deferred to a later stage.
 
-## Priority 3ap: Window scroll / focus / UI completion — M11-50 — IMPLEMENTED (`2026-11-03`)
+## Priority 3ap: Window scroll / focus / UI completion — M11-50 — DONE (`2026-11-03`)
 
 ### Goal
 
@@ -1688,12 +1688,23 @@ or call without layout, real focus, navigation, or OS window management.
 - No Python API or environment change.
 
 Boundary: `docs/m11_50_window_completion.md`. Tests:
-`test/test_m11_50_window_completion.py` (10 items).
+`test/test_m11_50_window_completion.py` (10 items). The full suite collects 1768
+items; each wheel lane: **`1766 passed, 2 skipped`**.
 
-### Verification
+### Verification — passed
 
-Pending real-V8 Linux + Windows + macOS arm64 lanes. Evidence will be recorded
-in `docs/m11_50_report.md`.
+Tree `6d2250e` (branch `m11-50-window-completion`):
+
+- Linux `release-linux` run `41597535300` — cp311–cp314, each
+  `1766 passed, 2 skipped`;
+- Windows `release-windows` run `41597541345` — Python 3.11–3.14, each
+  `1766 passed, 2 skipped`;
+- macOS arm64 fallback run `41598354469` (`macos-14`, cached V8 monolith,
+  `macosx_11_0_arm64` wheels) — cp311–cp314, each `1766 passed, 2 skipped`.
+  Artifact IDs are in `docs/m11_50_report.md`.
+
+All lanes passed on the first attempt; the temporary macos-14 workflow's
+`macos-release` branch was restored to `3f01d7c` afterward.
 
 ### Next
 

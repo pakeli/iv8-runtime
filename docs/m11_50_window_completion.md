@@ -1,6 +1,6 @@
 # M11-50 — Window scroll / focus / UI completion
 
-Status: **IMPLEMENTED — real-V8 verification pending**
+Status: **VERIFIED — real V8 green on Linux + Windows + macOS arm64 (`2026-11-03`)**
 
 This slice continues the object-oriented common-API track on `Window`. It adds
 the remaining deterministic window surface that page scripts commonly probe or
@@ -91,6 +91,13 @@ status coercion/reset/per-Page isolation, BarProp shape and read-only behavior,
 the `clientInformation` alias, access-trace records for the new scroll/status
 members, and `watch_apis` hits for all ten methods.
 
-No historical guard expects these members to be absent; the only intentional
-change to existing behavior is that `window.status` now exists (it was an
-ordinary global property before).
+No historical guard expects these members to be absent. Previously a page
+could create an ordinary `window.status` data property; it is now a native
+accessor with string coercion and per-document reset. That is the only
+intentional behavior change for an existing name.
+
+## Verification
+
+Real V8 is green for tree `6d2250e` on Linux, Windows, and macOS arm64; every
+wheel lane reports `1766 passed, 2 skipped` and all 10 new tests execute. Run
+IDs, artifact IDs, and fallback details are in `docs/m11_50_report.md`.
