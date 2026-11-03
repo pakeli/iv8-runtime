@@ -10,10 +10,10 @@ task queue for Claude after chat-history loss.
 At the user's direction, **Window now has higher priority than Document**:
 
 1. **Active — Window continuation.** M11-51 (Window event handler attributes;
-   Priority 3aq below) is verified. M11-52 is Window messaging
-   (`postMessage` + `MessageEvent`; Priority 3ar below). After it, continue
-   with a deterministic focus/visibility model (`getComputedStyle` only if a
-   CSS model is approved) before returning to Document work.
+   Priority 3aq below) and M11-52 (Window messaging; Priority 3ar below) are
+   verified. M11-53 is a deterministic focus/visibility model
+   (`getComputedStyle` only if a CSS model is approved) before returning to
+   Document work.
 2. **Later — Document continuation.** `document.write`/`writeln`/`open`/`close`
    and `importNode`/`adoptNode` move behind the Window slices. `document.all`
    and DOM prototype chains remain deferred.
@@ -1780,7 +1780,7 @@ Window messaging was taken next as Priority 3ar below. A deterministic
 focus/visibility model can follow; Document `write`/import work is explicitly
 later.
 
-## Priority 3ar: Window messaging (`postMessage` + `MessageEvent`) — M11-52 — IMPLEMENTED (`2026-11-03`)
+## Priority 3ar: Window messaging (`postMessage` + `MessageEvent`) — M11-52 — DONE (`2026-11-03`)
 
 ### Goal
 
@@ -1809,17 +1809,28 @@ workers, transferables, or network behavior.
 - No Python API or environment key changes.
 
 Boundary: `docs/m11_52_window_messaging.md`. Tests:
-`test/test_m11_52_window_messaging.py` (10 items).
+`test/test_m11_52_window_messaging.py` (10 items). The full suite collects 1789
+items; each wheel lane: **`1787 passed, 2 skipped`**.
 
-### Verification
+### Verification — passed
 
-Pending real-V8 Linux + Windows + macOS arm64 lanes. Evidence will be recorded
-in `docs/m11_52_report.md`.
+Tree `bc00040` (branch `m11-52-window-messaging`):
+
+- Linux `release-linux` run `41620346617` — cp311–cp314, each
+  `1787 passed, 2 skipped`;
+- Windows `release-windows` run `41620356968` — Python 3.11–3.14, each
+  `1787 passed, 2 skipped`;
+- macOS arm64 fallback run `41621413284` (`macos-14`, cached V8 monolith,
+  `macosx_11_0_arm64` wheels) — cp311–cp314, each `1787 passed, 2 skipped`.
+  Artifact IDs are in `docs/m11_52_report.md`.
+
+All lanes passed on the first attempt; the temporary macos-14 workflow's
+`macos-release` branch was restored to `3f01d7c` afterward.
 
 ### Next
 
-Continue Window-first with a deterministic focus/visibility model; Document
-`write`/import work remains later.
+Continue Window-first with M11-53: a deterministic focus/visibility model;
+Document `write`/import work remains later.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

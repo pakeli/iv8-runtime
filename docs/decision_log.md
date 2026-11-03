@@ -1186,8 +1186,9 @@ direction alone.
   bootstrap captures the original `structuredClone` / `MessageEvent` /
   `setTimeout` and deletes its hidden natives; calls are watchable. No
   iframes, workers, transferables, or cross-window delivery. Boundary:
-  `docs/m11_52_window_messaging.md`. Verification is pending real V8; see
-  `docs/m11_52_report.md`.
+  `docs/m11_52_window_messaging.md`. Verified on real V8 (Linux `41620346617`,
+  Windows `41620356968`, macOS arm64 fallback `41621413284`, tree `bc00040`,
+  each wheel lane `1787 passed, 2 skipped`); see `docs/m11_52_report.md`.
 
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /

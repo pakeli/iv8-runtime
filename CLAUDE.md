@@ -32,18 +32,15 @@ git log --oneline --decorate -n 20
   Intel/x64 and universal2 are not built.
 - As of `2026-11-03`, the execution order is **Window-first: Window is
   prioritized above Document** (`docs/next_tasks.md`). The latest verified
-  milestone is **M11-51** (Window event handler attributes — bounded
-  `window.onload`/`onerror`/`onmessage` and other `on*` accessors,
-  install/replace/clear, post-listener invocation, `return false`
-  cancellation, per-generation reset), green on real V8 Linux + Windows +
-  macOS arm64 (tree `34b119b`, merged to `master` on the fork; upstream sync
-  out of scope). **M11-52** (Window messaging — `postMessage` with structured
+  milestone is **M11-52** (Window messaging — `postMessage` with structured
   clone and bounded target origins, async FIFO timer delivery, and
-  `MessageEvent`) is implemented and awaiting real-V8 verification. M11-51
-  follows **M11-50** (Window scroll/focus/UI completion, tree `6d2250e`),
-  **M11-49** (HTML string APIs and variadic tree methods, tree `52bafab`),
-  **M11-48** (Node foundation, tree `3f4940f`), **M11-47** (Document identity,
-  tree `cc1c47d`), **M11-46** (`document.cookie`, tree `18f1f4b`), and
+  `MessageEvent`), green on real V8 Linux + Windows + macOS arm64 (tree
+  `bc00040`, merged to `master` on the fork; upstream sync out of scope). It
+  follows **M11-51** (Window event handler attributes, tree `34b119b`),
+  **M11-50** (Window scroll/focus/UI completion, tree `6d2250e`), **M11-49**
+  (HTML string APIs and variadic tree methods, tree `52bafab`), **M11-48**
+  (Node foundation, tree `3f4940f`), **M11-47** (Document identity, tree
+  `cc1c47d`), **M11-46** (`document.cookie`, tree `18f1f4b`), and
   **M11-41..M11-45** (BOM viewport/media/device metadata, commit `61abc3b`).
   The M11 line is compatibility-first.
 - A post-M11 monitoring slice is also verified: **host access trace steps 1–4
@@ -139,10 +136,10 @@ Answer roughly as follows:
     the M11-48 node foundation (Text/Comment/DocumentFragment, live text), the
     M11-49 HTML string/variadic DOM APIs, the M11-50 Window scroll/focus/UI
     stubs, the M11-51 Window event handler attributes, and the M11-52 Window
-    messaging surface — M11-51 and earlier verified on real V8 Linux + Windows
-    + macOS arm64; M11-52 implemented, verification pending;
-  - latest implemented and verified compatibility feature: M11-51 (Window event
-    handler attributes); latest implemented: M11-52 (Window messaging);
+    messaging surface — verified on real V8 Linux + Windows + macOS arm64;
+    latest verification `2026-11-03`;
+  - latest implemented and verified compatibility feature: M11-52 (Window
+    messaging);
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

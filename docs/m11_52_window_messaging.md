@@ -1,6 +1,6 @@
 # M11-52 — Window messaging (`postMessage` + `MessageEvent`)
 
-Status: **IMPLEMENTED — real-V8 verification pending**
+Status: **VERIFIED — real V8 green on Linux + Windows + macOS arm64 (`2026-11-03`)**
 
 This slice continues the Window-first track with the single-context messaging
 surface: `window.postMessage` and a `MessageEvent` constructor. It builds on the
@@ -87,3 +87,9 @@ cleanup, MessageEvent defaults/fields/ports copying, async clone delivery,
 event fields at dispatch time, the target-origin matrix, listener-then-handler
 ordering with FIFO delivery, transfer/argument TypeErrors, uncloneable-message
 rejection, captured originals surviving page overrides, and the watch hit.
+
+## Verification
+
+Real V8 is green for tree `bc00040` on Linux, Windows, and macOS arm64; every
+wheel lane reports `1787 passed, 2 skipped` and all 10 new tests execute. Run
+IDs, artifact IDs, and fallback details are in `docs/m11_52_report.md`.
