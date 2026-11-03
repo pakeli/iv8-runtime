@@ -55,15 +55,16 @@ def test_entity_decoding_and_serialization_escaping():
               const a = document.createElement('div');
               a.setAttribute('data-x', 'a"b&c');
               a.textContent = 'x';
-              const attr = a.innerHTML;
+              const attr = a.outerHTML;
               a.innerHTML = '<i title="a&amp;b&quot;c">x</i>';
               return [text, html, attr,
-                      a.getAttribute('title'), a.innerHTML].join('|');
+                      a.querySelector('i').getAttribute('title'),
+                      a.innerHTML].join('|');
             })();
             """
         ) == ('a & b <c>   A 😀 &bogus;|'
               'a &amp; b &lt;c&gt; &nbsp; A 😀 &amp;bogus;|'
-              'data-x="a&quot;b&amp;c"x|a&b"c|'
+              '<div data-x="a&quot;b&amp;c">x</div>|a&b"c|'
               '<i title="a&amp;b&quot;c">x</i>')
 
 
@@ -123,7 +124,8 @@ def test_outer_html_getter_and_setter():
               const before = a.outerHTML;
               a.outerHTML = '<b id="b">B</b><!--c-->';
               const host = document.getElementById('host');
-              const after = [host.innerHTML, document.getElementById('a'),
+              const after = [host.innerHTML,
+                             String(document.getElementById('a')),
                              document.getElementById('b').textContent,
                              host.childNodes[1].data].join('|');
               const detached = document.createElement('div');
