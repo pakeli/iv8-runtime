@@ -4,6 +4,14 @@ Last reviewed: `2026-11-03`
 
 ## 1. Summary
 
+**Internal maintenance (`2026-11-03`):** the first Page refactor extracts the
+V8-independent selector parser and adds automatic Linux/Python 3.13 V8 CI.
+Implemented with local checks passed; **V8-linked/release verification pending**.
+Differential parser validation: 20,119 identical results, UBSan clean. Local
+V8-free pytest: focused `4 passed, 25 skipped`; full `225 passed, 1564 skipped`.
+These are not runtime verification results. No completed CI verification yet;
+latest verified feature remains M11-52. See `docs/page_refactor.md`.
+
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 

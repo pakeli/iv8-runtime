@@ -1,8 +1,10 @@
 # iv8-runtime Runtime Surface Index
 
 Last reviewed: `2026-11-03` · Latest verified milestone: **M11-52**
-(HTML string APIs and variadic tree methods), verified on real V8 (Linux +
-Windows + macOS arm64). It follows **M11-48** (Node foundation — Text/Comment/
+(Window messaging — `postMessage` / `MessageEvent`), verified on real V8 (Linux +
+Windows + macOS arm64). It follows **M11-51** (Window event handler attributes),
+**M11-50** (Window scroll/focus/UI completion), **M11-49** (HTML string APIs),
+and **M11-48** (Node foundation — Text/Comment/
 DocumentFragment nodes, live `textContent`, active `characterData` records),
 **M11-47** (Document identity), **M11-46** (`document.cookie`), and
 **M11-41..M11-45** (BOM viewport/media/device metadata). The post-M11 host
@@ -19,6 +21,11 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 `docs/host_access_trace_workflow.md`.
 
 ## 0. What this document is
+
+Internal maintenance after M11-52 extracts selector parsing into
+`selector_parser.h` / `selector_parser.cpp` and adds PR/push V8 CI. No public
+surface changes; local checks passed, V8-linked/release verification pending.
+See `docs/page_refactor.md`. This is not the M11-53 feature milestone.
 
 This is the **single overview page** for the runtime as it actually exists at `HEAD`.
 It exists because the repository's oldest formal contract — `docs/api_contract.md` —

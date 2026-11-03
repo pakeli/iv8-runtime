@@ -7,6 +7,12 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
 
+Maintenance before the next feature slice: the first Page parser extraction
+and automatic Linux/Python 3.13 V8 CI are implemented. Run V8 CI plus all three
+release lanes on the change; verification is pending.
+Then configure the new check as required in repository branch protection.
+See `docs/page_refactor.md` for scope, local results, and remaining verification.
+
 At the user's direction, **Window now has higher priority than Document**:
 
 1. **Active — Window continuation.** M11-51 (Window event handler attributes;

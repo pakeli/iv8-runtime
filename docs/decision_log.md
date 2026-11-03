@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-11-02`
+Last reviewed: `2026-11-03`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -954,6 +954,28 @@ At the user's direction the next slice became M11-50 Window completion (see
 were deferred behind the Window-first slices that followed (M11-51/M11-52),
 then the remaining headless-browser gaps. DOM prototype chains are deferred to
 a later stage.
+
+### 47. Incremental Page refactoring with a real-V8 PR check
+
+Approved/implemented locally `2026-11-03`; V8-linked/release verification pending.
+
+Keep the public Page API and browser-compatibility boundaries unchanged. Start
+by extracting the V8-independent selector parser into its own translation unit;
+leave DOM matching and V8/host-object lifetime ownership in place. This avoids a
+large rewrite or introducing abstractions for unapproved features.
+
+Add a Linux x64 / Python 3.13 V8-linked push/PR workflow using the existing
+manylinux build helper, pinned image, and monolith cache. Require explicit V8
+linking, fail on missing interpreters/wheels, and test outside the checkout.
+Full release interpreter/platform coverage remains unchanged. Configuring this
+check as merge-required is a separate GitHub setting, not accomplished by the
+workflow file.
+
+20,119 parser comparisons were identical under UBSan; the newly built V8-free
+wheel passed `225 passed, 1564 skipped` (focused: `4 passed, 25 skipped`). These
+results do not verify a V8-linked runtime build. See `docs/page_refactor.md` for
+the boundary, limitations, and pending release evidence. M11-53 remains the
+next Window feature milestone.
 
 ## Pending Decisions
 

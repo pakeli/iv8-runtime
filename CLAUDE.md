@@ -24,6 +24,13 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
+- Internal maintenance after M11-52: selector parsing is extracted from
+  `page_state.cpp` into `selector_parser.h` / `selector_parser.cpp`; DOM matching
+  and resource ownership stay unchanged. `.github/workflows/v8-ci.yml` adds
+  automatic Linux/Python 3.13 real-V8 checks alongside skeleton CI. Local
+  differential/UBSan and skeleton checks passed; **V8-linked/release verification
+  is pending**, and no branch-protection setting has been changed. See
+  `docs/page_refactor.md`. M11-53 remains the next feature slice.
 - The repository started from an M1-only architecture and API contract.
 - The implementation at `HEAD` is **well beyond M1**.
 - Release lanes: Linux x64, Windows x64, and macOS arm64 (`macos-15` via

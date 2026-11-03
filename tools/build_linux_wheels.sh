@@ -3,6 +3,8 @@
 # Build + repair + test distributable manylinux_2_28 wheels for cp311-cp314,
 # INSIDE the manylinux_2_28 container, linking the pre-built V8 monolith and its
 # bundled clang+lld from data/v8/ (produced by tools/build_v8_manylinux.sh).
+# Set IV8_PYTHON_TAG=cp313-cp313 for the single-interpreter PR check; by default
+# all four release interpreters are required, built, and tested.
 # Phase 9 / Strategy A.
 #
 set -euo pipefail
@@ -35,28 +37,36 @@ fi
 
 TC="$ROOT/data/v8/toolchain"
 export PATH="$TC/bin:$PATH"  # so -fuse-ld=lld finds ld.lld
-export CMAKE_ARGS="-DCMAKE_C_COMPILER=$TC/bin/clang -DCMAKE_CXX_COMPILER=$TC/bin/clang++"
+export CMAKE_ARGS="-DIV8_LINK_V8=ON -DCMAKE_C_COMPILER=$TC/bin/clang -DCMAKE_CXX_COMPILER=$TC/bin/clang++"
 # Link with lld (CREL) and statically embed the GCC-toolset libstdc++/libgcc so
 # the wheel stays portable on manylinux_2_28 (no new GLIBCXX runtime dep). CMake
 # initializes the module/shared linker flags from LDFLAGS.
 export LDFLAGS="-fuse-ld=lld -static-libstdc++ -static-libgcc"
 
-PYTHONS=(
-  /opt/python/cp311-cp311
-  /opt/python/cp312-cp312
-  /opt/python/cp313-cp313
-  /opt/python/cp314-cp314
-)
+# The PR gate selects one interpreter; releases keep the complete matrix.
+PYTHON_TAGS=(cp311-cp311 cp312-cp312 cp313-cp313 cp314-cp314)
+if [ -n "${IV8_PYTHON_TAG:-}" ]; then
+  case "$IV8_PYTHON_TAG" in
+    cp311-cp311|cp312-cp312|cp313-cp313|cp314-cp314)
+      PYTHON_TAGS=("$IV8_PYTHON_TAG") ;;
+    *) echo "Unsupported IV8_PYTHON_TAG: $IV8_PYTHON_TAG" >&2; exit 1 ;;
+  esac
+fi
+PYTHONS=()
+for tag in "${PYTHON_TAGS[@]}"; do
+  PY="/opt/python/$tag"
+  if [ ! -x "$PY/bin/python" ] || [ ! -x "$PY/bin/pip" ]; then
+    echo "Required interpreter is missing: $PY" >&2
+    exit 1
+  fi
+  PYTHONS+=("$PY")
+done
 
 rm -rf dist wheelhouse
 mkdir -p dist wheelhouse
 
 echo "==> build raw wheels"
 for PY in "${PYTHONS[@]}"; do
-  if [ ! -x "$PY/bin/pip" ]; then
-    echo "    (skip: $PY not present in this image)"
-    continue
-  fi
   echo "--- $PY ---"
   "$PY/bin/pip" wheel . --no-deps -w dist
 done
@@ -68,16 +78,15 @@ done
 
 echo "==> clean install + full test suite per interpreter"
 for PY in "${PYTHONS[@]}"; do
-  [ -x "$PY/bin/python" ] || continue
   tag="$("$PY/bin/python" -c 'import sys;print("cp%d%d"%sys.version_info[:2])')"
   whl="$(ls wheelhouse/*"${tag}"-*.whl 2>/dev/null | head -1 || true)"
-  [ -n "$whl" ] || { echo "    (no wheel for $tag)"; continue; }
+  [ -n "$whl" ] || { echo "Required wheel is missing for $tag" >&2; exit 1; }
   echo "--- test $tag: $whl ---"
   venv="/tmp/venv-$tag"
   "$PY/bin/python" -m venv "$venv"
   "$venv/bin/pip" install -q "$whl" "pytest>=7"
-  ( cd /tmp && "$venv/bin/python" -c "import iv8; assert iv8._v8_linked, 'V8 not linked'; print('$tag import ok:', iv8._v8_runtime_version)" )
-  "$venv/bin/python" -m pytest "$ROOT/test"
+  ( cd /tmp && "$venv/bin/python" -c "import iv8; assert 'site-packages' in iv8.__file__, iv8.__file__; assert iv8._v8_linked, 'V8 not linked'; print('$tag import ok:', iv8._v8_runtime_version)" )
+  ( cd /tmp && "$venv/bin/python" -m pytest "$ROOT/test" )
 done
 
 echo "==> WHEELS_OK"

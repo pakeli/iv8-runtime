@@ -1,6 +1,6 @@
 # Development Setup
 
-Last reviewed: `2026-10-27`
+Last reviewed: `2026-11-03`
 
 This document is a practical quick-start for resuming development on a new machine.
 
@@ -100,6 +100,8 @@ python -m pytest test/test_watch_object_keys.py -v
 ## 5. CI / Release Entry Points
 
 - general CI: `.github/workflows/ci.yml`
+- real-V8 push/PR CI: `.github/workflows/v8-ci.yml` (Linux x64 / Python 3.13;
+  implementation prepared, first run pending; see `docs/page_refactor.md`)
 - Linux release wheels: `.github/workflows/release-linux.yml`
 - Windows release lane: `.github/workflows/release-windows.yml`
 - macOS arm64 release lane: `.github/workflows/release-macos.yml`
