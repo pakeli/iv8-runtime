@@ -5,6 +5,21 @@ Last reviewed: `2026-11-03`
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
+## Current execution order — Window-first (`2026-11-03`)
+
+At the user's direction, **Window now has higher priority than Document**:
+
+1. **Active — Window continuation.** M11-51 is Window event handler attributes
+   (`window.onload` etc.; Priority 3aq below). Continue with the remaining
+   Window gaps (Window messaging/`postMessage` design, a deterministic
+   focus/visibility model, `getComputedStyle` only if a CSS model is approved)
+   before returning to Document work.
+2. **Later — Document continuation.** `document.write`/`writeln`/`open`/`close`
+   and `importNode`/`adoptNode` move behind the Window slices. `document.all`
+   and DOM prototype chains remain deferred.
+3. Remaining headless-browser gaps and the open decisions in
+   `docs/current_status.md` follow.
+
 ## Priority 1: Reconcile contracts with implementation reality — DONE (`2026-08-06`)
 
 ### Goal
@@ -1708,8 +1723,49 @@ All lanes passed on the first attempt; the temporary macos-14 workflow's
 
 ### Next
 
-M11-51: `document.write`/`writeln`/`open`/`close` and
-`importNode`/`adoptNode`, then the remaining headless-browser gaps.
+Window was raised above Document at the user's direction. M11-51 is Window
+event handler attributes (Priority 3aq below); `document.write`/`writeln`/
+`open`/`close` and `importNode`/`adoptNode` move to a later milestone.
+
+## Priority 3aq: Window event handler attributes — M11-51 — IMPLEMENTED (`2026-11-03`)
+
+### Goal
+
+Raise Window compatibility further with the commonly used IDL event handler
+properties, without changing Document or element priorities.
+
+### What landed
+
+- Native accessor properties on `window` for a bounded handler set:
+  `onload`, `onunload`, `onbeforeunload`, `onerror`, `onresize`, `onscroll`,
+  `onfocus`, `onblur`, `onhashchange`, `onpopstate`, `onmessage`, `onstorage`,
+  `ononline`, `onoffline`, `onpagehide`, `onpageshow`,
+  `onunhandledrejection`, and `onrejectionhandled`.
+- Getter returns the assigned function or `null`; assigning a function
+  installs/replaces it, and non-callable values clear it.
+- Handlers run after regular listeners for the same target/phase, at-target
+  and while bubbling to `window`, with `this === window` and the Event argument.
+- Returning `false` cancels cancelable events; handler exceptions are
+  swallowed; `stopImmediatePropagation` suppresses the handler while
+  `stopPropagation` does not.
+- Handlers are generation-scoped and released during teardown.
+- Only the listed names are accessors; other `on*` names stay ordinary global
+  properties.
+- No Python API or environment key changes.
+
+Boundary: `docs/m11_51_window_event_handlers.md`. Tests:
+`test/test_m11_51_window_event_handlers.py` (10 items).
+
+### Verification
+
+Pending real-V8 Linux + Windows + macOS arm64 lanes. Evidence will be recorded
+in `docs/m11_51_report.md`.
+
+### Next
+
+Continue Window-first with a Window messaging (`postMessage`/`MessageEvent`)
+design or a deterministic focus/visibility model; Document `write`/import work
+is explicitly later.
 
 ## Priority 4: Build the ranked compatibility backlog and pick M11-5 — DONE (`2026-10-28`)
 

@@ -62,6 +62,7 @@ macOS wheel artifacts: `13214030365` (cp311), `13213530903` (cp312),
 
 ## Outcome
 
-M11-50 is verified and ready to merge to fork `master`. The next common-API
-slice is M11-51: `document.write`/`writeln`/`open`/`close` plus
-`importNode`/`adoptNode`.
+M11-50 is verified and ready to merge to fork `master`. At the user's
+direction, Window was then raised above Document: M11-51 is Window event
+handler attributes, and `document.write`/`writeln`/`open`/`close` plus
+`importNode`/`adoptNode` are deferred to a later Document slice.

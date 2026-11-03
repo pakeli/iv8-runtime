@@ -1158,6 +1158,22 @@ direction alone.
   Windows `41597541345`, macOS arm64 fallback `41598354469`, tree `6d2250e`,
   each wheel lane `1766 passed, 2 skipped`); see `docs/m11_50_report.md`.
 
+- **Priority rebalance — Window above Document (`2026-11-03`)** — at the user's
+  direction, Window work is now the active common-API track and Document
+  continuation is lower priority. Window slices come next; `document.write` /
+  import-adopt and the remaining Document gaps move behind them. This reorders
+  the roadmap in `docs/next_tasks.md` and `docs/current_status.md` without
+  changing any delivered surface.
+
+- `M11-51` — **Window event handler attributes** — selected on `2026-11-03` as
+  the first Window slice after the priority rebalance: a bounded set of IDL
+  `window.on*` accessors (`onload`, `onerror`, `onmessage`, lifecycle/messaging
+  names), install/replace/clear semantics, post-listener invocation at target
+  and during bubbling, `return false` cancellation, swallowed handler
+  exceptions, and generation-scoped teardown. Boundary:
+  `docs/m11_51_window_event_handlers.md`. Verification is pending real V8; see
+  `docs/m11_51_report.md`. Document `write`/import-adopt remain later.
+
 A related question this slice raises: the runtime still has **four** independent
 legacy manual pumps (`run_timers` / `run_jobs` / `run_animation_frame` /
 `run_idle_callbacks`). M11-29 composed timers + microtasks, M11-30 added rAF/idle,

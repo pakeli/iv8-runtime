@@ -1062,6 +1062,17 @@ geometry is unchanged). ``window.status`` is a writable per-document string
 All ten methods participate in the watch channel. No Python API or environment
 key changes. See ``docs/m11_50_window_completion.md``.
 
+M11-51 continues the Window-first track with a bounded set of IDL event
+handler attributes: ``window.onload``, ``onerror``, ``onmessage``, and a small
+lifecycle/messaging set, implemented as native accessors that install, replace,
+or clear a handler function. Handlers run after regular listeners at the window
+target and while bubbling, receive the Event object with ``this === window``,
+cancel a cancelable event when returning ``false``, swallow exceptions, and are
+released with each generation. Unlisted names (``window.onclick``), document/
+element ``on*`` attributes, automatic error events, and the legacy ``onerror``
+signature remain absent. No Python API or environment key changes. See
+``docs/m11_51_window_event_handlers.md``.
+
 The post-M11 host access trace steps 1–4 plus the step-5 native BOM call,
 window metadata, nested metadata, static visualViewport, navigator.storage
 manager, navigator.permissions, matchMedia-result, legacy-navigator, and

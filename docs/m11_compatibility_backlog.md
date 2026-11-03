@@ -2,6 +2,11 @@
 
 Last reviewed: `2026-10-30`
 
+> **Priority update (`2026-11-03`).** At the user's direction, Window work now
+> has higher priority than Document continuation. The historical ranking below
+> remains as planning evidence; the current execution order lives in
+> `docs/next_tasks.md` and `docs/current_status.md`.
+
 ## 1. Purpose
 
 This is the Priority 4 deliverable from `docs/next_tasks.md`: replace per-slice

@@ -7,15 +7,21 @@ Last reviewed: `2026-11-03`
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.
 
-As of `2026-11-03`, the latest implemented and verified M11 milestone is
-**M11-50** (Window scroll / focus / UI completion: read-only `scrollX` /
-`scrollY` / `pageXOffset` / `pageYOffset`, no-op `scroll` / `scrollTo` /
-`scrollBy` / `focus` / `blur` / `move*` / `resize*` / `stop`, writable
-per-document `window.status`, BarProp metadata, and the `clientInformation`
-alias). Real-V8 CI is green on Linux, Windows, and macOS arm64 — Linux run
-`41597535300`, Windows run `41597541345`, macOS arm64 fallback run
-`41598354469`, each wheel lane reporting `1766 passed, 2 skipped` on tree
-`6d2250e`. It follows **M11-49** (HTML string APIs and variadic tree methods:
+As of `2026-11-03`, the active execution order is **Window-first: Window has
+higher priority than Document** (see `docs/next_tasks.md`). The latest
+implemented M11 milestone is **M11-51** (Window event handler attributes:
+`window.onload` and a bounded set of IDL `on*` properties with
+install/replace/clear, at-target and bubbling invocation, `return false`
+cancellation, and generation-scoped teardown). Its real-V8 verification is
+**pending**. The latest verified milestone is **M11-50** (Window scroll / focus
+/ UI completion: read-only `scrollX` / `scrollY` / `pageXOffset` /
+`pageYOffset`, no-op `scroll` / `scrollTo` / `scrollBy` / `focus` / `blur` /
+`move*` / `resize*` / `stop`, writable per-document `window.status`, BarProp
+metadata, and the `clientInformation` alias). Real-V8 CI is green on Linux,
+Windows, and macOS arm64 — Linux run `41597535300`, Windows run `41597541345`,
+macOS arm64 fallback run `41598354469`, each wheel lane reporting
+`1766 passed, 2 skipped` on tree `6d2250e`. It follows **M11-49** (HTML string
+APIs and variadic tree methods:
 `innerHTML` / `outerHTML` / `insertAdjacent*`, `append` / `prepend` /
 `before` / `after` / `replaceWith` / `replaceChildren`, bounded entity
 decoding, and deterministic serialization; tree `52bafab`, `1756 passed,
@@ -115,6 +121,11 @@ viewport / media / device metadata), verified on commit `61abc3b` with
   `resizeBy` / `resizeTo`, and `stop`, writable per-document `status`,
   read-only BarProp metadata, and the `clientInformation` alias of
   `navigator`
+- `M11-51` (implemented; verification pending): Window event handler
+  attributes — bounded native `onload` / `onerror` / `onmessage` / lifecycle
+  and messaging `on*` accessors; function-or-null getters/setters, handler
+  invocation after regular listeners at target and in bubbling, `return false`
+  cancellation, swallowed exceptions, and per-generation reset
 - Post-M11 host access trace (steps 1–4, the complete step-5 object groups, steps 6a–6h, and step 7):
   `Page.start_access_trace` / `stop_access_trace` / `read_access_trace`,
   recording native HostObject get/set/call entries, missing string-key
@@ -685,25 +696,29 @@ The repository is executing its post-M10 direction:
 - M11-50 (Window scroll/focus/UI completion) is **landed and verified on real
   V8 (Linux + Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_50_window_completion.md` and `docs/m11_50_report.md`;
-- the next execution handoff is M11-51: `document.write`/`writeln`/`open`/
-  `close` and `importNode`/`adoptNode`, then the remaining headless-browser
-  gaps (context-sensitive parsing, selector pseudo-classes, additional document
-  surfaces). Prototype chains are explicitly deferred to a later stage. The
-  unassigned selector follow-up and `navigator.userAgentData` remain deferred.
-  Gaps are inventoried in `docs/dom_bom_gaps.md`.
+- M11-51 (Window event handler attributes) is **implemented on `2026-11-03`
+  and awaiting real-V8 verification**; see
+  `docs/m11_51_window_event_handlers.md` and (after the lanes run)
+  `docs/m11_51_report.md`;
+- the current execution order is **Window-first**: continue Window work
+  (messaging/`postMessage` or a deterministic focus/visibility model) before
+  returning to Document `write`/import/adopt. Prototype chains are explicitly
+  deferred to a later stage. The unassigned selector follow-up and
+  `navigator.userAgentData` remain deferred. Gaps are inventoried in
+  `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete surface should become `M11-51` next on the object-oriented
-  common-API track? (`docs/decision_log.md` §A — `M11-1` through `M11-50` are
-  settled, landed, and verified. The planned next slice is `document.write` +
-  import/adopt,
-  followed by remaining headless-browser gaps; DOM prototype chains are
-  explicitly deferred to a later stage, the unassigned selector pseudo-class
-  follow-up remains deferred, UA-CH is deliberately deferred, and candidates
-  come from `docs/dom_bom_gaps.md`.)
+- Which concrete Window surface should become `M11-52` next, now that Window is
+  prioritized above Document? (`docs/decision_log.md` §A — `M11-1` through
+  `M11-50` are settled, landed, and verified; `M11-51` is implemented and
+  awaiting verification. Candidate next Window slices are `postMessage` +
+  `MessageEvent` for the single-context window, or a deterministic
+  focus/visibility model. Document `write` + import/adopt are explicitly later;
+  DOM prototype chains, the unassigned selector pseudo-class follow-up, and
+  UA-CH remain deferred; candidates come from `docs/dom_bom_gaps.md`.)
 - Should the `in` operator, non-HostObject query targets, or wrapper-cached
   references ever be covered through a Proxy/AST design, or remain explicit
   out-of-scope blind spots? (Steps 6a–6h cover the explicit has/descriptor APIs
@@ -721,9 +736,11 @@ These are the questions a new coding session should resolve before major new wor
 If you need a one-line answer:
 
 > The project has completed the original V8 embedding kernel, finished the M2–M8
-> hosted runtime, the M9–M10 monitoring extensions, and the M11 compatibility
-> line through M11-50 (Document cookie/identity, node foundation, HTML string
-> APIs, and Window scroll/focus/UI completion), and has landed steps 1–4 plus
+> hosted runtime, the M9–M10 monitoring extensions, and the verified M11
+> compatibility line through M11-50 (Document cookie/identity, node foundation,
+> HTML string APIs, and Window scroll/focus/UI completion); M11-51 (Window
+> event handler attributes) is implemented and awaiting verification. Window is
+> now prioritized above Document. The project has also landed steps 1–4 plus
 > the native-BOM-call,
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage
 > manager, navigator-permissions, matchMedia-result, legacy-navigator, and

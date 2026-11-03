@@ -312,8 +312,10 @@ property name:
 `scrollX` / `scrollY` / `pageXOffset` / `pageYOffset` (all `0`).
 
 `window.name` and (since M11-50) `window.status` record `get` and `set` through
-their accessors. Values and read-only assignment behavior are unchanged. The
-data-property-to-accessor
+their accessors. The M11-51 `window.on*` event handler accessors are
+deliberately **not** part of this traced metadata group: their reads/writes and
+handler invocation produce no access-trace events. Values and read-only
+assignment behavior are unchanged. The data-property-to-accessor
 change is intentional for these traceable fields; `parent` / `top` / `frames` /
 `opener` keep their prior descriptors and remain untraced in this group. Missing
 global-property probes and value/argument/return capture are not included.

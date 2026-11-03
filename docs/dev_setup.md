@@ -135,10 +135,12 @@ If you only remember one thing:
 > scroll/focus/blur/move/resize/stop, writable `window.status`, BarProps,
 > `clientInformation`), green on real V8 (Linux + Windows + macOS arm64) on
 > `2026-11-03` and merged to `master` on the fork (`pakeli/iv8-runtime`);
-> upstream sync is out of scope. It follows M11-49 (HTML string APIs and
-> variadic tree methods), M11-48 (Node foundation), M11-47 (Document
-> identity), M11-46 (`document.cookie`), and M11-41..M11-45 (BOM
-> viewport/media/device metadata, verified on `2026-10-30`).
+> upstream sync is out of scope. M11-51 (Window event handler attributes) is
+> implemented and awaiting real-V8 verification. **Window is prioritized above
+> Document**; Document `write`/import-adopt are later. M11-50 follows M11-49
+> (HTML string APIs and variadic tree methods), M11-48 (Node foundation),
+> M11-47 (Document identity), M11-46 (`document.cookie`), and M11-41..M11-45
+> (BOM viewport/media/device metadata, verified on `2026-10-30`).
 > The post-M11 host access trace steps 1–4 plus the
 > step-5 native BOM call, window metadata, nested metadata, static
 > visualViewport, navigator.storage manager, navigator.permissions,

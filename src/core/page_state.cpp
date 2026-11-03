@@ -3459,6 +3459,14 @@ protected:
         return names;
     }
 
+    // M11-51: Window-only hook for IDL event handler attributes (`onload`, ...).
+    // It runs after the ordinary listener snapshot for one target/phase, unless a
+    // listener called stopImmediatePropagation(). The base is a no-op, so
+    // document/element/FileReader dispatch behavior is unchanged.
+    virtual void invoke_event_handler(
+        v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::Object>,
+        v8::Local<v8::Value>, int, const std::string&) {}
+
 private:
     struct ListenerOptions {
         bool capture = false;
@@ -3612,44 +3620,46 @@ private:
         }
 
         auto it = listeners_.find(type);
-        if (it == listeners_.end()) {
-            return;
-        }
-        std::vector<ListenerSnapshot> snapshot;
-        snapshot.reserve(it->second.size());
-        for (Listener& listener : it->second) {
-            if ((listener.capture && include_capture) ||
-                (!listener.capture && include_bubble)) {
-                snapshot.push_back(ListenerSnapshot{
-                    listener.callback.Get(isolate), listener.capture,
-                    listener.once, listener.passive});
+        if (it != listeners_.end()) {
+            std::vector<ListenerSnapshot> snapshot;
+            snapshot.reserve(it->second.size());
+            for (Listener& listener : it->second) {
+                if ((listener.capture && include_capture) ||
+                    (!listener.capture && include_bubble)) {
+                    snapshot.push_back(ListenerSnapshot{
+                        listener.callback.Get(isolate), listener.capture,
+                        listener.once, listener.passive});
+                }
+            }
+            v8::Local<v8::Value> event_arg = event;
+            for (ListenerSnapshot& listener : snapshot) {
+                if (listener.once) {
+                    // Remove before the call so a reentrant dispatch cannot call it
+                    // again.
+                    remove_listener_handle(isolate, type, listener.callback,
+                                           listener.capture);
+                }
+                const bool previous_passive =
+                    event_in_passive_listener(isolate, context, event);
+                // Always set (false for active listeners) so a nested dispatch from
+                // a passive listener lets its own active listeners call
+                // preventDefault; restore the outer state afterwards.
+                set_event_in_passive_listener(isolate, context, event,
+                                              listener.passive);
+                v8::TryCatch try_catch(isolate);
+                (void)listener.callback->Call(context, receiver, 1, &event_arg);
+                if (try_catch.HasCaught()) {
+                    try_catch.Reset();  // one listener's error never stops the rest
+                }
+                set_event_in_passive_listener(isolate, context, event,
+                                              previous_passive);
+                if (event_is_immediately_stopped(isolate, context, event)) {
+                    break;  // stopImmediatePropagation: skip later same-target listeners
+                }
             }
         }
-        v8::Local<v8::Value> event_arg = event;
-        for (ListenerSnapshot& listener : snapshot) {
-            if (listener.once) {
-                // Remove before the call so a reentrant dispatch cannot call it
-                // again.
-                remove_listener_handle(isolate, type, listener.callback,
-                                       listener.capture);
-            }
-            const bool previous_passive =
-                event_in_passive_listener(isolate, context, event);
-            // Always set (false for active listeners) so a nested dispatch from
-            // a passive listener lets its own active listeners call
-            // preventDefault; restore the outer state afterwards.
-            set_event_in_passive_listener(isolate, context, event,
-                                          listener.passive);
-            v8::TryCatch try_catch(isolate);
-            (void)listener.callback->Call(context, receiver, 1, &event_arg);
-            if (try_catch.HasCaught()) {
-                try_catch.Reset();  // one listener's error never stops the rest
-            }
-            set_event_in_passive_listener(isolate, context, event,
-                                          previous_passive);
-            if (event_is_immediately_stopped(isolate, context, event)) {
-                break;  // stopImmediatePropagation: skip later same-target listeners
-            }
+        if (!event_is_immediately_stopped(isolate, context, event)) {
+            invoke_event_handler(isolate, context, event, receiver, phase, type);
         }
     }
 
@@ -3679,6 +3689,88 @@ public:
         const v8::FunctionCallbackInfo<v8::Value>&) override {
         return v8::Undefined(isolate);
     }
+
+    // M11-51: release IDL event handler attributes with the ordinary listeners.
+    void release_v8_handles() noexcept override {
+        EventTargetHost::release_v8_handles();
+        for (auto& entry : event_handlers_) {
+            entry.second.Reset();
+        }
+        event_handlers_.clear();
+    }
+
+    v8::Local<v8::Value> get_event_handler(v8::Isolate* isolate,
+                                           const std::string& name) {
+        auto it = event_handlers_.find(name);
+        if (it == event_handlers_.end() || it->second.IsEmpty()) {
+            return v8::Null(isolate);
+        }
+        return it->second.Get(isolate);
+    }
+
+    void set_event_handler(v8::Isolate* isolate, const std::string& name,
+                           v8::Local<v8::Value> value) {
+        auto it = event_handlers_.find(name);
+        if (!value->IsFunction()) {
+            // WebIDL EventHandler? treats non-callable (including null and
+            // undefined) as null.
+            if (it != event_handlers_.end()) {
+                it->second.Reset();
+                event_handlers_.erase(it);
+            }
+            return;
+        }
+        v8::Local<v8::Function> callback = value.As<v8::Function>();
+        if (it == event_handlers_.end()) {
+            event_handlers_.emplace(
+                name, v8::Global<v8::Function>(isolate, callback));
+        } else {
+            it->second.Reset(isolate, callback);
+        }
+    }
+
+protected:
+    // M11-51: IDL event handler attributes are non-capture listeners. They run
+    // after the regular listener snapshot at this target, for at-target (2) and
+    // bubbling (3) phases; the capture phase (1) never invokes them. A handler's
+    // false return marks a cancelable event as defaultPrevented, and thrown
+    // exceptions are swallowed like listener errors.
+    void invoke_event_handler(v8::Isolate* isolate,
+                              v8::Local<v8::Context> context,
+                              v8::Local<v8::Object> event,
+                              v8::Local<v8::Value> receiver, int phase,
+                              const std::string& type) override {
+        if (phase == 1) {
+            return;
+        }
+        auto it = event_handlers_.find(type);
+        if (it == event_handlers_.end() || it->second.IsEmpty()) {
+            return;
+        }
+        v8::Local<v8::Function> handler = it->second.Get(isolate);
+        v8::Local<v8::Value> event_arg = event;
+        v8::Local<v8::Value> result;
+        v8::TryCatch try_catch(isolate);
+        const bool called =
+            handler->Call(context, receiver, 1, &event_arg).ToLocal(&result);
+        if (!called || try_catch.HasCaught()) {
+            try_catch.Reset();
+            return;
+        }
+        if (!result->IsFalse()) {
+            return;
+        }
+        v8::Local<v8::Value> cancelable;
+        if (event->Get(context, v8_string(isolate, "cancelable"))
+                .ToLocal(&cancelable) &&
+            cancelable->BooleanValue(isolate)) {
+            (void)event->Set(context, v8_string(isolate, "defaultPrevented"),
+                             v8::True(isolate));
+        }
+    }
+
+private:
+    std::unordered_map<std::string, v8::Global<v8::Function>> event_handlers_;
 };
 
 // M11-8 FileReader state. The listener store reuses EventTargetHost; the object
@@ -9256,6 +9348,48 @@ void window_dispatch_event(const v8::FunctionCallbackInfo<v8::Value>& info) {
     window_event_method(info, "dispatchEvent");
 }
 
+// M11-51: Window IDL event handler attributes. The global slots are native
+// accessors backed by WindowEventTarget; assigning a function replaces the
+// handler, assigning null/undefined/non-callable clears it, and the getter
+// reports null when unset. The supported names are a bounded set of common
+// Window handlers; arbitrary `onfoo` names remain ordinary global properties.
+const char* const kWindowEventHandlerNames[] = {
+    "onload",        "onunload",        "onbeforeunload", "onerror",
+    "onresize",      "onscroll",        "onfocus",        "onblur",
+    "onhashchange",  "onpopstate",      "onmessage",      "onstorage",
+    "ononline",      "onoffline",       "onpagehide",     "onpageshow",
+    "onunhandledrejection",              "onrejectionhandled",
+};
+
+std::string window_handler_name(v8::Isolate* isolate,
+                                v8::Local<v8::Name> property) {
+    v8::String::Utf8Value utf8(isolate, property);
+    return *utf8 != nullptr
+               ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
+               : std::string();
+}
+
+void window_event_handler_getter(
+    v8::Local<v8::Name> property,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    auto* target = static_cast<WindowEventTarget*>(
+        info.Data().As<v8::External>()->Value(kWindowEventsTag));
+    info.GetReturnValue().Set(
+        target->get_event_handler(isolate,
+                                  window_handler_name(isolate, property)));
+}
+
+void window_event_handler_setter(
+    v8::Local<v8::Name> property, v8::Local<v8::Value> value,
+    const v8::PropertyCallbackInfo<void>& info) {
+    v8::Isolate* isolate = info.GetIsolate();
+    auto* target = static_cast<WindowEventTarget*>(
+        info.Data().As<v8::External>()->Value(kWindowEventsTag));
+    target->set_event_handler(isolate, window_handler_name(isolate, property),
+                              value);
+}
+
 // M8-1 TextEncoder / TextDecoder — a minimal UTF-8-only encoding surface. The actual
 // UTF-8 conversion is delegated to V8 itself (String::Utf8Value for encode,
 // String::NewFromUtf8 for decode), so multi-byte / lone-surrogate handling is exactly
@@ -12452,6 +12586,18 @@ void PageState::install_page(const std::string& base_url,
             install_window_event_fn("removeEventListener",
                                     &window_remove_event_listener);
             install_window_event_fn("dispatchEvent", &window_dispatch_event);
+            // M11-51: bounded Window event handler attributes. They share the
+            // same WindowEventTarget backing as addEventListener, run after the
+            // regular listeners at this target, and expose null when unset.
+            for (const char* handler_name : kWindowEventHandlerNames) {
+                (void)global->SetNativeDataProperty(
+                    context,
+                    v8::String::NewFromUtf8(isolate, handler_name)
+                        .ToLocalChecked(),
+                    &window_event_handler_getter,
+                    &window_event_handler_setter, window_data,
+                    v8::PropertyAttribute::None);
+            }
 
             // M8-1 TextEncoder / TextDecoder (UTF-8 only): constructor functions with
             // a prototype method + a read-only `encoding` prototype data property.

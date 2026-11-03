@@ -1,7 +1,9 @@
 # DOM / BOM Gap Inventory
 
-Last reviewed: `2026-11-03` · Baseline: **M11-50** (Window scroll/focus/UI
-completion verified on Linux + Windows + macOS arm64 `2026-11-03`)
+Last reviewed: `2026-11-03` · Baseline: **M11-51** (Window event handler
+attributes implemented `2026-11-03`; real-V8 verification pending. M11-50
+Window scroll/focus/UI completion is verified on Linux + Windows + macOS
+arm64. Window is prioritized above Document continuation.)
 
 > **Scope note.** This is a reference inventory of browser-surface features that
 > are **not implemented** as of M11-41..M11-45. It is not a contract and not a
@@ -63,7 +65,8 @@ completion verified on Linux + Windows + macOS arm64 `2026-11-03`)
 | `visualViewport` | **implemented as static metadata** — M11-41 derives width/height from the reported viewport with zero offsets, scale 1, no-op listeners, and no scroll/zoom/resize events |
 | Scroll APIs (`scroll` / `scrollTo` / `scrollBy` / `scrollX` / `scrollY` / `pageXOffset` / `pageYOffset`) | **implemented as deterministic stubs** — M11-50: positions are always `0`; methods accept any arguments and do nothing; no layout, clamping, smooth scrolling, or scroll events |
 | `window.focus` / `blur`, `moveBy` / `moveTo`, `resizeBy` / `resizeTo`, `stop` | **implemented as no-ops** — M11-50; `document.hasFocus()` stays `false`, and window geometry is unchanged |
-| Event handler attributes (`window.onload`, `window.onerror`, `element.onclick`, …) | **absent** — assignments create ordinary properties and never dispatch; `onchange` on MediaQueryList/PermissionStatus is likewise inert |
+| Window event handler attributes (`window.onload` / `onerror` / `onmessage` / lifecycle and messaging `on*`) | **partially implemented** — M11-51: bounded accessor list with install/replace/clear, post-listener invocation at target and in bubbling, `return false` cancellation, and per-generation reset. Automatic error/unhandled-rejection events, the legacy `onerror` signature, capture-phase handlers, and unlisted names (e.g. `window.onclick`) remain absent |
+| Document/element event handler attributes (`document.onclick`, `element.onclick`, HTML `on*` content attributes) | **absent** — assignments create ordinary properties and never dispatch; `onchange` on MediaQueryList/PermissionStatus is likewise inert |
 | `matchMedia` | **partially implemented** — M11-42 adds a bounded static evaluator for media types, comma lists, `not`/`only`/`and`, width/height, orientation, and fixed desktop capabilities; no dynamic viewport changes or `change` events |
 
 ### 1.5 Device and platform APIs
