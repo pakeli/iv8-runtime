@@ -80,10 +80,11 @@ def test_js_element_surface_not_exceeded():
         # (M4-A-4 added element.removeAttribute; M11-12 adds hasAttributes /
         # getAttributeNames. The rest stay out of scope here.)
         el = "document.getElementById('d')"
-        for member in ("attributes", "dataset",
-                       "src", "type",
-                       "async", "defer", "innerHTML", "outerHTML", "style"):
+        for member in ("attributes", "dataset", "src", "type",
+                       "async", "defer", "style"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        for member in ("innerHTML", "outerHTML"):
+            assert page.eval(f"typeof {el}.{member}") == "string"
         # M11-10 brings these into scope; M11-12 adds the attribute-name surface.
         assert page.eval(f"typeof {el}.toggleAttribute") == "function"
         assert page.eval(f"typeof {el}.classList") == "object"

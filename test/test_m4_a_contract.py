@@ -105,11 +105,12 @@ def test_js_element_surface_not_exceeded():
         # hasAttributes / getAttributeNames and raw previous/nextSibling left it in
         # M11-12/M11-13; the rest stay out.)
         for member in ("attributes", "dataset", "style",
-                       "removeAttributeNS",
-                       "innerHTML", "outerHTML", "src", "type", "async", "defer",
+                       "removeAttributeNS", "src", "type", "async", "defer",
                        "title", "hidden",
                        "compareDocumentPosition", "getRootNode"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        for member in ("innerHTML", "outerHTML"):
+            assert page.eval(f"typeof {el}.{member}") == "string"
         # M11-10 brings these into scope; M11-12/M11-13 add the rest.
         assert page.eval(f"typeof {el}.classList") == "object"
         assert page.eval(f"typeof {el}.toggleAttribute") == "function"

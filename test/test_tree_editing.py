@@ -334,11 +334,13 @@ def test_no_out_of_scope_tree_surface():
         page.load(html=html, base_url=BASE)
         assert page.eval("typeof document.appendChild") == "undefined"
         # (M4-A-6 added ownerDocument/isConnected/previous|nextElementSibling;
-        # M11-13 adds replaceChild/remove/raw siblings; M11-14 adds cloneNode. The
-        # append/prepend/before/after family still needs text-node semantics.)
+        # M11-13 adds replaceChild/remove/raw siblings; M11-14 adds cloneNode;
+        # M11-49 adds the variadic tree methods and insertAdjacent APIs.)
         el = "document.getElementById('d')"
-        for member in ("append", "prepend", "before", "after"):
-            assert page.eval(f"typeof {el}.{member}") == "undefined"
+        for member in ("append", "prepend", "before", "after", "replaceWith",
+                       "replaceChildren", "insertAdjacentHTML",
+                       "insertAdjacentElement", "insertAdjacentText"):
+            assert page.eval(f"typeof {el}.{member}") == "function"
         for member in ("replaceChild", "remove", "cloneNode"):
             assert page.eval(f"typeof {el}.{member}") == "function"
         for member in ("previousSibling", "nextSibling"):

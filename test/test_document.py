@@ -111,11 +111,14 @@ def test_element_has_no_mutation_or_query_surface():
         # (M2-8/M4-A-4 add setAttribute/removeAttribute; M4-A-3 adds appendChild/
         # removeChild/insertBefore; M4-A-5 adds element querySelector[All]/
         # getElementsByTagName; M11-13 adds replaceChild/remove — these stay out of
-        # scope: the append/prepend family, innerHTML/style. (matches arrived in
-        # M4-B-3, closest in M4-B-4.)
-        for absent in ("innerHTML", "outerHTML", "append", "prepend", "style"):
+        # scope: style. (matches arrived in M4-B-3, closest in M4-B-4; M11-49
+        # adds innerHTML/outerHTML and the variadic tree methods.)
+        for absent in ("style",):
             assert page.eval(f"document.body.{absent} === undefined") is True
-        for present in ("replaceChild", "remove"):
+        for present in ("innerHTML", "outerHTML"):
+            assert page.eval(f"typeof document.body.{present}") == "string"
+        for present in ("replaceChild", "remove", "append", "prepend",
+                        "replaceChildren", "before", "after", "replaceWith"):
             assert page.eval(f"typeof document.body.{present}") == "function"
 
 

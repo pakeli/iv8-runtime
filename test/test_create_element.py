@@ -183,11 +183,14 @@ def test_no_out_of_scope_creation_or_tree_surface():
         # removeAttribute; M4-A-5 adds element querySelector[All]/
         # getElementsByTagName; M4-A-6 adds ownerDocument/isConnected/
         # previous|nextElementSibling; M11-13 adds raw previous/nextSibling and
-        # replaceChild. Still out of scope here: innerHTML / outerHTML. (matches
-        # arrived in M4-B-3, closest in M4-B-4.)
+        # replaceChild. M11-49 adds innerHTML/outerHTML and the variadic tree
+        # methods. (matches arrived in M4-B-3, closest in M4-B-4.)
         el = "document.createElement('div')"
         for member in ("innerHTML", "outerHTML"):
-            assert page.eval(f"typeof {el}.{member}") == "undefined"
+            assert page.eval(f"typeof {el}.{member}") == "string"
+        for member in ("append", "prepend", "before", "after", "replaceWith",
+                       "replaceChildren"):
+            assert page.eval(f"typeof {el}.{member}") == "function"
         for member in ("replaceChild",):
             assert page.eval(f"typeof {el}.{member}") == "function"
         for member in ("previousSibling", "nextSibling"):

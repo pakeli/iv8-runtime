@@ -1593,6 +1593,121 @@ std::vector<std::string> split_class_tokens(const std::string& value) {
     return tokens;
 }
 
+// M11-49: bounded HTML character-reference decoding. Supports the common named
+// references plus decimal/hex numeric references. Unknown names and unterminated
+// references stay literal; invalid numeric references become U+FFFD.
+void append_utf8_code_point(std::string& out, std::uint32_t code_point) {
+    if (code_point <= 0x7F) {
+        out.push_back(static_cast<char>(code_point));
+    } else if (code_point <= 0x7FF) {
+        out.push_back(static_cast<char>(0xC0 | (code_point >> 6)));
+        out.push_back(static_cast<char>(0x80 | (code_point & 0x3F)));
+    } else if (code_point <= 0xFFFF) {
+        out.push_back(static_cast<char>(0xE0 | (code_point >> 12)));
+        out.push_back(static_cast<char>(0x80 | ((code_point >> 6) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | (code_point & 0x3F)));
+    } else {
+        out.push_back(static_cast<char>(0xF0 | (code_point >> 18)));
+        out.push_back(static_cast<char>(0x80 | ((code_point >> 12) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | ((code_point >> 6) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | (code_point & 0x3F)));
+    }
+}
+
+bool named_entity_code_point(const std::string& name, std::uint32_t* out) {
+    if (name == "amp") {
+        *out = 0x26;
+    } else if (name == "lt") {
+        *out = 0x3C;
+    } else if (name == "gt") {
+        *out = 0x3E;
+    } else if (name == "quot") {
+        *out = 0x22;
+    } else if (name == "apos") {
+        *out = 0x27;
+    } else if (name == "nbsp") {
+        *out = 0xA0;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+std::string decode_html_entities(const std::string& text) {
+    std::string out;
+    out.reserve(text.size());
+    std::size_t i = 0;
+    while (i < text.size()) {
+        if (text[i] != '&') {
+            out.push_back(text[i++]);
+            continue;
+        }
+        const std::size_t semi = text.find(';', i + 1);
+        if (semi == std::string::npos || semi - i > 32) {
+            out.push_back('&');
+            ++i;
+            continue;
+        }
+        const std::string body = text.substr(i + 1, semi - i - 1);
+        std::uint32_t code_point = 0;
+        bool decoded = false;
+        if (!body.empty() && body[0] == '#') {
+            const bool hex = body.size() > 1 &&
+                             (body[1] == 'x' || body[1] == 'X');
+            const std::size_t start = hex ? 2 : 1;
+            if (start < body.size()) {
+                bool valid = true;
+                bool overflow = false;
+                std::size_t digits = 0;
+                std::uint64_t value = 0;
+                for (std::size_t k = start; k < body.size(); ++k) {
+                    const unsigned char c = static_cast<unsigned char>(body[k]);
+                    int digit = -1;
+                    if (c >= '0' && c <= '9') {
+                        digit = c - '0';
+                    } else if (hex && c >= 'a' && c <= 'f') {
+                        digit = c - 'a' + 10;
+                    } else if (hex && c >= 'A' && c <= 'F') {
+                        digit = c - 'A' + 10;
+                    }
+                    if (digit < 0) {
+                        valid = false;
+                        break;
+                    }
+                    value = value * (hex ? 16 : 10) +
+                            static_cast<std::uint64_t>(digit);
+                    ++digits;
+                    if (value > 0x10FFFF) {
+                        overflow = true;
+                        break;
+                    }
+                }
+                if (valid && digits > 0 && !overflow) {
+                    code_point = static_cast<std::uint32_t>(value);
+                    decoded = true;
+                } else if (overflow || (valid && digits > 0 && value == 0)) {
+                    code_point = 0xFFFD;
+                    decoded = true;
+                }
+            }
+        } else if (named_entity_code_point(body, &code_point)) {
+            decoded = true;
+        }
+        if (!decoded) {
+            out.push_back('&');
+            ++i;
+            continue;
+        }
+        if (code_point == 0 || code_point > 0x10FFFF ||
+            (code_point >= 0xD800 && code_point <= 0xDFFF)) {
+            code_point = 0xFFFD;
+        }
+        append_utf8_code_point(out, code_point);
+        i = semi + 1;
+    }
+    return out;
+}
+
 // Capture id + class (+ M3-5 src) from the raw attribute text inside a start tag.
 // Minimal attribute tokenizer (quoted / bare values). Only id, class, and src are
 // retained — every other attribute is ignored. getAttribute still answers only id
@@ -1631,6 +1746,9 @@ void parse_attributes(const std::string& attrs, DomNode& node) {
         if (name.empty()) {
             continue;  // malformed: ignore an empty attribute name
         }
+        // M11-49: decode character references in attribute values (raw name
+        // syntax is unchanged).
+        value = decode_html_entities(value);
         if (name == "id") {
             node.id = value;
             node.has_id = true;
@@ -1704,10 +1822,11 @@ DomNode* attach_parsed_node(std::vector<std::unique_ptr<DomNode>>& pool,
 void append_parsed_text(std::vector<std::unique_ptr<DomNode>>& pool,
                         std::vector<DomNode*>& roots,
                         std::vector<DomNode*>& stack,
-                        const std::string& text) {
-    if (text.empty()) {
+                        const std::string& raw_text) {
+    if (raw_text.empty()) {
         return;
     }
+    const std::string text = decode_html_entities(raw_text);
     DomNode* last = nullptr;
     if (stack.empty()) {
         if (!roots.empty()) last = roots.back();
@@ -1862,7 +1981,13 @@ void parse_html(const std::string& html,
             if (content_end > i) {
                 auto text = std::make_unique<DomNode>();
                 text->kind = NodeKind::Text;
-                text->data = html.substr(i, content_end - i);
+                // script/style are raw text; title/textarea are RCDATA and decode
+                // character references.
+                const bool raw_text = tag == "script" || tag == "style";
+                text->data = raw_text
+                                 ? html.substr(i, content_end - i)
+                                 : decode_html_entities(
+                                       html.substr(i, content_end - i));
                 text->parent = raw;
                 raw->children.push_back(text.get());
                 pool.push_back(std::move(text));
@@ -1897,6 +2022,124 @@ void parse_html(const std::string& html,
             node->value = text_content_of(node.get());
         }
     }
+}
+
+// M11-49: HTML fragment serialization. Text escapes &, <, > and U+00A0;
+// attribute values escape &, " and U+00A0; script/style text is emitted raw.
+void append_escaped_html_text(std::string& out, const std::string& text) {
+    for (std::size_t i = 0; i < text.size();) {
+        const unsigned char c = static_cast<unsigned char>(text[i]);
+        if (c == '&') {
+            out += "&amp;";
+            ++i;
+        } else if (c == '<') {
+            out += "&lt;";
+            ++i;
+        } else if (c == '>') {
+            out += "&gt;";
+            ++i;
+        } else if (c == 0xC2 && i + 1 < text.size() &&
+                   static_cast<unsigned char>(text[i + 1]) == 0xA0) {
+            out += "&nbsp;";
+            i += 2;
+        } else {
+            out.push_back(text[i++]);
+        }
+    }
+}
+
+void append_escaped_html_attribute(std::string& out,
+                                   const std::string& text) {
+    for (std::size_t i = 0; i < text.size();) {
+        const unsigned char c = static_cast<unsigned char>(text[i]);
+        if (c == '&') {
+            out += "&amp;";
+            ++i;
+        } else if (c == '"') {
+            out += "&quot;";
+            ++i;
+        } else if (c == 0xC2 && i + 1 < text.size() &&
+                   static_cast<unsigned char>(text[i + 1]) == 0xA0) {
+            out += "&nbsp;";
+            i += 2;
+        } else {
+            out.push_back(text[i++]);
+        }
+    }
+}
+
+std::vector<std::pair<std::string, std::string>>
+serialization_attributes(const DomNode* node) {
+    std::vector<std::pair<std::string, std::string>> attributes;
+    if (node->has_id) {
+        attributes.emplace_back("id", node->id);
+    }
+    if (node->has_class) {
+        attributes.emplace_back("class", node->class_name);
+    }
+    std::vector<std::pair<std::string, std::string>> raw;
+    for (const auto& entry : node->attributes) {
+        if (entry.first == "id" || entry.first == "class") {
+            continue;
+        }
+        raw.push_back(entry);
+    }
+    std::sort(raw.begin(), raw.end(),
+              [](const auto& a, const auto& b) { return a.first < b.first; });
+    attributes.insert(attributes.end(), raw.begin(), raw.end());
+    return attributes;
+}
+
+std::string serialize_dom_children(const DomNode* node);
+
+std::string serialize_dom_node(const DomNode* node) {
+    if (node == nullptr) {
+        return std::string();
+    }
+    if (node->kind == NodeKind::Text) {
+        std::string out;
+        append_escaped_html_text(out, node->data);
+        return out;
+    }
+    if (node->kind == NodeKind::Comment) {
+        return "<!--" + node->data + "-->";
+    }
+    if (node->kind == NodeKind::DocumentFragment) {
+        return serialize_dom_children(node);
+    }
+    std::string out = "<" + node->tag;
+    for (const auto& attribute : serialization_attributes(node)) {
+        out += ' ';
+        out += attribute.first;
+        out += "=\"";
+        append_escaped_html_attribute(out, attribute.second);
+        out += '"';
+    }
+    out += '>';
+    if (is_void_element(node->tag)) {
+        return out;
+    }
+    out += serialize_dom_children(node);
+    out += "</" + node->tag + ">";
+    return out;
+}
+
+std::string serialize_dom_children(const DomNode* node) {
+    std::string out;
+    if (node == nullptr) {
+        return out;
+    }
+    const bool raw_text =
+        node->kind == NodeKind::Element &&
+        (node->tag == "script" || node->tag == "style");
+    for (const DomNode* child : node->children) {
+        if (raw_text && child->kind == NodeKind::Text) {
+            out += child->data;
+        } else {
+            out += serialize_dom_node(child);
+        }
+    }
+    return out;
 }
 
 DomNode* dfs_find(DomNode* node, const std::function<bool(const DomNode*)>& pred) {
@@ -2026,6 +2269,57 @@ inline std::vector<DomNode*> collect_options(DomNode* root) {
     collect_matching(root, [](const DomNode* n) { return n->tag == "option"; },
                      out);
     return out;
+}
+
+// M11-49: shared post-parse initialization for a document load and for HTML
+// fragments inserted by innerHTML/insertAdjacentHTML. parse_html has already
+// seeded input/option fields and textarea values; this performs select
+// normalization, form metadata seeding, and the form.reset() baseline snapshot.
+void initialize_parsed_nodes(
+    const std::vector<std::unique_ptr<DomNode>>& pool) {
+    for (const std::unique_ptr<DomNode>& node : pool) {
+        if (node->tag != "select") {
+            continue;
+        }
+        bool seen = false;
+        for (DomNode* option : collect_options(node.get())) {
+            if (!option->selected) {
+                continue;
+            }
+            if (seen) {
+                option->selected = false;
+            } else {
+                seen = true;
+            }
+        }
+    }
+    for (const std::unique_ptr<DomNode>& node : pool) {
+        if (node->tag != "form") {
+            continue;
+        }
+        const auto mit = node->attributes.find("method");
+        if (mit != node->attributes.end()) {
+            node->method = normalize_form_method(mit->second);
+        }
+        const auto ait = node->attributes.find("action");
+        if (ait != node->attributes.end()) {
+            node->action = ait->second;
+        }
+        const auto eit = node->attributes.find("enctype");
+        if (eit != node->attributes.end()) {
+            node->enctype = normalize_form_enctype(eit->second);
+        }
+        const auto tit = node->attributes.find("target");
+        if (tit != node->attributes.end()) {
+            node->target = tit->second;
+        }
+        node->no_validate = node->attributes.count("novalidate") != 0;
+    }
+    for (const std::unique_ptr<DomNode>& node : pool) {
+        node->initial_value = node->value;
+        node->initial_selected = node->selected;
+        node->initial_checked = node->checked;
+    }
 }
 
 // --- M11-32 minimal constraint validation ------------------------------------
@@ -3470,8 +3764,8 @@ public:
     std::vector<std::string> property_names() const override {
         std::vector<std::string> names = {
             "tagName",     "nodeName",   "nodeType",   "nodeValue", "id",
-            "className",   "textContent", "parentNode", "childNodes",
-            "children",
+            "className",   "textContent", "innerHTML",  "outerHTML",
+            "parentNode",  "childNodes",  "children",
             // M4-A-6 connectivity / element-sibling navigation.
             "ownerDocument", "isConnected", "previousElementSibling",
             "nextElementSibling",
@@ -3578,6 +3872,11 @@ public:
             "appendChild",      "removeChild",     "insertBefore",
             "replaceChild",     "remove",          "hasChildNodes",
             "cloneNode",        "isSameNode",      "isEqualNode",
+            // M11-49 variadic tree methods / adjacent insertion.
+            "append",           "prepend",         "replaceChildren",
+            "before",           "after",           "replaceWith",
+            "insertAdjacentHTML", "insertAdjacentElement",
+            "insertAdjacentText",
             "querySelector",    "querySelectorAll", "getElementsByTagName",
             // M11-19 descendant class query.
             "getElementsByClassName",
@@ -3616,7 +3915,8 @@ public:
     // M2-8: textContent is writable; M5-3/4/5/6: value on input/textarea/button/
     // select (option.value is READ-ONLY); M5-5: option.selected is writable.
     std::vector<std::string> writable_property_names() const override {
-        std::vector<std::string> names = {"textContent", "id", "className"};
+        std::vector<std::string> names = {"textContent", "innerHTML",
+                                          "outerHTML", "id", "className"};
         if (node_->tag == "input" || node_->tag == "textarea" ||
             node_->tag == "button" || node_->tag == "select") {
             names.push_back("value");
@@ -3733,7 +4033,8 @@ public:
     }
     std::vector<std::string> method_names() const override {
         return {"remove",     "cloneNode", "isSameNode", "isEqualNode",
-                "contains",   "hasChildNodes"};
+                "contains",   "hasChildNodes", "before", "after",
+                "replaceWith"};
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -3773,7 +4074,8 @@ public:
         return {"appendChild",      "removeChild",    "insertBefore",
                 "replaceChild",     "remove",         "hasChildNodes",
                 "cloneNode",        "isSameNode",     "isEqualNode",
-                "contains",         "querySelector",  "querySelectorAll",
+                "contains",         "append",         "prepend",
+                "replaceChildren",  "querySelector",  "querySelectorAll",
                 "getElementById"};
     }
 
@@ -3802,62 +4104,9 @@ public:
         title_node_ = find_tag("title");
         title_ = title_node_ != nullptr ? text_content_of(title_node_)
                                         : std::string();
-        // M5-5: deterministic initial single-select — within each <select>, keep
-        // only the document-order-first pre-selected <option>, clearing the rest.
-        // (No auto-select when none is pre-selected: select.value is then "".)
-        for (const std::unique_ptr<DomNode>& node : pool_) {
-            if (node->tag != "select") {
-                continue;
-            }
-            bool seen = false;
-            for (DomNode* option : collect_options(node.get())) {
-                if (!option->selected) {
-                    continue;
-                }
-                if (seen) {
-                    option->selected = false;
-                } else {
-                    seen = true;
-                }
-            }
-        }
-        // M7-3/M7-4/M7-5/M7-6: seed each <form>'s .method / .action / .enctype /
-        // .target slots from the matching attributes, decoupled from the attribute
-        // thereafter. method is normalized to "get"/"post" (absent -> default "get");
-        // action/target are seeded verbatim (no URL/context parsing; absent -> "");
-        // enctype is normalized to one of the three HTML enctypes (absent -> default).
-        for (const std::unique_ptr<DomNode>& node : pool_) {
-            if (node->tag != "form") {
-                continue;
-            }
-            const auto mit = node->attributes.find("method");
-            if (mit != node->attributes.end()) {
-                node->method = normalize_form_method(mit->second);
-            }
-            const auto ait = node->attributes.find("action");
-            if (ait != node->attributes.end()) {
-                node->action = ait->second;
-            }
-            const auto eit = node->attributes.find("enctype");
-            if (eit != node->attributes.end()) {
-                node->enctype = normalize_form_enctype(eit->second);
-            }
-            const auto tit = node->attributes.find("target");
-            if (tit != node->attributes.end()) {
-                node->target = tit->second;
-            }
-            // M7-7: novalidate is a boolean attribute — seed from its PRESENCE.
-            node->no_validate = node->attributes.count("novalidate") != 0;
-        }
-        // M6-1: snapshot the form.reset() baseline AFTER seeding + normalization —
-        // the fully-seeded, normalized value/selected/checked. Fixed thereafter
-        // (runtime attribute/textContent/.value/.checked/.selected edits do not
-        // move it). createElement nodes keep their defaults ("" / false / false).
-        for (const std::unique_ptr<DomNode>& node : pool_) {
-            node->initial_value = node->value;
-            node->initial_selected = node->selected;
-            node->initial_checked = node->checked;
-        }
+        // M5-5/M7/M6-1: seed select/form runtime slots and the reset baseline
+        // after parsing (shared with HTML-fragment insertion).
+        initialize_parsed_nodes(pool_);
     }
 
     // M3-5: the scripts found in the HTML, in document order (inline + external).
@@ -4560,6 +4809,32 @@ public:
                           DomNode* target, const std::string& name,
                           const v8::FunctionCallbackInfo<v8::Value>& args,
                           v8::Local<v8::Value>& out);
+
+    // M11-49: HTML fragment parsing/serialization and variadic tree methods.
+    std::vector<DomNode*> parse_html_fragment(const std::string& html);
+    DomNode* make_detached_fragment();
+    bool build_argument_fragment(
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const v8::FunctionCallbackInfo<v8::Value>& args, DomNode** fragment);
+    bool insert_dom_node(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                         DomNode* parent, DomNode* child, DomNode* ref,
+                         std::string* error);
+    bool replace_dom_node(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                          DomNode* parent, DomNode* new_child,
+                          DomNode* old_child, std::string* error);
+    bool remove_dom_node(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                         DomNode* parent, DomNode* child, std::string* error);
+    void replace_all_children(v8::Isolate* isolate,
+                              v8::Local<v8::Context> context, DomNode* parent,
+                              const std::vector<DomNode*>& children);
+    v8::Local<v8::Value> call_mutation_method(
+        v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* target,
+        const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args);
+    v8::Local<v8::Value> call_insert_adjacent(
+        v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* target,
+        const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args);
 
 private:
     // M11-5: create/enqueue the one pending microtask delivery for `state`.
@@ -5503,6 +5778,441 @@ v8::Local<v8::Value> make_class_list(v8::Isolate* isolate,
     return list;
 }
 
+// --- M11-49 HTML fragment / variadic tree helpers ---------------------------
+
+std::vector<DomNode*> DocumentHost::parse_html_fragment(const std::string& html) {
+    std::vector<std::unique_ptr<DomNode>> pool;
+    std::vector<DomNode*> roots;
+    std::vector<ScriptRecord> scripts;  // inserted scripts stay inert
+    parse_html(html, pool, roots, scripts);
+    initialize_parsed_nodes(pool);
+    for (std::unique_ptr<DomNode>& node : pool) {
+        detached_pool_.push_back(std::move(node));
+    }
+    return roots;
+}
+
+DomNode* DocumentHost::make_detached_fragment() {
+    auto fragment = std::make_unique<DomNode>();
+    fragment->kind = NodeKind::DocumentFragment;
+    DomNode* raw = fragment.get();
+    detached_pool_.push_back(std::move(fragment));
+    return raw;
+}
+
+bool DocumentHost::insert_dom_node(v8::Isolate* isolate,
+                                   v8::Local<v8::Context> context,
+                                   DomNode* parent, DomNode* child,
+                                   DomNode* ref, std::string* error) {
+    if (parent == nullptr || child == nullptr) {
+        *error = "invalid node";
+        return false;
+    }
+    if (ref != nullptr) {
+        if (ref->parent != parent) {
+            *error = "reference is not a child of this node";
+            return false;
+        }
+        if (child == ref) {
+            return true;
+        }
+    }
+    if (is_self_or_ancestor(child, parent)) {
+        *error = "cannot insert a node into its own subtree";
+        return false;
+    }
+    if (child->kind == NodeKind::DocumentFragment) {
+        std::vector<DomNode*> moved = child->children;
+        if (moved.empty()) {
+            return true;
+        }
+        std::size_t insert_at = parent->children.size();
+        if (ref != nullptr) {
+            const auto pos =
+                std::find(parent->children.begin(), parent->children.end(), ref);
+            insert_at = static_cast<std::size_t>(
+                std::distance(parent->children.begin(), pos));
+        }
+        DomNode* previous =
+            insert_at > 0 ? parent->children[insert_at - 1] : nullptr;
+        DomNode* next = ref;
+        for (DomNode* moved_child : moved) {
+            moved_child->parent = nullptr;
+        }
+        child->children.clear();
+        std::vector<DomNode*> none;
+        queue_child_list(isolate, context, child, none, moved, nullptr,
+                         nullptr);
+        for (std::size_t k = 0; k < moved.size(); ++k) {
+            moved[k]->parent = parent;
+            parent->children.insert(
+                parent->children.begin() +
+                    static_cast<std::ptrdiff_t>(insert_at + k),
+                moved[k]);
+        }
+        queue_child_list(isolate, context, parent, moved, none, previous, next);
+        return true;
+    }
+    DomNode* old_parent = child->parent;
+    DomNode* old_previous = nullptr;
+    DomNode* old_next = nullptr;
+    if (old_parent != nullptr) {
+        siblings_of(child, &old_previous, &old_next);
+    }
+    detach_from_parent(child);
+    child->parent = parent;
+    if (ref == nullptr) {
+        parent->children.push_back(child);
+    } else {
+        const auto pos =
+            std::find(parent->children.begin(), parent->children.end(), ref);
+        parent->children.insert(pos, child);
+    }
+    DomNode* new_previous = nullptr;
+    DomNode* new_next = nullptr;
+    siblings_of(child, &new_previous, &new_next);
+    if (old_parent != nullptr) {
+        std::vector<DomNode*> added;
+        std::vector<DomNode*> removed = {child};
+        queue_child_list(isolate, context, old_parent, added, removed,
+                         old_previous, old_next);
+    }
+    std::vector<DomNode*> added = {child};
+    std::vector<DomNode*> removed;
+    queue_child_list(isolate, context, parent, added, removed, new_previous,
+                     new_next);
+    return true;
+}
+
+bool DocumentHost::remove_dom_node(v8::Isolate* isolate,
+                                   v8::Local<v8::Context> context,
+                                   DomNode* parent, DomNode* child,
+                                   std::string* error) {
+    if (parent == nullptr || child == nullptr || child->parent != parent) {
+        *error = "node is not a child of this node";
+        return false;
+    }
+    DomNode* previous = nullptr;
+    DomNode* next = nullptr;
+    siblings_of(child, &previous, &next);
+    detach_from_parent(child);
+    std::vector<DomNode*> added;
+    std::vector<DomNode*> removed = {child};
+    queue_child_list(isolate, context, parent, added, removed, previous, next);
+    return true;
+}
+
+bool DocumentHost::replace_dom_node(v8::Isolate* isolate,
+                                    v8::Local<v8::Context> context,
+                                    DomNode* parent, DomNode* new_child,
+                                    DomNode* old_child, std::string* error) {
+    if (parent == nullptr || new_child == nullptr || old_child == nullptr ||
+        old_child->parent != parent) {
+        *error = "oldChild is not a child of this node";
+        return false;
+    }
+    if (new_child == old_child) {
+        return true;
+    }
+    if (is_self_or_ancestor(new_child, parent)) {
+        *error = "cannot insert a node into its own subtree";
+        return false;
+    }
+    if (new_child->kind == NodeKind::DocumentFragment) {
+        std::vector<DomNode*> moved = new_child->children;
+        std::size_t index = 0;
+        const auto old_it =
+            std::find(parent->children.begin(), parent->children.end(),
+                      old_child);
+        if (old_it != parent->children.end()) {
+            index = static_cast<std::size_t>(
+                std::distance(parent->children.begin(), old_it));
+        }
+        DomNode* old_previous = nullptr;
+        DomNode* old_next = nullptr;
+        siblings_of(old_child, &old_previous, &old_next);
+        if (!moved.empty()) {
+            for (DomNode* moved_child : moved) {
+                moved_child->parent = nullptr;
+            }
+            new_child->children.clear();
+            std::vector<DomNode*> none;
+            queue_child_list(isolate, context, new_child, none, moved, nullptr,
+                             nullptr);
+        }
+        detach_from_parent(old_child);
+        std::vector<DomNode*> none;
+        std::vector<DomNode*> old_removed = {old_child};
+        queue_child_list(isolate, context, parent, none, old_removed,
+                         old_previous, old_next);
+        if (!moved.empty()) {
+            std::size_t insert_at =
+                index > parent->children.size() ? parent->children.size()
+                                                : index;
+            DomNode* previous =
+                insert_at > 0 ? parent->children[insert_at - 1] : nullptr;
+            DomNode* next = insert_at < parent->children.size()
+                                ? parent->children[insert_at]
+                                : nullptr;
+            for (std::size_t k = 0; k < moved.size(); ++k) {
+                moved[k]->parent = parent;
+                parent->children.insert(
+                    parent->children.begin() +
+                        static_cast<std::ptrdiff_t>(insert_at + k),
+                    moved[k]);
+            }
+            queue_child_list(isolate, context, parent, moved, none, previous,
+                             next);
+        }
+        return true;
+    }
+    if (new_child->parent != nullptr) {
+        DomNode* old_parent = new_child->parent;
+        DomNode* previous = nullptr;
+        DomNode* next = nullptr;
+        siblings_of(new_child, &previous, &next);
+        detach_from_parent(new_child);
+        std::vector<DomNode*> added;
+        std::vector<DomNode*> removed = {new_child};
+        queue_child_list(isolate, context, old_parent, added, removed,
+                         previous, next);
+    }
+    std::size_t index = 0;
+    const auto old_it =
+        std::find(parent->children.begin(), parent->children.end(), old_child);
+    if (old_it != parent->children.end()) {
+        index = static_cast<std::size_t>(
+            std::distance(parent->children.begin(), old_it));
+    }
+    DomNode* old_previous = nullptr;
+    DomNode* old_next = nullptr;
+    siblings_of(old_child, &old_previous, &old_next);
+    detach_from_parent(old_child);
+    std::vector<DomNode*> added;
+    std::vector<DomNode*> removed = {old_child};
+    queue_child_list(isolate, context, parent, added, removed, old_previous,
+                     old_next);
+    if (index > parent->children.size()) {
+        index = parent->children.size();
+    }
+    new_child->parent = parent;
+    parent->children.insert(
+        parent->children.begin() + static_cast<std::ptrdiff_t>(index),
+        new_child);
+    DomNode* new_previous = nullptr;
+    DomNode* new_next = nullptr;
+    siblings_of(new_child, &new_previous, &new_next);
+    added = {new_child};
+    removed.clear();
+    queue_child_list(isolate, context, parent, added, removed, new_previous,
+                     new_next);
+    return true;
+}
+
+void DocumentHost::replace_all_children(
+    v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* parent,
+    const std::vector<DomNode*>& children) {
+    if (parent == nullptr) {
+        return;
+    }
+    std::vector<DomNode*> removed = parent->children;
+    for (DomNode* child : removed) {
+        child->parent = nullptr;
+    }
+    parent->children.clear();
+    for (DomNode* child : children) {
+        child->parent = parent;
+        parent->children.push_back(child);
+    }
+    if (!removed.empty() || !children.empty()) {
+        queue_child_list(isolate, context, parent, children, removed, nullptr,
+                         nullptr);
+    }
+}
+
+bool DocumentHost::build_argument_fragment(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const v8::FunctionCallbackInfo<v8::Value>& args, DomNode** fragment) {
+    DomNode* f = make_detached_fragment();
+    for (int i = 0; i < args.Length(); ++i) {
+        HostObject* host = host_object_backing(args[i]);
+        DomNode* node = nullptr;
+        if (host != nullptr && host->is_node()) {
+            node = static_cast<NodeHost*>(host)->node();
+        } else {
+            v8::Local<v8::String> str;
+            if (!args[i]->ToString(context).ToLocal(&str)) {
+                return false;  // pending exception propagates unchanged
+            }
+            v8::String::Utf8Value utf8(isolate, str);
+            auto text = std::make_unique<DomNode>();
+            text->kind = NodeKind::Text;
+            if (*utf8 != nullptr) {
+                text->data.assign(*utf8,
+                                  static_cast<std::size_t>(utf8.length()));
+            }
+            node = text.get();
+            detached_pool_.push_back(std::move(text));
+        }
+        std::string error;
+        if (!insert_dom_node(isolate, context, f, node, nullptr, &error)) {
+            isolate->ThrowException(v8::Exception::TypeError(
+                v8_string(isolate, error).As<v8::String>()));
+            return false;
+        }
+    }
+    *fragment = f;
+    return true;
+}
+
+v8::Local<v8::Value> DocumentHost::call_mutation_method(
+    v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* target,
+    const std::string& name,
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+    const auto throw_type_error = [&](const std::string& message) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8_string(isolate, message).As<v8::String>()));
+        return v8::Undefined(isolate);
+    };
+    if (name == "before" || name == "after" || name == "replaceWith") {
+        if (target->parent == nullptr) {
+            return v8::Undefined(isolate);  // ChildNode methods: no parent, no-op
+        }
+    }
+    DomNode* fragment = nullptr;
+    if (!build_argument_fragment(isolate, context, args, &fragment)) {
+        return v8::Undefined(isolate);  // conversion error propagates
+    }
+    if (name == "append" || name == "prepend") {
+        DomNode* ref = nullptr;
+        if (name == "prepend" && !target->children.empty()) {
+            ref = target->children.front();
+        }
+        std::string error;
+        if (!insert_dom_node(isolate, context, target, fragment, ref, &error)) {
+            return throw_type_error(error);
+        }
+        return v8::Undefined(isolate);
+    }
+    if (name == "replaceChildren") {
+        std::vector<DomNode*> moved = fragment->children;
+        fragment->children.clear();
+        for (DomNode* child : moved) {
+            child->parent = nullptr;
+        }
+        replace_all_children(isolate, context, target, moved);
+        return v8::Undefined(isolate);
+    }
+    DomNode* parent = target->parent;
+    if (name == "replaceWith") {
+        std::string error;
+        if (!replace_dom_node(isolate, context, parent, fragment, target,
+                              &error)) {
+            return throw_type_error(error);
+        }
+        return v8::Undefined(isolate);
+    }
+    DomNode* ref = name == "before" ? target : sibling_node(target, 1);
+    std::string error;
+    if (!insert_dom_node(isolate, context, parent, fragment, ref, &error)) {
+        return throw_type_error(error);
+    }
+    return v8::Undefined(isolate);
+}
+
+v8::Local<v8::Value> DocumentHost::call_insert_adjacent(
+    v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* target,
+    const std::string& name,
+    const v8::FunctionCallbackInfo<v8::Value>& args) {
+    const auto syntax_error = [&](const char* message) {
+        isolate->ThrowException(v8::Exception::SyntaxError(
+            v8_string(isolate, message).As<v8::String>()));
+        return v8::Undefined(isolate);
+    };
+    const auto type_error = [&](const std::string& message) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8_string(isolate, message).As<v8::String>()));
+        return v8::Undefined(isolate);
+    };
+    std::string position;
+    if (args.Length() > 0) {
+        v8::String::Utf8Value utf8(isolate, args[0]);
+        if (*utf8 != nullptr) {
+            position.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+        }
+    }
+    if (position != "beforebegin" && position != "afterbegin" &&
+        position != "beforeend" && position != "afterend") {
+        return syntax_error("insertAdjacent: invalid position");
+    }
+    const bool needs_parent =
+        position == "beforebegin" || position == "afterend";
+    DomNode* parent = needs_parent ? target->parent : target;
+    if (parent == nullptr) {
+        return type_error("insertAdjacent: element has no parent");
+    }
+    DomNode* node = nullptr;
+    if (name == "insertAdjacentHTML") {
+        std::string html;
+        if (args.Length() > 1) {
+            v8::String::Utf8Value utf8(isolate, args[1]);
+            if (*utf8 != nullptr) {
+                html.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+            }
+        }
+        std::vector<DomNode*> roots = parse_html_fragment(html);
+        DomNode* fragment = make_detached_fragment();
+        for (DomNode* root : roots) {
+            root->parent = fragment;
+            fragment->children.push_back(root);
+        }
+        node = fragment;
+    } else if (name == "insertAdjacentElement") {
+        HostObject* host = args.Length() > 1 ? host_object_backing(args[1])
+                                             : nullptr;
+        if (host == nullptr || !host->is_node() ||
+            host->node_kind() != NodeKind::Element) {
+            return type_error("insertAdjacentElement: argument is not an element");
+        }
+        node = static_cast<NodeHost*>(host)->node();
+    } else {  // insertAdjacentText
+        std::string text;
+        if (args.Length() > 1) {
+            v8::Local<v8::String> str;
+            if (!args[1]->ToString(context).ToLocal(&str)) {
+                return v8::Undefined(isolate);
+            }
+            v8::String::Utf8Value utf8(isolate, str);
+            if (*utf8 != nullptr) {
+                text.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+            }
+        }
+        auto text_node = std::make_unique<DomNode>();
+        text_node->kind = NodeKind::Text;
+        text_node->data = text;
+        node = text_node.get();
+        detached_pool_.push_back(std::move(text_node));
+    }
+    DomNode* ref = nullptr;
+    if (position == "beforebegin") {
+        ref = target;
+    } else if (position == "afterbegin") {
+        ref = target->children.empty() ? nullptr : target->children.front();
+    } else if (position == "beforeend") {
+        ref = nullptr;
+    } else {  // afterend
+        ref = sibling_node(target, 1);
+    }
+    std::string error;
+    if (!insert_dom_node(isolate, context, parent, node, ref, &error)) {
+        return type_error(error);
+    }
+    if (name == "insertAdjacentElement") {
+        return args[1];
+    }
+    return v8::Undefined(isolate);
+}
+
 // M11-48: shared Node/tree methods used by every node host. The receiver is a
 // plain DomNode*; argument validation accepts any node kind. DocumentFragment
 // arguments insert/move their children instead of the fragment itself.
@@ -5871,6 +6581,11 @@ v8::Local<v8::Value> CharacterDataHost::call_method(
                                     result)) {
         return result;
     }
+    // M11-49 ChildNode methods on Text/Comment.
+    if (name == "before" || name == "after" || name == "replaceWith") {
+        return document_->call_mutation_method(isolate, context, node_, name,
+                                               args);
+    }
     return v8::Undefined(isolate);
 }
 
@@ -5965,6 +6680,11 @@ v8::Local<v8::Value> DocumentFragmentHost::call_method(
     if (document_->call_node_method(isolate, context, node_, name, args,
                                     result)) {
         return result;
+    }
+    // M11-49 ParentNode methods on fragments.
+    if (name == "append" || name == "prepend" || name == "replaceChildren") {
+        return document_->call_mutation_method(isolate, context, node_, name,
+                                               args);
     }
     const auto arg_string = [&](int index) {
         std::string text;
@@ -6176,6 +6896,12 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     }
     if (name == "textContent") {
         return v8_string(isolate, text_content_of(node_));
+    }
+    if (name == "innerHTML") {
+        return v8_string(isolate, serialize_dom_children(node_));
+    }
+    if (name == "outerHTML") {
+        return v8_string(isolate, serialize_dom_node(node_));
     }
     if (name == "nodeValue") return v8::Null(isolate);  // Element nodes have no value
     if (name == "parentNode") {
@@ -6599,6 +7325,33 @@ void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> cont
         node_->value = str_value;
         return;
     }
+    // M11-49: innerHTML/outerHTML parse an HTML fragment and replace the target /
+    // the element itself. Parsed scripts stay inert (their ScriptRecords are
+    // discarded).
+    if (name == "innerHTML") {
+        std::vector<DomNode*> roots = document_->parse_html_fragment(str_value);
+        document_->replace_all_children(isolate, context, node_, roots);
+        return;
+    }
+    if (name == "outerHTML") {
+        DomNode* parent = node_->parent;
+        if (parent == nullptr) {
+            return;  // parentless element: no-op, as in the DOM
+        }
+        std::vector<DomNode*> roots = document_->parse_html_fragment(str_value);
+        DomNode* fragment = document_->make_detached_fragment();
+        for (DomNode* root : roots) {
+            root->parent = fragment;
+            fragment->children.push_back(root);
+        }
+        std::string error;
+        if (!document_->replace_dom_node(isolate, context, parent, fragment,
+                                         node_, &error)) {
+            isolate->ThrowException(v8::Exception::TypeError(
+                v8_string(isolate, error).As<v8::String>()));
+        }
+        return;
+    }
     // M2-8/M11-48: textContent = ... replaces all children with zero or one Text
     // node (shared helper also used by fragments and document.title).
     document_->set_text_content(isolate, context, node_, str_value);
@@ -6712,6 +7465,17 @@ v8::Local<v8::Value> ElementHost::call_method(
     if (document_->call_node_method(isolate, context, node_, name, args,
                                     node_result)) {
         return node_result;
+    }
+    // M11-49: variadic tree methods and Element.insertAdjacent*.
+    if (name == "append" || name == "prepend" || name == "replaceChildren" ||
+        name == "before" || name == "after" || name == "replaceWith") {
+        return document_->call_mutation_method(isolate, context, node_, name,
+                                               args);
+    }
+    if (name == "insertAdjacentHTML" || name == "insertAdjacentElement" ||
+        name == "insertAdjacentText") {
+        return document_->call_insert_adjacent(isolate, context, node_, name,
+                                               args);
     }
     // M11-32: checkValidity()/reportValidity() on a form aggregates its controls;
     // on a control they validate just that control. reportValidity has no UI in
