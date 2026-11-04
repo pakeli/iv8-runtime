@@ -7,6 +7,11 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
 
+Active maintenance (`2026-11-04`): extract the Base64 byte codec, preserving
+M8-4 semantics and all V8 conversion/error paths. Complete native/focused
+validation, real-V8 CI, and all release lanes; see
+`docs/page_base64_refactor.md`. M11-53 remains next.
+
 Fourth maintenance extraction verified (`2026-11-04`): query codec and pair
 parse/serialize functions are independent of V8; canonical private-slot state
 and M8-3 semantics are preserved. Source `f017a01` passed V8 CI and all three

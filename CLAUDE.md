@@ -24,6 +24,11 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
+- Latest internal work (`2026-11-04`, verification pending): Base64 byte codec
+  is extracted into `base64`; host coercion/Latin-1 validation/error conversion
+  stay in place. Focused Base64/M8 collection is 32, full collection 1,818.
+  Independent evidence is in `docs/page_base64_refactor.md`; previous extraction
+  runs do not cover it. M11-53 remains the next feature milestone.
 - Latest internal work, verified (`2026-11-04`): query byte codec
   and ordered parse/serialize are extracted into `query_parameters`; canonical
   V8 private-slot storage and host coercion/mutation stay in place. Focused

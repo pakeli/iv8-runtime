@@ -29,6 +29,7 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 #endif
 
 #include "iv8/access_summary.h"
+#include "iv8/base64.h"
 #include "iv8/context_host.h"
 #include "iv8/query_parameters.h"
 #include "iv8/selector_parser.h"
@@ -10190,91 +10191,6 @@ void file_reader_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // NewFromOneByte). ASCII whitespace in atob input is ignored. Both error paths throw a
 // JS TypeError (the project has no DOMException/InvalidCharacterError). No base64url /
 // ArrayBuffer API / streaming / auto UTF-8.
-std::string base64_encode(const std::string& in) {
-    static const char kTbl[] =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    std::string out;
-    std::size_t i = 0;
-    const std::size_t n = in.size();
-    while (i + 3 <= n) {
-        const std::uint32_t x = (static_cast<std::uint8_t>(in[i]) << 16) |
-                                (static_cast<std::uint8_t>(in[i + 1]) << 8) |
-                                static_cast<std::uint8_t>(in[i + 2]);
-        out += kTbl[(x >> 18) & 63];
-        out += kTbl[(x >> 12) & 63];
-        out += kTbl[(x >> 6) & 63];
-        out += kTbl[x & 63];
-        i += 3;
-    }
-    const std::size_t rem = n - i;
-    if (rem == 1) {
-        const std::uint32_t x = static_cast<std::uint8_t>(in[i]) << 16;
-        out += kTbl[(x >> 18) & 63];
-        out += kTbl[(x >> 12) & 63];
-        out += "==";
-    } else if (rem == 2) {
-        const std::uint32_t x = (static_cast<std::uint8_t>(in[i]) << 16) |
-                                (static_cast<std::uint8_t>(in[i + 1]) << 8);
-        out += kTbl[(x >> 18) & 63];
-        out += kTbl[(x >> 12) & 63];
-        out += kTbl[(x >> 6) & 63];
-        out += "=";
-    }
-    return out;
-}
-
-int base64_val(char c) {
-    if (c >= 'A' && c <= 'Z') return c - 'A';
-    if (c >= 'a' && c <= 'z') return c - 'a' + 26;
-    if (c >= '0' && c <= '9') return c - '0' + 52;
-    if (c == '+') return 62;
-    if (c == '/') return 63;
-    return -1;
-}
-
-// Forgiving-base64 decode (WHATWG口径): strip ASCII whitespace; ONLY when the length
-// is a multiple of 4, remove up to two trailing '='; then a length % 4 == 1 is a
-// failure, and any remaining non-alphabet code point (including a stray '=') is a
-// failure. Returns false on any violation.
-bool base64_decode(const std::string& in, std::string& out) {
-    std::string s;
-    for (char c : in) {
-        if (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' ||
-            c == '\v') {
-            continue;
-        }
-        s += c;
-    }
-    if (s.size() % 4 == 0) {
-        std::size_t k = s.size();
-        int pad = 0;
-        while (k > 0 && s[k - 1] == '=' && pad < 2) {
-            pad++;
-            k--;
-        }
-        s.resize(k);
-    }
-    if (s.size() % 4 == 1) {
-        return false;
-    }
-    std::uint32_t buf = 0;
-    int bits = 0;
-    for (char c : s) {
-        const int v = base64_val(c);
-        if (v < 0) {
-            return false;  // a stray '=' or a non-alphabet character
-        }
-        buf = (buf << 6) | static_cast<std::uint32_t>(v);
-        bits += 6;
-        if (bits >= 8) {
-            bits -= 8;
-            out += static_cast<char>((buf >> bits) & 0xFF);
-        }
-        buf &= (bits > 0) ? ((1u << bits) - 1) : 0u;  // keep only pending bits
-    }
-    return true;
-}
-
 void btoa_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();

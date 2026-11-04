@@ -22,6 +22,11 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 
 ## 0. What this document is
 
+Fifth internal extraction (`2026-11-04`, verification pending): Base64 byte
+encoding/forgiving decoding is independent of V8 in `base64.h` / `base64.cpp`.
+Host conversion, validation, exceptions, and the M8-4 surface are unchanged.
+See `docs/page_base64_refactor.md` for independent verification.
+
 Fourth internal extraction, verified (`2026-11-04`): byte-level
 query parsing/serialization now lives in `query_parameters`. URLSearchParams
 still owns canonical text in a GC-managed private slot; JS semantics and

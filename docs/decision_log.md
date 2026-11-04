@@ -1033,6 +1033,18 @@ release matrices. Source `f017a01` passed Linux `41791203775`, Windows
 The pinned temporary macOS driver was restored afterward. See
 `docs/page_query_refactor.md` for trees/artifacts; M11-53 stays next.
 
+### 51. Fifth Page extraction — Base64 byte codec
+
+Approved/implemented `2026-11-04`; real-V8/release verification pending.
+
+Extract the existing standard encoder and forgiving decoder as byte-only native
+functions. Keep JS coercion, Latin-1 checks, exception mapping, and V8 binary
+strings in the host layer. Preserve padding rules, the six ignored whitespace
+bytes, discarded bits, and native append/partial-output semantics; add no
+Base64url/streaming/UTF-8 feature. Use old/new differential checks plus a standard
+encoding reference, focused Base64/M8 tests, and all three release matrices.
+See `docs/page_base64_refactor.md`; M11-53 remains next.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

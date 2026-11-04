@@ -4,6 +4,13 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
+**Latest internal maintenance, verification pending (`2026-11-04`):** Base64
+byte encoding/forgiving decoding is extracted into a V8-independent module.
+The host retains JS coercion, Latin-1 validation, exceptions, and binary-string
+conversion. Focused Base64/M8 collection is 32; full collection 1,818. See
+`docs/page_base64_refactor.md` for independent evidence; prior extraction runs
+do not verify this slice.
+
 **Latest internal maintenance, verified (`2026-11-04`):** the
 URLSearchParams byte codec and ordered query parsing/serialization are extracted
 into `query_parameters`. Canonical state stays in its V8 private slot; host
