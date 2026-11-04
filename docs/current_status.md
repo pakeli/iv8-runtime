@@ -4,14 +4,17 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
-**Latest internal maintenance, verification pending (`2026-11-04`):** the
+**Latest internal maintenance, verified (`2026-11-04`):** the
 second Page refactor extracts deterministic Cookie parsing/storage into
 `CookieJar`, owned by value in `PageState`. DocumentHost coercion/tracing stays
-on its existing path; Python/JS contracts are unchanged. The focused Cookie
-file now collects 11 items; the full suite collects 1,795. Local differential
-and real-V8/release results are recorded separately in
-`docs/page_cookie_refactor.md`; do not treat the previous extraction's green
-runs as verification of this slice.
+on its existing path; Python/JS contracts are unchanged. Source `347dfbf` (tree
+`02a5fc1835bea8d162c4a140c6bfb7324aa519b4`) passed Linux `41764895229`, Windows
+`41764904132`, and macOS arm64 `41764990337`, Python 3.11–3.14 each
+`1793 passed, 2 skipped` (1,795 collected). V8 CI `41764857600` also passed;
+macOS additionally ran the focused Cookie file first, `11 passed` in every
+lane. The 30,033-write native differential check passed under UBSan. Full
+source/run/artifact and temporary-driver restoration evidence is in
+`docs/page_cookie_refactor.md`.
 
 **Internal maintenance verified (`2026-11-04`):** the first Page refactor extracts the
 V8-independent selector parser and adds automatic Linux/Python 3.13 V8 CI.

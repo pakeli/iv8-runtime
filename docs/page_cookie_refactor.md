@@ -1,7 +1,7 @@
 # Page refactor — Cookie module
 
-Scope agreed: `2026-11-04`. Status: **implemented; local checks passed;
-real-V8/release verification pending**.
+Scope agreed: `2026-11-04`. Status: **VERIFIED on real V8 — Linux x64,
+Windows x64, macOS arm64 (`2026-11-04`)**.
 Source baseline: `f0cbc18` (the verified selector extraction, PR #1).
 
 This is a second internal maintenance slice after M11-52. The frozen
@@ -55,6 +55,37 @@ Keep this slice pending until every release lane is green.
 
 ## Real-V8 verification
 
-Pending. Record source commit/tree, CI/release run IDs, artifact IDs, and actual
-passed/skipped counts after all release lanes succeed. Previous selector
-extraction verification does not cover this change.
+Source commit: `347dfbf5e561c46d6dfd7a4cbc674bb6e5eb677f`, Git tree
+`02a5fc1835bea8d162c4a140c6bfb7324aa519b4`. All three release runs succeeded;
+the 1,795-item full suite reported **1793 passed, 2 skipped** in every lane.
+Every release interpreter imported a V8-linked wheel reporting `15.0.245.19`.
+
+| Lane | Run | Python versions | Result per interpreter |
+|---|---|---|---|
+| V8 CI | [41764857600](https://github.com/pakeli/iv8-runtime/actions/runs/41764857600) | 3.13 | 1793 passed, 2 skipped |
+| release-linux | [41764895229](https://github.com/pakeli/iv8-runtime/actions/runs/41764895229) | 3.11–3.14 | 1793 passed, 2 skipped |
+| release-windows | [41764904132](https://github.com/pakeli/iv8-runtime/actions/runs/41764904132) | 3.11–3.14 | 1793 passed, 2 skipped |
+| release-macos | [41764990337](https://github.com/pakeli/iv8-runtime/actions/runs/41764990337) | 3.11–3.14 | focused 11 passed; full 1793 passed, 2 skipped |
+
+Linux artifact: `13293010800` (`iv8-linux-manylinux2_28-wheels`, all four
+interpreters).
+
+Windows artifacts: `13292356664` (cp311), `13292745409` (cp312),
+`13291882305` (cp313), `13292805339` (cp314).
+
+macOS arm64 artifacts: `13292745566` (cp311), `13291807864` (cp312),
+`13292441608` (cp313), `13292336874` (cp314).
+
+macOS used the official macos-15 release workflow with the existing
+`macos-release` monolith cache. Driver commit
+`012f8983489ff12bef67ae05aa6721b9eee0308a` pinned both checkout steps to the
+full `347dfbf` source SHA and ran the Cookie test file before the full suite.
+Restore commit `738f001f06a4793965269806ccf2cabb10d594ea` restored the original
+workflow blob `eb730d3e77a17d4d527e67646475385cebb2428c` without rewriting
+history. The driver changes are not part of the source branch.
+
+The existing `Linux x64 / Python 3.13 / V8` GitHub Actions check remains
+mandatory on master, with up-to-date branches and administrator enforcement.
+Handoff-only documentation edits after the verified source preserve the tested
+runtime, build configuration, and tests. M11-53 remains the next feature
+milestone; this slice adds no browser surface.
