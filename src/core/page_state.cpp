@@ -30,6 +30,7 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 
 #include "iv8/access_summary.h"
 #include "iv8/context_host.h"
+#include "iv8/query_parameters.h"
 #include "iv8/selector_parser.h"
 #include "iv8/url_parser.h"
 
@@ -9433,100 +9434,9 @@ void url_to_href(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
 }
 
-// M8-3 URLSearchParams — a minimal application/x-www-form-urlencoded query-parameter
-// object. The parameter list is kept as a canonical (re-serialized) query string in a
-// private slot on the instance (GC-managed, invisible to JS); each method parses it,
-// operates, and (for mutators) writes it back. percent 口径: decode '+' -> space and
-// %XX -> byte (bad/short % left literal); encode passes [A-Za-z0-9*-._] through, space
-// -> '+', every other byte -> %XX (uppercase). No iterator / entries / keys / values /
-// forEach / sort / size, and no link to URL.searchParams.
-int usp_hex_val(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    return -1;
-}
-
-std::string usp_decode(const std::string& s) {
-    std::string out;
-    for (std::size_t i = 0; i < s.size(); i++) {
-        const char c = s[i];
-        if (c == '+') {
-            out += ' ';
-        } else if (c == '%' && i + 2 < s.size()) {
-            const int hi = usp_hex_val(s[i + 1]);
-            const int lo = usp_hex_val(s[i + 2]);
-            if (hi >= 0 && lo >= 0) {
-                out += static_cast<char>((hi << 4) | lo);
-                i += 2;
-            } else {
-                out += c;
-            }
-        } else {
-            out += c;
-        }
-    }
-    return out;
-}
-
-std::string usp_encode(const std::string& s) {
-    static const char kHex[] = "0123456789ABCDEF";
-    std::string out;
-    for (unsigned char c : s) {
-        // Explicit ASCII test — std::isalnum is locale-dependent for bytes > 0x7F
-        // (e.g. it treats the UTF-8 lead byte 0xC3 as alphanumeric under some Windows
-        // locales), which would leak raw multi-byte bytes into the output.
-        const bool unreserved =
-            (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') ||
-            (c >= 'a' && c <= 'z') || c == '*' || c == '-' || c == '.' || c == '_';
-        if (unreserved) {
-            out += static_cast<char>(c);
-        } else if (c == ' ') {
-            out += '+';
-        } else {
-            out += '%';
-            out += kHex[c >> 4];
-            out += kHex[c & 0x0F];
-        }
-    }
-    return out;
-}
-
-std::vector<std::pair<std::string, std::string>> usp_parse(const std::string& q) {
-    std::vector<std::pair<std::string, std::string>> out;
-    std::size_t start = 0;
-    while (true) {
-        const std::size_t amp = q.find('&', start);
-        const std::string token = (amp == std::string::npos)
-                                      ? q.substr(start)
-                                      : q.substr(start, amp - start);
-        if (!token.empty()) {
-            const auto eq = token.find('=');
-            if (eq == std::string::npos) {
-                out.emplace_back(usp_decode(token), std::string());
-            } else {
-                out.emplace_back(usp_decode(token.substr(0, eq)),
-                                 usp_decode(token.substr(eq + 1)));
-            }
-        }
-        if (amp == std::string::npos) break;
-        start = amp + 1;
-    }
-    return out;
-}
-
-std::string usp_serialize(
-    const std::vector<std::pair<std::string, std::string>>& pairs) {
-    std::string out;
-    for (std::size_t i = 0; i < pairs.size(); i++) {
-        if (i > 0) out += '&';
-        out += usp_encode(pairs[i].first);
-        out += '=';
-        out += usp_encode(pairs[i].second);
-    }
-    return out;
-}
-
+// M8-3 URLSearchParams keeps canonical query text in its GC-managed private
+// slot. The query_parameters module handles byte parsing/encoding; V8 state,
+// coercion, and method mutation stay here. M11-15 links a non-live URL snapshot.
 v8::Local<v8::Private> usp_private_key(v8::Isolate* isolate) {
     return v8::Private::ForApi(
         isolate,
@@ -9597,7 +9507,7 @@ void url_search_params_constructor(const v8::FunctionCallbackInfo<v8::Value>& in
         if (!str.empty() && str[0] == '?') {
             str = str.substr(1);
         }
-        canonical = usp_serialize(usp_parse(str));  // canonicalize
+        canonical = serialize_query_parameters(parse_query_parameters(str));  // canonicalize
     }
     usp_write_state(isolate, context, self, canonical);
 }
@@ -9606,7 +9516,8 @@ void usp_get(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
-    for (const auto& p : usp_parse(usp_read_state(isolate, context, info.This()))) {
+    for (const auto& p :
+         parse_query_parameters(usp_read_state(isolate, context, info.This()))) {
         if (p.first == name) {
             info.GetReturnValue().Set(v8_string(isolate, p.second));
             return;
@@ -9621,7 +9532,8 @@ void usp_get_all(const v8::FunctionCallbackInfo<v8::Value>& info) {
     const std::string name = usp_arg_string(isolate, context, info[0]);
     v8::Local<v8::Array> arr = v8::Array::New(isolate);
     std::uint32_t idx = 0;
-    for (const auto& p : usp_parse(usp_read_state(isolate, context, info.This()))) {
+    for (const auto& p :
+         parse_query_parameters(usp_read_state(isolate, context, info.This()))) {
         if (p.first == name) {
             (void)arr->Set(context, idx++, v8_string(isolate, p.second));
         }
@@ -9633,7 +9545,8 @@ void usp_has(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
-    for (const auto& p : usp_parse(usp_read_state(isolate, context, info.This()))) {
+    for (const auto& p :
+         parse_query_parameters(usp_read_state(isolate, context, info.This()))) {
         if (p.first == name) {
             info.GetReturnValue().Set(true);
             return;
@@ -9647,9 +9560,10 @@ void usp_append(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
     const std::string value = usp_arg_string(isolate, context, info[1]);
-    auto pairs = usp_parse(usp_read_state(isolate, context, info.This()));
+    auto pairs = parse_query_parameters(usp_read_state(isolate, context, info.This()));
     pairs.emplace_back(name, value);
-    usp_write_state(isolate, context, info.This(), usp_serialize(pairs));
+    usp_write_state(isolate, context, info.This(),
+                    serialize_query_parameters(pairs));
 }
 
 void usp_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
@@ -9657,7 +9571,7 @@ void usp_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
     const std::string value = usp_arg_string(isolate, context, info[1]);
-    const auto pairs = usp_parse(usp_read_state(isolate, context, info.This()));
+    const auto pairs = parse_query_parameters(usp_read_state(isolate, context, info.This()));
     std::vector<std::pair<std::string, std::string>> out;
     bool replaced = false;
     for (const auto& p : pairs) {
@@ -9673,21 +9587,23 @@ void usp_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (!replaced) {
         out.emplace_back(name, value);
     }
-    usp_write_state(isolate, context, info.This(), usp_serialize(out));
+    usp_write_state(isolate, context, info.This(),
+                    serialize_query_parameters(out));
 }
 
 void usp_delete(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
-    const auto pairs = usp_parse(usp_read_state(isolate, context, info.This()));
+    const auto pairs = parse_query_parameters(usp_read_state(isolate, context, info.This()));
     std::vector<std::pair<std::string, std::string>> out;
     for (const auto& p : pairs) {
         if (p.first != name) {
             out.push_back(p);
         }
     }
-    usp_write_state(isolate, context, info.This(), usp_serialize(out));
+    usp_write_state(isolate, context, info.This(),
+                    serialize_query_parameters(out));
 }
 
 void usp_to_string(const v8::FunctionCallbackInfo<v8::Value>& info) {

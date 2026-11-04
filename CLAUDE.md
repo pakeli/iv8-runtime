@@ -24,7 +24,16 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
-- Latest internal work, verified (`2026-11-04`): minimal URL
+- Latest internal work, verified (`2026-11-04`): query byte codec
+  and ordered parse/serialize are extracted into `query_parameters`; canonical
+  V8 private-slot storage and host coercion/mutation stay in place. Focused
+  query/URL set passed all 54 items in each macOS interpreter before the full
+  suite. Source `f017a01` passed Linux `41791203775`, Windows `41791210361`, and
+  macOS arm64 `41791328195`, Python 3.11–3.14 each `1806 passed, 2 skipped`
+  (1,808 collected). V8 CI `41791168585` also passed. Independent source/run/
+  artifact evidence and 20,271-case native differential/UBSan results are in
+  `docs/page_query_refactor.md`. M11-53 stays the next feature milestone.
+- Previous internal maintenance, verified (`2026-11-04`): minimal URL
   decomposition/resolution is extracted into `url_parser`; the host layer keeps
   JS coercion/tracing and secure-context policy. The focused URL/consumer set
   passed all 76 items in each macOS interpreter before the full suite. Source
