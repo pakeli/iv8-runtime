@@ -22,6 +22,14 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 
 ## 0. What this document is
 
+Third internal extraction, verified (`2026-11-04`): shared minimal
+URL decomposition/resolution now lives in `url_parser.h` / `url_parser.cpp`.
+There is no public-surface or normalization change; host-layer URL consumers
+keep their existing semantics. Source `2e30d48` passed Linux `41783823684`,
+Windows `41783830832`, and macOS arm64 `41783905526`, Python 3.11–3.14 each
+`1799 passed, 2 skipped`; macOS focused URL/consumer runs each `76 passed`.
+See `docs/page_url_refactor.md` for source trees and artifacts.
+
 Second internal extraction, verified (`2026-11-04`): Cookie parsing,
 fixed-epoch expiry, serialization, and storage are in `CookieJar`, owned by
 `PageState`. The M11-46 public surface and DocumentHost trace/coercion path are

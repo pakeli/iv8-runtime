@@ -7,6 +7,13 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
 
+Third maintenance extraction verified (`2026-11-04`): shared minimal URL
+decomposition/resolution is in `url_parser`, with M2-3/M8-2 behavior preserved.
+Source `2e30d48` passed real-V8 CI and all three release matrices, Python
+3.11–3.14 each `1799 passed, 2 skipped`; macOS focused URL/consumer runs each
+`76 passed`. Merge through the existing V8 gate. See `docs/page_url_refactor.md`
+for source/run/artifact evidence. M11-53 stays the next feature milestone.
+
 Second maintenance extraction verified (`2026-11-04`): Cookie parsing/storage
 now lives in the Page-owned `CookieJar`. V8 CI and all three release lanes
 passed, Python 3.11–3.14 each `1793 passed, 2 skipped`; macOS focused tests
