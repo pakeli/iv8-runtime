@@ -31,6 +31,7 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 #include "iv8/access_summary.h"
 #include "iv8/base64.h"
 #include "iv8/context_host.h"
+#include "iv8/html_entities.h"
 #include "iv8/query_parameters.h"
 #include "iv8/selector_parser.h"
 #include "iv8/url_parser.h"
@@ -1541,121 +1542,6 @@ std::vector<std::string> split_class_tokens(const std::string& value) {
     return tokens;
 }
 
-// M11-49: bounded HTML character-reference decoding. Supports the common named
-// references plus decimal/hex numeric references. Unknown names and unterminated
-// references stay literal; invalid numeric references become U+FFFD.
-void append_utf8_code_point(std::string& out, std::uint32_t code_point) {
-    if (code_point <= 0x7F) {
-        out.push_back(static_cast<char>(code_point));
-    } else if (code_point <= 0x7FF) {
-        out.push_back(static_cast<char>(0xC0 | (code_point >> 6)));
-        out.push_back(static_cast<char>(0x80 | (code_point & 0x3F)));
-    } else if (code_point <= 0xFFFF) {
-        out.push_back(static_cast<char>(0xE0 | (code_point >> 12)));
-        out.push_back(static_cast<char>(0x80 | ((code_point >> 6) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | (code_point & 0x3F)));
-    } else {
-        out.push_back(static_cast<char>(0xF0 | (code_point >> 18)));
-        out.push_back(static_cast<char>(0x80 | ((code_point >> 12) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | ((code_point >> 6) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | (code_point & 0x3F)));
-    }
-}
-
-bool named_entity_code_point(const std::string& name, std::uint32_t* out) {
-    if (name == "amp") {
-        *out = 0x26;
-    } else if (name == "lt") {
-        *out = 0x3C;
-    } else if (name == "gt") {
-        *out = 0x3E;
-    } else if (name == "quot") {
-        *out = 0x22;
-    } else if (name == "apos") {
-        *out = 0x27;
-    } else if (name == "nbsp") {
-        *out = 0xA0;
-    } else {
-        return false;
-    }
-    return true;
-}
-
-std::string decode_html_entities(const std::string& text) {
-    std::string out;
-    out.reserve(text.size());
-    std::size_t i = 0;
-    while (i < text.size()) {
-        if (text[i] != '&') {
-            out.push_back(text[i++]);
-            continue;
-        }
-        const std::size_t semi = text.find(';', i + 1);
-        if (semi == std::string::npos || semi - i > 32) {
-            out.push_back('&');
-            ++i;
-            continue;
-        }
-        const std::string body = text.substr(i + 1, semi - i - 1);
-        std::uint32_t code_point = 0;
-        bool decoded = false;
-        if (!body.empty() && body[0] == '#') {
-            const bool hex = body.size() > 1 &&
-                             (body[1] == 'x' || body[1] == 'X');
-            const std::size_t start = hex ? 2 : 1;
-            if (start < body.size()) {
-                bool valid = true;
-                bool overflow = false;
-                std::size_t digits = 0;
-                std::uint64_t value = 0;
-                for (std::size_t k = start; k < body.size(); ++k) {
-                    const unsigned char c = static_cast<unsigned char>(body[k]);
-                    int digit = -1;
-                    if (c >= '0' && c <= '9') {
-                        digit = c - '0';
-                    } else if (hex && c >= 'a' && c <= 'f') {
-                        digit = c - 'a' + 10;
-                    } else if (hex && c >= 'A' && c <= 'F') {
-                        digit = c - 'A' + 10;
-                    }
-                    if (digit < 0) {
-                        valid = false;
-                        break;
-                    }
-                    value = value * (hex ? 16 : 10) +
-                            static_cast<std::uint64_t>(digit);
-                    ++digits;
-                    if (value > 0x10FFFF) {
-                        overflow = true;
-                        break;
-                    }
-                }
-                if (valid && digits > 0 && !overflow) {
-                    code_point = static_cast<std::uint32_t>(value);
-                    decoded = true;
-                } else if (overflow || (valid && digits > 0 && value == 0)) {
-                    code_point = 0xFFFD;
-                    decoded = true;
-                }
-            }
-        } else if (named_entity_code_point(body, &code_point)) {
-            decoded = true;
-        }
-        if (!decoded) {
-            out.push_back('&');
-            ++i;
-            continue;
-        }
-        if (code_point == 0 || code_point > 0x10FFFF ||
-            (code_point >= 0xD800 && code_point <= 0xDFFF)) {
-            code_point = 0xFFFD;
-        }
-        append_utf8_code_point(out, code_point);
-        i = semi + 1;
-    }
-    return out;
-}
-
 // Capture id + class (+ M3-5 src) from the raw attribute text inside a start tag.
 // Minimal attribute tokenizer (quoted / bare values). Only id, class, and src are
 // retained — every other attribute is ignored. getAttribute still answers only id
@@ -1968,50 +1854,6 @@ void parse_html(const std::string& html,
     for (const std::unique_ptr<DomNode>& node : pool) {
         if (node->kind == NodeKind::Element && node->tag == "textarea") {
             node->value = text_content_of(node.get());
-        }
-    }
-}
-
-// M11-49: HTML fragment serialization. Text escapes &, <, > and U+00A0;
-// attribute values escape &, " and U+00A0; script/style text is emitted raw.
-void append_escaped_html_text(std::string& out, const std::string& text) {
-    for (std::size_t i = 0; i < text.size();) {
-        const unsigned char c = static_cast<unsigned char>(text[i]);
-        if (c == '&') {
-            out += "&amp;";
-            ++i;
-        } else if (c == '<') {
-            out += "&lt;";
-            ++i;
-        } else if (c == '>') {
-            out += "&gt;";
-            ++i;
-        } else if (c == 0xC2 && i + 1 < text.size() &&
-                   static_cast<unsigned char>(text[i + 1]) == 0xA0) {
-            out += "&nbsp;";
-            i += 2;
-        } else {
-            out.push_back(text[i++]);
-        }
-    }
-}
-
-void append_escaped_html_attribute(std::string& out,
-                                   const std::string& text) {
-    for (std::size_t i = 0; i < text.size();) {
-        const unsigned char c = static_cast<unsigned char>(text[i]);
-        if (c == '&') {
-            out += "&amp;";
-            ++i;
-        } else if (c == '"') {
-            out += "&quot;";
-            ++i;
-        } else if (c == 0xC2 && i + 1 < text.size() &&
-                   static_cast<unsigned char>(text[i + 1]) == 0xA0) {
-            out += "&nbsp;";
-            i += 2;
-        } else {
-            out.push_back(text[i++]);
         }
     }
 }

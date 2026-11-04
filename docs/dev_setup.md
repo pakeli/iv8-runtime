@@ -101,8 +101,8 @@ python -m pytest test/test_watch_object_keys.py -v
 
 - general CI: `.github/workflows/ci.yml`
 - real-V8 push/PR CI: `.github/workflows/v8-ci.yml` (Linux x64 / Python 3.13;
-  latest maintenance run `41797126420`, `1816 passed, 2 skipped`; required merge
-  check: `Linux x64 / Python 3.13 / V8`; see `docs/page_base64_refactor.md`)
+  latest maintenance run `41828571144`, `1822 passed, 2 skipped`; required merge
+  check: `Linux x64 / Python 3.13 / V8`; see `docs/page_html_entities_refactor.md`)
 - Linux release wheels: `.github/workflows/release-linux.yml`
 - Windows release lane: `.github/workflows/release-windows.yml`
 - macOS arm64 release lane: `.github/workflows/release-macos.yml`
@@ -159,10 +159,10 @@ If you only remember one thing:
 > `docs/m11_48_report.md`, `docs/m11_49_report.md`,
 > `docs/m11_50_report.md`, `docs/m11_51_report.md`,
 > `docs/m11_52_report.md`, `docs/host_access_trace.md`, and
-> `docs/host_access_trace_workflow.md`. Subsequent Cookie, URL, query-codec, and
-> Base64 extractions are verified; the latest is source `10151d4`: Linux
-> `41797209223`, Windows `41797219218`, macOS arm64 `41797389405`. The full suite
-> now collects 1818 items; each release lane reports `1816 passed, 2 skipped`.
+> `docs/host_access_trace_workflow.md`. Subsequent Cookie, URL, query-codec,
+> Base64, and HTML entity extractions are verified; the latest is source `85b2d20`:
+> Linux `41828654174`, Windows `41828670556`, macOS arm64 `41828851448`. The full
+> suite now collects 1824 items; each release lane reports `1822 passed, 2 skipped`.
 > See `docs/page_cookie_refactor.md`, `docs/page_url_refactor.md`,
-> `docs/page_query_refactor.md`, and `docs/page_base64_refactor.md` for maintenance
-> boundaries and artifacts.
+> `docs/page_query_refactor.md`, `docs/page_base64_refactor.md`, and
+> `docs/page_html_entities_refactor.md` for maintenance boundaries and artifacts.

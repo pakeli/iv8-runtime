@@ -4,7 +4,17 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
-**Latest internal maintenance, verified (`2026-11-04`):** Base64
+**Latest internal maintenance, verified (`2026-11-04`):** bounded
+HTML entity decoding and text/attribute escaping are extracted into the
+string-only `html_entities` module. DOM ownership, tokenization, raw/RCDATA
+contexts, traversal, and mutation bookkeeping remain in Page. Source `85b2d20`
+(tree `b904d7ff803b5acd5b0e7b7b7e8c2d70a7c18735`) passed Linux `41828654174`,
+Windows `41828670556`, and macOS arm64 `41828851448`, Python 3.11–3.14 each
+`1822 passed, 2 skipped` (1,824 collected). macOS focused runs each `63 passed`;
+V8 CI `41828571144` passed. All 20,070 native comparisons matched under UBSan.
+See `docs/page_html_entities_refactor.md` for artifact/restoration evidence.
+
+**Previous internal maintenance, verified (`2026-11-04`):** Base64
 byte encoding/forgiving decoding is extracted into a V8-independent module.
 The host retains JS coercion, Latin-1 validation, exceptions, and binary-string
 conversion. Source `10151d4` (tree `0766c6deae5d2f5896881a4928bde46893f68016`)

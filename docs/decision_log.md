@@ -1050,6 +1050,22 @@ differential cases under UBSan and the reference encoding check. The pinned
 temporary macOS workflow was restored. See `docs/page_base64_refactor.md` for
 trees/artifacts; M11-53 remains next.
 
+### 52. Sixth Page extraction — bounded HTML entity codec and escaping
+
+Approved, implemented, and real-V8 release-verified `2026-11-04`.
+
+Extract string-only decoding and text/attribute escapers, retaining private
+UTF-8 scalar emission and the bounded named lookup in that module. Preserve
+all numeric/literal/lookahead/append semantics; leave DOM ownership, tokenizer,
+raw-text/RCDATA classification, traversal, and mutation records in Page. No
+HTML5 normalization or entity-table expansion. Use native differential and
+focused HTML/consumer checks plus all release lanes. See
+`docs/page_html_entities_refactor.md`. Source `85b2d20` passed Linux
+`41828654174`, Windows `41828670556`, and macOS arm64 `41828851448`, Python
+3.11–3.14 each `1822 passed, 2 skipped`; focused macOS runs each `63 passed`.
+V8 CI `41828571144` and 20,070 native differential cases under UBSan passed.
+The pinned temporary macOS workflow was restored. M11-53 stays next.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

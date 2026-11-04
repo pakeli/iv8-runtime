@@ -7,6 +7,13 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
 
+Sixth maintenance extraction verified (`2026-11-04`): bounded HTML entity
+decoding/escaping is independent of V8 and DOM ownership. Source `85b2d20`
+passed V8 CI and all three release matrices, Python 3.11–3.14 each
+`1822 passed, 2 skipped`; focused macOS runs each `63 passed`. Merge through
+the existing V8 gate. Evidence is in `docs/page_html_entities_refactor.md`.
+M11-53 remains next.
+
 Fifth maintenance extraction verified (`2026-11-04`): Base64 byte algorithms
 are independent of V8, preserving M8-4 behavior and host conversion/error paths.
 Source `10151d4` passed V8 CI and all three release matrices, Python 3.11–3.14

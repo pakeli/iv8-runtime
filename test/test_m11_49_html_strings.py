@@ -1,5 +1,7 @@
 """M11-49: HTML string APIs, entity decoding, and variadic tree methods."""
 
+import json
+
 import pytest
 
 import iv8
@@ -338,3 +340,63 @@ def test_outer_html_setter_mutation_record_order():
         page.run_jobs()
         assert page.eval("window.__records.join('/')") == \
             "childList||SPAN/childList|B,I|"
+
+
+@on_only
+@pytest.mark.parametrize("encoded,expected", [
+    ("&#0;&#xD800;&#1114112;", "\ufffd\ufffd\ufffd"),
+    ("&#x1F600;&#X41;&#65;", "😀AA"),
+    ("&#x; &#; &AMP; &unknown; &amp", "&#x; &#; &AMP; &unknown; &amp"),
+])
+def test_bounded_entity_numeric_and_literal_edges(encoded, expected):
+    with iv8.Page() as page:
+        assert page.eval("(() => { const element = document.createElement('div');"
+                         " element.innerHTML = " + json.dumps(encoded) + ";"
+                         " return element.textContent; })()") == expected
+
+
+@on_only
+def test_entity_decoding_is_single_pass():
+    with iv8.Page() as page:
+        assert page.eval("""
+            (() => {
+              const element = document.createElement('div');
+              element.innerHTML = '&amp;lt; &amp;#65;';
+              return JSON.stringify([element.textContent, element.innerHTML]);
+            })();
+        """) == json.dumps(["&lt; &#65;", "&amp;lt; &amp;#65;"],
+                           separators=(",", ":"))
+
+
+@on_only
+def test_text_and_attribute_escaping_keep_distinct_rules():
+    with iv8.Page() as page:
+        assert page.eval("""
+            (() => {
+              const element = document.createElement('div');
+              const value = '<>&"\u00a0';
+              element.textContent = value;
+              element.setAttribute('data-x', value);
+              return element.outerHTML;
+            })();
+        """) == '<div data-x="<>&amp;&quot;&nbsp;">&lt;&gt;&amp;"&nbsp;</div>'
+
+
+@on_only
+def test_loaded_entities_preserve_raw_text_and_rcdata_consumers():
+    html = ("<html><head><title>&amp;</title>"
+            "<style>&amp; < ></style>"
+            "<script>window.entityRaw = '&amp;';</script></head>"
+            "<body><div id='entity' data-x='&lt;&amp;'>&amp;</div>"
+            "<textarea id='area'>&lt;&amp;</textarea></body></html>")
+    with iv8.Page() as page:
+        _load(page, html)
+        assert page.eval("""
+            JSON.stringify([
+              document.title, document.querySelector('style').textContent,
+              window.entityRaw, document.getElementById('entity').textContent,
+              document.getElementById('entity').getAttribute('data-x'),
+              document.getElementById('area').value
+            ]);
+        """) == json.dumps(["&", "&amp; < >", "&amp;", "&", "<&", "<&"],
+                           separators=(",", ":"))
