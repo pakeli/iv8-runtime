@@ -4,6 +4,14 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
+**Latest implemented monitoring addition, verification pending (`2026-11-04`):**
+`Page.read_access_trace(clear=True, format="text")` provides concise per-event
+paths and captured values, including `GET document.cookie -> ""`. Default raw
+dicts and aggregation remain compatible. Local formatter checks passed (51
+new pure-Python cases); full V8-free suite `276 passed, 1604 skipped`, 1,880
+collected. Five new native integrations remain pending. See
+`docs/access_trace_text.md`; prior refactor runs do not verify this addition.
+
 **Latest internal maintenance, verified (`2026-11-04`):** bounded
 HTML entity decoding and text/attribute escaping are extracted into the
 string-only `html_entities` module. DOM ownership, tokenization, raw/RCDATA

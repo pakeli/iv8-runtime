@@ -22,6 +22,11 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 
 ## 0. What this document is
 
+Readable monitoring addition (`2026-11-04`, verification pending):
+`Page.read_access_trace(clear=True, *, format="raw")` keeps the default event
+dict and accepts `format="text"` for a concise string log. No JS/native capture
+changes; contract and independent evidence are in `docs/access_trace_text.md`.
+
 Sixth internal extraction, verified (`2026-11-04`): bounded HTML
 entity decoding and escaping now live in `html_entities`. DOM parsing/ownership,
 raw/RCDATA decisions, serializer traversal, and the public surface are unchanged.
@@ -183,7 +188,7 @@ All Python-side; none of these add a JS-visible global.
 | `watch_reflect_ownkeys(...)` / `read_reflect_ownkeys_hits()` | M10-1 | `Reflect.ownKeys` |
 | `watch_object_keys(...)` / `read_object_keys_hits()` | M10-2 | `Object.keys` |
 | `access_trace_report(*, clear=False, progress=None)` | step 7 (verified 2026-11-02) | pure-Python aggregated dynamic-run report: access groups with first/last seq and source, missing candidates, operation/object-type totals, coverage/capacity/filter/stopped warnings, and caller-supplied progress; see `docs/host_access_trace_workflow.md` |
-| `start_access_trace(max_events=10000, object_types=None)` / `stop_access_trace()` / `read_access_trace(clear=True)` | host access trace, steps 1–4 + the complete step-5 object groups + steps 6a–6h (verified 2026-11-02) | native HostObject property `get`/`set`, method `call`, missing string-key `get_probe`, `get_method` references with adjacent-call folding, `delete`/`own_keys`/`define_property` request events, explicit `has`/`get_own_property_descriptor` query events for HostObject targets, independent performance/crypto/Storage/permissions/matchMedia/window callback and getter entries, window metadata/alias accessors, nested connection/orientation/timeOrigin reads, visualViewport metadata/handler/method accesses, navigator.storage manager calls, navigator.permissions query/status accesses, matchMedia result reads/method calls, legacy navigator plugins/mimeTypes/javaEnabled accesses, generic/native get/set/call and query completion summaries, and synchronous exception name/message/location/stack; structured events with generation, object identity, resource, and source kind. The separate step-7 report aggregates this log; see `docs/host_access_trace.md` and `docs/host_access_trace_workflow.md` |
+| `start_access_trace(max_events=10000, object_types=None)` / `stop_access_trace()` / `read_access_trace(clear=True, *, format="raw")` | host access trace, steps 1–4 + the complete step-5 object groups + steps 6a–6h (verified 2026-11-02) | native HostObject property `get`/`set`, method `call`, missing string-key `get_probe`, `get_method` references with adjacent-call folding, `delete`/`own_keys`/`define_property` request events, explicit `has`/`get_own_property_descriptor` query events for HostObject targets, independent performance/crypto/Storage/permissions/matchMedia/window callback and getter entries, window metadata/alias accessors, nested connection/orientation/timeOrigin reads, visualViewport metadata/handler/method accesses, navigator.storage manager calls, navigator.permissions query/status accesses, matchMedia result reads/method calls, legacy navigator plugins/mimeTypes/javaEnabled accesses, generic/native get/set/call and query completion summaries, and synchronous exception name/message/location/stack; structured events with generation, object identity, resource, and source kind. Optional `format="text"` renders concise paths and captured values (see `docs/access_trace_text.md`); raw is the default. The separate step-7 report aggregates this log; see `docs/host_access_trace.md` and `docs/host_access_trace_workflow.md` |
 
 Shared semantics across the five watch channels:
 

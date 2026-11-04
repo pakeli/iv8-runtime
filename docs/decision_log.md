@@ -1066,6 +1066,20 @@ focused HTML/consumer checks plus all release lanes. See
 V8 CI `41828571144` and 20,070 native differential cases under UBSan passed.
 The pinned temporary macOS workflow was restored. M11-53 stays next.
 
+### 53. Readable access-trace presentation
+
+Approved by the user's log-readability request `2026-11-04`; implemented,
+real-V8/release verification pending.
+
+Extend only the Python monitoring facade with a keyword-only `format` on
+`read_access_trace`: `raw` (the existing default dict) or `text` (concise lines).
+Keep native capture, summaries, coverage, read/clear behavior, and aggregation
+unchanged. Display empty strings explicitly, quote control characters, mark
+truncation/type-only/missing data, and retain visible capacity warnings. Format
+captured metadata without getters/eval or a callback bridge. Invalid format
+arguments must fail before a destructive native read. Contract and test/release
+evidence: `docs/access_trace_text.md`. M11-53 remains the next browser feature.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

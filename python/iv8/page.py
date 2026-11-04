@@ -22,6 +22,7 @@ from collections.abc import Mapping
 from urllib.parse import urljoin
 
 from . import _core
+from ._trace_format import format_access_trace
 from .errors import JSContextDisposedError, JSError
 
 __all__ = ["Page"]
@@ -1080,10 +1081,16 @@ class Page:
         """
         self._native.stop_access_trace()
 
-    def read_access_trace(self, clear: bool = True) -> dict:
+    def read_access_trace(self, clear: bool = True, *, format: str = "raw") -> dict | str:
         """Return the access-trace report, optionally clearing the event log.
 
-        The report has ``events``, ``enabled``, ``generation``, ``max_events``,
+        ``format="text"`` returns concise one-event-per-line text, for example
+        ``GET document.cookie -> ""``. ``format="raw"`` (default) returns the
+        existing dictionary. Text uses captured summaries only: truncated strings,
+        type-only object previews, and missing values are explicitly marked.
+        No getters or page code run during formatting.
+
+        The raw report has ``events``, ``enabled``, ``generation``, ``max_events``,
         ``dropped_events``, ``filter_object_types``, and a ``coverage`` dictionary
         describing this slice's explicit scope. Each event contains ``seq``,
         ``generation``, ``object_id``, ``object_type``, ``label``, ``member``,
@@ -1107,7 +1114,12 @@ class Page:
         """
         if not isinstance(clear, bool):
             raise TypeError("clear must be a bool")
-        return self._native.read_access_trace(clear)
+        if not isinstance(format, str):
+            raise TypeError("format must be a str")
+        if format not in ("raw", "text"):
+            raise ValueError("format must be 'raw' or 'text'")
+        report = self._native.read_access_trace(clear)
+        return format_access_trace(report) if format == "text" else report
 
     def access_trace_report(self, *, clear: bool = False,
                             progress=None) -> dict:

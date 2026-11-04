@@ -11,6 +11,20 @@ global, or top-level Python export.
 
 ## 1. Purpose
 
+For a short per-event log, use the optional readable view:
+
+```python
+print(page.read_access_trace(clear=False, format="text"))
+# GET document.cookie -> ""
+# CALL hostProbe.add(2, 3) -> 5
+```
+
+`string:0:` in the raw schema means an empty string. Text mode displays it as
+`""`, uses captured values/arguments, and explicitly marks truncated or absent
+metadata. The default `format="raw"` preserves the dictionary below; aggregation
+is unchanged. This presentation addition has its own contract/verification in
+`docs/access_trace_text.md`.
+
 A run report answers three questions:
 
 1. **What was accessed?** — grouped access counts with the first event's

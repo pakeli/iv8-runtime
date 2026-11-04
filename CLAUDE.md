@@ -24,6 +24,12 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
+- Latest user-requested monitoring addition (`2026-11-04`, verification pending):
+  `Page.read_access_trace(clear=True, format="text")` renders concise events and
+  captured values. Default raw dictionaries and step-7 aggregation are unchanged.
+  Local formatter tests passed; full V8-free suite `276 passed, 1604 skipped`
+  (1,880 collected), with five native integrations pending. See
+  `docs/access_trace_text.md`; earlier refactor runs do not cover this feature.
 - Latest internal work, verified (`2026-11-04`): HTML entity
   decoding and text/attribute escaping are extracted into `html_entities`;
   DOM resources, parse contexts, and traversal stay in Page. Source `85b2d20`
