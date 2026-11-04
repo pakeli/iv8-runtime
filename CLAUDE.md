@@ -24,7 +24,15 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
-- Latest internal work, verified (`2026-11-04`): query byte codec
+- Latest internal work, verified (`2026-11-04`): Base64 byte codec
+  is extracted into `base64`; host coercion/Latin-1 validation/error conversion
+  stay in place. Source `10151d4` passed Linux `41797209223`, Windows
+  `41797219218`, and macOS arm64 `41797389405`, Python 3.11–3.14 each
+  `1816 passed, 2 skipped` (1,818 collected). macOS focused runs each `32 passed`;
+  V8 CI `41797126420` passed. Independent source/artifact and 14,955-case
+  differential/UBSan/reference-encoding evidence is in
+  `docs/page_base64_refactor.md`. M11-53 remains the next feature milestone.
+- Previous internal maintenance, verified (`2026-11-04`): query byte codec
   and ordered parse/serialize are extracted into `query_parameters`; canonical
   V8 private-slot storage and host coercion/mutation stay in place. Focused
   query/URL set passed all 54 items in each macOS interpreter before the full

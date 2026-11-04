@@ -52,6 +52,7 @@ if(IV8_LINK_V8)
       src/core/cookie_jar.cpp
       src/core/url_parser.cpp
       src/core/query_parameters.cpp
+      src/core/base64.cpp
       src/core/page_state.cpp
       src/binding/context_binding.cpp
       src/binding/page_binding.cpp)

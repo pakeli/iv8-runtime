@@ -8,6 +8,8 @@ ignored; atob("") === ""; malformed input throws TypeError. Byte/code-unit only,
 auto UTF-8. No base64url / Buffer / ArrayBuffer API / streaming. No Python surface.
 """
 
+import json
+
 import pytest
 
 import iv8
@@ -189,3 +191,39 @@ def test_dispose_stale():
     page.dispose()
     with pytest.raises(iv8.JSContextDisposedError):
         page.eval("btoa('abc')")
+
+
+@on_only
+@pytest.mark.parametrize("encoded,expected", [
+    ("YQ", "a"),
+    ("YWI", "ab"),
+    (" Y\fQ\v==\r\n", "a"),
+    ("YR==", "a"),
+])
+def test_forgiving_base64_keeps_padding_and_whitespace_rules(encoded, expected):
+    with iv8.Page() as page:
+        assert page.eval("atob(" + json.dumps(encoded) + ")") == expected
+
+
+@on_only
+@pytest.mark.parametrize("encoded", [
+    "=AAA", "YQ=", "YQ===", "_w==", "YQ==\u00a0",
+])
+def test_invalid_padding_alphabet_and_non_ascii_whitespace_raise(encoded):
+    with iv8.Page() as page:
+        with pytest.raises(iv8.JSError) as info:
+            page.eval("atob(" + json.dumps(encoded) + ")")
+        assert info.value.name == "TypeError"
+        assert page.eval("atob('YQ==')") == "a"
+
+
+@on_only
+def test_base64_coercion_errors_propagate_and_context_remains_usable():
+    with iv8.Page() as page:
+        for function_name in ("atob", "btoa"):
+            with pytest.raises(iv8.JSError) as info:
+                page.eval(function_name + "({toString() {"
+                          " throw new RangeError('base64 coercion'); }})")
+            assert info.value.name == "RangeError"
+            assert info.value.message == "base64 coercion"
+        assert page.eval("atob(btoa('still usable'))") == "still usable"

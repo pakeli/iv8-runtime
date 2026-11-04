@@ -7,6 +7,13 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
 
+Fifth maintenance extraction verified (`2026-11-04`): Base64 byte algorithms
+are independent of V8, preserving M8-4 behavior and host conversion/error paths.
+Source `10151d4` passed V8 CI and all three release matrices, Python 3.11–3.14
+each `1816 passed, 2 skipped`; focused macOS runs each `32 passed`. Merge via
+the existing V8 gate. Evidence is in `docs/page_base64_refactor.md`.
+M11-53 remains the next feature milestone.
+
 Fourth maintenance extraction verified (`2026-11-04`): query codec and pair
 parse/serialize functions are independent of V8; canonical private-slot state
 and M8-3 semantics are preserved. Source `f017a01` passed V8 CI and all three
