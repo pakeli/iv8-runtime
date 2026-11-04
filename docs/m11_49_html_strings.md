@@ -12,7 +12,8 @@ methods. It builds on the M11-48 Text/Comment/DocumentFragment foundation.
 Internal maintenance note (`2026-11-04`): bounded character-reference decoding
 and string escaping are extracted into `html_entities`; the frozen APIs, DOM
 ownership, raw-text handling, and mutation behavior are unchanged. Independent
-verification is tracked in `docs/page_html_entities_refactor.md`.
+verification is tracked in `docs/page_html_entities_refactor.md`; this
+extraction is verified on all three release platforms.
 
 ```js
 el.innerHTML;                    // serialized children
@@ -94,6 +95,10 @@ script inertness, outerHTML replacement, all four adjacent positions and
 errors, variadic string/node/fragment handling, ChildNode methods, empty
 replaceChildren, script/style raw text vs title/textarea escaping, and pinned
 mutation records.
+
+The file now collects 18 items: six extraction regressions extend the original
+12 with numeric/literal reference boundaries, single-pass behavior, distinct
+text/attribute escaping, and loaded raw-text/RCDATA consumers.
 
 Historical guards were updated intentionally in `test_create_element.py`,
 `test_document.py`, `test_m3_contract.py`, `test_m4_a_contract.py`, and

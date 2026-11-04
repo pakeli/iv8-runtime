@@ -1,7 +1,7 @@
 # Page refactor — bounded HTML character references and escaping
 
-Scope agreed: `2026-11-04`. Status: **implemented; local checks passed;
-real-V8/release verification pending**.
+Scope agreed: `2026-11-04`. Status: **VERIFIED on real V8 — Linux x64,
+Windows x64, macOS arm64 (`2026-11-04`)**.
 Baseline: `34d1d96` (verified Base64 extraction, PR #5).
 
 Extract bounded character-reference decoding and text/attribute escaping into
@@ -42,5 +42,36 @@ Record actual source trees, runs, artifacts, and test counts before verification
 
 ## Real-V8 verification
 
-Pending. Record this slice's source tree, CI/release runs, artifacts, focused
-results, and actual full-suite counts. Prior extraction runs do not verify it.
+Source commit: `85b2d2002582f7004c0e6868edf6f9b018067e36`, Git tree
+`b904d7ff803b5acd5b0e7b7b7e8c2d70a7c18735`. All release runs succeeded; each
+interpreter reported **1822 passed, 2 skipped** (1,824 collected) and imported
+a V8-linked build reporting `15.0.245.19`.
+
+| Lane | Run | Python versions | Result |
+|---|---|---|---|
+| V8 CI | [41828571144](https://github.com/pakeli/iv8-runtime/actions/runs/41828571144) | 3.13 | 1822 passed, 2 skipped |
+| release-linux | [41828654174](https://github.com/pakeli/iv8-runtime/actions/runs/41828654174) | 3.11–3.14 | 1822 passed, 2 skipped |
+| release-windows | [41828670556](https://github.com/pakeli/iv8-runtime/actions/runs/41828670556) | 3.11–3.14 | 1822 passed, 2 skipped |
+| release-macos | [41828851448](https://github.com/pakeli/iv8-runtime/actions/runs/41828851448) | 3.11–3.14 | focused 63 passed; full 1822 passed, 2 skipped |
+
+Linux artifact: `13323115499` (`iv8-linux-manylinux2_28-wheels`, all four
+interpreters).
+
+Windows artifacts: `13321346775` (cp311), `13322125432` (cp312),
+`13321266841` (cp313), `13322930131` (cp314).
+
+macOS arm64 artifacts: `13321782276` (cp311), `13322786154` (cp312),
+`13323011099` (cp313), `13321397797` (cp314).
+
+macOS used the existing release-branch cache through temporary workflow commit
+`1de5fd67aef02311e9e731dcd2e64d7bff5f2246`; both checkout steps pinned the full
+`85b2d20` source SHA, and the focused set ran before the full suite in each
+interpreter. Restore commit `8b5c97d2515ad1ffdf9ebcf3f39765bad36e1324` restored
+original workflow blob `eb730d3e77a17d4d527e67646475385cebb2428c` without
+rewriting history. A dispatch response experienced a transport EOF; the run
+was confirmed received before further action, so no duplicate was dispatched.
+The temporary driver is not part of the source branch.
+
+The real-V8 merge gate remains mandatory with up-to-date branches and
+administrator enforcement. Later handoff-only documentation edits preserve
+the tested runtime/build/test files. M11-53 remains the next feature milestone.

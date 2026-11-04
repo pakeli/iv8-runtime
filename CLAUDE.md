@@ -24,13 +24,15 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
-- Latest internal work (`2026-11-04`, verification pending): HTML entity
+- Latest internal work, verified (`2026-11-04`): HTML entity
   decoding and text/attribute escaping are extracted into `html_entities`;
-  DOM resources, parse contexts, and traversal stay in Page. Focused HTML/
-  consumer collection is 63, full collection 1,824. See
-  `docs/page_html_entities_refactor.md`; earlier runs do not cover this slice.
-  M11-53 remains next.
-- Latest internal work, verified (`2026-11-04`): Base64 byte codec
+  DOM resources, parse contexts, and traversal stay in Page. Source `85b2d20`
+  passed Linux `41828654174`, Windows `41828670556`, and macOS arm64
+  `41828851448`, Python 3.11–3.14 each `1822 passed, 2 skipped` (1,824 collected).
+  macOS focused runs each `63 passed`; V8 CI `41828571144` passed. Source/run/
+  artifact and 20,070-case differential/UBSan evidence is in
+  `docs/page_html_entities_refactor.md`. M11-53 remains next.
+- Previous internal maintenance, verified (`2026-11-04`): Base64 byte codec
   is extracted into `base64`; host coercion/Latin-1 validation/error conversion
   stay in place. Source `10151d4` passed Linux `41797209223`, Windows
   `41797219218`, and macOS arm64 `41797389405`, Python 3.11–3.14 each
