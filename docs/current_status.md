@@ -4,6 +4,13 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
+**Latest internal maintenance, verification pending (`2026-11-04`):** bounded
+HTML entity decoding and text/attribute escaping are extracted into the
+string-only `html_entities` module. DOM ownership, tokenization, raw/RCDATA
+contexts, traversal, and mutation bookkeeping remain in Page. Focused collection
+is 63, full collection 1,824. Independent evidence is in
+`docs/page_html_entities_refactor.md`; previous runs do not cover this slice.
+
 **Latest internal maintenance, verified (`2026-11-04`):** Base64
 byte encoding/forgiving decoding is extracted into a V8-independent module.
 The host retains JS coercion, Latin-1 validation, exceptions, and binary-string

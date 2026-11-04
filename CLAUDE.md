@@ -24,6 +24,12 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
+- Latest internal work (`2026-11-04`, verification pending): HTML entity
+  decoding and text/attribute escaping are extracted into `html_entities`;
+  DOM resources, parse contexts, and traversal stay in Page. Focused HTML/
+  consumer collection is 63, full collection 1,824. See
+  `docs/page_html_entities_refactor.md`; earlier runs do not cover this slice.
+  M11-53 remains next.
 - Latest internal work, verified (`2026-11-04`): Base64 byte codec
   is extracted into `base64`; host coercion/Latin-1 validation/error conversion
   stay in place. Source `10151d4` passed Linux `41797209223`, Windows

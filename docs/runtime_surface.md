@@ -22,6 +22,11 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 
 ## 0. What this document is
 
+Sixth internal extraction (`2026-11-04`, verification pending): bounded HTML
+entity decoding and escaping now live in `html_entities`. DOM parsing/ownership,
+raw/RCDATA decisions, serializer traversal, and the public surface are unchanged.
+See `docs/page_html_entities_refactor.md` for independent evidence.
+
 Fifth internal extraction, verified (`2026-11-04`): Base64 byte
 encoding/forgiving decoding is independent of V8 in `base64.h` / `base64.cpp`.
 Host conversion, validation, exceptions, and the M8-4 surface are unchanged.

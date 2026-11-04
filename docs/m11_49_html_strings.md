@@ -9,6 +9,11 @@ methods. It builds on the M11-48 Text/Comment/DocumentFragment foundation.
 
 ## Surface
 
+Internal maintenance note (`2026-11-04`): bounded character-reference decoding
+and string escaping are extracted into `html_entities`; the frozen APIs, DOM
+ownership, raw-text handling, and mutation behavior are unchanged. Independent
+verification is tracked in `docs/page_html_entities_refactor.md`.
+
 ```js
 el.innerHTML;                    // serialized children
 el.innerHTML = '<b>x</b>';       // parse fragment, replace children
