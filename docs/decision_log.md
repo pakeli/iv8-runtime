@@ -1000,6 +1000,18 @@ macOS driver pinned the tested source and was restored afterward. See
 `docs/page_cookie_refactor.md` for trees, artifacts, and verification evidence.
 M11-53 stays the next feature slice.
 
+### 49. Third Page extraction — shared minimal URL parser/resolver
+
+Approved/implemented `2026-11-04`; real-V8/release verification pending.
+
+Extract `UrlParts`, decomposition, and relative-reference resolution into a
+string-only native module. Preserve M2-3/M8-2 bounded semantics and leave JS
+coercion, URLSearchParams snapshots, secure-context policy, and all resource
+ownership in the host layer. No WHATWG normalization upgrade or new browser
+API. Verify original/extracted behavior differentially and run focused URL/
+consumer tests plus the three real-V8 release matrices. See
+`docs/page_url_refactor.md`; M11-53 remains the next feature milestone.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

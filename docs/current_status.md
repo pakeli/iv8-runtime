@@ -4,6 +4,13 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
+**Latest internal maintenance, verification pending (`2026-11-04`):** shared
+minimal URL decomposition/resolution is extracted into the V8-independent
+`url_parser` module. Host coercion/tracing, URLSearchParams snapshots, and
+secure-context policy remain on their existing paths. The focused URL/consumer
+set collects 76 items; the full suite collects 1,801. See
+`docs/page_url_refactor.md`; earlier extraction runs do not verify this slice.
+
 **Latest internal maintenance, verified (`2026-11-04`):** the
 second Page refactor extracts deterministic Cookie parsing/storage into
 `CookieJar`, owned by value in `PageState`. DocumentHost coercion/tracing stays

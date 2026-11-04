@@ -31,6 +31,7 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 #include "iv8/access_summary.h"
 #include "iv8/context_host.h"
 #include "iv8/selector_parser.h"
+#include "iv8/url_parser.h"
 
 // M9-1: V8 Inspector (CDP) attach base. Included after context_host.h so the
 // v8_headers.h COMPILER-macro workaround has already run before any V8 header.
@@ -1253,58 +1254,6 @@ private:
     v8::Global<v8::Value> onresize_;
     v8::Global<v8::Value> onscroll_;
 };
-
-// The static components of a decomposed URL (WHATWG-style names). Only the
-// pieces M2-3 location exposes.
-struct UrlParts {
-    std::string href;
-    std::string origin;
-    std::string protocol;
-    std::string host;
-    std::string hostname;
-    std::string pathname;
-    std::string search;
-    std::string hash;
-};
-
-// Minimal, deterministic decomposition of an absolute `scheme://host[:port]/
-// path?query#hash` URL. NOT a full WHATWG URL parser (no userinfo, default-port
-// elision, or percent-decoding) — just enough for the fixed page base URL.
-UrlParts decompose_url(const std::string& url) {
-    UrlParts parts;
-    parts.href = url;
-
-    std::string rest = url;
-    const auto scheme_end = rest.find(':');
-    if (scheme_end != std::string::npos) {
-        parts.protocol = rest.substr(0, scheme_end + 1);  // includes ':'
-        rest = rest.substr(scheme_end + 1);
-    }
-    if (rest.rfind("//", 0) == 0) {  // has an authority
-        rest = rest.substr(2);
-        const auto auth_end = rest.find_first_of("/?#");
-        const std::string authority =
-            (auth_end == std::string::npos) ? rest : rest.substr(0, auth_end);
-        rest = (auth_end == std::string::npos) ? "" : rest.substr(auth_end);
-        parts.host = authority;  // host + optional port
-        const auto port = authority.find(':');
-        parts.hostname =
-            (port == std::string::npos) ? authority : authority.substr(0, port);
-        parts.origin = parts.protocol + "//" + parts.host;
-    }
-    const auto hash_pos = rest.find('#');
-    if (hash_pos != std::string::npos) {
-        parts.hash = rest.substr(hash_pos);  // includes '#'
-        rest = rest.substr(0, hash_pos);
-    }
-    const auto query_pos = rest.find('?');
-    if (query_pos != std::string::npos) {
-        parts.search = rest.substr(query_pos);  // includes '?'
-        rest = rest.substr(0, query_pos);
-    }
-    parts.pathname = rest;
-    return parts;
-}
 
 // M2-3 minimal location (read-only). Values are the static decomposition of the
 // page's base URL. Read-only: exposed as getter-only accessors, so a JS-side
@@ -9396,74 +9345,6 @@ void text_decoder_decode(const v8::FunctionCallbackInfo<v8::Value>& info) {
     } else {
         info.GetReturnValue().Set(v8::String::Empty(isolate));
     }
-}
-
-// M8-2 global URL — a minimal read-only URL object built on the same decompose_url
-// decomposition that backs `location`, so the field 口径 is identical. A string is
-// "absolute" iff it matches `scheme://…` (a valid scheme followed by `://`).
-bool url_is_absolute(const std::string& s) {
-    const auto pos = s.find("://");
-    if (pos == std::string::npos || pos == 0) {
-        return false;
-    }
-    if (!std::isalpha(static_cast<unsigned char>(s[0]))) {
-        return false;
-    }
-    for (std::size_t i = 0; i < pos; i++) {
-        const char c = s[i];
-        if (!(std::isalnum(static_cast<unsigned char>(c)) || c == '+' || c == '-' ||
-              c == '.')) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// Resolve `input` against optional `base` under the project's minimal URL 口径:
-// an absolute input is taken as-is (base ignored); otherwise a base that is itself
-// absolute-with-authority is required, and the reference is merged (protocol-relative
-// `//`, absolute-path `/`, query `?`, fragment `#`, or a directory-relative path — no
-// dot-segment collapsing). Returns false (=> constructor throws TypeError) when the
-// input is relative and no usable base is available.
-bool resolve_url(const std::string& input, bool has_base, const std::string& base,
-                 std::string& out) {
-    if (url_is_absolute(input)) {
-        out = input;
-        return true;
-    }
-    if (!has_base || !url_is_absolute(base)) {
-        return false;
-    }
-    const UrlParts b = decompose_url(base);
-    if (b.origin.empty()) {
-        return false;  // base had no authority to resolve against
-    }
-    if (input.empty()) {
-        out = b.protocol + "//" + b.host + b.pathname + b.search;  // drop base fragment
-        return true;
-    }
-    const char c0 = input[0];
-    if (c0 == '#') {
-        out = b.protocol + "//" + b.host + b.pathname + b.search + input;
-        return true;
-    }
-    if (c0 == '?') {
-        out = b.protocol + "//" + b.host + b.pathname + input;
-        return true;
-    }
-    if (c0 == '/') {
-        out = (input.rfind("//", 0) == 0) ? (b.protocol + input)  // protocol-relative
-                                          : (b.origin + input);   // absolute path
-        return true;
-    }
-    std::string dir = b.pathname;
-    const auto slash = dir.rfind('/');
-    dir = (slash == std::string::npos) ? std::string("/") : dir.substr(0, slash + 1);
-    if (dir.empty()) {
-        dir = "/";
-    }
-    out = b.origin + dir + input;  // directory-relative merge
-    return true;
 }
 
 // `new URL(input, base?)`. input / base go through String(...); resolution failure

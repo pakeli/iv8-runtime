@@ -24,6 +24,11 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
+- Latest internal work (`2026-11-04`, verification pending): minimal URL
+  decomposition/resolution is extracted into `url_parser`; the host layer keeps
+  JS coercion/tracing and secure-context policy. Focused URL/consumer collection
+  is 76 items, full collection 1,801. See `docs/page_url_refactor.md`; previous
+  maintenance verification does not cover this slice. M11-53 stays next.
 - Latest internal work, verified (`2026-11-04`): the second Page
   extraction moves Cookie parsing/storage into `CookieJar`, owned by value in
   `PageState`; existing delegates preserve the DocumentHost coercion/trace path.

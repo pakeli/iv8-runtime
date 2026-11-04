@@ -13,6 +13,8 @@ No username / password / port / setters. (M11-15 later adds a non-live
 URL.searchParams snapshot.) No Python surface.
 """
 
+import json
+
 import pytest
 
 import iv8
@@ -266,3 +268,63 @@ def test_dispose_stale():
     page.dispose()
     with pytest.raises(iv8.JSContextDisposedError):
         page.eval("new URL('https://a.com/x')")
+
+
+@on_only
+@pytest.mark.parametrize("reference,base,expected", [
+    ("", "https://url.test/dir/page?old=1#fragment",
+     "https://url.test/dir/page?old=1"),
+    ("child", "https://url.test", "https://url.test/child"),
+    ("../raw%2fpath", "https://url.test/dir/page",
+     "https://url.test/dir/../raw%2fpath"),
+    ("/a/../b?x=%2f#part", "https://url.test/dir/page",
+     "https://url.test/a/../b?x=%2f#part"),
+])
+def test_minimal_reference_merges_preserve_existing_strings(reference, base, expected):
+    with iv8.Page() as page:
+        assert page.eval("new URL(" + json.dumps(reference) + ", " +
+                         json.dumps(base) + ").href") == expected
+
+
+@on_only
+def test_url_argument_coercion_errors_propagate():
+    expressions = [
+        "new URL({toString() { throw new RangeError('url coercion'); }})",
+        "new URL('https://url.test/', {toString() {"
+        " throw new RangeError('url coercion'); }})",
+    ]
+    with iv8.Page() as page:
+        for expression in expressions:
+            with pytest.raises(iv8.JSError) as info:
+                page.eval(expression)
+            assert info.value.name == "RangeError"
+            assert info.value.message == "url coercion"
+        assert page.eval("new URL('https://url.test/').href") == "https://url.test/"
+
+
+@on_only
+def test_url_views_share_decomposition_after_page_reload():
+    addresses = [
+        ("https://first.test:8443/dir/page?x=1#part", "first.test",
+         "https://first.test:8443"),
+        ("http://localhost:8080/next?y=2#new", "localhost",
+         "http://localhost:8080"),
+    ]
+    with iv8.Page() as page:
+        for address, hostname, origin in addresses:
+            page.load("<html><body></body></html>", address)
+            assert page.eval("document.URL") == address
+            assert page.eval("document.documentURI") == address
+            assert page.eval("document.baseURI") == address
+            assert page.eval("document.domain") == hostname
+            assert page.eval("window.origin") == origin
+            assert page.eval("location.origin") == origin
+            assert page.eval("""
+                (() => {
+                  const parsed = new URL(location.href);
+                  return ['href', 'origin', 'protocol', 'host', 'hostname',
+                          'pathname', 'search', 'hash']
+                    .every(name => parsed[name] === location[name]);
+                })();
+            """) is True
+            assert page.eval("isSecureContext") is True

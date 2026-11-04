@@ -32,6 +32,10 @@ M8-5 (this phase) adds **no** runtime capability — only this summary and the
 
 ## 2. URL object (M8-2)
 
+Internal maintenance note (`2026-11-04`): minimal URL decomposition/resolution
+is extracted into `url_parser`; host coercion and the frozen rules below are
+unchanged. Its independent verification is tracked in `docs/page_url_refactor.md`.
+
 - **`URL`** — `new URL(input, base?)`. `input` / `base` go through `String(...)` and
   resolve with the project's minimal 口径 — the same `scheme://host[:port]/path?query
   #hash` decomposition (`decompose_url`) that backs `location`, so the fields match it
