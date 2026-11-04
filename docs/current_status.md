@@ -4,14 +4,17 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
-**Latest internal maintenance, verification pending (`2026-11-04`):** Base64
+**Latest internal maintenance, verified (`2026-11-04`):** Base64
 byte encoding/forgiving decoding is extracted into a V8-independent module.
 The host retains JS coercion, Latin-1 validation, exceptions, and binary-string
-conversion. Focused Base64/M8 collection is 32; full collection 1,818. See
-`docs/page_base64_refactor.md` for independent evidence; prior extraction runs
-do not verify this slice.
+conversion. Source `10151d4` (tree `0766c6deae5d2f5896881a4928bde46893f68016`)
+passed Linux `41797209223`, Windows `41797219218`, and macOS arm64
+`41797389405`, Python 3.11–3.14 each `1816 passed, 2 skipped` (1,818 collected).
+macOS focused runs each `32 passed`; V8 CI `41797126420` passed. All 14,955
+native comparisons matched under UBSan and encoding matched Python's reference.
+See `docs/page_base64_refactor.md` for artifacts and restoration evidence.
 
-**Latest internal maintenance, verified (`2026-11-04`):** the
+**Previous internal maintenance, verified (`2026-11-04`):** the
 URLSearchParams byte codec and ordered query parsing/serialization are extracted
 into `query_parameters`. Canonical state stays in its V8 private slot; host
 coercion/mutation and URL snapshots are unchanged. Focused query/URL collection:

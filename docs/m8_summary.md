@@ -78,7 +78,8 @@ release platforms; independent evidence is tracked in `docs/page_query_refactor.
 
 Internal maintenance note (`2026-11-04`): byte encoding/decoding is extracted
 into `base64`; JS conversion, validation, errors, and the frozen rules below
-are unchanged. Independent verification is in `docs/page_base64_refactor.md`.
+are unchanged. The extraction is verified on all three release platforms;
+independent evidence is in `docs/page_base64_refactor.md`.
 
 - **`btoa(input)`** — `String(input)` as a **binary string**: a code unit `> 0xFF`
   throws `TypeError` (fixed 口径; this build has no `InvalidCharacterError`), else each

@@ -22,10 +22,13 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 
 ## 0. What this document is
 
-Fifth internal extraction (`2026-11-04`, verification pending): Base64 byte
+Fifth internal extraction, verified (`2026-11-04`): Base64 byte
 encoding/forgiving decoding is independent of V8 in `base64.h` / `base64.cpp`.
 Host conversion, validation, exceptions, and the M8-4 surface are unchanged.
-See `docs/page_base64_refactor.md` for independent verification.
+Source `10151d4` passed Linux `41797209223`, Windows `41797219218`, and macOS
+arm64 `41797389405`, Python 3.11–3.14 each `1816 passed, 2 skipped`; focused
+macOS runs each `32 passed`. See `docs/page_base64_refactor.md` for artifacts
+and independent verification.
 
 Fourth internal extraction, verified (`2026-11-04`): byte-level
 query parsing/serialization now lives in `query_parameters`. URLSearchParams

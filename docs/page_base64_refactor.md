@@ -1,7 +1,7 @@
 # Page refactor — Base64 byte codec
 
-Scope agreed: `2026-11-04`. Status: **implemented; local checks passed;
-real-V8/release verification pending**.
+Scope agreed: `2026-11-04`. Status: **VERIFIED on real V8 — Linux x64,
+Windows x64, macOS arm64 (`2026-11-04`)**.
 Baseline: `52cbc2e` (verified query codec extraction, PR #4).
 
 Extract standard Base64 byte encoding and the existing forgiving decoder into
@@ -45,5 +45,34 @@ counts before marking the slice verified.
 
 ## Real-V8 verification
 
-Pending. Record this slice's source tree, CI/release runs, artifacts, focused
-results, and actual full-suite counts. Earlier maintenance runs do not cover it.
+Source commit: `10151d44e0deb2bb5acfc4ab637ffbe923ccbb39`, Git tree
+`0766c6deae5d2f5896881a4928bde46893f68016`. All release runs succeeded; each
+interpreter reported **1816 passed, 2 skipped** (1,818 collected) and imported
+a V8-linked build reporting `15.0.245.19`.
+
+| Lane | Run | Python versions | Result |
+|---|---|---|---|
+| V8 CI | [41797126420](https://github.com/pakeli/iv8-runtime/actions/runs/41797126420) | 3.13 | 1816 passed, 2 skipped |
+| release-linux | [41797209223](https://github.com/pakeli/iv8-runtime/actions/runs/41797209223) | 3.11–3.14 | 1816 passed, 2 skipped |
+| release-windows | [41797219218](https://github.com/pakeli/iv8-runtime/actions/runs/41797219218) | 3.11–3.14 | 1816 passed, 2 skipped |
+| release-macos | [41797389405](https://github.com/pakeli/iv8-runtime/actions/runs/41797389405) | 3.11–3.14 | focused 32 passed; full 1816 passed, 2 skipped |
+
+Linux artifact: `13306835043` (`iv8-linux-manylinux2_28-wheels`, all four
+interpreters).
+
+Windows artifacts: `13306106645` (cp311), `13306101628` (cp312),
+`13305888247` (cp313), `13305149150` (cp314).
+
+macOS arm64 artifacts: `13305604105` (cp311), `13306730055` (cp312),
+`13305679327` (cp313), `13305709218` (cp314).
+
+The macOS cached driver commit `5119889f4bc0a8df58eb59f0b54824294844e5c9`
+pins both checkout steps to the full `10151d4` source SHA and runs the 32-item
+focused set before the full suite in each interpreter. Restore commit
+`32d2cafc94cfb0235f9e721d165c2a55ca1eadaf` restored original workflow blob
+`eb730d3e77a17d4d527e67646475385cebb2428c` without rewriting history. The
+temporary driver is not part of the source branch.
+
+The real-V8 merge gate remains mandatory with up-to-date branches and
+administrator enforcement. Later handoff-only documentation edits preserve the
+tested runtime/build/test files. M11-53 remains the next feature milestone.
