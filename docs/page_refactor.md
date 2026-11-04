@@ -1,7 +1,9 @@
 # Page refactor — first extraction
 
-Scope agreed: `2026-11-03`. Status: **implemented; local checks passed;
-V8-linked/release verification pending**. Source baseline: `3e76871`.
+Scope agreed: `2026-11-03`. Status: **VERIFIED on real V8 — Linux x64,
+Windows x64, macOS arm64 (`2026-11-04`)**. Source baseline: `3e76871`.
+Verified source commit: `917cbfb265949a3bf3e1c60eabd843f2a10c962b`, Git tree
+`b47aad7f9d1897d9cc390e6caf47a8edddd6e147`.
 
 This is an internal maintenance slice after M11-52, not M11-53. It changes
 neither the Python/JavaScript surface nor the frozen selector behavior in
@@ -29,8 +31,9 @@ distinguish skeleton results from actual V8 runtime results. Check shell and
 workflow syntax locally. Record results and outstanding release verification
 below without claiming that previous release runs tested this change.
 
-Configuring the new check as required in GitHub branch protection is a separate
-repository setting; a workflow file alone does not enable that policy.
+Merge policy: require `Linux x64 / Python 3.13 / V8` from the GitHub Actions
+app (`15368`), with up-to-date branches and administrator enforcement. This
+is a repository branch-protection setting, separate from the workflow file.
 
 ## Implementation and local results — `2026-11-03`
 
@@ -60,13 +63,43 @@ repository setting; a workflow file alone does not enable that policy.
 - Scratch builds, comparison executables/corpus, and pytest logs are under
   ignored `data/page-refactor/`; no environment or wheel is part of the change.
 
-No V8 monolith is installed locally. No V8-linked wheel was built or tested for
-this maintenance slice. At the local-verification snapshot, no new CI
-run/artifact evidence was available. The latest
-verified feature milestone remains M11-52; its historical three-platform
-results do not verify this refactor. Run the new V8 CI check and all three
-release lanes before marking this maintenance slice release-verified.
+The local results above used no V8 monolith. Runtime verification was performed
+separately by the following GitHub Actions runs.
 
-Publishing the workflow starts its first CI verification. This slice does not
-configure a required branch-protection check. After a successful run, select its
-`Linux x64 / Python 3.13 / V8` check in the repository's merge policy.
+## Real-V8 verification — `2026-11-04`
+
+| Lane | Run | Python versions | Result per interpreter |
+|---|---|---|---|
+| PR/push V8 CI | [41674273069](https://github.com/pakeli/iv8-runtime/actions/runs/41674273069) | 3.13 | 1787 passed, 2 skipped |
+| release-linux | [41759793220](https://github.com/pakeli/iv8-runtime/actions/runs/41759793220) | 3.11–3.14 | 1787 passed, 2 skipped |
+| release-windows | [41759812090](https://github.com/pakeli/iv8-runtime/actions/runs/41759812090) | 3.11–3.14 | 1787 passed, 2 skipped |
+| release-macos | [41760140836](https://github.com/pakeli/iv8-runtime/actions/runs/41760140836) | 3.11–3.14 | 1787 passed, 2 skipped |
+
+All release runs succeeded. The suite collects 1,789 items; every interpreter
+imported a V8-linked wheel reporting V8 `15.0.245.19`.
+
+Artifacts:
+
+- Linux: `13289198869` (`iv8-linux-manylinux2_28-wheels`, all four wheels).
+- Windows: `13289663700` (cp311), `13289643369` (cp312), `13290410661`
+  (cp313), `13289158545` (cp314).
+- macOS arm64: `13289283806` (cp311), `13290311758` (cp312), `13290481101`
+  (cp313), `13289154141` (cp314), tagged `macosx_11_0_arm64`.
+
+Linux and Windows ran directly on `917cbfb`. macOS used the official
+`release-macos` workflow on the **macos-15** runner, now available again, with
+the existing monolith cache scoped to `macos-release`. Temporary workflow
+commit `d847f6ae07cbac3112765604379bbe3564216d24` pinned both checkout steps to
+the full `917cbfb` source SHA; all five job checkouts are confirmed in the log.
+The initial cache-miss macOS run `41759820659` was cancelled in favor of this
+cached run. Restore commit `fba3fed994bec31da41b75e8dc484aa7eccda868` restored
+the original workflow blob `eb730d3e77a17d4d527e67646475385cebb2428c` without
+rewriting branch history.
+
+The ordinary skeleton CI run `41674273281` completed its 12 Linux/Windows/
+macOS arm64 jobs successfully; its four optional macos-13 jobs remained queued
+at this verification snapshot. It is separate from the real-V8 merge gate.
+
+This internal maintenance slice is release-verified. The latest feature
+milestone remains M11-52, and M11-53 remains the next Window feature. Subsequent
+handoff-only documentation edits preserve the tested runtime/build/test files.

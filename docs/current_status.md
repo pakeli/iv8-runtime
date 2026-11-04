@@ -1,16 +1,19 @@
 # Current Status
 
-Last reviewed: `2026-11-03`
+Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
-**Internal maintenance (`2026-11-03`):** the first Page refactor extracts the
+**Internal maintenance verified (`2026-11-04`):** the first Page refactor extracts the
 V8-independent selector parser and adds automatic Linux/Python 3.13 V8 CI.
-Implemented with local checks passed; **V8-linked/release verification pending**.
-Differential parser validation: 20,119 identical results, UBSan clean. Local
-V8-free pytest: focused `4 passed, 25 skipped`; full `225 passed, 1564 skipped`.
-These are not runtime verification results. No completed CI verification yet;
-latest verified feature remains M11-52. See `docs/page_refactor.md`.
+Source `917cbfb` (tree `b47aad7f9d1897d9cc390e6caf47a8edddd6e147`) is green on
+Linux `41759793220`, Windows `41759812090`, and macOS arm64 `41760140836`
+(macos-15, cached driver checkout pinned to `917cbfb`), each Python 3.11–3.14
+lane `1787 passed, 2 skipped`. V8 CI `41674273069` is also green. The macOS
+temporary configuration was restored without rewriting history. The merge
+policy requires the real-V8 check; evidence, artifact IDs, and local
+differential/UBSan results are in `docs/page_refactor.md`. Latest verified
+feature remains M11-52; M11-53 is still next.
 
 `iv8-runtime` started as an M1-scoped Python/V8 embedding project, but the actual
 implementation in `master` has progressed well beyond the original M1 boundary.

@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-11-03`
+Last reviewed: `2026-11-04`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -957,7 +957,7 @@ a later stage.
 
 ### 47. Incremental Page refactoring with a real-V8 PR check
 
-Approved/implemented locally `2026-11-03`; V8-linked/release verification pending.
+Approved/implemented locally `2026-11-03`; real-V8 release-verified `2026-11-04`.
 
 Keep the public Page API and browser-compatibility boundaries unchanged. Start
 by extracting the V8-independent selector parser into its own translation unit;
@@ -968,14 +968,19 @@ Add a Linux x64 / Python 3.13 V8-linked push/PR workflow using the existing
 manylinux build helper, pinned image, and monolith cache. Require explicit V8
 linking, fail on missing interpreters/wheels, and test outside the checkout.
 Full release interpreter/platform coverage remains unchanged. Configuring this
-check as merge-required is a separate GitHub setting, not accomplished by the
-workflow file.
+check as merge-required is a separate GitHub setting. The merge policy uses
+the GitHub Actions app's `Linux x64 / Python 3.13 / V8` check with up-to-date
+branches and administrator enforcement.
 
 20,119 parser comparisons were identical under UBSan; the newly built V8-free
 wheel passed `225 passed, 1564 skipped` (focused: `4 passed, 25 skipped`). These
-results do not verify a V8-linked runtime build. See `docs/page_refactor.md` for
-the boundary, limitations, and pending release evidence. M11-53 remains the
-next Window feature milestone.
+local results are distinct from runtime verification. Source `917cbfb` is now
+verified by Linux `41759793220`, Windows `41759812090`, and macOS arm64
+`41760140836`; all Python 3.11–3.14 lanes reported `1787 passed, 2 skipped`.
+The macOS runner was macos-15 with a pinned source checkout and the release
+branch cache; the temporary workflow configuration was restored. See
+`docs/page_refactor.md` for source trees, artifacts, and evidence. M11-53 remains
+the next Window feature milestone.
 
 ## Pending Decisions
 
