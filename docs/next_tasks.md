@@ -1,11 +1,17 @@
 # Next Tasks
 
-Last reviewed: `2026-11-03`
+Last reviewed: `2026-11-04`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
+
+Maintenance completed/verified `2026-11-04`: the first Page parser extraction
+and automatic Linux/Python 3.13 V8 CI passed all three real-V8 release lanes
+(Python 3.11–3.14, each `1787 passed, 2 skipped`). Merge via PR with the
+real-V8 check required. See `docs/page_refactor.md` for source trees, run IDs,
+artifact IDs, and local differential/UBSan results. Resume M11-53 afterward.
 
 At the user's direction, **Window now has higher priority than Document**:
 

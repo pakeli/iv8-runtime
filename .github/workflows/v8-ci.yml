@@ -1,0 +1,52 @@
+name: V8 CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v8-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MANYLINUX_IMAGE: quay.io/pypa/manylinux_2_28_x86_64@sha256:b04887b645dde99b9e955aeae3ff4da414992d0bd88259f046295b56361c5614
+
+jobs:
+  linux-v8:
+    name: Linux x64 / Python 3.13 / V8
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore pinned V8 monolith
+        id: v8cache
+        uses: ./.github/actions/restore-v8-cache
+        with:
+          path: data/v8
+          key: v8-manylinux2_28-${{ hashFiles('tools/build_v8_manylinux.sh', 'cmake/v8_pin.cmake') }}
+
+      - name: Build pinned V8 on cache miss
+        id: v8build
+        if: steps.v8cache.outputs.cache-hit != 'true'
+        run: |
+          docker run --rm -v "$PWD":/io "$MANYLINUX_IMAGE" \
+            bash /io/tools/build_v8_manylinux.sh
+          sudo chown -R "$(id -u):$(id -g)" data/v8
+
+      - name: Save newly built V8 monolith
+        if: steps.v8build.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: data/v8
+          key: v8-manylinux2_28-${{ hashFiles('tools/build_v8_manylinux.sh', 'cmake/v8_pin.cmake') }}
+
+      - name: Build and test V8-linked wheel
+        run: |
+          docker run --rm -v "$PWD":/io \
+            -e IV8_PYTHON_TAG=cp313-cp313 "$MANYLINUX_IMAGE" \
+            bash /io/tools/build_linux_wheels.sh

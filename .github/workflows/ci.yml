@@ -1,9 +1,7 @@
 name: CI
 
-# Bootstrap CI for the M1 build skeleton. V8 is NOT linked yet, so these lanes
-# only build/install/test the placeholder extension across the support matrix
-# (docs/dependency_strategy.md §6, §11 EC-3). V8-linking lanes and the
-# debug/ASan lane are added once EC-2 (Linux V8 build environment) lands.
+# Cross-platform V8-free build/API guards. Runtime tests run separately in
+# v8-ci.yml (PRs/pushes) and the three V8-linked release workflows.
 
 on:
   push:
