@@ -24,6 +24,15 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
+- Latest internal work, verified (`2026-11-04`): the second Page
+  extraction moves Cookie parsing/storage into `CookieJar`, owned by value in
+  `PageState`; existing delegates preserve the DocumentHost coercion/trace path.
+  Source `347dfbf` passed Linux `41764895229`, Windows `41764904132`, and macOS
+  arm64 `41764990337`, Python 3.11–3.14 each `1793 passed, 2 skipped`. The
+  Cookie file collects 11 tests (macOS focused runs all `11 passed`), full suite
+  1,795. V8 CI `41764857600` also passed. See `docs/page_cookie_refactor.md`
+  for source trees, artifacts, and the native differential/UBSan results.
+  M11-53 remains the next feature milestone.
 - Internal maintenance after M11-52: selector parsing is extracted from
   `page_state.cpp` into `selector_parser.h` / `selector_parser.cpp`; DOM matching
   and resource ownership stay unchanged. `.github/workflows/v8-ci.yml` adds

@@ -39,6 +39,11 @@ document.cookie;                 // "b=2"
 
 ## Storage and lifetime
 
+Internal implementation note (`2026-11-04`): a maintenance slice extracts the
+jar into `CookieJar`, owned by value in `PageState`; behavior and the contract
+below are unchanged. The extraction is verified separately on all three
+release platforms; evidence is tracked in `docs/page_cookie_refactor.md`.
+
 The jar is owned by `PageState`, not by a document generation:
 
 - it survives `Page.load()` generations;
@@ -84,6 +89,11 @@ rules are not modeled.
 - persistence across `load()` and isolation between Pages;
 - access-trace get/set events for the `cookie` member;
 - descriptor-visible writable behavior and no-JS-regression checks.
+- extraction regressions: all three supported expiry date forms, max-age
+  precedence/invalid attributes, coercion failure with trace exception metadata,
+  deletion/reinsertion order, and load persistence across base-origin changes.
+
+The file now collects 11 items; the original M11-46 release below had five.
 
 ## Verification
 
