@@ -29,8 +29,6 @@ jobs:
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: 917cbfb265949a3bf3e1c60eabd843f2a10c962b
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -66,8 +64,6 @@ jobs:
         python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: 917cbfb265949a3bf3e1c60eabd843f2a10c962b
       - name: Restore V8 monolith cache (with retries)
         id: v8cache
         uses: ./.github/actions/restore-v8-cache
