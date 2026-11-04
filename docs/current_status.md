@@ -4,7 +4,18 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
-**Latest internal maintenance, verified (`2026-11-04`):** bounded
+**Latest verified monitoring addition (`2026-11-04`):**
+`Page.read_access_trace(clear=True, format="text")` provides concise per-event
+paths and captured values, including `GET document.cookie -> ""`. Default raw
+dicts and aggregation remain compatible. Source `1599fd5` (tree
+`9320586725f0034b1a33695771d04578f5c7ad91`) passed Linux `41848358166`, Windows
+`41848373389`, and macOS arm64 fallback `41850244647` (macos-14), Python
+3.11–3.14 each `1878 passed, 2 skipped` (1,880 collected). V8 CI `41848183724`
+passed; macOS focused checks each `79 passed`. All five native integrations
+executed. Local pure formatter checks and raw/aggregate compatibility also
+passed. Evidence and driver restoration: `docs/access_trace_text.md`.
+
+**Latest C++ maintenance, verified (`2026-11-04`):** bounded
 HTML entity decoding and text/attribute escaping are extracted into the
 string-only `html_entities` module. DOM ownership, tokenization, raw/RCDATA
 contexts, traversal, and mutation bookkeeping remain in Page. Source `85b2d20`

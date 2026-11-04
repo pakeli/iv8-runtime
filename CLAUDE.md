@@ -24,7 +24,16 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
-- Latest internal work, verified (`2026-11-04`): HTML entity
+- Latest user-requested monitoring addition, verified (`2026-11-04`):
+  `Page.read_access_trace(clear=True, format="text")` renders concise events and
+  captured values. Default raw dictionaries and step-7 aggregation are unchanged.
+  Source `1599fd5` passed Linux `41848358166`, Windows `41848373389`, and macOS
+  arm64 fallback `41850244647` (macos-14), Python 3.11–3.14 each
+  `1878 passed, 2 skipped` (1,880 collected). V8 CI `41848183724` passed;
+  focused macOS checks each `79 passed`, including all five native integrations.
+  See `docs/access_trace_text.md` for evidence and driver restoration. M11-53
+  remains the next browser feature milestone.
+- Latest C++ maintenance, verified (`2026-11-04`): HTML entity
   decoding and text/attribute escaping are extracted into `html_entities`;
   DOM resources, parse contexts, and traversal stay in Page. Source `85b2d20`
   passed Linux `41828654174`, Windows `41828670556`, and macOS arm64

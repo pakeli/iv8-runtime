@@ -7,6 +7,13 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
 
+User-requested monitoring UX verified (`2026-11-04`): readable
+`read_access_trace(format="text")`, preserving default raw logs and aggregation.
+Source `1599fd5` passed V8 CI and all release lanes, Python 3.11–3.14 each
+`1878 passed, 2 skipped`; macOS focused checks each `79 passed` on the macos-14
+fallback. Merge through the existing V8 gate; evidence/artifacts/restoration are
+in `docs/access_trace_text.md`. M11-53 remains the next browser feature.
+
 Sixth maintenance extraction verified (`2026-11-04`): bounded HTML entity
 decoding/escaping is independent of V8 and DOM ownership. Source `85b2d20`
 passed V8 CI and all three release matrices, Python 3.11–3.14 each

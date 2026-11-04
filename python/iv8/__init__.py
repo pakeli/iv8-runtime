@@ -1129,6 +1129,12 @@ provides a pure-Python aggregated report (access groups, missing candidates,
 coverage/capacity/filter warnings, and caller-supplied event-loop progress);
 see ``docs/host_access_trace_workflow.md`` and ``docs/host_access_trace.md``.
 
+``Page.read_access_trace(clear=True, format="text")`` adds an opt-in readable
+log, such as ``GET document.cookie -> ""``. The default ``format="raw"`` keeps
+the existing dictionary. Text uses captured summaries only, explicitly marking
+truncation, type-only values, and missing metadata; it never executes JS.
+See ``docs/access_trace_text.md`` for the presentation contract.
+
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,
 ``JSConversionError``, ``JSError``, ``JSUndefined``, ``JSValue``, and ``Page`` are
 exported in BOTH build modes so the public API shape is stable. In a V8-free
