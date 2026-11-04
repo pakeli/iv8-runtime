@@ -101,8 +101,8 @@ python -m pytest test/test_watch_object_keys.py -v
 
 - general CI: `.github/workflows/ci.yml`
 - real-V8 push/PR CI: `.github/workflows/v8-ci.yml` (Linux x64 / Python 3.13;
-  latest maintenance run `41764857600`, `1793 passed, 2 skipped`; required merge
-  check: `Linux x64 / Python 3.13 / V8`; see `docs/page_cookie_refactor.md`)
+  latest maintenance run `41783767829`, `1799 passed, 2 skipped`; required merge
+  check: `Linux x64 / Python 3.13 / V8`; see `docs/page_url_refactor.md`)
 - Linux release wheels: `.github/workflows/release-linux.yml`
 - Windows release lane: `.github/workflows/release-windows.yml`
 - macOS arm64 release lane: `.github/workflows/release-macos.yml`
@@ -159,8 +159,9 @@ If you only remember one thing:
 > `docs/m11_48_report.md`, `docs/m11_49_report.md`,
 > `docs/m11_50_report.md`, `docs/m11_51_report.md`,
 > `docs/m11_52_report.md`, `docs/host_access_trace.md`, and
-> `docs/host_access_trace_workflow.md`. The subsequent Cookie module extraction
-> is verified on source `347dfbf`: Linux `41764895229`, Windows `41764904132`,
-> macOS arm64 `41764990337`. The full suite now collects 1795 items;
-> each release lane reports `1793 passed, 2 skipped`. See
-> `docs/page_cookie_refactor.md` for the maintenance boundary and artifacts.
+> `docs/host_access_trace_workflow.md`. Subsequent Cookie and URL module
+> extractions are verified; the latest is source `2e30d48`: Linux `41783823684`,
+> Windows `41783830832`, macOS arm64 `41783905526`. The full suite now collects
+> 1801 items; each release lane reports `1799 passed, 2 skipped`. See
+> `docs/page_cookie_refactor.md` and `docs/page_url_refactor.md` for maintenance
+> boundaries and artifacts.

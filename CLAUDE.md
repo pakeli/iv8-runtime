@@ -24,12 +24,15 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
-- Latest internal work (`2026-11-04`, verification pending): minimal URL
+- Latest internal work, verified (`2026-11-04`): minimal URL
   decomposition/resolution is extracted into `url_parser`; the host layer keeps
-  JS coercion/tracing and secure-context policy. Focused URL/consumer collection
-  is 76 items, full collection 1,801. See `docs/page_url_refactor.md`; previous
-  maintenance verification does not cover this slice. M11-53 stays next.
-- Latest internal work, verified (`2026-11-04`): the second Page
+  JS coercion/tracing and secure-context policy. The focused URL/consumer set
+  passed all 76 items in each macOS interpreter before the full suite. Source
+  `2e30d48` passed Linux `41783823684`, Windows `41783830832`, and macOS arm64
+  `41783905526`, Python 3.11–3.14 each `1799 passed, 2 skipped` (1,801 collected).
+  V8 CI `41783767829` also passed. See `docs/page_url_refactor.md` for artifacts
+  and the 15,224-case native differential/UBSan results. M11-53 stays next.
+- Previous internal maintenance, verified (`2026-11-04`): the second Page
   extraction moves Cookie parsing/storage into `CookieJar`, owned by value in
   `PageState`; existing delegates preserve the DocumentHost coercion/trace path.
   Source `347dfbf` passed Linux `41764895229`, Windows `41764904132`, and macOS
