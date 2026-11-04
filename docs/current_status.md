@@ -4,14 +4,18 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
-**Latest internal maintenance, verification pending (`2026-11-04`):** the
+**Latest internal maintenance, verified (`2026-11-04`):** the
 URLSearchParams byte codec and ordered query parsing/serialization are extracted
 into `query_parameters`. Canonical state stays in its V8 private slot; host
 coercion/mutation and URL snapshots are unchanged. Focused query/URL collection:
-54 items; full collection: 1,808. See `docs/page_query_refactor.md` for independent
-validation; earlier extraction runs do not cover this slice.
+54 items, all passed before the full suite in every macOS interpreter. Source
+`f017a01` (tree `f6b2075a905777714c2b0fa44562b4b49472490a`) passed Linux
+`41791203775`, Windows `41791210361`, and macOS arm64 `41791328195`, Python
+3.11–3.14 each `1806 passed, 2 skipped` (1,808 collected). V8 CI `41791168585`
+also passed; 20,271 all-byte native comparisons matched under UBSan. See
+`docs/page_query_refactor.md` for source/run/artifact and restoration evidence.
 
-**Latest internal maintenance, verified (`2026-11-04`):** shared
+**Previous internal maintenance, verified (`2026-11-04`):** shared
 minimal URL decomposition/resolution is extracted into the V8-independent
 `url_parser` module. Host coercion/tracing, URLSearchParams snapshots, and
 secure-context policy remain on their existing paths. The focused URL/consumer

@@ -1,7 +1,7 @@
 # Page refactor — query-parameter codec
 
-Scope agreed: `2026-11-04`. Status: **implemented; local checks passed;
-real-V8/release verification pending**.
+Scope agreed: `2026-11-04`. Status: **VERIFIED on real V8 — Linux x64,
+Windows x64, macOS arm64 (`2026-11-04`)**.
 Baseline: `a9b550c` (verified URL parser extraction, PR #3).
 
 Extract byte-level query parsing/serialization and form-URL encoding from
@@ -44,6 +44,34 @@ source trees, run IDs, artifacts, and test counts before marking verified.
 
 ## Real-V8 verification
 
-Pending. Record the current source commit/tree, CI/release run IDs, artifact
-IDs, focused results, and actual full-suite counts after release verification.
-Previous maintenance runs do not cover this extraction.
+Source commit: `f017a012b2b487f002e304144055bf2593a64e80`, Git tree
+`f6b2075a905777714c2b0fa44562b4b49472490a`. All release runs succeeded; each
+interpreter reported **1806 passed, 2 skipped** (1,808 collected) and imported
+a V8-linked build reporting `15.0.245.19`.
+
+| Lane | Run | Python versions | Result |
+|---|---|---|---|
+| V8 CI | [41791168585](https://github.com/pakeli/iv8-runtime/actions/runs/41791168585) | 3.13 | 1806 passed, 2 skipped |
+| release-linux | [41791203775](https://github.com/pakeli/iv8-runtime/actions/runs/41791203775) | 3.11–3.14 | 1806 passed, 2 skipped |
+| release-windows | [41791210361](https://github.com/pakeli/iv8-runtime/actions/runs/41791210361) | 3.11–3.14 | 1806 passed, 2 skipped |
+| release-macos | [41791328195](https://github.com/pakeli/iv8-runtime/actions/runs/41791328195) | 3.11–3.14 | focused 54 passed; full 1806 passed, 2 skipped |
+
+Linux artifact: `13303970360` (`iv8-linux-manylinux2_28-wheels`, all four
+interpreters).
+
+Windows artifacts: `13303039116` (cp311), `13303157840` (cp312),
+`13303341890` (cp313), `13302704564` (cp314).
+
+macOS arm64 artifacts: `13303322980` (cp311), `13303622021` (cp312),
+`13303880606` (cp313), `13303118920` (cp314).
+
+macOS uses the existing release-branch cache through temporary workflow commit
+`d8aeb20fec41861bfe510fa16e9da6b41c70b775`; both checkouts pin the full
+`f017a01` source SHA. The 54-item focused set ran before the full suite in each
+interpreter. Restore commit `b0f2ab698c4ace2fc8bb03e11f29ab19478dd3b1` restored
+original workflow blob `eb730d3e77a17d4d527e67646475385cebb2428c` without
+rewriting history. The temporary driver is not part of the source branch.
+
+The existing real-V8 merge gate remains mandatory with up-to-date branches and
+administrator enforcement. Later handoff-only documentation edits preserve the
+tested runtime/build/test files. M11-53 remains the next feature milestone.

@@ -55,8 +55,8 @@ independent evidence is tracked in `docs/page_url_refactor.md`.
 
 Internal maintenance note (`2026-11-04`): the byte codec and pair parse/serialize
 functions are extracted into `query_parameters`; canonical V8 storage and the
-frozen JS rules below stay unchanged. Independent verification is tracked in
-`docs/page_query_refactor.md`.
+frozen JS rules below stay unchanged. The extraction is verified on all three
+release platforms; independent evidence is tracked in `docs/page_query_refactor.md`.
 
 - **`URLSearchParams`** — `new URLSearchParams(init?)`: `undefined` / `null` / omitted
   → empty; another `URLSearchParams` → a copy; a **string** (via `String(init)`, a

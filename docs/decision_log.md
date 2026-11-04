@@ -1018,7 +1018,7 @@ See `docs/page_url_refactor.md` for trees and artifacts. M11-53 remains next.
 
 ### 50. Fourth Page extraction — query byte codec and pair serialization
 
-Approved/implemented `2026-11-04`; real-V8/release verification pending.
+Approved, implemented, and real-V8 release-verified `2026-11-04`.
 
 Extract only byte-level form-URL encoding/decoding and ordered query pair
 parsing/serialization. Leave the canonical V8 private-slot string, JS coercion,
@@ -1026,7 +1026,12 @@ mutation callbacks, validation, and URL snapshot behavior in the host layer.
 Keep malformed escapes literal and preserve explicit ASCII encoding, duplicate
 order, and empty keys/values. No new ownership or API surface. Use all-byte
 native differential checks, focused query/URL tests, and the three real-V8
-release matrices. See `docs/page_query_refactor.md`; M11-53 stays next.
+release matrices. Source `f017a01` passed Linux `41791203775`, Windows
+`41791210361`, and macOS arm64 `41791328195`, Python 3.11–3.14 each
+`1806 passed, 2 skipped`; focused macOS runs each `54 passed`. V8 CI
+`41791168585` passed, as did 20,271 native all-byte comparisons under UBSan.
+The pinned temporary macOS driver was restored afterward. See
+`docs/page_query_refactor.md` for trees/artifacts; M11-53 stays next.
 
 ## Pending Decisions
 
