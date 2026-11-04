@@ -11,6 +11,8 @@ non-live snapshot. No iterator / entries / keys / values / forEach / sort / size
 record init / FormData / fetch. No Python API.
 """
 
+import json
+
 import pytest
 
 import iv8
@@ -296,3 +298,64 @@ def test_dispose_stale():
     page.dispose()
     with pytest.raises(iv8.JSContextDisposedError):
         page.eval("new URLSearchParams('a=1')")
+
+
+@on_only
+@pytest.mark.parametrize("encoded,decoded,canonical", [
+    ("%", "%", "%25"),
+    ("%2", "%2", "%252"),
+    ("%GG", "%GG", "%25GG"),
+    ("a+b%2Bc", "a b+c", "a+b%2Bc"),
+])
+def test_malformed_escapes_and_plus_keep_existing_canonical_form(encoded, decoded, canonical):
+    with iv8.Page() as page:
+        query = json.dumps("key=" + encoded)
+        assert page.eval("new URLSearchParams(" + query + ").get('key')") == decoded
+        assert page.eval("new URLSearchParams(" + query + ").toString()") == "key=" + canonical
+
+
+@on_only
+def test_empty_names_values_and_first_equals_preserve_pair_order():
+    with iv8.Page() as page:
+        assert page.eval("""
+            (() => {
+              const params = new URLSearchParams('&&=first&x&=second&&x=&value=a=b');
+              return JSON.stringify([params.getAll(''), params.getAll('x'),
+                                     params.get('value'), params.toString()]);
+            })();
+        """) == json.dumps([
+            ["first", "second"], ["", ""], "a=b",
+            "=first&x=&=second&x=&value=a%3Db",
+        ], separators=(",", ":"))
+
+
+@on_only
+def test_nul_and_unicode_survive_private_state_round_trips():
+    with iv8.Page() as page:
+        assert page.eval("""
+            (() => {
+              const params = new URLSearchParams('key=%00%E5%80%BC');
+              params.append('other', 'é');
+              return JSON.stringify([params.get('key'), params.toString()]);
+            })();
+        """) == json.dumps([
+            "\x00值", "key=%00%E5%80%BC&other=%C3%A9",
+        ], ensure_ascii=False, separators=(",", ":"))
+
+
+@on_only
+def test_encoded_key_mutation_keeps_copy_and_url_snapshot_isolated():
+    with iv8.Page() as page:
+        assert page.eval("""
+            (() => {
+              const url = new URL('https://query.test/?a%2Bb=1&x=0&a%2Bb=2');
+              const snapshot = url.searchParams;
+              const copy = new URLSearchParams(snapshot);
+              copy.set('a+b', 'new value');
+              snapshot.delete('a+b');
+              return JSON.stringify([copy.toString(), snapshot.toString(), url.href]);
+            })();
+        """) == json.dumps([
+            "a%2Bb=new+value&x=0", "x=0",
+            "https://query.test/?a%2Bb=1&x=0&a%2Bb=2",
+        ], separators=(",", ":"))

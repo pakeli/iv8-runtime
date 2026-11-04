@@ -4,6 +4,13 @@ Last reviewed: `2026-11-04`
 
 ## 1. Summary
 
+**Latest internal maintenance, verification pending (`2026-11-04`):** the
+URLSearchParams byte codec and ordered query parsing/serialization are extracted
+into `query_parameters`. Canonical state stays in its V8 private slot; host
+coercion/mutation and URL snapshots are unchanged. Focused query/URL collection:
+54 items; full collection: 1,808. See `docs/page_query_refactor.md` for independent
+validation; earlier extraction runs do not cover this slice.
+
 **Latest internal maintenance, verified (`2026-11-04`):** shared
 minimal URL decomposition/resolution is extracted into the V8-independent
 `url_parser` module. Host coercion/tracing, URLSearchParams snapshots, and

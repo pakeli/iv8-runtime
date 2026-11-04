@@ -22,6 +22,11 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 
 ## 0. What this document is
 
+Fourth internal extraction (`2026-11-04`, verification pending): byte-level
+query parsing/serialization now lives in `query_parameters`. URLSearchParams
+still owns canonical text in a GC-managed private slot; JS semantics and
+snapshot behavior are unchanged. See `docs/page_query_refactor.md`.
+
 Third internal extraction, verified (`2026-11-04`): shared minimal
 URL decomposition/resolution now lives in `url_parser.h` / `url_parser.cpp`.
 There is no public-surface or normalization change; host-layer URL consumers

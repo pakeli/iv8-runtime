@@ -24,6 +24,12 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
+- Latest internal work (`2026-11-04`, verification pending): query byte codec
+  and ordered parse/serialize are extracted into `query_parameters`; canonical
+  V8 private-slot storage and host coercion/mutation stay in place. Focused
+  query/URL collection is 54, full collection 1,808. Independent evidence is in
+  `docs/page_query_refactor.md`; previous maintenance runs do not cover it.
+  M11-53 stays the next feature milestone.
 - Latest internal work, verified (`2026-11-04`): minimal URL
   decomposition/resolution is extracted into `url_parser`; the host layer keeps
   JS coercion/tracing and secure-context policy. The focused URL/consumer set

@@ -7,6 +7,11 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
 
+Active maintenance (`2026-11-04`): extract the query codec and pair
+parse/serialize functions while preserving GC-managed V8 state and M8-3
+semantics. Complete native/focused validation, real-V8 CI, and all release
+lanes; see `docs/page_query_refactor.md`. M11-53 remains next.
+
 Third maintenance extraction verified (`2026-11-04`): shared minimal URL
 decomposition/resolution is in `url_parser`, with M2-3/M8-2 behavior preserved.
 Source `2e30d48` passed real-V8 CI and all three release matrices, Python
