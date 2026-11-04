@@ -1068,8 +1068,8 @@ The pinned temporary macOS workflow was restored. M11-53 stays next.
 
 ### 53. Readable access-trace presentation
 
-Approved by the user's log-readability request `2026-11-04`; implemented,
-real-V8/release verification pending.
+Approved by the user's log-readability request, implemented, and real-V8
+release-verified `2026-11-04`.
 
 Extend only the Python monitoring facade with a keyword-only `format` on
 `read_access_trace`: `raw` (the existing default dict) or `text` (concise lines).
@@ -1078,7 +1078,12 @@ unchanged. Display empty strings explicitly, quote control characters, mark
 truncation/type-only/missing data, and retain visible capacity warnings. Format
 captured metadata without getters/eval or a callback bridge. Invalid format
 arguments must fail before a destructive native read. Contract and test/release
-evidence: `docs/access_trace_text.md`. M11-53 remains the next browser feature.
+evidence: `docs/access_trace_text.md`. Source `1599fd5` passed Linux
+`41848358166`, Windows `41848373389`, and macOS arm64 fallback `41850244647`,
+Python 3.11–3.14 each `1878 passed, 2 skipped`; focused macOS checks each
+`79 passed`. V8 CI `41848183724` passed. The macos-15 attempt was cancelled
+while queued; macos-14 used the same pinned source/cache and the temporary
+configuration was restored. M11-53 remains the next browser feature.
 
 ## Pending Decisions
 

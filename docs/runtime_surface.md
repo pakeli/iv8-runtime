@@ -22,10 +22,13 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 
 ## 0. What this document is
 
-Readable monitoring addition (`2026-11-04`, verification pending):
+Readable monitoring addition, verified (`2026-11-04`):
 `Page.read_access_trace(clear=True, *, format="raw")` keeps the default event
 dict and accepts `format="text"` for a concise string log. No JS/native capture
-changes; contract and independent evidence are in `docs/access_trace_text.md`.
+changes. Source `1599fd5` passed Linux `41848358166`, Windows `41848373389`, and
+macOS arm64 fallback `41850244647`, Python 3.11–3.14 each `1878 passed, 2 skipped`;
+macOS focused checks each `79 passed`. Contract/artifacts/restoration are in
+`docs/access_trace_text.md`.
 
 Sixth internal extraction, verified (`2026-11-04`): bounded HTML
 entity decoding and escaping now live in `html_entities`. DOM parsing/ownership,

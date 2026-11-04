@@ -1,8 +1,8 @@
 # Readable host-access trace
 
 Scope approved by the log-readability request: `2026-11-04`.
-Status: **implemented; local Python checks passed; real-V8/release verification
-pending**. Baseline: `0cff79a` (PR #6).
+Status: **VERIFIED on real V8 — Linux x64, Windows x64, macOS arm64
+(`2026-11-04`)**. Baseline: `0cff79a` (PR #6).
 
 ## Public contract
 
@@ -73,5 +73,36 @@ runs, artifacts, and counts here.
 
 ## Real-V8 verification
 
-Pending. Record source commit/tree, CI/release run IDs, artifacts, and actual
-focused/full counts after every release lane passes.
+Source commit: `1599fd5f1afca3a3acbd9981870a0a68b9d10cfb`, Git tree
+`9320586725f0034b1a33695771d04578f5c7ad91`. All release runs succeeded;
+every interpreter reported **1878 passed, 2 skipped** (1,880 collected),
+including all five new native integrations, and imported V8 `15.0.245.19`.
+
+| Lane | Run | Python versions | Result |
+|---|---|---|---|
+| V8 CI | [41848183724](https://github.com/pakeli/iv8-runtime/actions/runs/41848183724) | 3.13 | 1878 passed, 2 skipped |
+| release-linux | [41848358166](https://github.com/pakeli/iv8-runtime/actions/runs/41848358166) | 3.11–3.14 | 1878 passed, 2 skipped |
+| release-windows | [41848373389](https://github.com/pakeli/iv8-runtime/actions/runs/41848373389) | 3.11–3.14 | 1878 passed, 2 skipped |
+| macOS arm64 fallback | [41850244647](https://github.com/pakeli/iv8-runtime/actions/runs/41850244647) | 3.11–3.14 | focused 79 passed; full 1878 passed, 2 skipped |
+
+Linux artifact: `13334085925` (all four wheels). Windows artifacts:
+`13331378432` (cp311), `13331224422` (cp312), `13334155193` (cp313),
+`13331309638` (cp314).
+
+macOS arm64 artifacts: `13335870151` (cp311), `13334217003` (cp312),
+`13335425379` (cp313), `13335120402` (cp314), tagged `macosx_11_0_arm64`.
+
+Initial macos-15 driver commit `185d6703be041b07adad28797f18cd9d9f5aa6a4`
+started run `41848718450`, which was cancelled while queued without a runner.
+Fallback commit `b0d249400f7a9a6c935d46100b157fadf7ccd2f7` uses macos-14 arm64
+with the same cache, full source checkout pinned to `1599fd5`, and focused
+new/API/report/value tests before the full suite (79 passed per interpreter).
+All five checkouts were confirmed in the log. Restore commit
+`1a71b7b2af8f63bb54bf8778f7b16e3f2934e52a` restored original workflow blob
+`eb730d3e77a17d4d527e67646475385cebb2428c` without rewriting history. These
+temporary drivers are not part of the source branch.
+
+The existing real-V8 merge gate remains mandatory with up-to-date branches and
+administrator enforcement. Subsequent handoff-only documentation changes
+preserve the tested runtime/build/test files. This is a Python monitoring
+presentation addition; M11-53 stays the next browser feature milestone.

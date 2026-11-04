@@ -25,6 +25,11 @@ metadata. The default `format="raw"` preserves the dictionary below; aggregation
 is unchanged. This presentation addition has its own contract/verification in
 `docs/access_trace_text.md`.
 
+Verified `2026-11-04` on source `1599fd5`: Linux `41848358166`, Windows
+`41848373389`, macOS arm64 fallback `41850244647`, Python 3.11–3.14 each
+`1878 passed, 2 skipped`; focused macOS checks each `79 passed`. The historical
+step-7 verification below remains its original snapshot.
+
 A run report answers three questions:
 
 1. **What was accessed?** — grouped access counts with the first event's

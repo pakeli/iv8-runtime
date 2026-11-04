@@ -34,7 +34,8 @@ per event (for example `GET document.cookie -> ""`). The default
 `format="raw"` keeps the event dictionary and all coverage/identity/source
 fields described here. Text mode formats captured summaries without JS
 execution; it cannot recover uncaptured values. Its separate boundary and
-verification are in `docs/access_trace_text.md`.
+verification are in `docs/access_trace_text.md` (real-V8 verified `2026-11-04`
+on Linux/Windows/macOS arm64, Python 3.11–3.14 each `1878 passed, 2 skipped`).
 
 The only operations covered by this slice are the generic callbacks in
 `src/core/host_object.cpp`:
