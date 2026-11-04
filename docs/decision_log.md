@@ -982,6 +982,18 @@ branch cache; the temporary workflow configuration was restored. See
 `docs/page_refactor.md` for source trees, artifacts, and evidence. M11-53 remains
 the next Window feature milestone.
 
+### 48. Second Page extraction — deterministic Cookie jar
+
+Approved `2026-11-04`; implementation/verification pending.
+
+Extract Cookie parsing, fixed-epoch expiry, serialization, and ordered storage
+into a V8-independent `CookieJar` owned by value at the existing PageState member
+location. Keep DocumentHost conversion/tracing and Page-owned lifetime intact.
+Preserve the M11-46 contract, including permissive parsing and ignored origin/
+path/security attributes; add no future Cookie features. Extend regression
+coverage and use differential native validation plus all three real-V8 release
+lanes. See `docs/page_cookie_refactor.md`. M11-53 stays the next feature slice.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

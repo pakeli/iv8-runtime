@@ -24,6 +24,12 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
+- Latest internal work (`2026-11-04`, verification pending): the second Page
+  extraction moves Cookie parsing/storage into `CookieJar`, owned by value in
+  `PageState`; existing delegates preserve the DocumentHost coercion/trace path.
+  The Cookie file collects 11 tests, full suite 1,795. See
+  `docs/page_cookie_refactor.md`; the previous refactor's runs do not verify
+  this slice. M11-53 remains the next feature milestone.
 - Internal maintenance after M11-52: selector parsing is extracted from
   `page_state.cpp` into `selector_parser.h` / `selector_parser.cpp`; DOM matching
   and resource ownership stay unchanged. `.github/workflows/v8-ci.yml` adds

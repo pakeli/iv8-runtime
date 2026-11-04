@@ -11,6 +11,7 @@
 #include <pybind11/pybind11.h>
 
 #include "iv8/access_trace.h"
+#include "iv8/cookie_jar.h"
 #include "iv8/host_object.h"
 #include "iv8/watch_registry.h"
 
@@ -356,8 +357,8 @@ private:
     std::string window_name_;
     // M11-50: window.status resets whenever a new generation is installed.
     std::string window_status_;
-    // M11-46: deterministic document.cookie entries, insertion/update ordered.
-    std::vector<std::pair<std::string, std::string>> document_cookies_;
+    // M11-46: Page-owned Cookie state survives document generations.
+    CookieJar cookie_jar_;
     // Step 5i: per-generation replaced window aliases (parent/frames/opener).
     v8::Global<v8::Value> window_parent_override_;
     v8::Global<v8::Value> window_frames_override_;

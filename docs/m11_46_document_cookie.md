@@ -39,6 +39,11 @@ document.cookie;                 // "b=2"
 
 ## Storage and lifetime
 
+Internal implementation note (`2026-11-04`): a maintenance slice extracts the
+jar into `CookieJar`, owned by value in `PageState`; behavior and the contract
+below are unchanged. Its independent verification status is tracked in
+`docs/page_cookie_refactor.md`.
+
 The jar is owned by `PageState`, not by a document generation:
 
 - it survives `Page.load()` generations;

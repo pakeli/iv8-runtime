@@ -7,6 +7,11 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — Window-first (`2026-11-03`)
 
+Active maintenance (`2026-11-04`): the approved second Page extraction moves
+Cookie parsing/storage into `CookieJar`. Complete focused validation, real-V8
+CI, and all three release lanes before marking it verified; see
+`docs/page_cookie_refactor.md`. No M11 feature scope changes.
+
 Maintenance completed/verified `2026-11-04`: the first Page parser extraction
 and automatic Linux/Python 3.13 V8 CI passed all three real-V8 release lanes
 (Python 3.11–3.14, each `1787 passed, 2 skipped`). Merge via PR with the

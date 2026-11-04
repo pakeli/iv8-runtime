@@ -22,6 +22,11 @@ macOS arm64, `2026-11-02`); see `docs/host_access_trace.md` and
 
 ## 0. What this document is
 
+Second internal extraction (`2026-11-04`, verification pending): Cookie parsing,
+fixed-epoch expiry, serialization, and storage are in `CookieJar`, owned by
+`PageState`. The M11-46 public surface and DocumentHost trace/coercion path are
+unchanged. See `docs/page_cookie_refactor.md` for the boundary and evidence.
+
 Internal maintenance after M11-52 extracts selector parsing into
 `selector_parser.h` / `selector_parser.cpp` and adds PR/push V8 CI. Verified on
 `2026-11-04`: source `917cbfb`, Linux `41759793220`, Windows `41759812090`,
