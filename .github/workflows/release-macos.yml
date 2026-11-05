@@ -25,12 +25,10 @@ permissions:
 
 jobs:
   build-v8:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: 15edd82e68c62d0c551a55e9935bf34427edfb2a
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -58,7 +56,7 @@ jobs:
 
   wheels:
     needs: build-v8
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -66,8 +64,6 @@ jobs:
         python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: 15edd82e68c62d0c551a55e9935bf34427edfb2a
       - name: Restore V8 monolith cache (with retries)
         id: v8cache
         uses: ./.github/actions/restore-v8-cache
@@ -93,7 +89,6 @@ jobs:
           python -m pip install "$whl"
           cd "$RUNNER_TEMP"
           python -c "import iv8; assert iv8._v8_linked, 'V8 not linked'; print('macos-arm64', iv8._v8_runtime_version)"
-          python -m pytest "$GITHUB_WORKSPACE/test/test_browser_compatibility_repair.py"
           python -m pytest "$GITHUB_WORKSPACE/test"
       - uses: actions/upload-artifact@v4
         with:
