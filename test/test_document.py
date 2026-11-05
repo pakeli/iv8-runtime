@@ -113,8 +113,7 @@ def test_element_has_no_mutation_or_query_surface():
         # getElementsByTagName; M11-13 adds replaceChild/remove — these stay out of
         # scope: style. (matches arrived in M4-B-3, closest in M4-B-4; M11-49
         # adds innerHTML/outerHTML and the variadic tree methods.)
-        for absent in ("style",):
-            assert page.eval(f"document.body.{absent} === undefined") is True
+        assert page.eval("Object.prototype.toString.call(document.body.style)") == "[object CSSStyleDeclaration]"
         for present in ("innerHTML", "outerHTML"):
             assert page.eval(f"typeof document.body.{present}") == "string"
         for present in ("replaceChild", "remove", "append", "prepend",

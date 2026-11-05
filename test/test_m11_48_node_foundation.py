@@ -43,8 +43,8 @@ def test_parser_emits_text_comments_and_element_only_document_children():
               ].join('|');
             })();
             """
-        ) == ("1|HTML|undefined|5|3|1|3| A |3| B |3|3,8,3|xy|inside|"
-              "T A xy B ")
+        ) == ("1|HTML|undefined|5|3|1|3| A |3| B tail|3|3,8,3|xy|inside|"
+              "T A xy B tail")
         assert page.eval("document.title") == "T"
 
 

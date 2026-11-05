@@ -95,9 +95,10 @@ def test_frozen_items_absent():
                      "applets"):
             for extra in ("item", "namedItem"):
                 assert page.eval(f"typeof document.{coll}.{extra}") == "undefined"
-        assert page.eval("typeof document.getElementsByClassName('x').item") == "undefined"
-        # No document.all / plugins / other collections not yet added.
-        for member in ("all", "plugins", "createElementNS", "write"):
+        assert page.eval("typeof document.getElementsByClassName('x').item") == "function"
+        assert page.eval("document.all === undefined") is False
+        # Unapproved collections and document-writing APIs remain absent.
+        for member in ("plugins", "createElementNS", "write"):
             assert page.eval(f"typeof document.{member}") == "undefined"
         for member in ("createTextNode", "createComment",
                        "createDocumentFragment"):
@@ -107,7 +108,7 @@ def test_frozen_items_absent():
         assert page.eval(
             "typeof document.getElementById('f').getElementsByClassName") == "function"
         # No attribute-reflection properties — only raw getAttribute.
-        assert page.eval("typeof document.getElementById('a').href") == "undefined"
+        assert page.eval("typeof document.getElementById('a').href") == "string"
         assert page.eval("typeof document.getElementById('a').name") == "undefined"
         assert page.eval("typeof document.getElementById('i').src") == "undefined"
         assert page.eval("typeof document.getElementById('i').type") == "undefined"

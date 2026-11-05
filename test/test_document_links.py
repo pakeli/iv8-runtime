@@ -39,8 +39,8 @@ def test_links_is_a_plain_array():
         assert page.eval("Array.isArray(document.links)") is True
         for member in ("item", "namedItem"):
             assert page.eval(f"typeof document.links.{member}") == "undefined"
-        # No .href URL reflection (only raw getAttribute), no navigation behaviour.
-        assert page.eval("typeof document.links[0].href") == "undefined"
+        # Browser compatibility adds .href URL reflection (only raw getAttribute), no navigation behaviour.
+        assert page.eval("typeof document.links[0].href") == "string"
         assert page.eval("document.links[0].getAttribute('href')") == "x"
 
 

@@ -39,7 +39,7 @@ def test_method_present_and_plain_array():
         assert page.eval("Array.isArray(document.getElementsByClassName('x'))") is False
         for member in ("item", "namedItem"):
             assert page.eval(
-                f"typeof document.getElementsByClassName('x').{member}") == "undefined"
+                f"typeof document.getElementsByClassName('x').{member}") == "function"
 
 
 # --- fresh document -> empty array ----------------------------------------------

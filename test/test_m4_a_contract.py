@@ -104,11 +104,12 @@ def test_js_element_surface_not_exceeded():
         # in M4-B-1, contains in M4-B-2, matches in M4-B-3, closest in M4-B-4;
         # hasAttributes / getAttributeNames and raw previous/nextSibling left it in
         # M11-12/M11-13; the rest stay out.)
-        for member in ("attributes", "dataset", "style",
+        for member in ("attributes", "dataset",
                        "removeAttributeNS", "src", "type", "async", "defer",
                        "title", "hidden",
                        "compareDocumentPosition", "getRootNode"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        assert page.eval(f"Object.prototype.toString.call({el}.style)") == "[object CSSStyleDeclaration]"
         for member in ("innerHTML", "outerHTML"):
             assert page.eval(f"typeof {el}.{member}") == "string"
         # M11-10 brings these into scope; M11-12/M11-13 add the rest.

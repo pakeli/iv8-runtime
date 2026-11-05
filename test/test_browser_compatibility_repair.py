@@ -244,7 +244,7 @@ def test_battery_and_deprecated_quota_use_jobs_and_defined_baselines():
         page.eval("globalThis.battery = null; globalThis.usage = null; globalThis.quotaError = null; navigator.getBattery().then(value => battery = value); navigator.webkitPersistentStorage.queryUsageAndQuota((used, quota) => usage=[used,quota]); navigator.webkitPersistentStorage.requestQuota(1, () => {}, error => quotaError=error.name)")
         assert page.eval("battery === null")
         page.run_jobs()
-        assert evaluate(page, "[battery.charging, battery.level, battery.chargingTime, battery.dischargingTime === Infinity, Object.prototype.toString.call(battery), usage, quotaError]") == [True, 1, 0, True, "[object BatteryManager]", [0, 0], "NotSupportedError"]
+        assert evaluate(page, "[battery.charging, battery.level, battery.chargingTime, battery.dischargingTime === Infinity, Object.prototype.toString.call(battery), usage, quotaError]") == [True, 1, 0, True, "[object BatteryManager]", [0, 10 * 1024**3], "NotSupportedError"]
 
 
 @on_only
@@ -277,3 +277,79 @@ def test_async_capture_is_optional_and_handled_rejections_are_removed():
         page.eval("setTimeout(() => {throw Error('after load')})")
         page.run_timers()
         assert len(page.read_async_errors()["errors"]) == 1
+
+
+@on_only
+def test_reparenting_root_body_does_not_create_a_cycle_and_coalesces_text():
+    with iv8.Page() as page:
+        page.load('<html><head></head></html><body>one</body>two', BASE)
+        assert page.eval("document.body.textContent") == "onetwo"
+        assert page.eval("document.body.parentElement === document.documentElement")
+        assert page.eval("document.body.childNodes.length") == 1
+
+
+@on_only
+def test_live_collection_length_has_a_shared_brand_checked_accessor():
+    with iv8.Page() as page:
+        page.load(HTML, BASE)
+        assert evaluate(page, """(() => {
+          const first = document.getElementsByTagName('script');
+          const second = document.getElementsByClassName('anything');
+          const prototype = Object.getPrototypeOf(first);
+          const descriptor = Object.getOwnPropertyDescriptor(prototype, 'length');
+          let rejected = false;
+          try {descriptor.get.call({})} catch(error) {rejected = error instanceof TypeError;}
+          return [prototype === Object.getPrototypeOf(second), Object.hasOwn(first, 'length'),
+            typeof descriptor.get, descriptor.get.call(first), descriptor.enumerable,
+            descriptor.configurable, rejected, Object.keys(first).join(',')];
+        })()""") == [True, False, "function", 2, True, True, True, "0,1"]
+
+
+@on_only
+def test_url_component_setters_encode_delimiters_in_their_own_component():
+    with iv8.Page() as page:
+        page.load(HTML, BASE)
+        assert evaluate(page, """(() => {
+          const anchor = document.createElement('a'); anchor.href = '/';
+          anchor.pathname = '/a?b#c'; anchor.search = 'q=#value'; anchor.hash = 'x#y';
+          return [anchor.pathname, anchor.search, anchor.hash, anchor.href];
+        })()""") == ["/a%3Fb%23c", "?q=%23value", "#x#y",
+                     "https://www.nmpa.gov.cn/a%3Fb%23c?q=%23value#x#y"]
+
+
+@on_only
+def test_async_jobs_frames_and_idle_errors_are_observable_and_nonblocking():
+    with iv8.Page() as page:
+        page.capture_async_errors()
+        page.eval("globalThis.progress=0; queueMicrotask(() => {throw Error('job')}); queueMicrotask(() => progress++); requestAnimationFrame(() => {throw Error('frame')}); requestIdleCallback(() => {throw Error('idle')});", name="jobs.js")
+        page.run_jobs()
+        page.run_animation_frame()
+        page.run_idle_callbacks()
+        assert page.eval("progress") == 1
+        errors = page.read_async_errors()["errors"]
+        assert [entry["kind"] for entry in errors] == ["microtask", "animation_frame", "idle"]
+        assert all(entry["name"] == "Error" for entry in errors)
+
+
+@on_only
+def test_diagnostic_channels_are_bounded_isolated_and_reject_disposal():
+    page = iv8.Page()
+    try:
+        page.capture_async_errors()
+        page.eval("for(let i=0;i<1002;i++) { location.reload(); setTimeout(() => {throw Error('bounded')}); }")
+        page.run_timers()
+        navigation = page.read_navigation_requests()
+        errors = page.read_async_errors()
+        assert len(navigation["requests"]) == 1000 and navigation["dropped_requests"] == 2
+        assert len(errors["errors"]) == 1000 and errors["dropped_errors"] == 2
+        with iv8.Page() as other:
+            assert other.read_navigation_requests()["requests"] == []
+            assert other.read_async_errors()["errors"] == []
+        for method in (page.capture_async_errors, page.read_navigation_requests, page.read_async_errors):
+            with pytest.raises(TypeError):
+                method("yes")
+    finally:
+        page.dispose()
+    for method in (page.capture_async_errors, page.read_navigation_requests, page.read_async_errors):
+        with pytest.raises(iv8.JSContextDisposedError):
+            method()

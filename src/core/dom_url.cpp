@@ -46,6 +46,17 @@ std::string encoded(std::string value) {
     return result;
 }
 
+std::string encode_delimiter(std::string value, char delimiter,
+                              const std::string& replacement) {
+    std::string result;
+    for (char character : value) result += character == delimiter ? replacement : std::string(1, character);
+    return result;
+}
+
+std::string query_encoded(const std::string& value) {
+    return encode_delimiter(encode_delimiter(encoded(value), '#', "%23"), '\'', "%27");
+}
+
 std::string path_normalized(const std::string& path) {
     std::vector<std::string> segments;
     std::size_t start = path.starts_with('/') ? 1 : 0;
@@ -61,7 +72,7 @@ std::string path_normalized(const std::string& path) {
                    folded == "%2e%2e") {
             if (!segments.empty()) segments.pop_back();
             if (last) segments.emplace_back();
-        } else segments.push_back(encoded(segment));
+        } else segments.push_back(encode_delimiter(encode_delimiter(encoded(segment), '?', "%3F"), '#', "%23"));
         if (last) break;
         start = end + 1;
     }
@@ -150,7 +161,7 @@ DomUrl resolve_dom_url(std::string input, const std::string& base) {
     }
     const auto query = rest.find('?');
     if (query != std::string::npos) {
-        result.search = "?" + encoded(rest.substr(query + 1));
+        result.search = "?" + query_encoded(rest.substr(query + 1));
         rest.resize(query);
     }
     result.pathname = result.opaque ? rest : path_normalized(rest);
@@ -165,7 +176,7 @@ DomUrl set_dom_url_component(const DomUrl& current, const std::string& member,
     if (member == "hash") result.hash = value.empty() ? "" :
         "#" + encoded(value.starts_with('#') ? value.substr(1) : value);
     else if (member == "search") result.search = value.empty() ? "" :
-        "?" + encoded(value.starts_with('?') ? value.substr(1) : value);
+        "?" + query_encoded(value.starts_with('?') ? value.substr(1) : value);
     else if (result.opaque) return current;
     else if (member == "pathname") result.pathname = path_normalized(value);
     else if (member == "protocol") {

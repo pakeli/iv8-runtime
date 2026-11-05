@@ -191,13 +191,13 @@ def test_script_unaffected_and_inert():
               const s = document.createElement('script');
               s.textContent = 'globalThis.ran = 1;';
               document.body.appendChild(s);
-              return [typeof s.text,                        // undefined (script isn't option)
+              return [typeof s.text,                        // script text reflection (still inert)
                       document.getElementById('op').text,   // v
                       globalThis.ran === 0,
                       document.currentScript === null].join(',');
             })();
             """
-        ) == "undefined,v,true,true"
+        ) == "string,v,true,true"
 
 
 # --- repeated load re-reads ------------------------------------------------------

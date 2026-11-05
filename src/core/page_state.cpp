@@ -3786,13 +3786,31 @@ public:
                 html_node->children.push_back(body_node);
                 pool_.push_back(std::move(body));
             }
+            if (body_node != nullptr && body_node->parent != html_node) {
+                if (body_node->parent != nullptr) {
+                    auto& siblings = body_node->parent->children;
+                    siblings.erase(std::remove(siblings.begin(), siblings.end(), body_node), siblings.end());
+                }
+                roots_.erase(std::remove(roots_.begin(), roots_.end(), body_node), roots_.end());
+                body_node->parent = html_node;
+                html_node->children.push_back(body_node);
+            }
+            const auto append_to_body = [body_node](DomNode* node) {
+                if (node->kind == NodeKind::Text && !body_node->children.empty() &&
+                    body_node->children.back()->kind == NodeKind::Text) {
+                    body_node->children.back()->data += node->data;
+                    node->parent = nullptr;
+                } else {
+                    node->parent = body_node;
+                    body_node->children.push_back(node);
+                }
+            };
             if (body_node != nullptr && body_node->parent == html_node) {
                 bool after_body = false;
                 for (auto child = html_node->children.begin(); child != html_node->children.end();) {
                     if (*child == body_node) after_body = true;
                     if (after_body && *child != body_node && (*child)->kind != NodeKind::Comment) {
-                        (*child)->parent = body_node;
-                        body_node->children.push_back(*child);
+                        append_to_body(*child);
                         child = html_node->children.erase(child);
                     } else ++child;
                 }
@@ -3803,8 +3821,7 @@ public:
                 if (body_node != nullptr && after_html && *root != html_node &&
                     ((*root)->kind == NodeKind::Element ||
                      (*root)->kind == NodeKind::Text)) {
-                    (*root)->parent = body_node;
-                    body_node->children.push_back(*root);
+                    append_to_body(*root);
                     root = roots_.erase(root);
                 } else ++root;
             }
@@ -4816,10 +4833,14 @@ v8::Intercepted collection_name(v8::Local<v8::Name> name,
     return v8::Intercepted::kYes;
 }
 
-void collection_length(v8::Local<v8::Name>,
-    const v8::PropertyCallbackInfo<v8::Value>& info) {
-    auto binding = collection_binding(info.Holder());
-    if (binding != nullptr) info.GetReturnValue().Set(static_cast<std::uint32_t>(
+void collection_length(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto binding = collection_binding(info.This());
+    if (binding == nullptr) {
+        info.GetIsolate()->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(info.GetIsolate(), "Illegal invocation")));
+        return;
+    }
+    info.GetReturnValue().Set(static_cast<std::uint32_t>(
         binding->document->collection_nodes(*binding).size()));
 }
 
@@ -4874,12 +4895,6 @@ v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
     object_template->SetHandler(v8::NamedPropertyHandlerConfiguration(&collection_name,
         nullptr, nullptr, nullptr, nullptr, v8::Local<v8::Value>(),
         v8::PropertyHandlerFlags::kNonMasking));
-    object_template->SetNativeDataProperty(v8_string(isolate, "length").As<v8::String>(),
-        &collection_length, nullptr, v8::Local<v8::Value>(), v8::ReadOnly);
-    object_template->Set(v8_string(isolate, "item").As<v8::String>(),
-        v8::FunctionTemplate::New(isolate, &collection_item, v8::False(isolate)));
-    object_template->Set(v8_string(isolate, "namedItem").As<v8::String>(),
-        v8::FunctionTemplate::New(isolate, &collection_item, v8::True(isolate)));
     if (all) {
         object_template->MarkAsUndetectable();
         object_template->SetCallAsFunctionHandler(&all_collection_call,
@@ -4888,11 +4903,37 @@ v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
     v8::Local<v8::Object> object;
     if (!object_template->NewInstance(context).ToLocal(&object)) return v8::Object::New(isolate);
     object->SetAlignedPointerInInternalField(0, raw, v8::kEmbedderDataTypeTagDefault);
-    (void)object->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-        v8_string(isolate, all ? "HTMLAllCollection" : "HTMLCollection"), v8::ReadOnly);
-    v8::Local<v8::Value> iterator;
-    if (v8::Array::New(isolate)->Get(context, v8::Symbol::GetIterator(isolate)).ToLocal(&iterator))
-        (void)object->DefineOwnProperty(context, v8::Symbol::GetIterator(isolate), iterator, v8::DontEnum);
+    auto cache_key = v8::Private::ForApi(isolate, v8::String::NewFromUtf8Literal(isolate,
+        "iv8.collection.prototypes"));
+    v8::Local<v8::Value> cached;
+    if (!context->Global()->GetPrivate(context, cache_key).ToLocal(&cached)) return object;
+    v8::Local<v8::Object> prototypes = cached->IsObject() ? cached.As<v8::Object>() : v8::Object::New(isolate);
+    (void)context->Global()->SetPrivate(context, cache_key, prototypes);
+    const auto class_name = v8_string(isolate, all ? "HTMLAllCollection" : "HTMLCollection").As<v8::String>();
+    if (!prototypes->Get(context, class_name).ToLocal(&cached)) return object;
+    v8::Local<v8::Object> prototype;
+    if (cached->IsObject()) prototype = cached.As<v8::Object>();
+    else {
+        prototype = v8::Object::New(isolate);
+        v8::Local<v8::Function> getter;
+        if (!v8::Function::New(context, &collection_length).ToLocal(&getter)) return object;
+        v8::PropertyDescriptor length(getter, v8::Undefined(isolate));
+        length.set_enumerable(true); length.set_configurable(true);
+        (void)prototype->DefineProperty(context, v8::String::NewFromUtf8Literal(isolate, "length"), length);
+        for (const auto& name : {"item", "namedItem"}) {
+            v8::Local<v8::Function> method;
+            if (!v8::Function::New(context, &collection_item,
+                    v8::Boolean::New(isolate, std::string(name) == "namedItem")).ToLocal(&method)) return object;
+            (void)prototype->Set(context, v8_string(isolate, name), method);
+        }
+        (void)prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
+            class_name, static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
+        v8::Local<v8::Value> iterator;
+        if (v8::Array::New(isolate)->Get(context, v8::Symbol::GetIterator(isolate)).ToLocal(&iterator))
+            (void)prototype->DefineOwnProperty(context, v8::Symbol::GetIterator(isolate), iterator, v8::DontEnum);
+        (void)prototypes->Set(context, class_name, prototype);
+    }
+    (void)object->SetPrototype(context, prototype);
     return object;
 }
 

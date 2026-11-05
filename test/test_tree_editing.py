@@ -332,7 +332,7 @@ def test_no_out_of_scope_tree_surface():
     html = "<html><body><div id='d'></div></body></html>"
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
-        assert page.eval("typeof document.appendChild") == "undefined"
+        assert page.eval("typeof document.appendChild") == "function"
         # (M4-A-6 added ownerDocument/isConnected/previous|nextElementSibling;
         # M11-13 adds replaceChild/remove/raw siblings; M11-14 adds cloneNode;
         # M11-49 adds the variadic tree methods and insertAdjacent APIs.)
