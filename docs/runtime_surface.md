@@ -1,5 +1,12 @@
 # iv8-runtime Runtime Surface Index
 
+**Latest implemented, verification pending (`2026-11-05`):** user-requested
+DOM/BOM browser compatibility repairs are in progress. Contract and exact
+acceptance/limitations: `docs/browser_compatibility_repair.md`. This batch takes
+priority over the planned focus/visibility work; it adds offline navigation
+intent observation, not real navigation/networking. Latest verified milestones
+and release counts below remain unchanged until all release lanes pass.
+
 Last reviewed: `2026-11-04` · Latest verified feature milestone: **M11-52**
 (Window messaging — `postMessage` / `MessageEvent`), verified on real V8 (Linux +
 Windows + macOS arm64). It follows **M11-51** (Window event handler attributes),

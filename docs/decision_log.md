@@ -1340,3 +1340,14 @@ contract alongside `api_contract.md`.
 
 Build and CI support exist in some form, but release priority should be confirmed
 before major platform-specific investment.
+
+## 54. Browser semantic repairs from offline Chrome comparison (`2026-11-05`)
+
+The user approved fixing the reported DOM/BOM differences and closely related
+behaviors. Implement shared node identity, reflected properties, bounded URL
+reflection, live query collections, prototype accessors and receiver checks,
+document tree edits, document.all, and bounded capability behavior. Observe
+navigation intents without HTTP or reload. Async callback diagnostics are opt-in.
+The contract is `docs/browser_compatibility_repair.md`; verification is pending.
+This explicitly supersedes the relevant historical snapshot/own-data-property
+contracts, without expanding the M1 JSContext or enabling networking.

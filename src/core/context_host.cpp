@@ -20,6 +20,18 @@ namespace iv8 {
 
 namespace {
 
+void async_message_listener(v8::Local<v8::Message>, v8::Local<v8::Value> exception) {
+    auto isolate = v8::Isolate::GetCurrent();
+    auto state = static_cast<ContextState*>(isolate->GetData(kIsolateStateSlot));
+    if (state != nullptr) state->observe_async_message(exception);
+}
+
+void promise_rejection_listener(v8::PromiseRejectMessage message) {
+    auto isolate = v8::Isolate::GetCurrent();
+    auto state = static_cast<ContextState*>(isolate->GetData(kIsolateStateSlot));
+    if (state != nullptr) state->observe_promise_rejection(message);
+}
+
 std::int64_t saturating_add_ms(std::int64_t a, std::int64_t b) {
     constexpr std::int64_t kMax = std::numeric_limits<std::int64_t>::max();
     if (b > 0 && a > kMax - b) {
@@ -50,6 +62,8 @@ ContextState::ContextState() {
     // automatically — M2-4 is manual-pump only.
     isolate->SetData(kIsolateStateSlot, this);
     isolate->SetMicrotasksPolicy(v8::MicrotasksPolicy::kExplicit);
+    isolate->AddMessageListener(&async_message_listener);
+    isolate->SetPromiseRejectCallback(&promise_rejection_listener);
     v8::Isolate::Scope isolate_scope(isolate);
     v8::HandleScope handle_scope(isolate);
     v8::Local<v8::Context> local = v8::Context::New(isolate);
@@ -104,6 +118,7 @@ void ContextState::teardown() noexcept {
             // teardown() is noexcept; a hook failure must not block isolate cleanup.
         }
     }
+    async_errors_.clear();
     // 2. reset the persistent context, 3. dispose isolate + 4. release allocator
     context_.Reset();
     isolate_host_.reset();
@@ -194,6 +209,7 @@ void ContextState::run_timers() {
             (void)callback->Call(context, recv, 0, nullptr);
         }
         if (try_catch.HasCaught()) {
+            record_async_error(isolate, context, try_catch, "timer");
             try_catch.Reset();  // swallow: page/context stays usable
         }
     }
@@ -244,6 +260,7 @@ void ContextState::fire_timer_locked(v8::Isolate* isolate,
         (void)callback->Call(context, recv, 0, nullptr);
     }
     if (try_catch.HasCaught()) {
+        record_async_error(isolate, context, try_catch, "timer");
         try_catch.Reset();  // swallow: page/context stays usable
     }
 }
@@ -496,6 +513,7 @@ void ContextState::fire_animation_frame_locked(
             (void)callback->Call(context, recv, 1, argv);
         }
         if (try_catch.HasCaught()) {
+            record_async_error(isolate, context, try_catch, "animation_frame");
             try_catch.Reset();  // swallow: page/context stays usable
         }
         if (drain_between) {
@@ -609,6 +627,7 @@ void ContextState::fire_idle_round_locked(
             (void)callback->Call(context, recv, 1, argv);
         }
         if (try_catch.HasCaught()) {
+            record_async_error(isolate, context, try_catch, "idle");
             try_catch.Reset();  // swallow: page/context stays usable
         }
         if (drain_between) {
@@ -638,6 +657,72 @@ void ContextState::run_jobs() {
     v8::Context::Scope context_scope(context);
     py::gil_scoped_release release_gil;
     isolate->PerformMicrotaskCheckpoint();
+}
+
+void ContextState::set_async_error_capture(bool enabled) {
+    with_scope([&](v8::Isolate*, v8::Local<v8::Context>) { async_error_capture_ = enabled; });
+}
+
+void ContextState::record_async_error(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::TryCatch& caught, const std::string& kind) noexcept {
+    if (!async_error_capture_ || !caught.HasCaught()) return;
+    try {
+        if (async_errors_.size() >= 1000) { ++dropped_async_errors_; return; }
+        auto error = extract_js_error(isolate, context, caught, "");
+        async_errors_.push_back({std::move(error), kind, {}});
+    } catch (...) {}
+}
+
+void ContextState::observe_async_message(v8::Local<v8::Value> exception) noexcept {
+    if (!async_error_capture_ || exception.IsEmpty()) return;
+    auto isolate = isolate_host_->isolate();
+    v8::TryCatch caught(isolate);
+    isolate->ThrowException(exception);
+    record_async_error(isolate, isolate->GetCurrentContext(), caught, "microtask");
+    caught.Reset();
+}
+
+void ContextState::observe_promise_rejection(v8::PromiseRejectMessage message) noexcept {
+    if (!async_error_capture_) return;
+    try {
+        auto isolate = isolate_host_->isolate();
+        if (message.GetEvent() == v8::kPromiseHandlerAddedAfterReject) {
+            async_errors_.erase(std::remove_if(async_errors_.begin(), async_errors_.end(),
+                [&](const AsyncErrorRecord& entry) {
+                    return !entry.promise.IsEmpty() && entry.promise.Get(isolate) == message.GetPromise();
+                }), async_errors_.end());
+        } else if (message.GetEvent() == v8::kPromiseRejectWithNoHandler) {
+            v8::TryCatch caught(isolate);
+            isolate->ThrowException(message.GetValue());
+            const auto before = async_errors_.size();
+            record_async_error(isolate, isolate->GetCurrentContext(), caught, "promise");
+            if (async_errors_.size() > before) async_errors_.back().promise.Reset(isolate, message.GetPromise());
+            caught.Reset();
+        }
+    } catch (...) {}
+}
+
+py::dict ContextState::read_async_errors(bool clear) {
+    py::dict result;
+    with_scope([&](v8::Isolate*, v8::Local<v8::Context>) {
+        py::list errors;
+        for (const auto& entry : async_errors_) {
+            py::dict error;
+            error["kind"] = entry.kind;
+            error["name"] = entry.error.name;
+            error["message"] = entry.error.message;
+            error["stack"] = entry.error.stack;
+            error["resource_name"] = entry.error.resource_name;
+            error["line"] = entry.error.has_line ? py::cast(entry.error.line) : py::none();
+            error["column"] = entry.error.has_column ? py::cast(entry.error.column) : py::none();
+            errors.append(error);
+        }
+        result["errors"] = errors;
+        result["dropped_errors"] = dropped_async_errors_;
+        result["max_errors"] = 1000;
+        if (clear) { async_errors_.clear(); dropped_async_errors_ = 0; }
+    });
+    return result;
 }
 
 std::uint64_t ContextState::retain_value(v8::Local<v8::Value> value) {

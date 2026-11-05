@@ -123,14 +123,14 @@ def test_element_get_elements_by_tag_name():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         assert page.eval(
-            "document.getElementById('root').getElementsByTagName('p').map(e => e.id).join(',')"
+            "Array.from(document.getElementById('root').getElementsByTagName('p')).map(e => e.id).join(',')"
         ) == "a,b"
         assert page.eval(
             "document.getElementById('root').getElementsByTagName('P').length"
         ) == 2   # case-insensitive
         # "*" = every element in subtree, including root self.
         assert page.eval(
-            "document.getElementById('root').getElementsByTagName('*').map(e => e.id).join(',')"
+            "Array.from(document.getElementById('root').getElementsByTagName('*')).map(e => e.id).join(',')"
         ) == "root,a,inner,b"
 
 

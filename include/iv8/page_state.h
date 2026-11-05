@@ -168,6 +168,14 @@ public:
     std::string document_cookie() const;
     void set_document_cookie(const std::string& value);
 
+    // Offline navigation intents. Called under the existing context guard;
+    // recording never loads a document or contacts a server.
+    void record_navigation(v8::Isolate* isolate, const std::string& operation,
+                            const std::string& url);
+    pybind11::dict read_navigation_requests(bool clear);
+    void capture_async_errors(bool enabled);
+    pybind11::dict read_async_errors(bool clear);
+
     // Step 5i: traced window.parent / top / frames / opener accessors. Overrides
     // are per-generation V8 values; reset while the isolate is still alive.
     v8::Local<v8::Value> window_alias_value(v8::Isolate* isolate,
@@ -359,6 +367,15 @@ private:
     std::string window_status_;
     // M11-46: Page-owned Cookie state survives document generations.
     CookieJar cookie_jar_;
+    struct NavigationRequest {
+        std::string operation;
+        std::string url;
+        std::string resource_name;
+        std::uint64_t generation;
+    };
+    std::vector<NavigationRequest> navigation_requests_;
+    std::uint64_t dropped_navigation_requests_ = 0;
+    bool async_error_capture_ = false;
     // Step 5i: per-generation replaced window aliases (parent/frames/opener).
     v8::Global<v8::Value> window_parent_override_;
     v8::Global<v8::Value> window_frames_override_;

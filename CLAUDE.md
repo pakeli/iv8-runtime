@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+**Latest implemented, verification pending (`2026-11-05`):** user-requested
+DOM/BOM browser compatibility repairs are in progress. Contract and exact
+acceptance/limitations: `docs/browser_compatibility_repair.md`. This batch takes
+priority over the planned focus/visibility work; it adds offline navigation
+intent observation, not real navigation/networking. Latest verified milestones
+and release counts below remain unchanged until all release lanes pass.
+
 This file is the primary handoff entrypoint for Claude (and other coding agents)
 working on `iv8-runtime` after repository migration or chat-history loss.
 

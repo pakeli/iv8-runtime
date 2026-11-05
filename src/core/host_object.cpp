@@ -31,7 +31,7 @@ v8::Local<v8::String> v8str(v8::Isolate* isolate, const std::string& s) {
 // (e.g. a derived object without the internal field), so a stray access returns
 // JS undefined rather than dereferencing garbage.
 HostObject* backing_of(v8::Local<v8::Object> self) {
-    if (self.IsEmpty() || self->InternalFieldCount() < 1) {
+    if (self.IsEmpty() || self->InternalFieldCount() != 1) {
         return nullptr;
     }
     return static_cast<HostObject*>(
@@ -272,6 +272,84 @@ void property_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
     }
 }
 
+// Function accessors expose real Web IDL descriptors on a shared prototype.
+// Callback data contains the member and expected interface; no native pointer is
+// captured, so copying a getter cannot outlive or bypass its receiver's brand.
+HostObject* idl_receiver(const v8::FunctionCallbackInfo<v8::Value>& info,
+                          std::string& key) {
+    v8::Isolate* isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    auto data = info.Data().As<v8::Array>();
+    v8::Local<v8::Value> member;
+    v8::Local<v8::Value> interface;
+    if (!data->Get(context, 0).ToLocal(&member) ||
+        !data->Get(context, 1).ToLocal(&interface)) return nullptr;
+    v8::String::Utf8Value member_text(isolate, member);
+    v8::String::Utf8Value interface_text(isolate, interface);
+    HostObject* host = backing_of(info.This());
+    if (host == nullptr || *interface_text == nullptr ||
+        host->prototype_key() != *interface_text) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8str(isolate, "Illegal invocation")));
+        return nullptr;
+    }
+    key = *member_text != nullptr ? *member_text : "";
+    return host;
+}
+
+void idl_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    std::string key;
+    HostObject* host = idl_receiver(info, key);
+    if (host == nullptr) return;
+    auto isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    AccessTrace* trace = active_trace(isolate);
+    const auto seq = record_access(trace, host, key, AccessOperation::kGet);
+    v8::TryCatch caught(isolate);
+    auto result = host->get_property(isolate, context, key);
+    if (seq != 0) {
+        try {
+            AccessCompletion completion;
+            completion.outcome = caught.HasCaught() ? "threw" : "returned";
+            if (caught.HasCaught()) {
+                access_capture_exception(isolate, context, caught, completion);
+            } else {
+                completion.value_summary = access_value_summary(isolate, result);
+            }
+            trace->complete(seq, std::move(completion));
+        } catch (...) {}
+    }
+    if (caught.HasCaught()) { caught.ReThrow(); return; }
+    info.GetReturnValue().Set(result);
+}
+
+void idl_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    std::string key;
+    HostObject* host = idl_receiver(info, key);
+    if (host == nullptr) return;
+    auto isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    v8::Local<v8::Value> value = info.Length() ? info[0] :
+        v8::Local<v8::Value>(v8::Undefined(isolate));
+    AccessTrace* trace = active_trace(isolate);
+    const auto seq = record_access(trace, host, key, AccessOperation::kSet);
+    v8::TryCatch caught(isolate);
+    host->set_property(isolate, context, key, value);
+    if (seq != 0) {
+        try {
+            AccessCompletion completion;
+            completion.outcome = caught.HasCaught() ? "threw" : "returned";
+            if (caught.HasCaught()) {
+                access_capture_exception(isolate, context, caught, completion);
+            } else {
+                completion.value_summary = access_value_summary(isolate, value);
+            }
+            trace->complete(seq, std::move(completion));
+        } catch (...) {}
+    }
+    if (caught.HasCaught()) caught.ReThrow();
+}
+
 // One generic method trampoline: the method name is carried as the function's
 // Data, dispatched to the backing object's call_method().
 void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
@@ -472,7 +550,10 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
     const auto is_writable = [&writable](const std::string& name) {
         return std::find(writable.begin(), writable.end(), name) != writable.end();
     };
+    const auto prototype_properties = host->prototype_property_names();
     for (const std::string& property : host->property_names()) {
+        if (std::find(prototype_properties.begin(), prototype_properties.end(),
+                      property) != prototype_properties.end()) continue;
         if (is_writable(property)) {
             tmpl->SetNativeDataProperty(
                 v8str(isolate, property), &property_getter, &property_setter,
@@ -495,6 +576,40 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
 
     v8::Local<v8::Object> object = tmpl->NewInstance(context).ToLocalChecked();
     object->SetAlignedPointerInInternalField(0, host, kHostObjectTag);
+    if (!prototype_properties.empty()) {
+        auto slot = v8::Private::ForApi(isolate, v8str(isolate,
+            "iv8.idl.prototype." + host->prototype_key()));
+        v8::Local<v8::Value> cached;
+        if (!context->Global()->GetPrivate(context, slot).ToLocal(&cached))
+            return object;
+        v8::Local<v8::Object> prototype;
+        if (cached->IsObject()) {
+            prototype = cached.As<v8::Object>();
+        } else {
+            prototype = v8::Object::New(isolate);
+            for (const auto& property : prototype_properties) {
+                auto data = v8::Array::New(isolate, 2);
+                (void)data->Set(context, 0, v8str(isolate, property));
+                (void)data->Set(context, 1, v8str(isolate, host->prototype_key()));
+                v8::Local<v8::Function> getter;
+                if (!v8::Function::New(context, &idl_getter, data).ToLocal(&getter))
+                    return object;
+                v8::Local<v8::Function> setter;
+                if (is_writable(property) &&
+                    !v8::Function::New(context, &idl_setter, data).ToLocal(&setter))
+                    return object;
+                v8::PropertyDescriptor descriptor(getter, setter.IsEmpty()
+                    ? v8::Local<v8::Value>(v8::Undefined(isolate))
+                    : v8::Local<v8::Value>(setter));
+                descriptor.set_enumerable(true);
+                descriptor.set_configurable(true);
+                (void)prototype->DefineProperty(context, v8str(isolate, property),
+                                                 descriptor);
+            }
+            (void)context->Global()->SetPrivate(context, slot, prototype);
+        }
+        (void)object->SetPrototype(context, prototype);
+    }
     return object;
 }
 

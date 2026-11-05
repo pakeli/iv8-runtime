@@ -36,7 +36,7 @@ def test_method_present_and_plain_array():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         assert page.eval("typeof document.getElementsByClassName") == "function"
-        assert page.eval("Array.isArray(document.getElementsByClassName('x'))") is True
+        assert page.eval("Array.isArray(document.getElementsByClassName('x'))") is False
         for member in ("item", "namedItem"):
             assert page.eval(
                 f"typeof document.getElementsByClassName('x').{member}") == "undefined"
@@ -49,7 +49,7 @@ def test_fresh_document_empty():
     with iv8.Page() as page:
         page.load(html="<html><body></body></html>", base_url=BASE)
         assert page.eval("document.getElementsByClassName('x').length") == 0
-        assert page.eval("Array.isArray(document.getElementsByClassName('x'))") is True
+        assert page.eval("Array.isArray(document.getElementsByClassName('x'))") is False
 
 
 # --- single-token match in document order, ignoring non-matching ----------------

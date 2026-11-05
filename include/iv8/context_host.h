@@ -15,6 +15,7 @@
 #include "iv8/v8_headers.h"
 
 #include "iv8/isolate_host.h"
+#include "iv8/js_exception.h"
 
 namespace iv8 {
 
@@ -93,6 +94,14 @@ public:
     void run_timers();
     // Manual pump: drain the pending microtask (job) queue.
     void run_jobs();
+
+    // Optional Page diagnostics; disabled in the M1 kernel by default.
+    void set_async_error_capture(bool enabled);
+    pybind11::dict read_async_errors(bool clear);
+    void record_async_error(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                            v8::TryCatch& caught, const std::string& kind) noexcept;
+    void observe_async_message(v8::Local<v8::Value> exception) noexcept;
+    void observe_promise_rejection(v8::PromiseRejectMessage message) noexcept;
 
     // --- M11-29 deterministic event-loop facade (timers + microtasks) ----------
     // Run one event-loop turn: drain microtasks, fire at most one timer whose
@@ -197,6 +206,14 @@ public:
     void release_value(std::uint64_t id) noexcept;
 
 private:
+    struct AsyncErrorRecord {
+        JsErrorData error;
+        std::string kind;
+        v8::Global<v8::Promise> promise;
+    };
+    bool async_error_capture_ = false;
+    std::vector<AsyncErrorRecord> async_errors_;
+    std::uint64_t dropped_async_errors_ = 0;
     friend class OperationScope;
 
     // Store a value in the handle table and return its opaque id. Called only
