@@ -1,5 +1,18 @@
 # CLAUDE.md
 
+**Latest verified browser compatibility repair (`2026-11-06`):** reflected
+meta/script/anchor properties, stable node wrappers, live tag/class collections,
+IDL accessors/brands, trailing-body recovery, document tree edits, document.all,
+bounded capability behavior, offline navigation intents and opt-in async errors.
+Source `15edd82` (tree `905d1f671bc31fd25b2aee78c13258a6318ec36a`) passed
+Linux `42064333308`, Windows `42064342679`, and macOS arm64 `42064322136`
+(macos-14), Python 3.11–3.14 each **1931 passed, 2 skipped** (1,933 collected).
+V8 CI `42064100130` passed; macOS focused runs each **53 passed**. The original
+independent report probe passed **27/27** against the installed final wheel.
+Contract, artifact IDs, source/driver restoration and remaining limits:
+`docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
+numbered feature milestone; actual navigation and networking remain absent.
+
 This file is the primary handoff entrypoint for Claude (and other coding agents)
 working on `iv8-runtime` after repository migration or chat-history loss.
 
@@ -24,7 +37,7 @@ git log --oneline --decorate -n 20
 
 ## Project Reality Check
 
-- Latest user-requested monitoring addition, verified (`2026-11-04`):
+- Previous monitoring presentation addition, verified (`2026-11-04`):
   `Page.read_access_trace(clear=True, format="text")` renders concise events and
   captured values. Default raw dictionaries and step-7 aggregation are unchanged.
   Source `1599fd5` passed Linux `41848358166`, Windows `41848373389`, and macOS
@@ -33,7 +46,7 @@ git log --oneline --decorate -n 20
   focused macOS checks each `79 passed`, including all five native integrations.
   See `docs/access_trace_text.md` for evidence and driver restoration. M11-53
   remains the next browser feature milestone.
-- Latest C++ maintenance, verified (`2026-11-04`): HTML entity
+- Previous C++ extraction maintenance, verified (`2026-11-04`): HTML entity
   decoding and text/attribute escaping are extracted into `html_entities`;
   DOM resources, parse contexts, and traversal stay in Page. Source `85b2d20`
   passed Linux `41828654174`, Windows `41828670556`, and macOS arm64

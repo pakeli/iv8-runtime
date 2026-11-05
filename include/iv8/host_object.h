@@ -47,6 +47,12 @@ public:
     // Names of the native-backed methods.
     virtual std::vector<std::string> method_names() const = 0;
 
+    // Browser IDL attributes opt into shared prototype accessors. Other hosts
+    // retain their historical own-property shape. The key identifies one
+    // interface within this context, never across isolates or generations.
+    virtual std::vector<std::string> prototype_property_names() const { return {}; }
+    virtual std::string prototype_key() const { return {}; }
+
     // Produce the value for property `name`. Runs inside the isolate/context
     // scopes; return a Local built from `isolate`/`context`.
     virtual v8::Local<v8::Value> get_property(v8::Isolate* isolate,

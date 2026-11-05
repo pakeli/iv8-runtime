@@ -81,8 +81,9 @@ def test_js_element_surface_not_exceeded():
         # getAttributeNames. The rest stay out of scope here.)
         el = "document.getElementById('d')"
         for member in ("attributes", "dataset", "src", "type",
-                       "async", "defer", "style"):
+                       "async", "defer"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        assert page.eval(f"Object.prototype.toString.call({el}.style)") == "[object CSSStyleDeclaration]"
         for member in ("innerHTML", "outerHTML"):
             assert page.eval(f"typeof {el}.{member}") == "string"
         # M11-10 brings these into scope; M11-12 adds the attribute-name surface.

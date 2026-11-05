@@ -40,8 +40,8 @@ def test_anchors_is_a_plain_array():
         assert page.eval("Array.isArray(document.anchors)") is True
         for member in ("item", "namedItem"):
             assert page.eval(f"typeof document.anchors.{member}") == "undefined"
-        # No .href URL reflection / navigation; only raw getAttribute.
-        assert page.eval("typeof document.anchors[0].href") == "undefined"
+        # Browser compatibility adds .href URL reflection / navigation; only raw getAttribute.
+        assert page.eval("typeof document.anchors[0].href") == "string"
         assert page.eval("document.anchors[0].getAttribute('name')") == "top"
 
 

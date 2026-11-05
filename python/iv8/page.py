@@ -1081,6 +1081,39 @@ class Page:
         """
         self._native.stop_access_trace()
 
+    def capture_async_errors(self, enabled: bool = True) -> None:
+        """Opt into bounded callback/rejection diagnostics; scheduling is unchanged.
+
+        Configuration survives load(); recorded errors belong to one generation
+        and reset on load(). Disabling preserves the current buffer for reading.
+        """
+        if not isinstance(enabled, bool):
+            raise TypeError("enabled must be a bool")
+        self._native.capture_async_errors(enabled)
+
+    def read_async_errors(self, clear: bool = True) -> dict:
+        """Read errors, dropped_errors and max_errors (1000).
+
+        Errors contain kind, name, message, stack, resource_name, line, column.
+        A later Promise handler removes a still-buffered rejection. This channel
+        observes callbacks; ordinary eval/load exceptions still raise JSError.
+        """
+        if not isinstance(clear, bool):
+            raise TypeError("clear must be a bool")
+        return self._native.read_async_errors(clear)
+
+    def read_navigation_requests(self, clear: bool = True) -> dict:
+        """Read offline assign/replace/reload intents; never perform navigation.
+
+        Returns ``requests``, ``dropped_requests`` and ``max_requests`` (1000).
+        Each request has ``operation``, resolved ``url``, ``resource_name`` and
+        ``generation``. The loaded document and location remain unchanged.
+        Requests survive load() until cleared, and are isolated per Page.
+        """
+        if not isinstance(clear, bool):
+            raise TypeError("clear must be a bool")
+        return self._native.read_navigation_requests(clear)
+
     def read_access_trace(self, clear: bool = True, *, format: str = "raw") -> dict | str:
         """Return the access-trace report, optionally clearing the event log.
 

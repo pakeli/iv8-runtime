@@ -1,6 +1,19 @@
 # Next Tasks
 
-Last reviewed: `2026-11-04`
+**Latest verified browser compatibility repair (`2026-11-06`):** reflected
+meta/script/anchor properties, stable node wrappers, live tag/class collections,
+IDL accessors/brands, trailing-body recovery, document tree edits, document.all,
+bounded capability behavior, offline navigation intents and opt-in async errors.
+Source `15edd82` (tree `905d1f671bc31fd25b2aee78c13258a6318ec36a`) passed
+Linux `42064333308`, Windows `42064342679`, and macOS arm64 `42064322136`
+(macos-14), Python 3.11–3.14 each **1931 passed, 2 skipped** (1,933 collected).
+V8 CI `42064100130` passed; macOS focused runs each **53 passed**. The original
+independent report probe passed **27/27** against the installed final wheel.
+Contract, artifact IDs, source/driver restoration and remaining limits:
+`docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
+numbered feature milestone; actual navigation and networking remain absent.
+
+Last reviewed: `2026-11-06`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
@@ -63,8 +76,9 @@ At the user's direction, **Window now has higher priority than Document**:
    (`getComputedStyle` only if a CSS model is approved) before returning to
    Document work.
 2. **Later — Document continuation.** `document.write`/`writeln`/`open`/`close`
-   and `importNode`/`adoptNode` move behind the Window slices. `document.all`
-   and DOM prototype chains remain deferred.
+   and `importNode`/`adoptNode` move behind the Window slices. The bounded
+   document.all repair is verified above; complete DOM constructor/prototype
+   inheritance and remaining legacy collection overloads are still deferred.
 3. Remaining headless-browser gaps and the open decisions in
    `docs/current_status.md` follow.
 

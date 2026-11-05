@@ -38,7 +38,7 @@ def test_fresh_page_query_collections_empty():
     with iv8.Page() as page:
         assert page.eval("document.head") is None
         assert page.eval("Array.isArray(document.querySelectorAll('div'))") is True
-        assert page.eval("Array.isArray(document.getElementsByTagName('div'))") is True
+        assert page.eval("Array.isArray(document.getElementsByTagName('div'))") is False
         assert page.eval("document.querySelectorAll('div').length") == 0
         assert page.eval("document.getElementsByTagName('div').length") == 0
 
@@ -134,7 +134,7 @@ def test_get_elements_by_tag_name():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         assert page.eval(
-            "document.getElementsByTagName('div').map(e => e.id).join(',')"
+            "Array.from(document.getElementsByTagName('div')).map(e => e.id).join(',')"
         ) == "d1,d2"
         assert page.eval("document.getElementsByTagName('section').length") == 0
 
@@ -155,7 +155,7 @@ def test_get_elements_by_tag_name_star():
         page.load(html=html, base_url=BASE)
         # All elements in document order: html, head, body, div, p.
         assert page.eval(
-            "document.getElementsByTagName('*').map(e => e.tagName).join(',')"
+            "Array.from(document.getElementsByTagName('*')).map(e => e.tagName).join(',')"
         ) == "HTML,HEAD,BODY,DIV,P"
 
 
@@ -169,7 +169,7 @@ def test_scripts_alignment():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE, resources={BASE + "a.js": "0;"})
         # getElementsByTagName('script') and document.scripts see the same set.
-        by_tag = page.eval("document.getElementsByTagName('script').map(e => e.id).join(',')")
+        by_tag = page.eval("Array.from(document.getElementsByTagName('script')).map(e => e.id).join(',')")
         by_qsa = page.eval("document.querySelectorAll('script').map(e => e.id).join(',')")
         scripts = page.eval("document.scripts.map(e => e.id).join(',')")
         assert by_tag == by_qsa == scripts == "e,i,m"
@@ -222,7 +222,7 @@ def test_returned_collections_have_no_htmlcollection_extras():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         assert page.eval("typeof document.querySelectorAll('div').item") == "undefined"
-        assert page.eval("typeof document.getElementsByTagName('div').namedItem") == "undefined"
+        assert page.eval("typeof document.getElementsByTagName('div').namedItem") == "function"
 
 
 # --- querySelector unchanged -----------------------------------------------------

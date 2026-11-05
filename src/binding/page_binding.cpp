@@ -130,5 +130,11 @@ void register_page(py::module_& module) {
              py::arg("max_events"), py::arg("object_types"))
         .def("stop_access_trace", &iv8::PageState::stop_access_trace)
         .def("read_access_trace", &iv8::PageState::read_access_trace,
+             py::arg("clear"))
+        .def("read_navigation_requests", &iv8::PageState::read_navigation_requests,
+             py::arg("clear"))
+        .def("capture_async_errors", &iv8::PageState::capture_async_errors,
+             py::arg("enabled"))
+        .def("read_async_errors", &iv8::PageState::read_async_errors,
              py::arg("clear"));
 }

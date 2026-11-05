@@ -30,7 +30,9 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 
 #include "iv8/access_summary.h"
 #include "iv8/base64.h"
+#include "iv8/browser_compatibility.h"
 #include "iv8/context_host.h"
+#include "iv8/dom_url.h"
 #include "iv8/html_entities.h"
 #include "iv8/query_parameters.h"
 #include "iv8/selector_parser.h"
@@ -946,6 +948,8 @@ public:
         : environment_(environment), connection_(environment) {}
 
     std::string global_name() const override { return "navigator"; }
+    std::vector<std::string> prototype_property_names() const override { return {"webdriver"}; }
+    std::string prototype_key() const override { return "Navigator"; }
     std::string trace_object_type() const override { return "navigator"; }
 
     std::vector<std::string> property_names() const override {
@@ -1264,20 +1268,21 @@ private:
 // — there is no assign/replace/reload/href-write navigation in M2-3.
 class LocationHost : public HostObject {
 public:
-    explicit LocationHost(UrlParts parts) : parts_(std::move(parts)) {}
+    LocationHost(UrlParts parts, PageState* page) : parts_(std::move(parts)), page_(page) {}
 
     std::string global_name() const override { return "location"; }
     std::string trace_object_type() const override { return "location"; }
 
     std::vector<std::string> property_names() const override {
         return {"href",     "origin",   "protocol", "host",
-                "hostname", "pathname", "search",   "hash"};
+                "hostname", "port", "pathname", "search",   "hash"};
     }
 
-    std::vector<std::string> method_names() const override { return {"toString"}; }
+    std::vector<std::string> method_names() const override { return {"toString", "assign", "replace", "reload"}; }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
                                       const std::string& name) override {
+        if (name == "port") return v8_string(isolate, resolve_dom_url(parts_.href, "").port);
         const std::string* value = component(name);
         if (value != nullptr) {
             return v8_string(isolate, *value);
@@ -1286,11 +1291,28 @@ public:
     }
 
     v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string& name,
-        const v8::FunctionCallbackInfo<v8::Value>&) override {
-        if (name == "toString") {
-            return v8_string(isolate, parts_.href);
+        v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args) override {
+        if (name == "toString") return v8_string(isolate, parts_.href);
+        std::string requested = parts_.href;
+        if (name != "reload") {
+            if (args.Length() == 0) {
+                isolate->ThrowException(v8::Exception::TypeError(
+                    v8::String::NewFromUtf8Literal(isolate, "A navigation URL is required")));
+                return v8::Undefined(isolate);
+            }
+            v8::Local<v8::String> input;
+            if (!args[0]->ToString(context).ToLocal(&input)) return v8::Undefined(isolate);
+            v8::String::Utf8Value utf8(isolate, input);
+            auto url = resolve_dom_url(*utf8 != nullptr ? *utf8 : "", parts_.href);
+            if (!url.valid) {
+                isolate->ThrowException(v8::Exception::TypeError(
+                    v8::String::NewFromUtf8Literal(isolate, "Invalid navigation URL")));
+                return v8::Undefined(isolate);
+            }
+            requested = url.href;
         }
+        page_->record_navigation(isolate, name, requested);
         return v8::Undefined(isolate);
     }
 
@@ -1308,6 +1330,7 @@ private:
     }
 
     UrlParts parts_;
+    PageState* page_;
 };
 
 // Fixed internal default base URL for M2-3. The RFC 2606 `.invalid` TLD makes it
@@ -3148,6 +3171,7 @@ private:
                 v8::TryCatch try_catch(isolate);
                 (void)listener.callback->Call(context, receiver, 1, &event_arg);
                 if (try_catch.HasCaught()) {
+                    state_from_isolate(isolate)->record_async_error(isolate, context, try_catch, "listener");
                     try_catch.Reset();  // one listener's error never stops the rest
                 }
                 set_event_in_passive_listener(isolate, context, event,
@@ -3254,6 +3278,7 @@ protected:
         const bool called =
             handler->Call(context, receiver, 1, &event_arg).ToLocal(&result);
         if (!called || try_catch.HasCaught()) {
+            state_from_isolate(isolate)->record_async_error(isolate, context, try_catch, "listener");
             try_catch.Reset();
             return;
         }
@@ -3349,6 +3374,22 @@ protected:
     DocumentHost* document_;
 };
 
+std::string reflected_element_attribute(const DomNode* node, const std::string& name) {
+    if (node->tag == "meta") {
+        if (name == "httpEquiv") return "http-equiv";
+        if (name == "content" || name == "name" || name == "scheme") return name;
+    }
+    if (node->tag == "script" && (name == "src" || name == "type")) return name;
+    return {};
+}
+
+struct LiveCollectionBinding {
+    DocumentHost* document;
+    DomNode* root;
+    std::string kind;
+    std::string query;
+};
+
 // M2-6/M2-7 element host object. Read-only, minimal node/element surface:
 // tagName / nodeName / nodeType / id / className / textContent + parentNode /
 // childNodes / children + getAttribute / hasAttribute. No mutation, no full
@@ -3362,6 +3403,10 @@ public:
     std::string global_name() const override { return std::string(); }  // never global
     std::string trace_object_type() const override { return "element"; }
     std::string trace_label() const override { return node_->tag; }
+    std::vector<std::string> prototype_property_names() const override {
+        return property_names();
+    }
+    std::string prototype_key() const override { return "Element:" + node_->tag; }
 
     std::vector<std::string> property_names() const override {
         std::vector<std::string> names = {
@@ -3378,6 +3423,19 @@ public:
             "firstChild", "lastChild", "previousSibling", "nextSibling",
             // M11-10 classList (fresh plain object per access).
             "classList"};
+        names.push_back("innerText");
+        names.push_back("style");
+        if (node_->tag == "canvas") names.insert(names.end(), {"width", "height"});
+        if (node_->tag == "meta") {
+            names.insert(names.end(), {"content", "name", "httpEquiv", "scheme"});
+        }
+        if (node_->tag == "script") {
+            names.insert(names.end(), {"src", "type", "text"});
+        }
+        if (node_->tag == "a" || node_->tag == "area") {
+            names.insert(names.end(), {"href", "protocol", "host", "hostname",
+                "port", "pathname", "search", "hash", "origin"});
+        }
         // M5-1: `elements` is exposed only on <form> (so non-form elements have no
         // `.elements` property at all). M7-3..7: `method` / `action` / `enctype` /
         // `target` (string) + `noValidate` (bool) — all read-write.
@@ -3490,6 +3548,7 @@ public:
             "closest",
             // M11-10 boolean attribute toggle.
             "toggleAttribute"};
+        if (node_->tag == "canvas") names.push_back("getContext");
         // M6-1: reset() is exposed only on <form>; M7-1: submit(); M7-2: requestSubmit().
         if (node_->tag == "form") {
             names.push_back("reset");
@@ -3519,6 +3578,17 @@ public:
     std::vector<std::string> writable_property_names() const override {
         std::vector<std::string> names = {"textContent", "innerHTML",
                                           "outerHTML", "id", "className"};
+        names.push_back("innerText");
+        names.push_back("style");
+        if (node_->tag == "canvas") names.insert(names.end(), {"width", "height"});
+        if (node_->tag == "meta") {
+            names.insert(names.end(), {"content", "name", "httpEquiv", "scheme"});
+        }
+        if (node_->tag == "script") names.insert(names.end(), {"src", "type", "text"});
+        if (node_->tag == "a" || node_->tag == "area") {
+            names.insert(names.end(), {"href", "protocol", "host", "hostname",
+                "port", "pathname", "search", "hash"});
+        }
         if (node_->tag == "input" || node_->tag == "textarea" ||
             node_->tag == "button" || node_->tag == "select") {
             names.push_back("value");
@@ -3701,6 +3771,61 @@ public:
     DocumentHost(const std::string& html, std::string url, PageState* page)
         : page_(page), url_(std::move(url)) {
         parse_html(html, pool_, roots_, scripts_);
+        // Full-document repair only: fragment parsing must keep its own roots.
+        DomNode* html_node = find_tag("html");
+        if (html_node != nullptr) {
+            DomNode* body_node = find_tag("body");
+            const auto html_position = std::find(roots_.begin(), roots_.end(), html_node);
+            const bool has_trailing = html_position != roots_.end() &&
+                std::next(html_position) != roots_.end();
+            if (body_node == nullptr && has_trailing) {
+                auto body = std::make_unique<DomNode>();
+                body->tag = "body";
+                body->parent = html_node;
+                body_node = body.get();
+                html_node->children.push_back(body_node);
+                pool_.push_back(std::move(body));
+            }
+            if (body_node != nullptr && body_node->parent != html_node) {
+                if (body_node->parent != nullptr) {
+                    auto& siblings = body_node->parent->children;
+                    siblings.erase(std::remove(siblings.begin(), siblings.end(), body_node), siblings.end());
+                }
+                roots_.erase(std::remove(roots_.begin(), roots_.end(), body_node), roots_.end());
+                body_node->parent = html_node;
+                html_node->children.push_back(body_node);
+            }
+            const auto append_to_body = [body_node](DomNode* node) {
+                if (node->kind == NodeKind::Text && !body_node->children.empty() &&
+                    body_node->children.back()->kind == NodeKind::Text) {
+                    body_node->children.back()->data += node->data;
+                    node->parent = nullptr;
+                } else {
+                    node->parent = body_node;
+                    body_node->children.push_back(node);
+                }
+            };
+            if (body_node != nullptr && body_node->parent == html_node) {
+                bool after_body = false;
+                for (auto child = html_node->children.begin(); child != html_node->children.end();) {
+                    if (*child == body_node) after_body = true;
+                    if (after_body && *child != body_node && (*child)->kind != NodeKind::Comment) {
+                        append_to_body(*child);
+                        child = html_node->children.erase(child);
+                    } else ++child;
+                }
+            }
+            bool after_html = false;
+            for (auto root = roots_.begin(); root != roots_.end();) {
+                if (*root == html_node) after_html = true;
+                if (body_node != nullptr && after_html && *root != html_node &&
+                    ((*root)->kind == NodeKind::Element ||
+                     (*root)->kind == NodeKind::Text)) {
+                    append_to_body(*root);
+                    root = roots_.erase(root);
+                } else ++root;
+            }
+        }
         // M11-47/M11-48: title reflects the first parsed <title> element live;
         // title_ remains the fallback for documents without a title element.
         title_node_ = find_tag("title");
@@ -3750,7 +3875,7 @@ public:
                 "characterSet", "contentType", "compatMode", "referrer",
                 "domain", "visibilityState", "hidden", "activeElement",
                 // M11-46 deterministic Page-level cookie jar.
-                "cookie"};
+                "cookie", "all"};
     }
     std::vector<std::string> writable_property_names() const override {
         // M11-46 cookie jar; M11-47 writable document.title.
@@ -3770,7 +3895,8 @@ public:
                                           // M11-20 name query.
                                           "getElementsByName",
                                           // M11-23 deterministic focus report.
-                                          "hasFocus"};
+                                          "hasFocus", "appendChild", "removeChild",
+                                          "insertBefore", "replaceChild"};
         const std::vector<std::string>& events = event_method_names();
         names.insert(names.end(), events.begin(), events.end());
         return names;
@@ -3781,6 +3907,8 @@ public:
     // teardown hook only reaches them through the document).
     void release_v8_handles() noexcept override {
         EventTargetHost::release_v8_handles();
+        node_objects_.clear();
+        all_collection_.Reset();
         for (const std::unique_ptr<NodeHost>& host : node_hosts_) {
             host->release_v8_handles();
         }
@@ -3807,6 +3935,11 @@ public:
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
                                       v8::Local<v8::Context> context,
                                       const std::string& name) override {
+        if (name == "all") {
+            if (all_collection_.IsEmpty()) all_collection_.Reset(isolate,
+                live_collection(isolate, context, nullptr, "tag", "*", true));
+            return all_collection_.Get(isolate);
+        }
         if (name == "URL") return v8_string(isolate, url_);
         if (name == "title") {
             return v8_string(isolate, title_node_ != nullptr
@@ -3977,6 +4110,71 @@ public:
         if (handle_event_method(isolate, context, name, args, event_result)) {
             return event_result;
         }
+        if (name == "appendChild" || name == "insertBefore" ||
+            name == "removeChild" || name == "replaceChild") {
+            const auto fail = [&](const char* error_name, const char* message) {
+                auto error = v8::Exception::Error(v8::String::NewFromUtf8Literal(isolate, "Document tree edit failed"));
+                (void)error.As<v8::Object>()->Set(context, v8::String::NewFromUtf8Literal(isolate, "name"),
+                    v8_string(isolate, error_name));
+                (void)error.As<v8::Object>()->Set(context, v8::String::NewFromUtf8Literal(isolate, "message"),
+                    v8_string(isolate, message));
+                isolate->ThrowException(error);
+                return v8::Local<v8::Value>(v8::Undefined(isolate));
+            };
+            DomNode* child = args.Length() ? NodeHost::node_of_arg(args[0]) : nullptr;
+            if (child == nullptr) return fail("TypeError", "A Node argument is required");
+            auto host = static_cast<NodeHost*>(host_object_backing(args[0]));
+            if (host->document() != this) return fail("WrongDocumentError", "Node belongs to another document");
+            if (name == "removeChild") {
+                auto found = std::find(roots_.begin(), roots_.end(), child);
+                if (found == roots_.end()) return fail("NotFoundError", "Node is not a child of document");
+                roots_.erase(found);
+                child->parent = nullptr;
+                return wrap_node(isolate, context, child);
+            }
+            DomNode* reference = nullptr;
+            if (name == "insertBefore" || name == "replaceChild") {
+                if (args.Length() < 2) return fail("TypeError", "A reference Node is required");
+                if (!args[1]->IsNull()) {
+                    reference = NodeHost::node_of_arg(args[1]);
+                    if (reference == nullptr) return fail("TypeError", "Reference is not a Node");
+                    if (std::find(roots_.begin(), roots_.end(), reference) == roots_.end())
+                        return fail("NotFoundError", "Reference is not a child of document");
+                } else if (name == "replaceChild") return fail("TypeError", "oldChild must be a Node");
+            }
+            if (child == reference) return wrap_node(isolate, context, child);
+            auto inserted = child->kind == NodeKind::DocumentFragment ? child->children :
+                std::vector<DomNode*>{child};
+            std::size_t elements = 0;
+            for (auto root : roots_) {
+                if (root != child && !(name == "replaceChild" && root == reference) &&
+                    root->kind == NodeKind::Element) ++elements;
+            }
+            for (auto node : inserted) {
+                if (node->kind == NodeKind::Text) return fail("HierarchyRequestError", "Document cannot contain text children");
+                if (node->kind == NodeKind::Element) ++elements;
+            }
+            if (elements > 1) return fail("HierarchyRequestError", "Document can contain only one element child");
+            for (auto node : inserted) {
+                if (node->parent != nullptr) {
+                    std::string error;
+                    if (!remove_dom_node(isolate, context, node->parent, node, &error))
+                        return fail("HierarchyRequestError", "Cannot detach node");
+                }
+                auto previous = std::find(roots_.begin(), roots_.end(), node);
+                if (previous != roots_.end()) roots_.erase(previous);
+                auto position = reference == nullptr ? roots_.end() :
+                    std::find(roots_.begin(), roots_.end(), reference);
+                roots_.insert(position, node);
+                node->parent = nullptr;
+            }
+            if (child->kind == NodeKind::DocumentFragment) child->children.clear();
+            if (name == "replaceChild") {
+                roots_.erase(std::find(roots_.begin(), roots_.end(), reference));
+                return wrap_node(isolate, context, reference);
+            }
+            return wrap_node(isolate, context, child);
+        }
         std::string arg;
         if (args.Length() > 0) {
             v8::String::Utf8Value utf8(isolate, args[0]);
@@ -3994,22 +4192,10 @@ public:
             return elements_array(isolate, context, query_all(arg));
         }
         if (name == "getElementsByTagName") {  // M4-A-1
-            return elements_array(isolate, context, elements_by_tag(arg));
+            return live_collection(isolate, context, nullptr, "tag", arg);
         }
-        if (name == "getElementsByClassName") {  // M4-B-13 / M11-19 class query
-            // String(name) split into class tokens (same tokenizer as className /
-            // setAttribute('class', ...)). Match every element whose class token
-            // set contains ALL tokens (multi-token intersection). Empty /
-            // whitespace-only -> [] (no throw). Case-sensitive. Live tree, document
-            // order, detached elements excluded (collect walks roots_).
-            std::vector<std::string> tokens = split_class_tokens(arg);
-            std::vector<DomNode*> nodes;
-            if (!tokens.empty()) {
-                nodes = collect([&tokens](const DomNode* n) {
-                    return has_all_class_tokens(n, tokens);
-                });
-            }
-            return elements_array(isolate, context, nodes);
+        if (name == "getElementsByClassName") {
+            return live_collection(isolate, context, nullptr, "class", arg);
         }
         if (name == "getElementsByName") {  // M11-20: exact name-attribute query
             std::vector<DomNode*> nodes = collect([&arg](const DomNode* n) {
@@ -4049,6 +4235,13 @@ public:
         }
         return v8::Undefined(isolate);
     }
+
+    const std::string& base_url() const { return url_; }
+
+    v8::Local<v8::Object> live_collection(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, DomNode* root, const std::string& kind,
+        const std::string& query, bool all = false);
+    std::vector<DomNode*> collection_nodes(const LiveCollectionBinding& binding) const;
 
     // M11-14: deep/shallow detached clone. The clone is inserted into the
     // detached pool (never into roots_), so document queries ignore it.
@@ -4162,7 +4355,11 @@ public:
                                    v8::Local<v8::Context> context,
                                    DomNode* node) {
         if (node == nullptr) return v8::Null(isolate);
-        return make_host_object(isolate, context, ensure_node_host(node));
+        auto& wrapper = node_objects_[node];
+        if (wrapper.IsEmpty()) {
+            wrapper.Reset(isolate, make_host_object(isolate, context, ensure_node_host(node)));
+        }
+        return wrapper.Get(isolate);
     }
 
     // Build a plain JS Array of host objects for arbitrary `nodes` (same wrapping
@@ -4548,6 +4745,9 @@ private:
     std::vector<ScriptRecord> scripts_;  // M3-5 scripts in document order
     std::vector<std::unique_ptr<NodeHost>> node_hosts_;
     std::unordered_map<DomNode*, NodeHost*> wrappers_;
+    std::unordered_map<DomNode*, v8::Global<v8::Object>> node_objects_;
+    v8::Global<v8::Object> all_collection_;
+    std::vector<std::unique_ptr<LiveCollectionBinding>> collections_;
     // M11-5: per-generation MutationObserver state (Globals released through the
     // isolate-alive teardown hook in release_v8_handles()).
     std::vector<std::unique_ptr<MutationObserverState>> observers_;
@@ -4561,6 +4761,181 @@ private:
     // set at install time. Null before install / in the both-modes shell.
     EventTargetHost* window_target_ = nullptr;
 };
+
+std::vector<DomNode*> DocumentHost::collection_nodes(const LiveCollectionBinding& binding) const {
+    const auto tokens = split_class_tokens(binding.query);
+    const auto predicate = binding.kind == "tag" ? tag_predicate(binding.query) :
+        std::function<bool(const DomNode*)>([tokens](const DomNode* node) {
+            return !tokens.empty() && has_all_class_tokens(node, tokens);
+        });
+    if (binding.root == nullptr) return collect(predicate);
+    std::vector<DomNode*> nodes;
+    for (auto child : binding.root->children) collect_matching(child, predicate, nodes);
+    return nodes;
+}
+
+LiveCollectionBinding* collection_binding(v8::Local<v8::Object> object) {
+    if (object->InternalFieldCount() != 2) return nullptr;
+    return static_cast<LiveCollectionBinding*>(object->GetAlignedPointerFromInternalField(0, v8::kEmbedderDataTypeTagDefault));
+}
+
+v8::Intercepted collection_index(std::uint32_t index,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+    auto binding = collection_binding(info.Holder());
+    if (binding == nullptr) return v8::Intercepted::kNo;
+    auto nodes = binding->document->collection_nodes(*binding);
+    if (index >= nodes.size()) return v8::Intercepted::kNo;
+    info.GetReturnValue().Set(binding->document->wrap_node(info.GetIsolate(),
+        info.GetIsolate()->GetCurrentContext(), nodes[index]));
+    return v8::Intercepted::kYes;
+}
+
+v8::Intercepted collection_index_query(std::uint32_t index,
+    const v8::PropertyCallbackInfo<v8::Integer>& info) {
+    auto binding = collection_binding(info.Holder());
+    if (binding == nullptr || index >= binding->document->collection_nodes(*binding).size())
+        return v8::Intercepted::kNo;
+    info.GetReturnValue().Set(static_cast<int>(v8::ReadOnly));
+    return v8::Intercepted::kYes;
+}
+
+void collection_indices(const v8::PropertyCallbackInfo<v8::Array>& info) {
+    auto binding = collection_binding(info.Holder());
+    if (binding == nullptr) return;
+    auto nodes = binding->document->collection_nodes(*binding);
+    auto array = v8::Array::New(info.GetIsolate(), static_cast<int>(nodes.size()));
+    for (std::uint32_t index = 0; index < nodes.size(); ++index)
+        (void)array->Set(info.GetIsolate()->GetCurrentContext(), index,
+            v8::Integer::NewFromUnsigned(info.GetIsolate(), index));
+    info.GetReturnValue().Set(array);
+}
+
+DomNode* collection_named(LiveCollectionBinding* binding, const std::string& name) {
+    if (name.empty()) return nullptr;
+    for (auto node : binding->document->collection_nodes(*binding)) {
+        auto found = node->attributes.find("name");
+        if (node->id == name || (found != node->attributes.end() && found->second == name))
+            return node;
+    }
+    return nullptr;
+}
+
+v8::Intercepted collection_name(v8::Local<v8::Name> name,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+    if (!name->IsString()) return v8::Intercepted::kNo;
+    auto binding = collection_binding(info.Holder());
+    if (binding == nullptr) return v8::Intercepted::kNo;
+    v8::String::Utf8Value text(info.GetIsolate(), name);
+    auto node = collection_named(binding, *text != nullptr ? *text : "");
+    if (node == nullptr) return v8::Intercepted::kNo;
+    info.GetReturnValue().Set(binding->document->wrap_node(info.GetIsolate(),
+        info.GetIsolate()->GetCurrentContext(), node));
+    return v8::Intercepted::kYes;
+}
+
+void collection_length(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto binding = collection_binding(info.This());
+    if (binding == nullptr) {
+        info.GetIsolate()->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(info.GetIsolate(), "Illegal invocation")));
+        return;
+    }
+    info.GetReturnValue().Set(static_cast<std::uint32_t>(
+        binding->document->collection_nodes(*binding).size()));
+}
+
+void collection_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    auto binding = collection_binding(info.This());
+    if (binding == nullptr) {
+        isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8Literal(isolate, "Illegal invocation")));
+        return;
+    }
+    v8::Local<v8::Value> argument = info.Length() ? info[0] :
+        v8::Local<v8::Value>(v8::Undefined(isolate));
+    DomNode* node = nullptr;
+    const bool named = info.Data()->IsTrue();
+    if (named) {
+        v8::Local<v8::String> name;
+        if (!argument->ToString(context).ToLocal(&name)) return;
+        v8::String::Utf8Value text(isolate, name);
+        node = collection_named(binding, *text != nullptr ? *text : "");
+    } else {
+        auto index = argument->Uint32Value(context);
+        if (index.IsNothing()) return;
+        auto nodes = binding->document->collection_nodes(*binding);
+        if (index.FromJust() < nodes.size()) node = nodes[index.FromJust()];
+    }
+    info.GetReturnValue().Set(binding->document->wrap_node(isolate, context, node));
+}
+
+void all_collection_call(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    auto binding = static_cast<LiveCollectionBinding*>(info.Data().As<v8::External>()->Value(v8::kExternalPointerTypeTagDefault));
+    if (info.Length() == 0) { info.GetReturnValue().Set(v8::Null(isolate)); return; }
+    v8::Local<v8::String> value;
+    if (!info[0]->ToString(context).ToLocal(&value)) return;
+    v8::String::Utf8Value name(isolate, value);
+    DomNode* node = collection_named(binding, *name != nullptr ? *name : "");
+    info.GetReturnValue().Set(binding->document->wrap_node(isolate, context, node));
+}
+
+v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, DomNode* root, const std::string& kind,
+    const std::string& query, bool all) {
+    auto binding = std::make_unique<LiveCollectionBinding>(LiveCollectionBinding{this, root, kind, query});
+    auto raw = binding.get();
+    collections_.push_back(std::move(binding));
+    auto object_template = v8::ObjectTemplate::New(isolate);
+    object_template->SetInternalFieldCount(2); // Distinct from a HostObject wrapper.
+    object_template->SetHandler(v8::IndexedPropertyHandlerConfiguration(
+        &collection_index, nullptr, &collection_index_query, nullptr, &collection_indices));
+    object_template->SetHandler(v8::NamedPropertyHandlerConfiguration(&collection_name,
+        nullptr, nullptr, nullptr, nullptr, v8::Local<v8::Value>(),
+        v8::PropertyHandlerFlags::kNonMasking));
+    if (all) {
+        object_template->MarkAsUndetectable();
+        object_template->SetCallAsFunctionHandler(&all_collection_call,
+            v8::External::New(isolate, raw, v8::kExternalPointerTypeTagDefault));
+    }
+    v8::Local<v8::Object> object;
+    if (!object_template->NewInstance(context).ToLocal(&object)) return v8::Object::New(isolate);
+    object->SetAlignedPointerInInternalField(0, raw, v8::kEmbedderDataTypeTagDefault);
+    auto cache_key = v8::Private::ForApi(isolate, v8::String::NewFromUtf8Literal(isolate,
+        "iv8.collection.prototypes"));
+    v8::Local<v8::Value> cached;
+    if (!context->Global()->GetPrivate(context, cache_key).ToLocal(&cached)) return object;
+    v8::Local<v8::Object> prototypes = cached->IsObject() ? cached.As<v8::Object>() : v8::Object::New(isolate);
+    (void)context->Global()->SetPrivate(context, cache_key, prototypes);
+    const auto class_name = v8_string(isolate, all ? "HTMLAllCollection" : "HTMLCollection").As<v8::String>();
+    if (!prototypes->Get(context, class_name).ToLocal(&cached)) return object;
+    v8::Local<v8::Object> prototype;
+    if (cached->IsObject()) prototype = cached.As<v8::Object>();
+    else {
+        prototype = v8::Object::New(isolate);
+        v8::Local<v8::Function> getter;
+        if (!v8::Function::New(context, &collection_length).ToLocal(&getter)) return object;
+        v8::PropertyDescriptor length(getter, v8::Undefined(isolate));
+        length.set_enumerable(true); length.set_configurable(true);
+        (void)prototype->DefineProperty(context, v8::String::NewFromUtf8Literal(isolate, "length"), length);
+        for (const auto& name : {"item", "namedItem"}) {
+            v8::Local<v8::Function> method;
+            if (!v8::Function::New(context, &collection_item,
+                    v8::Boolean::New(isolate, std::string(name) == "namedItem")).ToLocal(&method)) return object;
+            (void)prototype->Set(context, v8_string(isolate, name), method);
+        }
+        (void)prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
+            class_name, static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
+        v8::Local<v8::Value> iterator;
+        if (v8::Array::New(isolate)->Get(context, v8::Symbol::GetIterator(isolate)).ToLocal(&iterator))
+            (void)prototype->DefineOwnProperty(context, v8::Symbol::GetIterator(isolate), iterator, v8::DontEnum);
+        (void)prototypes->Set(context, class_name, prototype);
+    }
+    (void)object->SetPrototype(context, prototype);
+    return object;
+}
 
 // --- M11-5 MutationObserver native registry / delivery -----------------------
 
@@ -6325,6 +6700,52 @@ v8::Local<v8::Value> DocumentFragmentHost::call_method(
 v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
                                                v8::Local<v8::Context> context,
                                                const std::string& name) {
+    if (node_->tag == "canvas" && (name == "width" || name == "height")) {
+        const auto found = node_->attributes.find(name);
+        long value = name == "width" ? 300 : 150;
+        if (found != node_->attributes.end()) {
+            char* end = nullptr;
+            const long parsed = std::strtol(found->second.c_str(), &end, 10);
+            if (end != found->second.c_str() && parsed >= 0 && parsed <= 2147483647) value = parsed;
+        }
+        return v8::Integer::New(isolate, static_cast<int>(value));
+    }
+
+    if (name == "style") return make_inline_style(isolate, context,
+        document_->wrap_node(isolate, context, node_));
+    if (name == "innerText" || (node_->tag == "script" && name == "text"))
+        return v8_string(isolate, text_content_of(node_));
+    const auto reflected = reflected_element_attribute(node_, name);
+    if (!reflected.empty()) {
+        const auto found = node_->attributes.find(reflected);
+        if (found == node_->attributes.end()) return v8_string(isolate, "");
+        if (node_->tag == "script" && name == "src") {
+            const auto url = resolve_dom_url(found->second, document_->base_url());
+            return v8_string(isolate, url.valid ? url.href : found->second);
+        }
+        return v8_string(isolate, found->second);
+    }
+    if ((node_->tag == "a" || node_->tag == "area") &&
+        (name == "href" || name == "protocol" || name == "host" ||
+         name == "hostname" || name == "port" || name == "pathname" ||
+         name == "search" || name == "hash" || name == "origin")) {
+        const auto found = node_->attributes.find("href");
+        const auto url = found == node_->attributes.end() ? DomUrl{} :
+            resolve_dom_url(found->second, document_->base_url());
+        std::string value;
+        if (name == "href") value = url.valid ? url.href :
+            (found == node_->attributes.end() ? "" : found->second);
+        else if (name == "protocol") value = url.valid ? url.protocol : ":";
+        else if (name == "host") value = url.host;
+        else if (name == "hostname") value = url.hostname;
+        else if (name == "port") value = url.port;
+        else if (name == "pathname") value = url.pathname;
+        else if (name == "search") value = url.search;
+        else if (name == "hash") value = url.hash;
+        else if (name == "origin") value = url.origin;
+        return v8_string(isolate, value);
+    }
+
     if (name == "tagName" || name == "nodeName") {
         return v8_string(isolate, ascii_upper(node_->tag));
     }
@@ -6790,6 +7211,44 @@ void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> cont
                                        old_value);
         }
     };
+    if (name == "style") {
+        auto style = make_inline_style(isolate, context, document_->wrap_node(isolate, context, node_));
+        if (style->IsObject()) (void)style.As<v8::Object>()->Set(context,
+            v8::String::NewFromUtf8Literal(isolate, "cssText"), value);
+        return;
+    }
+    if (node_->tag == "canvas" && (name == "width" || name == "height")) {
+        auto converted = value->Uint32Value(context);
+        if (!converted.IsNothing()) reflect_raw_string(name, std::to_string(converted.FromJust()));
+        return;
+    }
+    if (name == "innerText" || (node_->tag == "script" && name == "text")) {
+        std::string text;
+        if (to_reflected_string(text)) document_->set_text_content(isolate, context, node_, text);
+        return;
+    }
+    const auto reflected = reflected_element_attribute(node_, name);
+    if (!reflected.empty()) {
+        std::string text;
+        if (to_reflected_string(text)) reflect_raw_string(reflected, text);
+        return;
+    }
+    if ((node_->tag == "a" || node_->tag == "area") &&
+        (name == "href" || name == "protocol" || name == "host" ||
+         name == "hostname" || name == "port" || name == "pathname" ||
+         name == "search" || name == "hash")) {
+        std::string text;
+        if (!to_reflected_string(text)) return;
+        if (name == "href") reflect_raw_string("href", text);
+        else {
+            const auto found = node_->attributes.find("href");
+            if (found == node_->attributes.end()) return;
+            const auto current = resolve_dom_url(found->second, document_->base_url());
+            const auto changed = set_dom_url_component(current, name, text);
+            if (changed.valid) reflect_raw_string("href", changed.href);
+        }
+        return;
+    }
     if (name == "encoding" && node_->tag == "form") {
         std::string text;
         if (to_reflected_string(text)) {
@@ -7080,6 +7539,17 @@ v8::Local<v8::Value> ElementHost::call_method(
         return document_->call_insert_adjacent(isolate, context, node_, name,
                                                args);
     }
+    if (node_->tag == "canvas" && name == "getContext") {
+        if (args.Length() == 0) {
+            isolate->ThrowException(v8::Exception::TypeError(
+                v8::String::NewFromUtf8Literal(isolate, "A context identifier is required")));
+            return v8::Undefined(isolate);
+        }
+        v8::Local<v8::String> identifier;
+        if (!args[0]->ToString(context).ToLocal(&identifier)) return v8::Undefined(isolate);
+        // Context allocation is explicitly unavailable in this headless runtime.
+        return v8::Null(isolate);
+    }
     // M11-32: checkValidity()/reportValidity() on a form aggregates its controls;
     // on a control they validate just that control. reportValidity has no UI in
     // this headless runtime, so it is identical to checkValidity.
@@ -7313,27 +7783,12 @@ v8::Local<v8::Value> ElementHost::call_method(
         return document_->elements_array(isolate, context, out);
     }
     if (name == "getElementsByTagName") {
-        std::vector<DomNode*> out;
-        collect_matching(node_, tag_predicate(arg_string(0)), out);
-        return document_->elements_array(isolate, context, out);
+        return document_->live_collection(isolate, context, node_, "tag", arg_string(0));
     }
-    if (name == "getElementsByClassName") {  // M11-19: descendants only
-        std::vector<std::string> tokens = split_class_tokens(arg_string(0));
-        std::vector<DomNode*> out;
-        if (!tokens.empty()) {
-            for (DomNode* child : node_->children) {
-                collect_matching(
-                    child,
-                    [&tokens](const DomNode* n) {
-                        return has_all_class_tokens(n, tokens);
-                    },
-                    out);
-            }
-        }
-        return document_->elements_array(isolate, context, out);
+    if (name == "getElementsByClassName") {
+        return document_->live_collection(isolate, context, node_, "class", arg_string(0));
     }
     if (node_->tag == "select" && (name == "item" || name == "namedItem")) {
-        // M11-22: option lookup helpers. The collection itself stays a plain array.
         const std::vector<DomNode*> options = collect_options(node_);
         if (name == "item") {
             int index = 0;
@@ -11325,6 +11780,7 @@ void PageState::install_page(const std::string& base_url,
     // host-method dispatch points can record hits and eval() can stamp the current
     // script's resource name. The registry itself outlives generations.
     state_->set_watch_registry(&watch_registry_);
+    state_->set_async_error_capture(async_error_capture_);
     // M3-3/M3-4: before this context's isolate is disposed, release the event-
     // listener Global handles (teardown ordering, mirroring timers). The hook
     // reads host_objects_ + window_events_ lazily at teardown time, so it sees
@@ -11359,7 +11815,7 @@ void PageState::install_page(const std::string& base_url,
     host_objects_.push_back(std::make_unique<NavigatorHost>(&environment_));
     host_objects_.push_back(std::make_unique<ScreenHost>(&environment_));  // M11-1
     host_objects_.push_back(  // M2-3 location, sourced from this page's base URL
-        std::make_unique<LocationHost>(decompose_url(base_url)));
+        std::make_unique<LocationHost>(decompose_url(base_url), this));
     auto document = std::make_unique<DocumentHost>(html, base_url, this);  // M2-6
     document_host_ = document.get();  // M3-4 observing ptr for lifecycle dispatch
     host_objects_.push_back(std::move(document));
@@ -12069,6 +12525,8 @@ void PageState::install_page(const std::string& base_url,
             install_global_function(isolate, context, global, "atob",
                                     &atob_callback);
 
+            install_browser_compatibility(isolate, context, base_url);
+
             // M9-1: if DevTools was enabled on a prior generation, give this fresh
             // generation its own Inspector + registered context (the WS URL stays
             // stable Python-side). When never enabled, this is skipped entirely.
@@ -12238,6 +12696,48 @@ PageState::~PageState() {
 }
 
 bool PageState::disposed() const { return state_->disposed(); }
+
+void PageState::capture_async_errors(bool enabled) {
+    state_->set_async_error_capture(enabled);
+    async_error_capture_ = enabled;
+}
+
+py::dict PageState::read_async_errors(bool clear) { return state_->read_async_errors(clear); }
+
+void PageState::record_navigation(v8::Isolate* isolate, const std::string& operation,
+                                   const std::string& url) {
+    if (navigation_requests_.size() >= 1000) { ++dropped_navigation_requests_; return; }
+    std::string resource;
+    auto stack = v8::StackTrace::CurrentStackTrace(isolate, 1, v8::StackTrace::kScriptNameOrSourceURL);
+    if (stack->GetFrameCount()) {
+        auto name = stack->GetFrame(isolate, 0)->GetScriptNameOrSourceURL();
+        if (!name.IsEmpty()) {
+            v8::String::Utf8Value utf8(isolate, name);
+            if (*utf8 != nullptr) resource.assign(*utf8, utf8.length());
+        }
+    }
+    navigation_requests_.push_back({operation, url, resource, generation_});
+}
+
+py::dict PageState::read_navigation_requests(bool clear) {
+    py::dict result;
+    py::list requests;
+    state_->with_scope([&](v8::Isolate*, v8::Local<v8::Context>) {
+        for (const auto& request : navigation_requests_) {
+            py::dict entry;
+            entry["operation"] = request.operation;
+            entry["url"] = request.url;
+            entry["resource_name"] = request.resource_name;
+            entry["generation"] = request.generation;
+            requests.append(entry);
+        }
+        result["requests"] = requests;
+        result["dropped_requests"] = dropped_navigation_requests_;
+        result["max_requests"] = 1000;
+        if (clear) { navigation_requests_.clear(); dropped_navigation_requests_ = 0; }
+    });
+    return result;
+}
 
 py::object PageState::eval(const std::string& source, bool to_py,
                            const std::string& name) {
