@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ff7d188f5f4638c65230d0a7ee3cc83f19d5bf76
+          ref: 15edd82e68c62d0c551a55e9935bf34427edfb2a
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -67,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ff7d188f5f4638c65230d0a7ee3cc83f19d5bf76
+          ref: 15edd82e68c62d0c551a55e9935bf34427edfb2a
       - name: Restore V8 monolith cache (with retries)
         id: v8cache
         uses: ./.github/actions/restore-v8-cache
