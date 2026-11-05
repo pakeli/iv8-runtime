@@ -94,6 +94,7 @@ jobs:
           cd "$RUNNER_TEMP"
           python -c "import iv8; assert iv8._v8_linked, 'V8 not linked'; print('macos-arm64', iv8._v8_runtime_version)"
           set +e
+          lldb --batch -o run -o 'thread backtrace all' -- python -c 'import iv8; page = iv8.Page(); print("page initialized")'
           python -m pytest "$GITHUB_WORKSPACE/test/test_browser_compatibility_repair.py"
           focused_status=$?
           python -m pytest "$GITHUB_WORKSPACE/test"
