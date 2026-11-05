@@ -5,8 +5,8 @@ getElementsByTagName(tag) query the element's CURRENT subtree — the element it
 plus its descendants (so the root may match). Same M11-34 selector subset as the
 document-level queries (lists, combinators, compound, attribute selectors, `*`;
 unsupported/malformed -> stable null/[]) and the case-insensitive tag rule ("*" =
-all in subtree) for getElementsByTagName; plain JS Array returns (no
-NodeList/HTMLCollection/item/namedItem/identity). Live-tree based. Document-level
+descendants) for getElementsByTagName, which now returns a live HTMLCollection.
+Selector queries retain their historical Array snapshot contract. Live-tree based. Document-level
 queries unchanged; script nodes are queryable but stay inert. JS-side only; no new
 Python surface.
 """
@@ -59,7 +59,7 @@ def test_subtree_includes_root_self():
               const root = document.getElementById('root');
               return [root.querySelector('#root') !== null,          // self by id
                       root.querySelector('#root').id === 'root',
-                      root.getElementsByTagName('div')[0].id === 'root',  // self by tag
+                      root.getElementsByTagName('div').length === 0, // descendants only
                       root.querySelectorAll('.r').map(e => e.id).join('|')].join(',');
             })();
             """
@@ -131,7 +131,7 @@ def test_element_get_elements_by_tag_name():
         # "*" = every element in subtree, including root self.
         assert page.eval(
             "Array.from(document.getElementById('root').getElementsByTagName('*')).map(e => e.id).join(',')"
-        ) == "root,a,inner,b"
+        ) == "a,inner,b"
 
 
 # --- detached subtree ------------------------------------------------------------
@@ -147,17 +147,17 @@ def test_detached_subtree_queries():
               const el = document.createElement('div');
               const before = [el.querySelector('span') === null,
                               el.querySelectorAll('span').length,
-                              el.getElementsByTagName('*').length];   // just self = 1
+                              el.getElementsByTagName('*').length];   // no descendants = 0
               const kid = document.createElement('span');
               kid.setAttribute('id', 'kid');
               el.appendChild(kid);
               const after = [el.querySelector('span').id,
                              el.querySelectorAll('span').length,
-                             el.getElementsByTagName('*').length];    // self + kid = 2
+                             el.getElementsByTagName('*').length];    // one descendant = 1
               return before.join(',') + '|' + after.join(',');
             })();
             """
-        ) == "true,0,1|kid,1,2"
+        ) == "true,0,0|kid,1,1"
 
 
 # --- live tree editing reflected -------------------------------------------------
@@ -225,4 +225,4 @@ def test_shape_guard():
         assert page.eval(f"typeof {el}.getElementsByClassName") == "function"
         # Returned arrays carry no HTMLCollection extras.
         assert page.eval(f"typeof {el}.querySelectorAll('span').item") == "undefined"
-        assert page.eval(f"typeof {el}.getElementsByTagName('span').namedItem") == "undefined"
+        assert page.eval(f"typeof {el}.getElementsByTagName('span').namedItem") == "function"

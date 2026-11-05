@@ -3775,7 +3775,10 @@ public:
         DomNode* html_node = find_tag("html");
         if (html_node != nullptr) {
             DomNode* body_node = find_tag("body");
-            if (body_node == nullptr) {
+            const auto html_position = std::find(roots_.begin(), roots_.end(), html_node);
+            const bool has_trailing = html_position != roots_.end() &&
+                std::next(html_position) != roots_.end();
+            if (body_node == nullptr && has_trailing) {
                 auto body = std::make_unique<DomNode>();
                 body->tag = "body";
                 body->parent = html_node;
@@ -3783,10 +3786,21 @@ public:
                 html_node->children.push_back(body_node);
                 pool_.push_back(std::move(body));
             }
+            if (body_node != nullptr && body_node->parent == html_node) {
+                bool after_body = false;
+                for (auto child = html_node->children.begin(); child != html_node->children.end();) {
+                    if (*child == body_node) after_body = true;
+                    if (after_body && *child != body_node && (*child)->kind != NodeKind::Comment) {
+                        (*child)->parent = body_node;
+                        body_node->children.push_back(*child);
+                        child = html_node->children.erase(child);
+                    } else ++child;
+                }
+            }
             bool after_html = false;
             for (auto root = roots_.begin(); root != roots_.end();) {
                 if (*root == html_node) after_html = true;
-                if (after_html && *root != html_node &&
+                if (body_node != nullptr && after_html && *root != html_node &&
                     ((*root)->kind == NodeKind::Element ||
                      (*root)->kind == NodeKind::Text)) {
                     (*root)->parent = body_node;

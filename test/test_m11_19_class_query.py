@@ -105,7 +105,7 @@ def test_class_query_shape():
         assert page.eval("Array.isArray(document.getElementsByClassName('a'))") is False
         assert page.eval("Array.isArray(root.getElementsByClassName('a'))") is False
         assert page.eval(
-            "typeof document.getElementsByClassName('a').item") == "undefined"
+            "typeof document.getElementsByClassName('a').item") == "function"
         assert page.eval(
             "typeof root.getElementsByClassName") == "function"
         assert not hasattr(iv8.Page, "getElementsByClassName")

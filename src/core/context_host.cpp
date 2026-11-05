@@ -62,12 +62,14 @@ ContextState::ContextState() {
     // automatically — M2-4 is manual-pump only.
     isolate->SetData(kIsolateStateSlot, this);
     isolate->SetMicrotasksPolicy(v8::MicrotasksPolicy::kExplicit);
-    isolate->AddMessageListener(&async_message_listener);
-    isolate->SetPromiseRejectCallback(&promise_rejection_listener);
     v8::Isolate::Scope isolate_scope(isolate);
     v8::HandleScope handle_scope(isolate);
     v8::Local<v8::Context> local = v8::Context::New(isolate);
     context_.Reset(isolate, local);
+    // Listener installation can allocate V8 handles: enter the isolate and
+    // HandleScope first, just like every other V8 registration operation.
+    isolate->AddMessageListener(&async_message_listener);
+    isolate->SetPromiseRejectCallback(&promise_rejection_listener);
 }
 
 ContextState::~ContextState() { teardown(); }

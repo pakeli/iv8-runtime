@@ -222,7 +222,7 @@ def test_returned_collections_have_no_htmlcollection_extras():
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
         assert page.eval("typeof document.querySelectorAll('div').item") == "undefined"
-        assert page.eval("typeof document.getElementsByTagName('div').namedItem") == "undefined"
+        assert page.eval("typeof document.getElementsByTagName('div').namedItem") == "function"
 
 
 # --- querySelector unchanged -----------------------------------------------------
