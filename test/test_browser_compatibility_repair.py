@@ -353,3 +353,21 @@ def test_diagnostic_channels_are_bounded_isolated_and_reject_disposal():
     for method in (page.capture_async_errors, page.read_navigation_requests, page.read_async_errors):
         with pytest.raises(iv8.JSContextDisposedError):
             method()
+
+
+@on_only
+def test_inherited_idl_getters_accept_valid_sibling_and_node_receivers():
+    with iv8.Page() as page:
+        assert evaluate(page, """(() => {
+          const div = document.createElement('div'), anchor = document.createElement('a');
+          anchor.id = 'anchor';
+          const prototype = Object.getPrototypeOf(div);
+          const id = Object.getOwnPropertyDescriptor(prototype, 'id');
+          const text = Object.getOwnPropertyDescriptor(prototype, 'textContent');
+          const node = document.createTextNode('text');
+          text.set.call(node, 'changed');
+          let rejected = false;
+          try {id.get.call(node)} catch(error) {rejected = error instanceof TypeError;}
+          return [id.get.call(anchor), text.get.call(node), id.get.name, id.set.name,
+            id.get.length, id.set.length, Object.hasOwn(id.get, 'prototype'), rejected];
+        })()""") == ["anchor", "changed", "get id", "set id", 0, 1, False, True]

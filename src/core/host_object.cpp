@@ -5,6 +5,7 @@
 #include <optional>
 #include <cstdio>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -286,14 +287,34 @@ HostObject* idl_receiver(const v8::FunctionCallbackInfo<v8::Value>& info,
         !data->Get(context, 1).ToLocal(&interface)) return nullptr;
     v8::String::Utf8Value member_text(isolate, member);
     v8::String::Utf8Value interface_text(isolate, interface);
+    key = *member_text != nullptr ? *member_text : "";
     HostObject* host = backing_of(info.This());
-    if (host == nullptr || *interface_text == nullptr ||
-        host->prototype_key() != *interface_text) {
+    bool compatible = host != nullptr && *interface_text != nullptr &&
+        host->prototype_key() == *interface_text;
+    // Node/HTMLElement attributes remain valid on sibling interfaces. Tag-
+    // specific attributes (form.action, script.src, input.value, ...) retain
+    // their stricter interface brand instead of accepting arbitrary hosts.
+    if (host != nullptr && *interface_text != nullptr &&
+        std::string_view(*interface_text).starts_with("Element:")) {
+        constexpr std::string_view node_properties[] = {
+            "nodeName", "nodeType", "nodeValue", "textContent", "parentNode",
+            "parentElement", "childNodes", "ownerDocument", "isConnected",
+            "firstChild", "lastChild", "previousSibling", "nextSibling"};
+        constexpr std::string_view element_properties[] = {
+            "id", "className", "tagName", "innerHTML", "outerHTML", "children",
+            "previousElementSibling", "nextElementSibling", "firstElementChild",
+            "lastElementChild", "childElementCount", "classList", "innerText", "style"};
+        const auto contains = [&key](const auto& names) {
+            return std::find(std::begin(names), std::end(names), key) != std::end(names);
+        };
+        if (contains(node_properties)) compatible = host->is_node();
+        else if (contains(element_properties)) compatible = host->node_kind() == NodeKind::Element;
+    }
+    if (!compatible) {
         isolate->ThrowException(v8::Exception::TypeError(
             v8str(isolate, "Illegal invocation")));
         return nullptr;
     }
-    key = *member_text != nullptr ? *member_text : "";
     return host;
 }
 
@@ -592,12 +613,16 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
                 (void)data->Set(context, 0, v8str(isolate, property));
                 (void)data->Set(context, 1, v8str(isolate, host->prototype_key()));
                 v8::Local<v8::Function> getter;
-                if (!v8::Function::New(context, &idl_getter, data).ToLocal(&getter))
+                if (!v8::Function::New(context, &idl_getter, data, 0,
+                        v8::ConstructorBehavior::kThrow).ToLocal(&getter))
                     return object;
+                getter->SetName(v8str(isolate, "get " + property));
                 v8::Local<v8::Function> setter;
                 if (is_writable(property) &&
-                    !v8::Function::New(context, &idl_setter, data).ToLocal(&setter))
+                    !v8::Function::New(context, &idl_setter, data, 1,
+                        v8::ConstructorBehavior::kThrow).ToLocal(&setter))
                     return object;
+                if (!setter.IsEmpty()) setter->SetName(v8str(isolate, "set " + property));
                 v8::PropertyDescriptor descriptor(getter, setter.IsEmpty()
                     ? v8::Local<v8::Value>(v8::Undefined(isolate))
                     : v8::Local<v8::Value>(setter));
