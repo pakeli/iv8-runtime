@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 876e76e1a108dd7c65029b7571e701db063bd92e
+          ref: ff7d188f5f4638c65230d0a7ee3cc83f19d5bf76
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -63,11 +63,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.13']
+        python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 876e76e1a108dd7c65029b7571e701db063bd92e
+          ref: ff7d188f5f4638c65230d0a7ee3cc83f19d5bf76
       - name: Restore V8 monolith cache (with retries)
         id: v8cache
         uses: ./.github/actions/restore-v8-cache
@@ -93,15 +93,9 @@ jobs:
           python -m pip install "$whl"
           cd "$RUNNER_TEMP"
           python -c "import iv8; assert iv8._v8_linked, 'V8 not linked'; print('macos-arm64', iv8._v8_runtime_version)"
-          set +e
-          lldb --batch -o 'settings set target.process.stop-on-exec false' -o run -o 'thread backtrace all' -- python -c 'import iv8; page = iv8.Page(); print("page initialized")'
           python -m pytest "$GITHUB_WORKSPACE/test/test_browser_compatibility_repair.py"
-          focused_status=$?
           python -m pytest "$GITHUB_WORKSPACE/test"
-          full_status=$?
-          if [ "$focused_status" -ne 0 ] || [ "$full_status" -ne 0 ]; then exit 1; fi
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: iv8-macos-arm64-wheel-cp${{ matrix.python }}
           path: dist/*.whl
