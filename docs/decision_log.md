@@ -1085,6 +1085,21 @@ Python 3.11–3.14 each `1878 passed, 2 skipped`; focused macOS checks each
 while queued; macos-14 used the same pinned source/cache and the temporary
 configuration was restored. M11-53 remains the next browser feature.
 
+### 54. Browser semantic repairs from offline Chrome comparison (`2026-11-05`)
+
+The user approved fixing the reported DOM/BOM differences and closely related
+behaviors. Implement shared node identity, reflected properties, bounded URL
+reflection, live query collections, prototype accessors and receiver checks,
+document tree edits, document.all, and bounded capability behavior. Observe
+navigation intents without HTTP or reload. Async callback diagnostics are opt-in.
+Verified `2026-11-06` on source `15edd82` (tree `905d1f671bc31fd25b2aee78c13258a6318ec36a`):
+Linux `42064333308`, Windows `42064342679`, macOS arm64 `42064322136`, Python
+3.11–3.14 each `1931 passed, 2 skipped`; focused macOS tests each `53 passed`.
+V8 CI `42064100130` and the independent 27/27 report probe passed. The original
+macOS workflow was restored. Contract and artifacts: `docs/browser_compatibility_repair.md`.
+This explicitly supersedes the relevant historical snapshot/own-data-property
+contracts, without expanding the M1 JSContext or enabling networking.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
@@ -1340,14 +1355,3 @@ contract alongside `api_contract.md`.
 
 Build and CI support exist in some form, but release priority should be confirmed
 before major platform-specific investment.
-
-## 54. Browser semantic repairs from offline Chrome comparison (`2026-11-05`)
-
-The user approved fixing the reported DOM/BOM differences and closely related
-behaviors. Implement shared node identity, reflected properties, bounded URL
-reflection, live query collections, prototype accessors and receiver checks,
-document tree edits, document.all, and bounded capability behavior. Observe
-navigation intents without HTTP or reload. Async callback diagnostics are opt-in.
-The contract is `docs/browser_compatibility_repair.md`; verification is pending.
-This explicitly supersedes the relevant historical snapshot/own-data-property
-contracts, without expanding the M1 JSContext or enabling networking.

@@ -1,13 +1,19 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest implemented, verification pending (`2026-11-05`):** user-requested
-DOM/BOM browser compatibility repairs are in progress. Contract and exact
-acceptance/limitations: `docs/browser_compatibility_repair.md`. This batch takes
-priority over the planned focus/visibility work; it adds offline navigation
-intent observation, not real navigation/networking. Latest verified milestones
-and release counts below remain unchanged until all release lanes pass.
+**Latest verified browser compatibility repair (`2026-11-06`):** reflected
+meta/script/anchor properties, stable node wrappers, live tag/class collections,
+IDL accessors/brands, trailing-body recovery, document tree edits, document.all,
+bounded capability behavior, offline navigation intents and opt-in async errors.
+Source `15edd82` (tree `905d1f671bc31fd25b2aee78c13258a6318ec36a`) passed
+Linux `42064333308`, Windows `42064342679`, and macOS arm64 `42064322136`
+(macos-14), Python 3.11–3.14 each **1931 passed, 2 skipped** (1,933 collected).
+V8 CI `42064100130` passed; macOS focused runs each **53 passed**. The original
+independent report probe passed **27/27** against the installed final wheel.
+Contract, artifact IDs, source/driver restoration and remaining limits:
+`docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
+numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-04` · Latest verified feature milestone: **M11-52**
+Last reviewed: `2026-11-06` · Latest verified numbered milestone: **M11-52**
 (Window messaging — `postMessage` / `MessageEvent`), verified on real V8 (Linux +
 Windows + macOS arm64). It follows **M11-51** (Window event handler attributes),
 **M11-50** (Window scroll/focus/UI completion), **M11-49** (HTML string APIs),
@@ -158,6 +164,8 @@ milestone.
 | `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27, M11-35 | optional read-only host-environment baseline; accepts the flat 36-key form or nested `navigator` / `screen` / `window` sections |
 | `get_default_environment()` | M11-1 | static; returns a fresh flat `dict` copy of the default template |
 | `get_defaults()` | M11-17 | static; returns a fresh nested `{navigator, screen, window}` dict |
+| `read_navigation_requests(clear=True)` | browser compatibility repair, verified 2026-11-06 | bounded offline assign/replace/reload intents; requests/dropped_requests/max_requests; never loads a document |
+| `capture_async_errors(enabled=True)` / `read_async_errors(clear=True)` | browser compatibility repair, verified 2026-11-06 | opt-in bounded timer/job/Promise/frame/idle/listener diagnostics; errors/dropped_errors/max_errors; scheduling is unchanged |
 
 `resources` (M3-5) was the only new Python parameter M3–M8 added; `environment`
 (M11-1) is the next one. `Page` has no `document` / DOM / event API on the Python
@@ -250,6 +258,12 @@ pause evidence (M9-3).
 
 Installed per generation by `install_page`:
 
+- **browser compatibility repair** (verified 2026-11-06) — reflected meta/script
+  inputs, anchor/area URL components, shared IDL accessors with receiver checks,
+  stable node identity, bounded trailing-body normalization, live query collections,
+  document.all, inline CSSStyleDeclaration, unavailable Canvas contexts, and offline
+  navigation/error diagnostics. Exact overrides to historical milestone contracts
+  and remaining limitations: `docs/browser_compatibility_repair.md`;
 - **global roots** — `window` / `globalThis` / `self` (all the same object);
 - `console` (`log` / `info` / `warn` / `error` plus M11-28 `debug` / `trace` /
   `table` / `dir` / `group` / `groupEnd` / `time` / `timeEnd` / `assert` /
@@ -260,10 +274,12 @@ Installed per generation by `install_page`:
   `appName` / `appCodeName` / `product` / `vendor` / `vendorSub` /
   `productSub`, and M11-35 `maxTouchPoints` / `pdfViewerEnabled` / `doNotTrack` /
   `connection`) and `location` (`href` / `origin` / `protocol` / `host` /
-  `hostname` / `pathname` / `search` / `hash` / `toString()`) — both read-only;
+  `hostname` / `port` / `pathname` / `search` / `hash` / `toString()`) — metadata remains read-only;
   `navigator.connection` is a fresh read-only `{effectiveType, rtt, downlink,
   saveData}` object with no events; `location` still derives from the base URL
-  and has no navigation methods;
+  with assign/replace/reload recording offline intents. The compatibility repair
+  also adds prototype webdriver, sendBeacon refusal, a secure-context deterministic
+  getBattery Promise and bounded webkitPersistentStorage callbacks; see its contract;
 - `screen` (`width` / `height` / `availWidth` / `availHeight` plus M11-25
   `colorDepth` / `pixelDepth` and M11-35 `availLeft` / `availTop` / `orientation`)
   and the `window` dimensions `devicePixelRatio` / `innerWidth` / `innerHeight`
@@ -445,8 +461,9 @@ Installed per generation by `install_page`:
   read-only `index`. Reflected writes queue MutationObserver attribute records;
 - **query extensions** (M11-19, M11-20) — multi-token
   `getElementsByClassName` at document and element level (the element form is
-  descendants-only), plus `document.getElementsByName`. Both return live plain
-  arrays in document order;
+  descendants-only), plus `document.getElementsByName`. The compatibility repair
+  changes tag/class queries to live HTMLCollection with item/namedItem/iteration;
+  getElementsByName retains its historical Array snapshot;
 - **selector engine** (M11-34) — document/element `querySelector[All]`,
   `matches()`, and `closest()` share selector lists, compound selectors,
   descendant / child / adjacent-sibling / general-sibling combinators, attribute
@@ -501,7 +518,9 @@ Installed per generation by `install_page`:
   `hidden` / `activeElement` / `hasFocus()`), `getElementById` /
   `querySelector` / `querySelectorAll` / `getElementsByTagName` /
   `getElementsByClassName` / `getElementsByName` / `createElement`, and the
-  M11-48 `createTextNode` / `createComment` / `createDocumentFragment`;
+  M11-48 `createTextNode` / `createComment` / `createDocumentFragment`, plus the
+  compatibility repair's appendChild/removeChild/insertBefore/replaceChild and
+  V8-undetectable live document.all;
   `document.children` stays element-only and `document.childNodes` remains
   absent (Document is not a Node);
 - **elements** — the minimal node surface (`tagName` / `nodeName` / `nodeType` /
@@ -546,14 +565,14 @@ Deliberate shape of this DOM (M11-48/M11-49): Element, Text, Comment, and
 DocumentFragment nodes share one live tree; `textContent` is computed live and
 whitespace text nodes are preserved; HTML fragments round-trip through a
 deterministic serializer with bounded entity decoding; XML CDATA, doctype nodes,
-Document-as-Node, and Node constructors remain absent. Collections are plain JS `Array`s (not
-`HTMLCollection` / `NodeList`, no `item()` / `namedItem()`, no identity
-guarantee); selectors match elements only and support the M11-34
+Document-as-Node, and Node constructors remain absent. Tag/class queries are live HTMLCollection objects; other historical
+collections retain their Array contracts. Native node wrappers have stable
+identity per generation. Selectors match elements only and support the M11-34
 subset (lists, compound selectors, combinators, attribute selectors, `*`) but not
 pseudo-classes/elements, escapes, namespaces, or `i`/`s` flags, there are no
 specialized `HTML*Element` classes or
-general attribute-reflection properties (only the M11-18/M11-21 form-control
-subset), and a `<script>` inserted into the tree stays **inert**.
+a full attribute-reflection surface (the form-control subset plus the repaired
+meta/script/anchor attributes are supported), and a `<script>` inserted into the tree stays **inert**.
 `form.submit()` / `requestSubmit()` are callable no-ops. Form validation is the
 bounded M11-32 subset above, not the full HTML constraint-validation algorithm.
 Crypto is the bounded M11-33 random subset; `crypto.subtle` is absent. Consult
