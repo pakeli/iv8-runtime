@@ -25,12 +25,10 @@ permissions:
 
 jobs:
   build-v8:
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ed0588c9667d486ce692753f811dd6b25528987e
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -56,25 +54,16 @@ jobs:
           path: data/v8
           key: v8-macos-arm64-${{ hashFiles('tools/build_v8_macos.sh', 'cmake/v8_pin.cmake') }}
 
-      - name: Export cached native SDK
-        uses: actions/upload-artifact@v4
-        with:
-          name: iv8-v8-macos-arm64-sdk
-          path: data/v8
-          if-no-files-found: error
-
   wheels:
     needs: build-v8
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.11']
+        python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ed0588c9667d486ce692753f811dd6b25528987e
       - name: Restore V8 monolith cache (with retries)
         id: v8cache
         uses: ./.github/actions/restore-v8-cache
