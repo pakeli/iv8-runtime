@@ -8,9 +8,9 @@ passed Linux `42350637889`, Windows `42350641803` and macOS arm64
 1 xfailed**. The immutable Chrome probe has 74 matches and one declared
 unavailable-open profile gap. macOS focused checks each passed 172 tests with
 that one expected failure. Installed cp311 acceptance returned NMPA document
-200 and data business code 200 with 10 rows. Customs matched browser-boundary
-controls return 200, while complete original-caller consistency remains under
-investigation. Scope, causal evidence and release records are in
+200 and data business code 200 with 10 rows. The original Customs caller
+returned 200 in three independent runs after adding its missing second-hop
+Referer. A fourth run confirmed the business title. Scope, causal evidence and release records are in
 `docs/native_binding_regression.md`.
 
 **Previous verified Web IDL environment repair (`2026-11-07`).** ENV-01 through
