@@ -1,0 +1,658 @@
+{
+  "window.tag": {
+    "returned": "[object Window]"
+  },
+  "window.constructor": {
+    "returned": "Window"
+  },
+  "window.chain": {
+    "returned": [
+      {
+        "tag": "[object Window]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object Window]",
+        "ownConstructor": "Window"
+      },
+      {
+        "tag": "[object WindowProperties]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object EventTarget]",
+        "ownConstructor": "EventTarget"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "document.tag": {
+    "returned": "[object HTMLDocument]"
+  },
+  "document.constructor": {
+    "returned": "HTMLDocument"
+  },
+  "document.chain": {
+    "returned": [
+      {
+        "tag": "[object HTMLDocument]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object HTMLDocument]",
+        "ownConstructor": "HTMLDocument"
+      },
+      {
+        "tag": "[object Document]",
+        "ownConstructor": "Document"
+      },
+      {
+        "tag": "[object Node]",
+        "ownConstructor": "Node"
+      },
+      {
+        "tag": "[object EventTarget]",
+        "ownConstructor": "EventTarget"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "navigator.tag": {
+    "returned": "[object Navigator]"
+  },
+  "navigator.constructor": {
+    "returned": "Navigator"
+  },
+  "navigator.chain": {
+    "returned": [
+      {
+        "tag": "[object Navigator]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object Navigator]",
+        "ownConstructor": "Navigator"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "screen.tag": {
+    "returned": "[object Screen]"
+  },
+  "screen.constructor": {
+    "returned": "Screen"
+  },
+  "screen.chain": {
+    "returned": [
+      {
+        "tag": "[object Screen]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object Screen]",
+        "ownConstructor": "Screen"
+      },
+      {
+        "tag": "[object EventTarget]",
+        "ownConstructor": "EventTarget"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "location.tag": {
+    "returned": "[object Location]"
+  },
+  "location.constructor": {
+    "returned": "Location"
+  },
+  "location.chain": {
+    "returned": [
+      {
+        "tag": "[object Location]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object Location]",
+        "ownConstructor": "Location"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "div.tag": {
+    "returned": "[object HTMLDivElement]"
+  },
+  "div.constructor": {
+    "returned": "HTMLDivElement"
+  },
+  "div.chain": {
+    "returned": [
+      {
+        "tag": "[object HTMLDivElement]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object HTMLDivElement]",
+        "ownConstructor": "HTMLDivElement"
+      },
+      {
+        "tag": "[object HTMLElement]",
+        "ownConstructor": "HTMLElement"
+      },
+      {
+        "tag": "[object Element]",
+        "ownConstructor": "Element"
+      },
+      {
+        "tag": "[object Node]",
+        "ownConstructor": "Node"
+      },
+      {
+        "tag": "[object EventTarget]",
+        "ownConstructor": "EventTarget"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "form.tag": {
+    "returned": "[object HTMLFormElement]"
+  },
+  "form.constructor": {
+    "returned": "HTMLFormElement"
+  },
+  "form.chain": {
+    "returned": [
+      {
+        "tag": "[object HTMLFormElement]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object HTMLFormElement]",
+        "ownConstructor": "HTMLFormElement"
+      },
+      {
+        "tag": "[object HTMLElement]",
+        "ownConstructor": "HTMLElement"
+      },
+      {
+        "tag": "[object Element]",
+        "ownConstructor": "Element"
+      },
+      {
+        "tag": "[object Node]",
+        "ownConstructor": "Node"
+      },
+      {
+        "tag": "[object EventTarget]",
+        "ownConstructor": "EventTarget"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "script.tag": {
+    "returned": "[object HTMLScriptElement]"
+  },
+  "script.constructor": {
+    "returned": "HTMLScriptElement"
+  },
+  "script.chain": {
+    "returned": [
+      {
+        "tag": "[object HTMLScriptElement]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object HTMLScriptElement]",
+        "ownConstructor": "HTMLScriptElement"
+      },
+      {
+        "tag": "[object HTMLElement]",
+        "ownConstructor": "HTMLElement"
+      },
+      {
+        "tag": "[object Element]",
+        "ownConstructor": "Element"
+      },
+      {
+        "tag": "[object Node]",
+        "ownConstructor": "Node"
+      },
+      {
+        "tag": "[object EventTarget]",
+        "ownConstructor": "EventTarget"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "meta.tag": {
+    "returned": "[object HTMLMetaElement]"
+  },
+  "meta.constructor": {
+    "returned": "HTMLMetaElement"
+  },
+  "meta.chain": {
+    "returned": [
+      {
+        "tag": "[object HTMLMetaElement]",
+        "ownConstructor": null
+      },
+      {
+        "tag": "[object HTMLMetaElement]",
+        "ownConstructor": "HTMLMetaElement"
+      },
+      {
+        "tag": "[object HTMLElement]",
+        "ownConstructor": "HTMLElement"
+      },
+      {
+        "tag": "[object Element]",
+        "ownConstructor": "Element"
+      },
+      {
+        "tag": "[object Node]",
+        "ownConstructor": "Node"
+      },
+      {
+        "tag": "[object EventTarget]",
+        "ownConstructor": "EventTarget"
+      },
+      {
+        "tag": "[object Object]",
+        "ownConstructor": "Object"
+      }
+    ]
+  },
+  "global.Window": {
+    "returned": "function"
+  },
+  "global.Document": {
+    "returned": "function"
+  },
+  "global.HTMLDocument": {
+    "returned": "function"
+  },
+  "global.Navigator": {
+    "returned": "function"
+  },
+  "global.Screen": {
+    "returned": "function"
+  },
+  "global.Location": {
+    "returned": "function"
+  },
+  "global.EventTarget": {
+    "returned": "function"
+  },
+  "global.Node": {
+    "returned": "function"
+  },
+  "global.Element": {
+    "returned": "function"
+  },
+  "global.HTMLElement": {
+    "returned": "function"
+  },
+  "global.HTMLDivElement": {
+    "returned": "function"
+  },
+  "global.HTMLFormElement": {
+    "returned": "function"
+  },
+  "global.HTMLScriptElement": {
+    "returned": "function"
+  },
+  "global.HTMLMetaElement": {
+    "returned": "function"
+  },
+  "global.XMLHttpRequest": {
+    "returned": "function"
+  },
+  "global.Worker": {
+    "returned": "function"
+  },
+  "global.fetch": {
+    "returned": "function"
+  },
+  "global.open": {
+    "returned": "function"
+  },
+  "method.createElement": {
+    "returned": {
+      "name": "createElement",
+      "length": 1,
+      "source": "function createElement() { [native code] }",
+      "hasPrototype": false,
+      "keys": [
+        "length",
+        "name"
+      ]
+    }
+  },
+  "method.getElementById": {
+    "returned": {
+      "name": "getElementById",
+      "length": 1,
+      "source": "function getElementById() { [native code] }",
+      "hasPrototype": false,
+      "keys": [
+        "length",
+        "name"
+      ]
+    }
+  },
+  "method.getElementsByTagName": {
+    "returned": {
+      "name": "getElementsByTagName",
+      "length": 1,
+      "source": "function getElementsByTagName() { [native code] }",
+      "hasPrototype": false,
+      "keys": [
+        "length",
+        "name"
+      ]
+    }
+  },
+  "method.addEventListener": {
+    "returned": {
+      "name": "addEventListener",
+      "length": 2,
+      "source": "function addEventListener() { [native code] }",
+      "hasPrototype": false,
+      "keys": [
+        "length",
+        "name"
+      ]
+    }
+  },
+  "method.removeChild": {
+    "returned": {
+      "name": "removeChild",
+      "length": 1,
+      "source": "function removeChild() { [native code] }",
+      "hasPrototype": false,
+      "keys": [
+        "length",
+        "name"
+      ]
+    }
+  },
+  "method.getAttribute": {
+    "returned": {
+      "name": "getAttribute",
+      "length": 1,
+      "source": "function getAttribute() { [native code] }",
+      "hasPrototype": false,
+      "keys": [
+        "length",
+        "name"
+      ]
+    }
+  },
+  "method.replace": {
+    "returned": {
+      "name": "replace",
+      "length": 1,
+      "source": "function replace() { [native code] }",
+      "hasPrototype": false,
+      "keys": [
+        "length",
+        "name"
+      ]
+    }
+  },
+  "method.storageGet": {
+    "returned": {
+      "name": "getItem",
+      "length": 1,
+      "source": "function getItem() { [native code] }",
+      "hasPrototype": false,
+      "keys": [
+        "length",
+        "name"
+      ]
+    }
+  },
+  "descriptor.document.cookie": {
+    "returned": {
+      "depth": 2,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get cookie",
+        "length": 0,
+        "source": "function get cookie() { [native code] }"
+      },
+      "setter": {
+        "name": "set cookie",
+        "length": 1,
+        "source": "function set cookie() { [native code] }"
+      }
+    }
+  },
+  "descriptor.document.readyState": {
+    "returned": {
+      "depth": 2,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get readyState",
+        "length": 0,
+        "source": "function get readyState() { [native code] }"
+      },
+      "setter": null
+    }
+  },
+  "descriptor.document.referrer": {
+    "returned": {
+      "depth": 2,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get referrer",
+        "length": 0,
+        "source": "function get referrer() { [native code] }"
+      },
+      "setter": null
+    }
+  },
+  "descriptor.navigator.userAgent": {
+    "returned": {
+      "depth": 1,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get userAgent",
+        "length": 0,
+        "source": "function get userAgent() { [native code] }"
+      },
+      "setter": null
+    }
+  },
+  "descriptor.navigator.webdriver": {
+    "returned": {
+      "depth": 1,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get webdriver",
+        "length": 0,
+        "source": "function get webdriver() { [native code] }"
+      },
+      "setter": null
+    }
+  },
+  "descriptor.div.id": {
+    "returned": {
+      "depth": 3,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get id",
+        "length": 0,
+        "source": "function get id() { [native code] }"
+      },
+      "setter": {
+        "name": "set id",
+        "length": 1,
+        "source": "function set id() { [native code] }"
+      }
+    }
+  },
+  "descriptor.form.action": {
+    "returned": {
+      "depth": 1,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get action",
+        "length": 0,
+        "source": "function get action() { [native code] }"
+      },
+      "setter": {
+        "name": "set action",
+        "length": 1,
+        "source": "function set action() { [native code] }"
+      }
+    }
+  },
+  "descriptor.script.src": {
+    "returned": {
+      "depth": 1,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get src",
+        "length": 0,
+        "source": "function get src() { [native code] }"
+      },
+      "setter": {
+        "name": "set src",
+        "length": 1,
+        "source": "function set src() { [native code] }"
+      }
+    }
+  },
+  "descriptor.meta.content": {
+    "returned": {
+      "depth": 1,
+      "enumerable": true,
+      "configurable": true,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get content",
+        "length": 0,
+        "source": "function get content() { [native code] }"
+      },
+      "setter": {
+        "name": "set content",
+        "length": 1,
+        "source": "function set content() { [native code] }"
+      }
+    }
+  },
+  "descriptor.location.href": {
+    "returned": {
+      "depth": 0,
+      "enumerable": true,
+      "configurable": false,
+      "kind": "accessor",
+      "writable": null,
+      "getter": {
+        "name": "get href",
+        "length": 0,
+        "source": "function get href() { [native code] }"
+      },
+      "setter": {
+        "name": "set href",
+        "length": 1,
+        "source": "function set href() { [native code] }"
+      }
+    }
+  },
+  "keys.document": {
+    "returned": [
+      "location"
+    ]
+  },
+  "keys.navigator": {
+    "returned": []
+  },
+  "ownNames.document": {
+    "returned": [
+      "location"
+    ]
+  },
+  "brand.createElement.wrongThis": {
+    "error": "TypeError",
+    "message": "Illegal invocation"
+  },
+  "brand.getElementById.wrongThis": {
+    "error": "TypeError",
+    "message": "Illegal invocation"
+  },
+  "brand.getAttribute.wrongThis": {
+    "error": "TypeError",
+    "message": "Illegal invocation"
+  },
+  "brand.getElementsByTagName.wrongThis": {
+    "error": "TypeError",
+    "message": "Illegal invocation"
+  },
+  "construct.createElement": {
+    "error": "TypeError",
+    "message": "document.createElement is not a constructor"
+  },
+  "construct.getAttribute": {
+    "error": "TypeError",
+    "message": "objects.div.getAttribute is not a constructor"
+  },
+  "storage.get.identity": {
+    "returned": true
+  },
+  "document.method.identity": {
+    "returned": true
+  },
+  "node.method.identity": {
+    "returned": true
+  }
+}

@@ -362,8 +362,8 @@ def test_inherited_idl_getters_accept_valid_sibling_and_node_receivers():
           const div = document.createElement('div'), anchor = document.createElement('a');
           anchor.id = 'anchor';
           const prototype = Object.getPrototypeOf(div);
-          const id = Object.getOwnPropertyDescriptor(prototype, 'id');
-          const text = Object.getOwnPropertyDescriptor(prototype, 'textContent');
+          const id = Object.getOwnPropertyDescriptor(Element.prototype, 'id');
+          const text = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
           const node = document.createTextNode('text');
           text.set.call(node, 'changed');
           let rejected = false;

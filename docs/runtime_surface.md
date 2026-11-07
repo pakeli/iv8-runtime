@@ -1,5 +1,15 @@
 # iv8-runtime Runtime Surface Index
 
+**Latest implemented Web IDL environment repair (`2026-11-07`), release
+verification pending.** ENV-01 through ENV-06 now cover native method metadata,
+receiver brands, shared interface inheritance and defining-prototype descriptors.
+All 75 supplied Chrome comparisons match. Native Document/EventTarget/node
+construction and explicit offline fetch/XHR/Worker/open behavior are included.
+The prior browser compatibility repair below remains the latest fully verified
+release. Boundary and evidence are in `docs/webidl_environment_semantics.md` and
+`docs/webidl_environment_report.md`. Finish this repair's release verification
+before resuming M11-53.
+
 **Latest verified browser compatibility repair (`2026-11-06`):** reflected
 meta/script/anchor properties, stable node wrappers, live tag/class collections,
 IDL accessors/brands, trailing-body recovery, document tree edits, document.all,
@@ -13,7 +23,7 @@ Contract, artifact IDs, source/driver restoration and remaining limits:
 `docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
 numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-06` · Latest verified numbered milestone: **M11-52**
+Last reviewed: `2026-11-07` · Latest verified numbered milestone: **M11-52**
 (Window messaging — `postMessage` / `MessageEvent`), verified on real V8 (Linux +
 Windows + macOS arm64). It follows **M11-51** (Window event handler attributes),
 **M11-50** (Window scroll/focus/UI completion), **M11-49** (HTML string APIs),
@@ -521,8 +531,9 @@ Installed per generation by `install_page`:
   M11-48 `createTextNode` / `createComment` / `createDocumentFragment`, plus the
   compatibility repair's appendChild/removeChild/insertBefore/replaceChild and
   V8-undetectable live document.all;
-  `document.children` stays element-only and `document.childNodes` remains
-  absent (Document is not a Node);
+  `document.children` stays element-only. The Web IDL repair adds Document's
+  Node identity, childNodes and Node operations, with the document as the parent
+  of its root nodes. Its release verification is pending above.
 - **elements** — the minimal node surface (`tagName` / `nodeName` / `nodeType` /
   `nodeValue` (null) / `id` / `className` / live `textContent` / `parentNode` /
   `childNodes` / `children`), connectivity and structural navigation
@@ -565,14 +576,16 @@ Deliberate shape of this DOM (M11-48/M11-49): Element, Text, Comment, and
 DocumentFragment nodes share one live tree; `textContent` is computed live and
 whitespace text nodes are preserved; HTML fragments round-trip through a
 deterministic serializer with bounded entity decoding; XML CDATA, doctype nodes,
-Document-as-Node, and Node constructors remain absent. Tag/class queries are live HTMLCollection objects; other historical
+and general XML parsing remain outside the bounded parser. Document now has
+Node identity and the approved standalone native constructors are implemented.
+Tag/class queries are live HTMLCollection objects. Other historical
 collections retain their Array contracts. Native node wrappers have stable
 identity per generation. Selectors match elements only and support the M11-34
 subset (lists, compound selectors, combinators, attribute selectors, `*`) but not
 pseudo-classes/elements, escapes, namespaces, or `i`/`s` flags, there are no
-specialized `HTML*Element` classes or
-a full attribute-reflection surface (the form-control subset plus the repaired
-meta/script/anchor attributes are supported), and a `<script>` inserted into the tree stays **inert**.
+full attribute-reflection semantics. HTML interface prototypes now provide tag
+identity and the implemented form-control and meta/script/anchor attributes.
+A `<script>` inserted into the tree stays **inert**.
 `form.submit()` / `requestSubmit()` are callable no-ops. Form validation is the
 bounded M11-32 subset above, not the full HTML constraint-validation algorithm.
 Crypto is the bounded M11-33 random subset; `crypto.subtle` is absent. Consult
@@ -580,10 +593,12 @@ the milestone summary before assuming any wider behavior.
 
 ## 4. Standing exclusions
 
-Never implemented at any milestone so far: networking (`fetch` / XHR / WebSocket /
-resource loading), navigation and history, JavaScript→Python callbacks, a Python-side
-DOM or event API (`Page.document`), CDATA/doctype nodes, live collections, layout
-or geometry. `iv8` also exports no browser symbol at module level —
+Execution exclusions include HTTP/WebSocket transport, automatic resource
+loading, committed navigation/history, JavaScript→Python callbacks, a Python-side
+DOM or event API (`Page.document`), CDATA/doctype nodes, layout and geometry.
+The Web IDL repair provides explicit offline fetch rejection and XHR/Worker
+constructor failure, plus a blocked-popup open result. Live tag/class collections
+and offline navigation intents are available. `iv8` also exports no browser symbol at module level —
 `test/test_scope_exclusions.py` guards this.
 
 Nuance since M11-1: the page reports configurable `screen` / `window` **dimension

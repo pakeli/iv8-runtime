@@ -11,6 +11,8 @@
 
 #include "iv8/access_summary.h"
 #include "iv8/access_trace.h"
+#include "iv8/web_interface.h"
+#include "iv8/web_method.h"
 
 namespace iv8 {
 
@@ -147,6 +149,35 @@ bool property_is_present(v8::Local<v8::Object> holder,
     return true;  // cyclic/unexpected chain: do not assert missing
 }
 
+bool is_interface_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                         v8::Local<v8::Object> object, HostObject* host,
+                         const std::string& member) {
+    if (host->prototype_key().empty()) return false;
+    auto interface = web_member_interface(host->prototype_key(), member, true);
+    auto prototype = web_interface_prototype(isolate, context, interface);
+    if (prototype.IsEmpty()) return false;
+    v8::Local<v8::Value> canonical;
+    if (!prototype->GetPrivate(context, v8::Private::ForApi(isolate,
+            v8str(isolate, "iv8.webidl.method." + member))).ToLocal(&canonical) ||
+        !canonical->IsFunction()) return false;
+    auto key = v8str(isolate, member);
+    for (int depth = 0; depth < 1000 && !object.IsEmpty() && !object->IsProxy(); ++depth) {
+        if (object->HasRealNamedProperty(context, key).FromMaybe(false)) {
+            v8::Local<v8::Value> descriptor;
+            v8::Local<v8::Value> value;
+            if (!object->GetOwnPropertyDescriptor(context, key).ToLocal(&descriptor) ||
+                !descriptor->IsObject() ||
+                !descriptor.As<v8::Object>()->Get(context, v8str(isolate, "value")).ToLocal(&value))
+                return false;
+            return value == canonical;
+        }
+        auto parent = object->GetPrototype();
+        if (!parent->IsObject()) return false;
+        object = parent.As<v8::Object>();
+    }
+    return false;
+}
+
 // Named-property interceptor for absent string keys. kNonMasking keeps the
 // interceptor out of the path for existing own/prototype properties; returning
 // kNo hands the lookup back to V8, so the script still sees undefined and all
@@ -167,16 +198,36 @@ v8::Intercepted named_property_getter(
     // kNonMasking should make this branch unnecessary, but keep the guard so a
     // V8 callback-order change cannot turn an existing property into a missing
     // probe. This is a real-property check, not a Get: it does not run getters.
-    if (property_is_present(info.Holder(), context, property)) {
-        return v8::Intercepted::kNo;
-    }
     v8::String::Utf8Value utf8(isolate, property);
-    if (*utf8 == nullptr) {
+    if (*utf8 == nullptr) return v8::Intercepted::kNo;
+    const std::string key(*utf8, static_cast<std::size_t>(utf8.length()));
+    if (property_is_present(info.Holder(), context, property)) {
+        if (is_interface_method(isolate, context, info.Holder(), host, key)) {
+            record_access(trace, host, key, AccessOperation::kGetMethod);
+        }
         return v8::Intercepted::kNo;
     }
-    const std::string key(*utf8, static_cast<std::size_t>(utf8.length()));
     trace->record(host, host->trace_object_type(), host->trace_label(), key,
                   AccessOperation::kGetProbe, "missing");
+    return v8::Intercepted::kNo;
+}
+
+v8::Intercepted named_property_setter(
+    v8::Local<v8::Name> property, v8::Local<v8::Value> value,
+    const v8::PropertyCallbackInfo<v8::Boolean>& info) {
+    auto isolate = info.GetIsolate();
+    auto* host = backing_of(info.Holder());
+    auto* trace = active_trace(isolate);
+    if (host == nullptr || trace == nullptr || !property->IsString()) return v8::Intercepted::kNo;
+    v8::String::Utf8Value text(isolate, property);
+    const std::string member(*text != nullptr ? *text : "");
+    if (is_interface_method(isolate, isolate->GetCurrentContext(), info.Holder(), host, member)) {
+        auto seq = record_access(trace, host, member, AccessOperation::kSet);
+        AccessCompletion completion;
+        completion.outcome = "returned";
+        completion.value_summary = access_value_summary(isolate, value);
+        trace->complete(seq, std::move(completion));
+    }
     return v8::Intercepted::kNo;
 }
 
@@ -276,9 +327,21 @@ void property_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
 // Function accessors expose real Web IDL descriptors on a shared prototype.
 // Callback data contains the member and expected interface; no native pointer is
 // captured, so copying a getter cannot outlive or bypass its receiver's brand.
+HostObject* method_receiver(v8::Isolate* isolate, v8::Local<v8::Object> receiver) {
+    if (auto* host = backing_of(receiver)) return host;
+    auto context = isolate->GetCurrentContext();
+    if (receiver != context->Global()) return nullptr;
+    v8::Local<v8::Value> value;
+    if (!receiver->GetPrivate(context, v8::Private::ForApi(isolate,
+            v8str(isolate, "iv8.webidl.window.host"))).ToLocal(&value) ||
+        !value->IsExternal()) return nullptr;
+    return static_cast<HostObject*>(value.As<v8::External>()->Value(
+        v8::kExternalPointerTypeTagDefault));
+}
+
 HostObject* idl_receiver(const v8::FunctionCallbackInfo<v8::Value>& info,
                           std::string& key) {
-    v8::Isolate* isolate = info.GetIsolate();
+    auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
     auto data = info.Data().As<v8::Array>();
     v8::Local<v8::Value> member;
@@ -288,31 +351,10 @@ HostObject* idl_receiver(const v8::FunctionCallbackInfo<v8::Value>& info,
     v8::String::Utf8Value member_text(isolate, member);
     v8::String::Utf8Value interface_text(isolate, interface);
     key = *member_text != nullptr ? *member_text : "";
-    HostObject* host = backing_of(info.This());
-    bool compatible = host != nullptr && *interface_text != nullptr &&
-        host->prototype_key() == *interface_text;
-    // Node/HTMLElement attributes remain valid on sibling interfaces. Tag-
-    // specific attributes (form.action, script.src, input.value, ...) retain
-    // their stricter interface brand instead of accepting arbitrary hosts.
-    if (host != nullptr && *interface_text != nullptr &&
-        std::string_view(*interface_text).starts_with("Element:")) {
-        constexpr std::string_view node_properties[] = {
-            "nodeName", "nodeType", "nodeValue", "textContent", "parentNode",
-            "parentElement", "childNodes", "ownerDocument", "isConnected",
-            "firstChild", "lastChild", "previousSibling", "nextSibling"};
-        constexpr std::string_view element_properties[] = {
-            "id", "className", "tagName", "innerHTML", "outerHTML", "children",
-            "previousElementSibling", "nextElementSibling", "firstElementChild",
-            "lastElementChild", "childElementCount", "classList", "innerText", "style"};
-        const auto contains = [&key](const auto& names) {
-            return std::find(std::begin(names), std::end(names), key) != std::end(names);
-        };
-        if (contains(node_properties)) compatible = host->is_node();
-        else if (contains(element_properties)) compatible = host->node_kind() == NodeKind::Element;
-    }
-    if (!compatible) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8str(isolate, "Illegal invocation")));
+    HostObject* host = method_receiver(isolate, info.This());
+    if (host == nullptr || *interface_text == nullptr ||
+        !web_interface_inherits(host->prototype_key(), *interface_text)) {
+        isolate->ThrowException(v8::Exception::TypeError(v8str(isolate, "Illegal invocation")));
         return nullptr;
     }
     return host;
@@ -375,13 +417,30 @@ void idl_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // Data, dispatched to the backing object's call_method().
 void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
-    HostObject* host = backing_of(info.This());
-    if (host == nullptr) {
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    auto data = info.Data().As<v8::Array>();
+    v8::Local<v8::Value> member;
+    v8::Local<v8::Value> owner_value;
+    if (!data->Get(context, 0).ToLocal(&member) ||
+        !data->Get(context, 1).ToLocal(&owner_value)) return;
+    v8::String::Utf8Value name(isolate, member);
+    const std::string key(*name != nullptr ? *name : "");
+    HostObject* host = method_receiver(isolate, info.This());
+    bool compatible = false;
+    if (owner_value->IsString()) {
+        v8::String::Utf8Value interface(isolate, owner_value);
+        compatible = host != nullptr && *interface != nullptr &&
+            web_interface_inherits(host->prototype_key(), *interface);
+    } else {
+        auto* owner = static_cast<HostObject*>(owner_value.As<v8::External>()->Value(
+            v8::kExternalPointerTypeTagDefault));
+        if (owner->trace_object_type() == "console") host = owner;
+        compatible = host != nullptr && owner->trace_object_type() == host->trace_object_type();
+    }
+    if (!compatible) {
+        isolate->ThrowException(v8::Exception::TypeError(v8str(isolate, "Illegal invocation")));
         return;
     }
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::String::Utf8Value name(isolate, info.Data());
-    const std::string key(*name != nullptr ? *name : "");
     AccessTrace* trace = active_trace(isolate);
     std::uint64_t seq = 0;
     if (trace != nullptr) {
@@ -459,9 +518,15 @@ void method_getter(v8::Local<v8::Name> property,
             }
         } else {
             v8::Local<v8::Function> fn;
-            if (!v8::FunctionTemplate::New(isolate, &method_callback, method_name)
-                     ->GetFunction(context)
-                     .ToLocal(&fn)) {
+            auto data = v8::Array::New(isolate, 2);
+            (void)data->Set(context, 0, method_name);
+            (void)data->Set(context, 1, v8::External::New(isolate, host,
+                v8::kExternalPointerTypeTagDefault));
+            v8::String::Utf8Value name(isolate, method_name);
+            const std::string member(*name != nullptr ? *name : "");
+            if (!make_web_method(isolate, context, member,
+                    web_method_length(host->trace_object_type(), member),
+                    &method_callback, data).ToLocal(&fn)) {
                 return;
             }
             (void)holder->SetPrivate(context, slot, fn);
@@ -469,9 +534,15 @@ void method_getter(v8::Local<v8::Name> property,
         }
     } else {
         v8::Local<v8::Function> fn;
-        if (!v8::FunctionTemplate::New(isolate, &method_callback, method_name)
-                 ->GetFunction(context)
-                 .ToLocal(&fn)) {
+        auto data = v8::Array::New(isolate, 2);
+        (void)data->Set(context, 0, method_name);
+        (void)data->Set(context, 1, v8::External::New(isolate, host,
+            v8::kExternalPointerTypeTagDefault));
+        v8::String::Utf8Value name(isolate, method_name);
+        const std::string member(*name != nullptr ? *name : "");
+        if (!make_web_method(isolate, context, member,
+                web_method_length(host->trace_object_type(), member),
+                &method_callback, data).ToLocal(&fn)) {
             return;
         }
         result = fn;
@@ -536,7 +607,74 @@ void method_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
     }
 }
 
+v8::Local<v8::Array> member_data(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                                const std::string& member, const std::string& interface) {
+    auto data = v8::Array::New(isolate, 2);
+    if (!data->Set(context, 0, v8str(isolate, member)).FromMaybe(false) ||
+        !data->Set(context, 1, v8str(isolate, interface)).FromMaybe(false)) return {};
+    return data;
+}
+
+bool define_idl_attribute(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                          v8::Local<v8::Object> target, const std::string& member,
+                          const std::string& interface, bool writable, bool configurable) {
+    auto data = member_data(isolate, context, member, interface);
+    if (data.IsEmpty()) return false;
+    v8::Local<v8::Function> getter;
+    v8::Local<v8::Function> setter;
+    if (!make_web_method(isolate, context, "get " + member, 0, &idl_getter, data)
+            .ToLocal(&getter)) return false;
+    if (writable && !make_web_method(isolate, context, "set " + member, 1, &idl_setter, data)
+            .ToLocal(&setter)) return false;
+    v8::PropertyDescriptor descriptor(getter, setter.IsEmpty()
+        ? v8::Local<v8::Value>(v8::Undefined(isolate)) : v8::Local<v8::Value>(setter));
+    descriptor.set_enumerable(true);
+    descriptor.set_configurable(configurable);
+    return target->DefineProperty(context, v8str(isolate, member), descriptor).FromMaybe(false);
+}
+
 }  // namespace
+
+void set_window_host(v8::Isolate* isolate, v8::Local<v8::Context> context, HostObject* host) {
+    (void)context->Global()->SetPrivate(context, v8::Private::ForApi(isolate,
+        v8str(isolate, "iv8.webidl.window.host")), v8::External::New(isolate, host, v8::kExternalPointerTypeTagDefault));
+}
+
+void install_host_interface(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                             HostObject* host) {
+    const auto name = host->prototype_key();
+    if (name.empty()) return;
+    const auto writable = host->writable_property_names();
+    if (name != "Location") {
+        for (const auto& member : host->property_names()) {
+            if (member == "location" && web_interface_inherits(name, "Document")) continue;
+            const auto interface = web_member_interface(name, member, false);
+            auto prototype = web_interface_prototype(isolate, context, interface);
+            if (prototype.IsEmpty()) return;
+            auto registered = v8::Private::ForApi(isolate, v8str(isolate, "iv8.webidl.attribute." + member));
+            if (prototype->HasPrivate(context, registered).FromMaybe(true)) continue;
+            if (!define_idl_attribute(isolate, context, prototype, member, interface,
+                    std::find(writable.begin(), writable.end(), member) != writable.end(), true)) return;
+            (void)prototype->SetPrivate(context, registered, v8::True(isolate));
+        }
+    }
+    for (const auto& member : host->method_names()) {
+        const auto interface = web_member_interface(name, member, true);
+        auto prototype = web_interface_prototype(isolate, context, interface);
+        if (prototype.IsEmpty()) return;
+        auto registered = v8::Private::ForApi(isolate, v8str(isolate, "iv8.webidl.method." + member));
+        if (prototype->HasPrivate(context, registered).FromMaybe(true)) continue;
+        auto data = member_data(isolate, context, member, interface);
+        v8::Local<v8::Function> function;
+        if (data.IsEmpty() || !make_web_method(isolate, context, member,
+                web_method_length(host->trace_object_type(), member), &method_callback, data)
+                .ToLocal(&function)) return;
+        (void)prototype->SetPrivate(context, registered, function);
+        if (name != "Location") {
+            (void)prototype->DefineOwnProperty(context, v8str(isolate, member), function);
+        }
+    }
+}
 
 v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
                                        v8::Local<v8::Context> context,
@@ -558,7 +696,7 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
     const auto handler_flags = static_cast<v8::PropertyHandlerFlags>(
         static_cast<int>(v8::PropertyHandlerFlags::kOnlyInterceptStrings));
     tmpl->SetHandler(v8::NamedPropertyHandlerConfiguration(
-        &named_property_getter, nullptr, &named_property_query,
+        &named_property_getter, &named_property_setter, &named_property_query,
         &named_property_deleter, &named_property_enumerator,
         &named_property_definer, nullptr,
         v8::Local<v8::Value>(), handler_flags));
@@ -571,10 +709,9 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
     const auto is_writable = [&writable](const std::string& name) {
         return std::find(writable.begin(), writable.end(), name) != writable.end();
     };
-    const auto prototype_properties = host->prototype_property_names();
+    const bool idl = !host->prototype_key().empty();
     for (const std::string& property : host->property_names()) {
-        if (std::find(prototype_properties.begin(), prototype_properties.end(),
-                      property) != prototype_properties.end()) continue;
+        if (idl) continue;
         if (is_writable(property)) {
             tmpl->SetNativeDataProperty(
                 v8str(isolate, property), &property_getter, &property_setter,
@@ -587,6 +724,7 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
         }
     }
     for (const std::string& method : host->method_names()) {
+        if (idl) continue;
         v8::Local<v8::String> mname = v8str(isolate, method);
         v8::Local<v8::Private> slot = v8::Private::New(isolate, mname);
         tmpl->SetNativeDataProperty(
@@ -597,43 +735,29 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
 
     v8::Local<v8::Object> object = tmpl->NewInstance(context).ToLocalChecked();
     object->SetAlignedPointerInInternalField(0, host, kHostObjectTag);
-    if (!prototype_properties.empty()) {
-        auto slot = v8::Private::ForApi(isolate, v8str(isolate,
-            "iv8.idl.prototype." + host->prototype_key()));
-        v8::Local<v8::Value> cached;
-        if (!context->Global()->GetPrivate(context, slot).ToLocal(&cached))
-            return object;
-        v8::Local<v8::Object> prototype;
-        if (cached->IsObject()) {
-            prototype = cached.As<v8::Object>();
-        } else {
-            prototype = v8::Object::New(isolate);
-            for (const auto& property : prototype_properties) {
-                auto data = v8::Array::New(isolate, 2);
-                (void)data->Set(context, 0, v8str(isolate, property));
-                (void)data->Set(context, 1, v8str(isolate, host->prototype_key()));
-                v8::Local<v8::Function> getter;
-                if (!v8::Function::New(context, &idl_getter, data, 0,
-                        v8::ConstructorBehavior::kThrow).ToLocal(&getter))
-                    return object;
-                getter->SetName(v8str(isolate, "get " + property));
-                v8::Local<v8::Function> setter;
-                if (is_writable(property) &&
-                    !v8::Function::New(context, &idl_setter, data, 1,
-                        v8::ConstructorBehavior::kThrow).ToLocal(&setter))
-                    return object;
-                if (!setter.IsEmpty()) setter->SetName(v8str(isolate, "set " + property));
-                v8::PropertyDescriptor descriptor(getter, setter.IsEmpty()
-                    ? v8::Local<v8::Value>(v8::Undefined(isolate))
-                    : v8::Local<v8::Value>(setter));
-                descriptor.set_enumerable(true);
-                descriptor.set_configurable(true);
-                (void)prototype->DefineProperty(context, v8str(isolate, property),
-                                                 descriptor);
-            }
-            (void)context->Global()->SetPrivate(context, slot, prototype);
-        }
+    if (idl) {
+        install_host_interface(isolate, context, host);
+        auto prototype = web_interface_prototype(isolate, context, host->prototype_key());
+        if (prototype.IsEmpty()) return object;
         (void)object->SetPrototype(context, prototype);
+        if (web_interface_inherits(host->prototype_key(), "Document")) {
+            (void)define_idl_attribute(isolate, context, object, "location", "Document", true, false);
+        }
+        if (host->prototype_key() == "Location") {
+            for (const auto& member : host->property_names()) {
+                const bool writable_member = std::find(writable.begin(), writable.end(), member) != writable.end();
+                (void)define_idl_attribute(isolate, context, object, member, "Location", writable_member, false);
+            }
+            for (const auto& member : host->method_names()) {
+                v8::Local<v8::Value> function;
+                if (!prototype->GetPrivate(context, v8::Private::ForApi(isolate,
+                        v8str(isolate, "iv8.webidl.method." + member))).ToLocal(&function)) return object;
+                (void)object->DefineOwnProperty(context, v8str(isolate, member), function,
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+            }
+            (void)object->DefineOwnProperty(context, v8::Symbol::GetToPrimitive(isolate),
+                v8::Undefined(isolate), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+        }
     }
     return object;
 }

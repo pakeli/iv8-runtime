@@ -194,7 +194,7 @@ def test_no_js_monitoring_global():
         page.load(html="<html><body></body></html>", base_url=BASE)
         for g in ("watchApis", "watchReflectGet", "watchReflectHas", "vconsole",
                   "vdebugger", "wrapNative", "__cdp__", "TrustedTypes",
-                  "trustedTypes", "Worker"):
+                  "trustedTypes"):
             assert page.eval(f"typeof globalThis.{g}") == "undefined"
         # Reflect stays a normal, callable object even while its entries are watched
         assert page.eval("typeof Reflect.get") == "function"

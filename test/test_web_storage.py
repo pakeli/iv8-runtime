@@ -206,15 +206,18 @@ def test_storage_globals_are_read_only():
 
 
 @on_only
-def test_detached_method_uses_the_same_store():
+def test_detached_method_requires_storage_receiver():
     with iv8.Page() as page:
         _setup(page)
         assert page.eval("""
-            (function () {
+            (() => {
                 localStorage.setItem('a', '1');
-                var get = localStorage.getItem;
-                var set = localStorage.setItem;
-                set('b', '2');
-                return [get('a'), get('b'), localStorage.length].join('|');
+                const get = localStorage.getItem;
+                const set = localStorage.setItem;
+                const errors = [];
+                for (const invoke of [() => get('a'), () => set('b', '2')]) {
+                    try { invoke(); } catch (error) { errors.push(error.name); }
+                }
+                return [...errors, get.call(localStorage, 'a'), localStorage.length].join('|');
             })()
-        """) == "1|2|2"
+        """) == "TypeError|TypeError|1|1"

@@ -65,10 +65,10 @@ def test_document_element_and_body():
 
 
 @on_only
-def test_missing_documentelement_and_body_are_null():
+def test_fragment_document_element_and_missing_body():
     with iv8.Page() as page:
         page.load(html="<div id='x'>hi</div>", base_url="https://frag.test/")
-        assert page.eval("document.documentElement === null") is True
+        assert page.eval("document.documentElement === document.getElementById('x')") is True
         assert page.eval("document.body === null") is True
 
 

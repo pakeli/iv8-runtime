@@ -236,4 +236,4 @@ def test_legacy_navigator_metadata_is_empty_and_read_only():
              navigator.mimeTypes.length,
              navigator.javaEnabled()].join(',')
             """
-        ) == "0,0,false"
+        ) == "0,0,true"

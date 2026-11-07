@@ -96,22 +96,23 @@ def test_storage_manager_keeps_plain_object_shape_and_identity():
 
 
 @on_only
-def test_storage_manager_descriptor_read_evaluates_the_parent_getter():
+def test_storage_manager_descriptor_does_not_evaluate_the_parent_getter():
     with iv8.Page() as page:
         _load(page)
         page.start_access_trace()
         descriptor = page.eval(
             """
             (() => {
-              const d = Object.getOwnPropertyDescriptor(navigator, 'storage');
-              return [typeof d.value, d.writable, d.enumerable,
+              const own = Object.getOwnPropertyDescriptor(navigator, 'storage');
+              const d = Object.getOwnPropertyDescriptor(Navigator.prototype, 'storage');
+              return [own === undefined, typeof d.get, d.enumerable,
                       d.configurable,
-                      d.value === navigator.storage].join('|');
+                      d.get.call(navigator) === navigator.storage].join('|');
             })();
             """,
             name="probe.js"
         )
-        assert descriptor == "object|false|true|false|true"
+        assert descriptor == "true|function|true|true|true"
         assert [(event["object_type"], event["member"], event["operation"])
                 for event in _events(page)] == [
             ("navigator", "storage", "get_own_property_descriptor"),

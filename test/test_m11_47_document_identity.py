@@ -103,9 +103,11 @@ def test_default_view_and_location_identity():
              document.location.pathname].join('|');
             """
         ) == "true|true|true|true|true|true|/path"
-        for member in ("defaultView", "location"):
-            with pytest.raises(iv8.JSError):
-                page.eval(f"'use strict'; document.{member} = 1;")
+        with pytest.raises(iv8.JSError):
+            page.eval("'use strict'; document.defaultView = 1;")
+        page.eval("document.location = '/next'")
+        assert page.eval("document.location === location") is True
+        assert page.read_navigation_requests()["requests"][0]["url"] == "https://m11-47.test/next"
 
 
 @on_only
@@ -116,13 +118,13 @@ def test_identity_descriptors_and_access_trace():
             """
             (() => {
               document.title = 'T';
-              const t = Object.getOwnPropertyDescriptor(document, 'title');
-              const u = Object.getOwnPropertyDescriptor(document, 'documentURI');
-              return [t.value, t.writable, t.enumerable, t.configurable,
-                      u.value, u.writable, u.enumerable, u.configurable].join('|');
+              const t = Object.getOwnPropertyDescriptor(Document.prototype, 'title');
+              const u = Object.getOwnPropertyDescriptor(Document.prototype, 'documentURI');
+              return [t.get.call(document), typeof t.set, t.enumerable, t.configurable,
+                      u.get.call(document), typeof u.set, u.enumerable, u.configurable].join('|');
             })();
             """
-        ) == f"T|true|true|false|{BASE}|false|true|false"
+        ) == f"T|function|true|true|{BASE}|undefined|true|true"
 
         page.start_access_trace()
         page.eval(

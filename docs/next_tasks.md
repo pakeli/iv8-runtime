@@ -1,5 +1,15 @@
 # Next Tasks
 
+**Latest implemented Web IDL environment repair (`2026-11-07`), release
+verification pending.** ENV-01 through ENV-06 now cover native method metadata,
+receiver brands, shared interface inheritance and defining-prototype descriptors.
+All 75 supplied Chrome comparisons match. Native Document/EventTarget/node
+construction and explicit offline fetch/XHR/Worker/open behavior are included.
+The prior browser compatibility repair below remains the latest fully verified
+release. Boundary and evidence are in `docs/webidl_environment_semantics.md` and
+`docs/webidl_environment_report.md`. Finish this repair's release verification
+before resuming M11-53.
+
 **Latest verified browser compatibility repair (`2026-11-06`):** reflected
 meta/script/anchor properties, stable node wrappers, live tag/class collections,
 IDL accessors/brands, trailing-body recovery, document tree edits, document.all,
@@ -13,7 +23,7 @@ Contract, artifact IDs, source/driver restoration and remaining limits:
 `docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
 numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-06`
+Last reviewed: `2026-11-07`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
@@ -77,8 +87,9 @@ At the user's direction, **Window now has higher priority than Document**:
    Document work.
 2. **Later — Document continuation.** `document.write`/`writeln`/`open`/`close`
    and `importNode`/`adoptNode` move behind the Window slices. The bounded
-   document.all repair is verified above; complete DOM constructor/prototype
-   inheritance and remaining legacy collection overloads are still deferred.
+   document.all repair is verified above. The approved Web IDL interface and
+   descriptor batch is implemented and awaiting release verification above.
+   Remaining legacy collection overloads follow the later Document work.
 3. Remaining headless-browser gaps and the open decisions in
    `docs/current_status.md` follow.
 

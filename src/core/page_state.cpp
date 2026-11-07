@@ -13,6 +13,7 @@
 #include <random>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -37,6 +38,8 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 #include "iv8/query_parameters.h"
 #include "iv8/selector_parser.h"
 #include "iv8/url_parser.h"
+#include "iv8/web_interface.h"
+#include "iv8/web_method.h"
 
 // M9-1: V8 Inspector (CDP) attach base. Included after context_host.h so the
 // v8_headers.h COMPILER-macro workaround has already run before any V8 header.
@@ -324,6 +327,14 @@ v8::Local<v8::Value> v8_string(v8::Isolate* isolate, const std::string& s) {
         .ToLocalChecked();
 }
 
+v8::Local<v8::Value> dom_exception(v8::Isolate* isolate, const char* name,
+                                     const std::string& message) {
+    auto error = v8::Exception::Error(v8_string(isolate, message).As<v8::String>());
+    (void)error.As<v8::Object>()->Set(isolate->GetCurrentContext(),
+        v8_string(isolate, "name"), v8_string(isolate, name));
+    return error;
+}
+
 // --- M11-7 Web Storage -------------------------------------------------------
 //
 // A Storage object is a plain JS object whose methods and `length` accessor carry
@@ -339,8 +350,19 @@ using StorageStore = std::vector<std::pair<std::string, std::string>>;
 constexpr v8::ExternalPointerTypeTag kStorageTag =
     v8::kExternalPointerTypeTagDefault;
 
-StorageStore* storage_store_from(v8::Local<v8::Value> data) {
+v8::Local<v8::Private> storage_brand(v8::Isolate* isolate) {
+    return v8::Private::ForApi(isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8.storage.backing"));
+}
+
+StorageStore* storage_receiver(v8::Isolate* isolate,
+                               v8::Local<v8::Object> receiver) {
+    v8::Local<v8::Value> data;
+    if (!receiver->GetPrivate(isolate->GetCurrentContext(), storage_brand(isolate))
+            .ToLocal(&data)) return nullptr;
     if (!data->IsExternal()) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(isolate, "Illegal invocation")));
         return nullptr;
     }
     return static_cast<StorageStore*>(
@@ -371,7 +393,7 @@ StorageStore::iterator storage_find(StorageStore* store,
 void storage_get_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    StorageStore* store = storage_store_from(info.Data());
+    StorageStore* store = storage_receiver(isolate, info.This());
     if (store == nullptr) {
         return;
     }
@@ -391,7 +413,7 @@ void storage_get_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
 void storage_set_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    StorageStore* store = storage_store_from(info.Data());
+    StorageStore* store = storage_receiver(isolate, info.This());
     if (store == nullptr) {
         return;
     }
@@ -412,7 +434,7 @@ void storage_set_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
 void storage_remove_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    StorageStore* store = storage_store_from(info.Data());
+    StorageStore* store = storage_receiver(isolate, info.This());
     if (store == nullptr) {
         return;
     }
@@ -429,7 +451,7 @@ void storage_remove_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void storage_clear(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
-    StorageStore* store = storage_store_from(info.Data());
+    StorageStore* store = storage_receiver(isolate, info.This());
     if (store != nullptr) {
         const std::uint64_t seq = access_trace_record(
             isolate, store, "storage", "storage", "clear",
@@ -442,7 +464,7 @@ void storage_clear(const v8::FunctionCallbackInfo<v8::Value>& info) {
 void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    StorageStore* store = storage_store_from(info.Data());
+    StorageStore* store = storage_receiver(isolate, info.This());
     if (store == nullptr) {
         return;
     }
@@ -463,20 +485,19 @@ void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
         v8_string(isolate, (*store)[index].first));
 }
 
-void storage_length_getter(v8::Local<v8::Name> property,
-                           const v8::PropertyCallbackInfo<v8::Value>& info) {
-    (void)property;
-    v8::Isolate* isolate = info.GetIsolate();
-    StorageStore* store = storage_store_from(info.Data());
-    if (store == nullptr) {
-        return;
+void storage_length_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    auto* store = storage_receiver(isolate, info.This());
+    if (store == nullptr) return;
+    const auto seq = access_trace_record(isolate, store, "storage", "storage", "length", AccessOperation::kGet);
+    auto result = v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size()));
+    if (seq != 0) {
+        AccessCompletion completion;
+        completion.outcome = "returned";
+        completion.value_summary = access_value_summary(isolate, result);
+        access_trace_from_isolate(isolate)->complete(seq, std::move(completion));
     }
-    const std::uint64_t seq = access_trace_record(
-        isolate, store, "storage", "storage", "length",
-        AccessOperation::kGet);
-    AccessPropertyCompletion completion(isolate, seq, info);
-    info.GetReturnValue().Set(
-        v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size())));
+    info.GetReturnValue().Set(result);
 }
 
 // Step 5: nested connection metadata. HostObject-backed so reads, missing
@@ -926,16 +947,6 @@ void make_media_query_list_callback(
 // whose cached native function records the call and returns false.
 constexpr char kJavaEnabledTraceToken = 0;
 
-void navigator_java_enabled_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    const std::uint64_t seq = access_trace_record(
-        isolate, &kJavaEnabledTraceToken, "navigator", "navigator",
-        "javaEnabled", AccessOperation::kCall);
-    AccessCallCompletion completion(isolate, seq, info);
-    info.GetReturnValue().Set(v8::Boolean::New(isolate, false));
-}
-
 // M2-3 minimal navigator (read-only), configurable since M11-1 and extended by
 // M11-24/M11-27. Values come from the page's HostEnvironment, which the Python
 // facade always supplies fully resolved — this class holds no defaults and never
@@ -948,7 +959,6 @@ public:
         : environment_(environment), connection_(environment) {}
 
     std::string global_name() const override { return "navigator"; }
-    std::vector<std::string> prototype_property_names() const override { return {"webdriver"}; }
     std::string prototype_key() const override { return "Navigator"; }
     std::string trace_object_type() const override { return "navigator"; }
 
@@ -960,17 +970,16 @@ public:
                 "vendorSub",       "productSub",        "maxTouchPoints",
                 "pdfViewerEnabled", "doNotTrack",        "connection",
                 "storage",         "permissions",       "plugins",
-                "mimeTypes",       "javaEnabled"};
+                "mimeTypes"};
     }
 
-    std::vector<std::string> method_names() const override { return {}; }
+    std::vector<std::string> method_names() const override { return {"javaEnabled"}; }
 
     void release_v8_handles() noexcept override {
         storage_object_.Reset();
         permissions_object_.Reset();
         plugins_object_.Reset();
         mime_types_object_.Reset();
-        java_enabled_object_.Reset();
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -1074,24 +1083,14 @@ public:
             }
             return slot.Get(isolate);
         }
-        if (name == "javaEnabled") {
-            if (java_enabled_object_.IsEmpty()) {
-                java_enabled_object_.Reset(
-                    isolate,
-                    v8::FunctionTemplate::New(isolate,
-                                              &navigator_java_enabled_callback)
-                        ->GetFunction(context)
-                        .ToLocalChecked());
-            }
-            return java_enabled_object_.Get(isolate);
-        }
         return v8::Undefined(isolate);
     }
 
     v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
+        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string& name,
         const v8::FunctionCallbackInfo<v8::Value>&) override {
-        return v8::Undefined(isolate);  // navigator exposes no methods
+        if (name == "javaEnabled") return v8::False(isolate);
+        return v8::Undefined(isolate);
     }
 
 private:
@@ -1106,7 +1105,6 @@ private:
     // Step 5h: cached legacy navigator metadata.
     v8::Global<v8::Array> plugins_object_;
     v8::Global<v8::Array> mime_types_object_;
-    v8::Global<v8::Function> java_enabled_object_;
 };
 
 // M11-1/M11-25 minimal screen (read-only). Static dimensions and color/pixel
@@ -1114,69 +1112,6 @@ private:
 // object: no availLeft / availTop / orientation, no ScreenOrientation, and no
 // media-query or layout integration. avail* are independent configured values,
 // not computed from width/height.
-class ScreenHost : public HostObject {
-public:
-    explicit ScreenHost(const HostEnvironment* environment)
-        : environment_(environment), orientation_(environment) {}
-
-    std::string global_name() const override { return "screen"; }
-    std::string trace_object_type() const override { return "screen"; }
-
-    std::vector<std::string> property_names() const override {
-        return {"width",      "height",     "availWidth", "availHeight",
-                "availLeft",  "availTop",   "colorDepth", "pixelDepth",
-                "orientation"};
-    }
-
-    std::vector<std::string> method_names() const override { return {}; }
-
-    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
-                                      v8::Local<v8::Context> context,
-                                      const std::string& name) override {
-        if (name == "width") {
-            return v8::Integer::New(isolate, environment_->screen_width);
-        }
-        if (name == "height") {
-            return v8::Integer::New(isolate, environment_->screen_height);
-        }
-        if (name == "availWidth") {
-            return v8::Integer::New(isolate, environment_->avail_width);
-        }
-        if (name == "availHeight") {
-            return v8::Integer::New(isolate, environment_->avail_height);
-        }
-        // M11-35: reported available origin (independent configured values).
-        if (name == "availLeft") {
-            return v8::Integer::New(isolate, environment_->avail_left);
-        }
-        if (name == "availTop") {
-            return v8::Integer::New(isolate, environment_->avail_top);
-        }
-        if (name == "colorDepth") {
-            return v8::Integer::New(isolate, environment_->color_depth);
-        }
-        if (name == "pixelDepth") {
-            return v8::Integer::New(isolate, environment_->pixel_depth);
-        }
-        // M11-35: deterministic orientation derived from the reported screen
-        // dimensions. Step 5 exposes it as a nested HostObject.
-        if (name == "orientation") {
-            return make_host_object(isolate, context, &orientation_);
-        }
-        return v8::Undefined(isolate);
-    }
-
-    v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
-        const v8::FunctionCallbackInfo<v8::Value>&) override {
-        return v8::Undefined(isolate);  // screen exposes no methods
-    }
-
-private:
-    const HostEnvironment* environment_;
-    ScreenOrientationHost orientation_;
-};
-
 // Step 5d: the static M11-41 visual viewport. It is a HostObject so its property
 // reads and no-op event-target methods enter the normal access-trace channel.
 // Values still come from the Page environment and never change within a
@@ -1271,6 +1206,7 @@ public:
     LocationHost(UrlParts parts, PageState* page) : parts_(std::move(parts)), page_(page) {}
 
     std::string global_name() const override { return "location"; }
+    std::string prototype_key() const override { return "Location"; }
     std::string trace_object_type() const override { return "location"; }
 
     std::vector<std::string> property_names() const override {
@@ -1279,6 +1215,29 @@ public:
     }
 
     std::vector<std::string> method_names() const override { return {"toString", "assign", "replace", "reload"}; }
+
+    std::vector<std::string> writable_property_names() const override {
+        return {"href", "protocol", "host", "hostname", "port", "pathname", "search", "hash"};
+    }
+    void set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                      const std::string& name, v8::Local<v8::Value> value) override {
+        v8::Local<v8::String> text;
+        if (!value->ToString(context).ToLocal(&text)) return;
+        v8::String::Utf8Value utf8(isolate, text);
+        const std::string input(*utf8 != nullptr ? *utf8 : "");
+        auto resolved = resolve_dom_url(input, parts_.href);
+        if (name != "href") {
+            resolved = resolve_dom_url(parts_.href, "");
+            // The existing URL implementation owns component normalization.
+            resolved = set_dom_url_component(resolved, name, input);
+        }
+        if (!resolved.valid) {
+            isolate->ThrowException(v8::Exception::TypeError(
+                v8::String::NewFromUtf8Literal(isolate, "Invalid navigation URL")));
+            return;
+        }
+        page_->record_navigation(isolate, "assign", resolved.href);
+    }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
                                       const std::string& name) override {
@@ -1444,6 +1403,26 @@ struct DomNode {
 // their data, Element/Fragment nodes concatenate descendant Text data in tree
 // order, and Comment data is excluded from a parent's aggregate (but returned
 // for the comment node itself).
+const char* document_insertion_error(DomNode* parent, const std::vector<DomNode*>& nodes,
+                                      DomNode* replaced = nullptr) {
+    if (parent->kind != NodeKind::Document) return nullptr;
+    std::unordered_set<DomNode*> incoming;
+    for (auto* node : nodes) {
+        if (node->kind == NodeKind::DocumentFragment) incoming.insert(node->children.begin(), node->children.end());
+        else incoming.insert(node);
+    }
+    int elements = 0;
+    for (auto* child : parent->children) {
+        if (child != replaced && !incoming.contains(child) && child->kind == NodeKind::Element) ++elements;
+    }
+    for (auto* child : incoming) {
+        if (child->kind != NodeKind::Element && child->kind != NodeKind::Comment)
+            return "Document children must be elements or comments";
+        if (child->kind == NodeKind::Element) ++elements;
+    }
+    return elements > 1 ? "Document can contain only one element child" : nullptr;
+}
+
 bool is_element_node(const DomNode* node) {
     return node != nullptr && node->kind == NodeKind::Element;
 }
@@ -3191,25 +3170,96 @@ private:
     std::unordered_map<std::string, std::vector<Listener>> listeners_;
 };
 
+class ScreenHost : public EventTargetHost {
+public:
+    explicit ScreenHost(const HostEnvironment* environment)
+        : environment_(environment), orientation_(environment) {}
+
+    std::string global_name() const override { return "screen"; }
+    std::string prototype_key() const override { return "Screen"; }
+    std::string trace_object_type() const override { return "screen"; }
+
+    std::vector<std::string> property_names() const override {
+        return {"width",      "height",     "availWidth", "availHeight",
+                "availLeft",  "availTop",   "colorDepth", "pixelDepth",
+                "orientation"};
+    }
+
+    std::vector<std::string> method_names() const override { return event_method_names(); }
+
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
+                                      v8::Local<v8::Context> context,
+                                      const std::string& name) override {
+        if (name == "width") {
+            return v8::Integer::New(isolate, environment_->screen_width);
+        }
+        if (name == "height") {
+            return v8::Integer::New(isolate, environment_->screen_height);
+        }
+        if (name == "availWidth") {
+            return v8::Integer::New(isolate, environment_->avail_width);
+        }
+        if (name == "availHeight") {
+            return v8::Integer::New(isolate, environment_->avail_height);
+        }
+        // M11-35: reported available origin (independent configured values).
+        if (name == "availLeft") {
+            return v8::Integer::New(isolate, environment_->avail_left);
+        }
+        if (name == "availTop") {
+            return v8::Integer::New(isolate, environment_->avail_top);
+        }
+        if (name == "colorDepth") {
+            return v8::Integer::New(isolate, environment_->color_depth);
+        }
+        if (name == "pixelDepth") {
+            return v8::Integer::New(isolate, environment_->pixel_depth);
+        }
+        // M11-35: deterministic orientation derived from the reported screen
+        // dimensions. Step 5 exposes it as a nested HostObject.
+        if (name == "orientation") {
+            return make_host_object(isolate, context, &orientation_);
+        }
+        return v8::Undefined(isolate);
+    }
+
+    v8::Local<v8::Value> call_method(
+        v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args) override {
+        v8::Local<v8::Value> result;
+        if (handle_event_method(isolate, context, name, args, result)) return result;
+        return v8::Undefined(isolate);
+    }
+
+private:
+    const HostEnvironment* environment_;
+    ScreenOrientationHost orientation_;
+};
+
 // M3-4 window event target. window / globalThis / self stay the intrinsic global
 // object (M2-2, so window === globalThis === self and globals live on it); this
 // backing object ONLY holds the global's event listeners and provides the
 // add/remove/dispatch semantics (inherited from EventTargetHost). It is NOT
-// installed as a named global host object — the three window.* methods are bare
-// global functions whose External data points at this instance (see install_page
-// / window_event_method), so window stays a real object, not a host wrapper.
+// installed as a named global host object. Shared EventTarget methods resolve
+// its backing through the context's private Window host slot.
 class WindowEventTarget : public EventTargetHost {
 public:
-    std::string global_name() const override { return std::string(); }  // never installed
+    std::string global_name() const override { return {}; }
+    std::string prototype_key() const override { return "Window"; }
+    std::string trace_object_type() const override { return "window"; }
+    std::string trace_label() const override { return "window"; }
     std::vector<std::string> property_names() const override { return {}; }
-    std::vector<std::string> method_names() const override { return {}; }
+    std::vector<std::string> method_names() const override { return event_method_names(); }
     v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
                                       const std::string&) override {
         return v8::Undefined(isolate);
     }
     v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
-        const v8::FunctionCallbackInfo<v8::Value>&) override {
+        v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args) override {
+        watch_record(isolate, "window", name);
+        v8::Local<v8::Value> result;
+        if (handle_event_method(isolate, context, name, args, result)) return result;
         return v8::Undefined(isolate);
     }
 
@@ -3369,6 +3419,12 @@ public:
         return static_cast<NodeHost*>(host)->node_;
     }
 
+    // M4-A-7: bubble a dispatched event along the current tree (defined out-of-line
+    // below DocumentHost, which owns the bubbling walk).
+    void dispatch_event(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                        v8::Local<v8::Object> event,
+                        v8::Local<v8::Object> receiver) override;
+
 protected:
     DomNode* node_;            // owned by document_ (lives for the page generation)
     DocumentHost* document_;
@@ -3397,20 +3453,17 @@ struct LiveCollectionBinding {
 // owning DocumentHost. Methods are defined out-of-line (below DocumentHost).
 class ElementHost : public NodeHost {
 public:
-    ElementHost(DomNode* node, DocumentHost* document)
-        : NodeHost(node, document) {}
+    ElementHost(DomNode* node, DocumentHost* document, bool html_document = true)
+        : NodeHost(node, document), html_document_(html_document) {}
 
     std::string global_name() const override { return std::string(); }  // never global
     std::string trace_object_type() const override { return "element"; }
     std::string trace_label() const override { return node_->tag; }
-    std::vector<std::string> prototype_property_names() const override {
-        return property_names();
-    }
-    std::string prototype_key() const override { return "Element:" + node_->tag; }
+    std::string prototype_key() const override { return html_document_ ? html_element_interface(node_->tag) : "Element"; }
 
     std::vector<std::string> property_names() const override {
         std::vector<std::string> names = {
-            "tagName",     "nodeName",   "nodeType",   "nodeValue", "id",
+            "baseURI", "tagName",     "nodeName",   "nodeType",   "nodeValue", "id",
             "className",   "textContent", "innerHTML",  "outerHTML",
             "parentNode",  "childNodes",  "children",
             // M4-A-6 connectivity / element-sibling navigation.
@@ -3423,6 +3476,7 @@ public:
             "firstChild", "lastChild", "previousSibling", "nextSibling",
             // M11-10 classList (fresh plain object per access).
             "classList"};
+        if (!html_document_) return names;
         names.push_back("innerText");
         names.push_back("style");
         if (node_->tag == "canvas") names.insert(names.end(), {"width", "height"});
@@ -3548,9 +3602,9 @@ public:
             "closest",
             // M11-10 boolean attribute toggle.
             "toggleAttribute"};
-        if (node_->tag == "canvas") names.push_back("getContext");
+        if (html_document_ && node_->tag == "canvas") names.push_back("getContext");
         // M6-1: reset() is exposed only on <form>; M7-1: submit(); M7-2: requestSubmit().
-        if (node_->tag == "form") {
+        if (html_document_ && node_->tag == "form") {
             names.push_back("reset");
             names.push_back("submit");
             names.push_back("requestSubmit");
@@ -3558,13 +3612,13 @@ public:
             names.push_back("checkValidity");
             names.push_back("reportValidity");
         }
-        if (is_form_control(node_)) {
+        if (html_document_ && is_form_control(node_)) {
             // M11-32: control-level constraint-validation entry points.
             names.push_back("checkValidity");
             names.push_back("reportValidity");
             names.push_back("setCustomValidity");
         }
-        if (node_->tag == "select") {
+        if (html_document_ && node_->tag == "select") {
             // M11-22: option lookup helpers (the options collection stays an Array).
             names.push_back("item");
             names.push_back("namedItem");
@@ -3578,6 +3632,7 @@ public:
     std::vector<std::string> writable_property_names() const override {
         std::vector<std::string> names = {"textContent", "innerHTML",
                                           "outerHTML", "id", "className"};
+        if (!html_document_) return names;
         names.push_back("innerText");
         names.push_back("style");
         if (node_->tag == "canvas") names.insert(names.end(), {"width", "height"});
@@ -3666,16 +3721,29 @@ public:
     void fire_invalid_event(v8::Isolate* isolate, v8::Local<v8::Context> context,
                             v8::Local<v8::Object> receiver);
 
-    // M4-A-7: bubble a dispatched event along the current tree (defined out-of-line
-    // below DocumentHost, which owns the bubbling walk).
-    void dispatch_event(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                        v8::Local<v8::Object> event,
-                        v8::Local<v8::Object> receiver) override;
 
 private:
+    bool html_document_ = true;
     // M4-A-3/M11-48: shared node-argument helper lives in NodeHost::node_of_arg.
     DomNode* node_of_arg(v8::Local<v8::Value> value) {
         return NodeHost::node_of_arg(value);
+    }
+};
+
+class StandaloneEventTarget : public EventTargetHost {
+public:
+    std::string global_name() const override { return {}; }
+    std::string prototype_key() const override { return "EventTarget"; }
+    std::string trace_object_type() const override { return "event_target"; }
+    std::vector<std::string> property_names() const override { return {}; }
+    std::vector<std::string> method_names() const override { return event_method_names(); }
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+                                      const std::string&) override { return v8::Undefined(isolate); }
+    v8::Local<v8::Value> call_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const std::string& name, const v8::FunctionCallbackInfo<v8::Value>& args) override {
+        v8::Local<v8::Value> result;
+        if (handle_event_method(isolate, context, name, args, result)) return result;
+        return v8::Undefined(isolate);
     }
 };
 
@@ -3687,6 +3755,9 @@ public:
         : NodeHost(node, document) {}
 
     std::string global_name() const override { return std::string(); }
+    std::string prototype_key() const override {
+        return node_->kind == NodeKind::Text ? "Text" : "Comment";
+    }
     std::string trace_object_type() const override {
         return node_->kind == NodeKind::Text ? "text" : "comment";
     }
@@ -3694,7 +3765,7 @@ public:
         return node_->kind == NodeKind::Text ? "#text" : "#comment";
     }
     std::vector<std::string> property_names() const override {
-        return {"nodeType",       "nodeName",     "nodeValue",
+        return {"baseURI", "nodeType",       "nodeName",     "nodeValue",
                 "textContent",    "data",         "length",
                 "parentNode",     "parentElement", "previousSibling",
                 "nextSibling",    "childNodes",   "firstChild",
@@ -3729,10 +3800,11 @@ public:
         : NodeHost(node, document) {}
 
     std::string global_name() const override { return std::string(); }
+    std::string prototype_key() const override { return "DocumentFragment"; }
     std::string trace_object_type() const override { return "document_fragment"; }
     std::string trace_label() const override { return "#document-fragment"; }
     std::vector<std::string> property_names() const override {
-        return {"nodeType",        "nodeName",        "nodeValue",
+        return {"baseURI", "nodeType",        "nodeName",        "nodeValue",
                 "textContent",     "childNodes",      "children",
                 "parentNode",      "parentElement",   "firstChild",
                 "lastChild",       "firstElementChild", "lastElementChild",
@@ -3766,10 +3838,13 @@ public:
 // M2-6 document host object (M2-7 hands out node-capable elements). Owns the
 // parsed tree + element wrappers for this page generation, so a load()/dispose()
 // that tears down the context invalidates everything together.
-class DocumentHost : public EventTargetHost {
+class DocumentHost : public NodeHost {
 public:
-    DocumentHost(const std::string& html, std::string url, PageState* page)
-        : page_(page), url_(std::move(url)) {
+    DocumentHost(const std::string& html, std::string url, PageState* page,
+                 bool active = true, bool html_document = true)
+        : NodeHost(&document_node_, this), page_(page), url_(std::move(url)),
+          active_(active), html_document_(html_document), roots_(document_node_.children) {
+        document_node_.kind = NodeKind::Document;
         parse_html(html, pool_, roots_, scripts_);
         // Full-document repair only: fragment parsing must keep its own roots.
         DomNode* html_node = find_tag("html");
@@ -3834,7 +3909,25 @@ public:
         // M5-5/M7/M6-1: seed select/form runtime slots and the reset baseline
         // after parsing (shared with HTML-fragment insertion).
         initialize_parsed_nodes(pool_);
+        for (auto* root : roots_) root->parent = &document_node_;
     }
+
+    v8::Local<v8::Value> document_global(v8::Isolate* isolate,
+                                         v8::Local<v8::Context> context) {
+        return document_object_.IsEmpty() ? v8::Local<v8::Value>(v8::Null(isolate))
+                                         : v8::Local<v8::Value>(document_object_.Get(isolate));
+    }
+
+    v8::Local<v8::Value> wrap_created_node(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, std::unique_ptr<DomNode> node) {
+        auto* raw = node.get();
+        detached_pool_.push_back(std::move(node));
+        return wrap_node(isolate, context, raw);
+    }
+    void set_wrapper(v8::Isolate* isolate, v8::Local<v8::Object> object) {
+        document_object_.Reset(isolate, object);
+    }
+    std::string prototype_key() const override { return html_document_ ? "HTMLDocument" : "Document"; }
 
     // M3-5: the scripts found in the HTML, in document order (inline + external).
     const std::vector<ScriptRecord>& scripts() const { return scripts_; }
@@ -3875,11 +3968,14 @@ public:
                 "characterSet", "contentType", "compatMode", "referrer",
                 "domain", "visibilityState", "hidden", "activeElement",
                 // M11-46 deterministic Page-level cookie jar.
-                "cookie", "all"};
+                "cookie", "all", "nodeType", "nodeName", "nodeValue", "textContent",
+                "ownerDocument", "parentNode", "parentElement", "isConnected",
+                "childNodes", "firstChild", "lastChild", "previousSibling", "nextSibling",
+                "firstElementChild", "lastElementChild", "childElementCount"};
     }
     std::vector<std::string> writable_property_names() const override {
         // M11-46 cookie jar; M11-47 writable document.title.
-        return {"cookie", "title"};
+        return {"cookie", "title", "location", "nodeValue", "textContent"};
     }
     std::vector<std::string> method_names() const override {
         // M2-6 document methods + M4-A-1 static queries + M4-A-2 createElement +
@@ -3896,7 +3992,8 @@ public:
                                           "getElementsByName",
                                           // M11-23 deterministic focus report.
                                           "hasFocus", "appendChild", "removeChild",
-                                          "insertBefore", "replaceChild"};
+                                          "insertBefore", "replaceChild", "hasChildNodes", "contains",
+                                          "isSameNode", "isEqualNode", "cloneNode"};
         const std::vector<std::string>& events = event_method_names();
         names.insert(names.end(), events.begin(), events.end());
         return names;
@@ -3907,6 +4004,7 @@ public:
     // teardown hook only reaches them through the document).
     void release_v8_handles() noexcept override {
         EventTargetHost::release_v8_handles();
+        document_object_.Reset();
         node_objects_.clear();
         all_collection_.Reset();
         for (const std::unique_ptr<NodeHost>& host : node_hosts_) {
@@ -3935,6 +4033,22 @@ public:
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
                                       v8::Local<v8::Context> context,
                                       const std::string& name) override {
+        if (name == "nodeType") return v8::Integer::New(isolate, 9);
+        if (name == "nodeName") return v8_string(isolate, "#document");
+        if (name == "nodeValue" || name == "textContent" || name == "ownerDocument" ||
+            name == "parentNode" || name == "parentElement" ||
+            name == "previousSibling" || name == "nextSibling") return v8::Null(isolate);
+        if (name == "isConnected") return v8::True(isolate);
+        if (name == "childNodes") return nodes_array(isolate, context, roots_);
+        if (name == "firstChild" || name == "lastChild") return wrap_node(isolate, context,
+            roots_.empty() ? nullptr : name == "firstChild" ? roots_.front() : roots_.back());
+        if (name == "firstElementChild" || name == "lastElementChild") {
+            const auto children = element_children_of_roots();
+            return wrap_node(isolate, context, children.empty() ? nullptr :
+                name == "firstElementChild" ? children.front() : children.back());
+        }
+        if (name == "childElementCount") return v8::Integer::New(isolate,
+            static_cast<int>(element_children_of_roots().size()));
         if (name == "all") {
             if (all_collection_.IsEmpty()) all_collection_.Reset(isolate,
                 live_collection(isolate, context, nullptr, "tag", "*", true));
@@ -3953,8 +4067,10 @@ public:
         if (name == "documentURI" || name == "baseURI") {
             return v8_string(isolate, url_);
         }
-        if (name == "defaultView") return context->Global();
+        if (name == "defaultView") return active_ ? v8::Local<v8::Value>(context->Global())
+                                                   : v8::Local<v8::Value>(v8::Null(isolate));
         if (name == "location") {
+            if (!active_) return v8::Null(isolate);
             v8::Local<v8::Value> location;
             if (context->Global()
                     ->Get(context, v8_string(isolate, "location"))
@@ -3966,7 +4082,7 @@ public:
         if (name == "readyState") return v8_string(isolate, ready_state_);
         // M11-23: deterministic document metadata (read-only).
         if (name == "characterSet") return v8_string(isolate, "UTF-8");
-        if (name == "contentType") return v8_string(isolate, "text/html");
+        if (name == "contentType") return v8_string(isolate, html_document_ ? "text/html" : "application/xml");
         if (name == "compatMode") return v8_string(isolate, "CSS1Compat");
         if (name == "referrer") return v8_string(isolate, std::string());
         if (name == "domain") {
@@ -3975,7 +4091,7 @@ public:
         if (name == "visibilityState") return v8_string(isolate, "visible");
         if (name == "hidden") return v8::False(isolate);
         if (name == "cookie") {
-            return v8_string(isolate, page_ != nullptr ? page_->document_cookie()
+            return v8_string(isolate, active_ && page_ != nullptr ? page_->document_cookie()
                                                        : std::string());
         }
         if (name == "activeElement") {
@@ -3998,7 +4114,8 @@ public:
             return array;
         }
         if (name == "documentElement") {
-            return wrap_node(isolate, context, find_tag("html"));
+            const auto children = element_children_of_roots();
+            return wrap_node(isolate, context, children.empty() ? nullptr : children.front());
         }
         if (name == "head") {  // M4-A-1: first <head> in the current tree, or null
             return wrap_node(isolate, context, find_tag("head"));
@@ -4071,10 +4188,20 @@ public:
     void set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
                       const std::string& name,
                       v8::Local<v8::Value> value) override {
-        if (name != "cookie" && name != "title") {
+        if (name != "cookie" && name != "title" && name != "location" &&
+            name != "nodeValue" && name != "textContent") {
             return;
         }
-        if (name == "cookie" && page_ == nullptr) {
+        if (name == "nodeValue" || name == "textContent") return;
+        if (name == "location") {
+            if (!active_) return;
+            v8::Local<v8::Value> location;
+            if (context->Global()->Get(context, v8_string(isolate, "location")).ToLocal(&location) &&
+                location->IsObject()) (void)location.As<v8::Object>()->Set(context,
+                    v8_string(isolate, "href"), value);
+            return;
+        }
+        if (name == "cookie" && (!active_ || page_ == nullptr)) {
             return;
         }
         v8::Local<v8::String> str;
@@ -4123,6 +4250,7 @@ public:
             };
             DomNode* child = args.Length() ? NodeHost::node_of_arg(args[0]) : nullptr;
             if (child == nullptr) return fail("TypeError", "A Node argument is required");
+            if (child->kind == NodeKind::Document) return fail("HierarchyRequestError", "Cannot insert a Document");
             auto host = static_cast<NodeHost*>(host_object_backing(args[0]));
             if (host->document() != this) return fail("WrongDocumentError", "Node belongs to another document");
             if (name == "removeChild") {
@@ -4166,15 +4294,34 @@ public:
                 auto position = reference == nullptr ? roots_.end() :
                     std::find(roots_.begin(), roots_.end(), reference);
                 roots_.insert(position, node);
-                node->parent = nullptr;
+                node->parent = &document_node_;
             }
             if (child->kind == NodeKind::DocumentFragment) child->children.clear();
             if (name == "replaceChild") {
                 roots_.erase(std::find(roots_.begin(), roots_.end(), reference));
+                reference->parent = nullptr;
                 return wrap_node(isolate, context, reference);
             }
             return wrap_node(isolate, context, child);
         }
+        if (name == "cloneNode") {
+            auto result = page_->create_document(isolate, context, html_document_);
+            if (!result->IsObject()) return result;
+            auto* clone = static_cast<DocumentHost*>(host_object_backing(result));
+            if (args.Length() && args[0]->BooleanValue(isolate)) {
+                for (auto* root : roots_) {
+                    auto* child = clone->clone_detached(root, true);
+                    child->parent = &clone->document_node_;
+                    clone->roots_.push_back(child);
+                }
+            }
+            clone->url_ = url_;
+            clone->title_node_ = clone->find_tag("title");
+            clone->title_ = title_;
+            return result;
+        }
+        v8::Local<v8::Value> node_result;
+        if (call_node_method(isolate, context, &document_node_, name, args, node_result)) return node_result;
         std::string arg;
         if (args.Length() > 0) {
             v8::String::Utf8Value utf8(isolate, args[0]);
@@ -4209,7 +4356,7 @@ public:
         }
         if (name == "createElement") {  // M4-A-2: detached element (not in the tree)
             auto node = std::make_unique<DomNode>();
-            node->tag = ascii_lower(arg);  // arg == String(tag); tagName is UPPER
+            node->tag = html_document_ ? ascii_lower(arg) : arg;  // arg == String(tag); tagName is UPPER
             DomNode* raw = node.get();
             detached_pool_.push_back(std::move(node));
             return wrap_node(isolate, context, raw);
@@ -4317,6 +4464,7 @@ public:
 
     // M11-48: one cached host per backing DomNode, dispatched by node kind.
     NodeHost* ensure_node_host(DomNode* node) {
+        if (node == &document_node_) return this;
         const auto it = wrappers_.find(node);
         if (it != wrappers_.end()) {
             return it->second;
@@ -4332,7 +4480,7 @@ public:
                 break;
             case NodeKind::Element:
             default:
-                created = std::make_unique<ElementHost>(node, this);
+                created = std::make_unique<ElementHost>(node, this, html_document_);
                 break;
         }
         NodeHost* host = created.get();
@@ -4355,6 +4503,7 @@ public:
                                    v8::Local<v8::Context> context,
                                    DomNode* node) {
         if (node == nullptr) return v8::Null(isolate);
+        if (node == &document_node_) return document_global(isolate, context);
         auto& wrapper = node_objects_[node];
         if (wrapper.IsEmpty()) {
             wrapper.Reset(isolate, make_host_object(isolate, context, ensure_node_host(node)));
@@ -4448,15 +4597,8 @@ public:
     // whole removed subtrees) are not. Public for ElementHost.isConnected.
     bool is_in_tree(const DomNode* node) const {
         const DomNode* top = node;
-        while (top->parent != nullptr) {
-            top = top->parent;
-        }
-        for (const DomNode* root : roots_) {
-            if (root == top) {
-                return true;
-            }
-        }
-        return false;
+        while (top != nullptr && top->parent != nullptr) top = top->parent;
+        return top == &document_node_;
     }
 
     // M4-A-7: remember window's event target so element/document bubbling can
@@ -4511,7 +4653,7 @@ public:
         reset_event_stopped(isolate, context, event);
         const bool bubbles = event_bubbles(isolate, context, event);
         std::vector<DomNode*> ancestors;
-        for (DomNode* ancestor = node->parent; ancestor != nullptr;
+        for (DomNode* ancestor = node->parent; ancestor != nullptr && ancestor != &document_node_;
              ancestor = ancestor->parent) {
             ancestors.push_back(ancestor);
         }
@@ -4614,7 +4756,8 @@ public:
     DomNode* make_detached_fragment();
     bool build_argument_fragment(
         v8::Isolate* isolate, v8::Local<v8::Context> context,
-        const v8::FunctionCallbackInfo<v8::Value>& args, DomNode** fragment);
+        const v8::FunctionCallbackInfo<v8::Value>& args, DomNode** fragment,
+        DomNode* insertion_parent, DomNode* replaced);
     bool insert_dom_node(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          DomNode* parent, DomNode* child, DomNode* ref,
                          std::string* error);
@@ -4666,17 +4809,6 @@ private:
 
     // The global `document` object (event.currentTarget for the document hop), or
     // the global object as a harmless fallback if it cannot be read.
-    v8::Local<v8::Value> document_global(v8::Isolate* isolate,
-                                         v8::Local<v8::Context> context) {
-        v8::Local<v8::Value> doc;
-        if (context->Global()
-                ->Get(context, v8_string(isolate, "document"))
-                .ToLocal(&doc) &&
-            doc->IsObject()) {
-            return doc;
-        }
-        return context->Global();
-    }
 
     DomNode* find_tag(const std::string& tag) const {
         return find_first(roots_,
@@ -4737,7 +4869,11 @@ private:
     std::string ready_state_ = "complete";  // M3-6 JS document.readyState
     DomNode* current_script_ = nullptr;      // M3-7 document.currentScript backing
     std::vector<std::unique_ptr<DomNode>> pool_;
-    std::vector<DomNode*> roots_;
+    bool active_ = true;
+    bool html_document_ = true;
+    DomNode document_node_;
+    std::vector<DomNode*>& roots_;
+    v8::Global<v8::Object> document_object_;
     // M4-A-2: createElement() nodes. Owned here for the page generation (stable,
     // no dangling) but NEVER linked into roots_/children, so they are detached —
     // invisible to find_*/collect_* (queries, document.scripts) and to the tree.
@@ -5785,6 +5921,14 @@ bool DocumentHost::insert_dom_node(v8::Isolate* isolate,
         *error = "invalid node";
         return false;
     }
+    if (child->kind == NodeKind::Document) {
+        *error = "Cannot insert a Document";
+        return false;
+    }
+    if (const char* invalid = document_insertion_error(parent, {child})) {
+        *error = invalid;
+        return false;
+    }
     if (ref != nullptr) {
         if (ref->parent != parent) {
             *error = "reference is not a child of this node";
@@ -5886,6 +6030,10 @@ bool DocumentHost::replace_dom_node(v8::Isolate* isolate,
     if (parent == nullptr || new_child == nullptr || old_child == nullptr ||
         old_child->parent != parent) {
         *error = "oldChild is not a child of this node";
+        return false;
+    }
+    if (const char* invalid = document_insertion_error(parent, {new_child}, old_child)) {
+        *error = invalid;
         return false;
     }
     if (new_child == old_child) {
@@ -6009,36 +6157,48 @@ void DocumentHost::replace_all_children(
 
 bool DocumentHost::build_argument_fragment(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
-    const v8::FunctionCallbackInfo<v8::Value>& args, DomNode** fragment) {
-    DomNode* f = make_detached_fragment();
-    for (int i = 0; i < args.Length(); ++i) {
-        HostObject* host = host_object_backing(args[i]);
+    const v8::FunctionCallbackInfo<v8::Value>& args, DomNode** fragment,
+    DomNode* insertion_parent, DomNode* replaced) {
+    std::vector<DomNode*> nodes;
+    for (int index = 0; index < args.Length(); ++index) {
+        auto* host = host_object_backing(args[index]);
         DomNode* node = nullptr;
         if (host != nullptr && host->is_node()) {
-            node = static_cast<NodeHost*>(host)->node();
+            auto* node_host = static_cast<NodeHost*>(host);
+            if (node_host->document() != this) {
+                isolate->ThrowException(dom_exception(isolate, "WrongDocumentError", "Node belongs to another document"));
+                return false;
+            }
+            node = node_host->node();
+            if (node->kind == NodeKind::Document || is_self_or_ancestor(node, insertion_parent)) {
+                isolate->ThrowException(dom_exception(isolate, "HierarchyRequestError", "Invalid insertion hierarchy"));
+                return false;
+            }
         } else {
-            v8::Local<v8::String> str;
-            if (!args[i]->ToString(context).ToLocal(&str)) {
-                return false;  // pending exception propagates unchanged
-            }
-            v8::String::Utf8Value utf8(isolate, str);
-            auto text = std::make_unique<DomNode>();
-            text->kind = NodeKind::Text;
-            if (*utf8 != nullptr) {
-                text->data.assign(*utf8,
-                                  static_cast<std::size_t>(utf8.length()));
-            }
-            node = text.get();
-            detached_pool_.push_back(std::move(text));
+            v8::Local<v8::String> text;
+            if (!args[index]->ToString(context).ToLocal(&text)) return false;
+            v8::String::Utf8Value utf8(isolate, text);
+            auto created = std::make_unique<DomNode>();
+            created->kind = NodeKind::Text;
+            if (*utf8 != nullptr) created->data.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+            node = created.get();
+            detached_pool_.push_back(std::move(created));
         }
+        nodes.push_back(node);
+    }
+    if (const char* invalid = document_insertion_error(insertion_parent, nodes, replaced)) {
+        isolate->ThrowException(dom_exception(isolate, "HierarchyRequestError", invalid));
+        return false;
+    }
+    auto* result = make_detached_fragment();
+    for (auto* node : nodes) {
         std::string error;
-        if (!insert_dom_node(isolate, context, f, node, nullptr, &error)) {
-            isolate->ThrowException(v8::Exception::TypeError(
-                v8_string(isolate, error).As<v8::String>()));
+        if (!insert_dom_node(isolate, context, result, node, nullptr, &error)) {
+            isolate->ThrowException(v8::Exception::TypeError(v8_string(isolate, error).As<v8::String>()));
             return false;
         }
     }
-    *fragment = f;
+    *fragment = result;
     return true;
 }
 
@@ -6056,9 +6216,24 @@ v8::Local<v8::Value> DocumentHost::call_mutation_method(
             return v8::Undefined(isolate);  // ChildNode methods: no parent, no-op
         }
     }
+    const bool child_operation = name == "before" || name == "after" || name == "replaceWith";
+    DomNode* insertion_parent = child_operation ? target->parent : target;
+    DomNode* reference = nullptr;
+    if (child_operation) {
+        std::unordered_set<DomNode*> moving;
+        for (int index = 0; index < args.Length(); ++index) {
+            auto* node = NodeHost::node_of_arg(args[index]);
+            if (node == nullptr) continue;
+            if (node->kind == NodeKind::DocumentFragment) moving.insert(node->children.begin(), node->children.end());
+            else moving.insert(node);
+        }
+        reference = name == "before" ? target : sibling_node(target, 1);
+        while (reference != nullptr && moving.contains(reference)) reference = sibling_node(reference, 1);
+    }
     DomNode* fragment = nullptr;
-    if (!build_argument_fragment(isolate, context, args, &fragment)) {
-        return v8::Undefined(isolate);  // conversion error propagates
+    if (!build_argument_fragment(isolate, context, args, &fragment, insertion_parent,
+            name == "replaceWith" ? target : nullptr)) {
+        return v8::Undefined(isolate);
     }
     if (name == "append" || name == "prepend") {
         DomNode* ref = nullptr;
@@ -6080,20 +6255,13 @@ v8::Local<v8::Value> DocumentHost::call_mutation_method(
         replace_all_children(isolate, context, target, moved);
         return v8::Undefined(isolate);
     }
-    DomNode* parent = target->parent;
-    if (name == "replaceWith") {
-        std::string error;
-        if (!replace_dom_node(isolate, context, parent, fragment, target,
-                              &error)) {
-            return throw_type_error(error);
-        }
-        return v8::Undefined(isolate);
-    }
-    DomNode* ref = name == "before" ? target : sibling_node(target, 1);
     std::string error;
-    if (!insert_dom_node(isolate, context, parent, fragment, ref, &error)) {
-        return throw_type_error(error);
-    }
+    const bool replacing = name == "replaceWith" && target->parent == insertion_parent;
+    const bool changed = replacing
+        ? replace_dom_node(isolate, context, insertion_parent, fragment, target, &error)
+        : insert_dom_node(isolate, context, insertion_parent, fragment, reference, &error);
+    if (!changed) return throw_type_error(error);
+
     return v8::Undefined(isolate);
 }
 
@@ -6127,6 +6295,17 @@ v8::Local<v8::Value> DocumentHost::call_insert_adjacent(
     DomNode* parent = needs_parent ? target->parent : target;
     if (parent == nullptr) {
         return type_error("insertAdjacent: element has no parent");
+    }
+    if (parent->kind == NodeKind::Document && name == "insertAdjacentHTML") {
+        isolate->ThrowException(dom_exception(isolate, "NoModificationAllowedError", "Cannot parse HTML beside the document element"));
+        return v8::Undefined(isolate);
+    }
+    if (name == "insertAdjacentElement" && args.Length() > 1) {
+        auto* host = host_object_backing(args[1]);
+        if (host != nullptr && host->is_node() && static_cast<NodeHost*>(host)->document() != this) {
+            isolate->ThrowException(dom_exception(isolate, "WrongDocumentError", "Node belongs to another document"));
+            return v8::Undefined(isolate);
+        }
     }
     DomNode* node = nullptr;
     if (name == "insertAdjacentHTML") {
@@ -6182,6 +6361,10 @@ v8::Local<v8::Value> DocumentHost::call_insert_adjacent(
     }
     std::string error;
     if (!insert_dom_node(isolate, context, parent, node, ref, &error)) {
+        if (parent->kind == NodeKind::Document) {
+            isolate->ThrowException(dom_exception(isolate, "HierarchyRequestError", error));
+            return v8::Undefined(isolate);
+        }
         return type_error(error);
     }
     if (name == "insertAdjacentElement") {
@@ -6258,7 +6441,24 @@ bool DocumentHost::call_node_method(
         return false;
     }
 
+    const auto dom_error = [&](const char* error_name, const char* message) {
+        auto error = v8::Exception::Error(v8_string(isolate, message).As<v8::String>());
+        (void)error.As<v8::Object>()->Set(context, v8_string(isolate, "name"), v8_string(isolate, error_name));
+        isolate->ThrowException(error);
+        out = v8::Undefined(isolate);
+        return true;
+    };
+    if (target->kind == NodeKind::Text || target->kind == NodeKind::Comment) {
+        return dom_error(name == "removeChild" || name == "replaceChild" ? "NotFoundError" : "HierarchyRequestError",
+            "CharacterData nodes cannot have children");
+    }
+    if (auto* child_host = host_object_backing(arg(0)); child_host != nullptr && child_host->is_node() &&
+        static_cast<NodeHost*>(child_host)->document() != this) {
+        return dom_error("WrongDocumentError", "Node belongs to another document");
+    }
     DomNode* child = NodeHost::node_of_arg(arg(0));
+    if (child != nullptr && child->kind == NodeKind::Document)
+        return dom_error("HierarchyRequestError", "Cannot insert a Document");
     if (name == "replaceChild") {
         DomNode* old_child = NodeHost::node_of_arg(arg(1));
         if (child == nullptr || old_child == nullptr) {
@@ -6480,6 +6680,7 @@ bool DocumentHost::call_node_method(
 v8::Local<v8::Value> CharacterDataHost::get_property(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
     const std::string& name) {
+    if (name == "baseURI") return document_->get_property(isolate, context, "baseURI");
     if (name == "nodeType") {
         return v8::Integer::New(isolate, static_cast<int>(node_->kind));
     }
@@ -6514,13 +6715,7 @@ v8::Local<v8::Value> CharacterDataHost::get_property(
         return v8::Null(isolate);
     }
     if (name == "ownerDocument") {
-        v8::Local<v8::Value> doc;
-        if (context->Global()
-                ->Get(context, v8_string(isolate, "document"))
-                .ToLocal(&doc)) {
-            return doc;
-        }
-        return v8::Null(isolate);
+        return document_->document_global(isolate, context);
     }
     if (name == "isConnected") {
         return v8::Boolean::New(isolate, document_->is_in_tree(node_));
@@ -6554,6 +6749,7 @@ v8::Local<v8::Value> CharacterDataHost::call_method(
     const std::string& name,
     const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Local<v8::Value> result;
+    if (handle_event_method(isolate, context, name, args, result)) return result;
     if (document_->call_node_method(isolate, context, node_, name, args,
                                     result)) {
         return result;
@@ -6571,6 +6767,7 @@ v8::Local<v8::Value> CharacterDataHost::call_method(
 v8::Local<v8::Value> DocumentFragmentHost::get_property(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
     const std::string& name) {
+    if (name == "baseURI") return document_->get_property(isolate, context, "baseURI");
     if (name == "nodeType") {
         return v8::Integer::New(isolate,
                                 static_cast<int>(NodeKind::DocumentFragment));
@@ -6616,13 +6813,7 @@ v8::Local<v8::Value> DocumentFragmentHost::get_property(
             static_cast<std::int32_t>(element_children_of(node_).size()));
     }
     if (name == "ownerDocument") {
-        v8::Local<v8::Value> doc;
-        if (context->Global()
-                ->Get(context, v8_string(isolate, "document"))
-                .ToLocal(&doc)) {
-            return doc;
-        }
-        return v8::Null(isolate);
+        return document_->document_global(isolate, context);
     }
     if (name == "isConnected") {
         return v8::Boolean::New(isolate, document_->is_in_tree(node_));
@@ -6654,6 +6845,7 @@ v8::Local<v8::Value> DocumentFragmentHost::call_method(
     const std::string& name,
     const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Local<v8::Value> result;
+    if (handle_event_method(isolate, context, name, args, result)) return result;
     if (document_->call_node_method(isolate, context, node_, name, args,
                                     result)) {
         return result;
@@ -6700,6 +6892,7 @@ v8::Local<v8::Value> DocumentFragmentHost::call_method(
 v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
                                                v8::Local<v8::Context> context,
                                                const std::string& name) {
+    if (name == "baseURI") return document_->get_property(isolate, context, "baseURI");
     if (node_->tag == "canvas" && (name == "width" || name == "height")) {
         const auto found = node_->attributes.find(name);
         long value = name == "width" ? 300 : 150;
@@ -6747,7 +6940,7 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     }
 
     if (name == "tagName" || name == "nodeName") {
-        return v8_string(isolate, ascii_upper(node_->tag));
+        return v8_string(isolate, html_document_ ? ascii_upper(node_->tag) : node_->tag);
     }
     if (name == "nodeType") {
         return v8::Integer::New(isolate, 1);  // ELEMENT_NODE
@@ -6942,13 +7135,7 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     if (name == "ownerDocument") {
         // The current generation's `document` — the SAME JS object installed as
         // the global, so `el.ownerDocument === document` holds.
-        v8::Local<v8::Value> doc;
-        if (context->Global()
-                ->Get(context, v8_string(isolate, "document"))
-                .ToLocal(&doc)) {
-            return doc;
-        }
-        return v8::Null(isolate);
+        return document_->document_global(isolate, context);
     }
     if (name == "isConnected") {
         return v8::Boolean::New(isolate, document_->is_in_tree(node_));
@@ -7396,6 +7583,10 @@ void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> cont
         return;
     }
     if (name == "outerHTML") {
+        if (node_->parent != nullptr && node_->parent->kind == NodeKind::Document) {
+            isolate->ThrowException(dom_exception(isolate, "NoModificationAllowedError", "Cannot replace the document element using outerHTML"));
+            return;
+        }
         DomNode* parent = node_->parent;
         if (parent == nullptr) {
             return;  // parentless element: no-op, as in the DOM
@@ -7891,7 +8082,7 @@ v8::Local<v8::Value> ElementHost::call_method(
 // document runs the walk (element -> ancestors -> document -> window), because it
 // owns the element wrappers, is_in_tree, and the window target. `receiver` is this
 // element's JS object and stays event.target throughout.
-void ElementHost::dispatch_event(v8::Isolate* isolate,
+void NodeHost::dispatch_event(v8::Isolate* isolate,
                                  v8::Local<v8::Context> context,
                                  v8::Local<v8::Object> event,
                                  v8::Local<v8::Object> receiver) {
@@ -9028,12 +9219,79 @@ void crypto_random_uuid_callback(
             .ToLocalChecked());
 }
 
+v8::Local<v8::Value> unsupported_capability(v8::Isolate* isolate,
+                                                 const std::string& capability) {
+    auto error = v8::Exception::Error(v8_string(isolate,
+        capability + " execution is unavailable in the offline Page runtime").As<v8::String>());
+    (void)error.As<v8::Object>()->Set(isolate->GetCurrentContext(),
+        v8_string(isolate, "name"), v8_string(isolate, "NotSupportedError"));
+    return error;
+}
+
+void web_interface_factory(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    auto* page = static_cast<PageState*>(info.Data().As<v8::External>()->Value(
+        v8::kExternalPointerTypeTagDefault));
+    v8::String::Utf8Value name(isolate, info[0]);
+    info.GetReturnValue().Set(page->create_web_interface(isolate, isolate->GetCurrentContext(),
+        *name != nullptr ? *name : "", info[1].As<v8::Array>()));
+}
+
+void offline_fetch(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    v8::Local<v8::Promise::Resolver> resolver;
+    if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) return;
+    auto error = info.Length() == 0
+        ? v8::Exception::TypeError(v8::String::NewFromUtf8Literal(isolate, "A fetch input is required"))
+        : unsupported_capability(isolate, "fetch");
+    if (!resolver->Reject(context, error).FromMaybe(false)) return;
+    info.GetReturnValue().Set(resolver->GetPromise());
+}
+
+void blocked_window_open(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    info.GetReturnValue().Set(v8::Null(info.GetIsolate()));
+}
+
+v8::Local<v8::Private> window_location_slot(v8::Isolate* isolate) {
+    return v8::Private::ForApi(isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8.window.location"));
+}
+
+void window_location_get(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    if (info.This() != context->Global()) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(isolate, "Illegal invocation")));
+        return;
+    }
+    v8::Local<v8::Value> location;
+    if (context->Global()->GetPrivate(context, window_location_slot(isolate)).ToLocal(&location))
+        info.GetReturnValue().Set(location);
+}
+
+void window_location_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    if (info.This() != context->Global()) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(isolate, "Illegal invocation")));
+        return;
+    }
+    v8::Local<v8::Value> location;
+    if (!context->Global()->GetPrivate(context, window_location_slot(isolate)).ToLocal(&location) ||
+        !location->IsObject()) return;
+    auto value = info.Length() ? info[0] : v8::Local<v8::Value>(v8::Undefined(isolate));
+    (void)location.As<v8::Object>()->Set(context, v8_string(isolate, "href"), value);
+}
+
 void install_global_function(v8::Isolate* isolate, v8::Local<v8::Context> context,
                              v8::Local<v8::Object> global, const std::string& name,
                              v8::FunctionCallback callback) {
-    v8::Local<v8::Function> fn =
-        v8::FunctionTemplate::New(isolate, callback)->GetFunction(context)
-            .ToLocalChecked();
+    v8::Local<v8::Function> fn;
+    if (!make_web_method(isolate, context, name,
+            web_method_length("window", name), callback).ToLocal(&fn)) return;
     (void)global->Set(context, v8_string(isolate, name), fn);
 }
 
@@ -9353,37 +9611,7 @@ void message_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) 
 constexpr v8::ExternalPointerTypeTag kWindowEventsTag =
     v8::kExternalPointerTypeTagDefault;
 
-// M3-4 window event target functions. window is the intrinsic global object (not
-// a host object), so its addEventListener / removeEventListener / dispatchEvent
-// are installed as bare global functions whose FunctionTemplate Data is an
-// External pointing at the page's WindowEventTarget. They forward to the shared
-// EventTargetHost semantics (dedupe, snapshot dispatch, swallow, order); because
-// they are called as `window.method(...)`, args.This() == window, so
-// event.target == window.
-void window_event_method(const v8::FunctionCallbackInfo<v8::Value>& info,
-                         const char* method_name) {
-    v8::Isolate* isolate = info.GetIsolate();
-    watch_record(isolate, "window", method_name);  // M9-2
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    auto* target = static_cast<EventTargetHost*>(
-        info.Data().As<v8::External>()->Value(kWindowEventsTag));
-    v8::Local<v8::Value> out;
-    if (target->handle_event_method(isolate, context, method_name, info, out)) {
-        info.GetReturnValue().Set(out);
-    }
-}
 
-void window_add_event_listener(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    window_event_method(info, "addEventListener");
-}
-
-void window_remove_event_listener(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    window_event_method(info, "removeEventListener");
-}
-
-void window_dispatch_event(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    window_event_method(info, "dispatchEvent");
-}
 
 // M11-51: Window IDL event handler attributes. The global slots are native
 // accessors backed by WindowEventTarget; assigning a function replaces the
@@ -11755,6 +11983,41 @@ HostObject* PageState::media_query_list_host(const std::u16string& media,
     return it->second.get();
 }
 
+v8::Local<v8::Value> PageState::create_document(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, bool html_document) {
+    auto document = std::make_unique<DocumentHost>("", "about:blank", this, false, html_document);
+    auto object = make_host_object(isolate, context, document.get());
+    document->set_wrapper(isolate, object);
+    host_objects_.push_back(std::move(document));
+    return object;
+}
+
+v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Array> arguments) {
+    if (name == "XMLHttpRequest" || name == "Worker") {
+        isolate->ThrowException(unsupported_capability(isolate, name));
+        return v8::Undefined(isolate);
+    }
+    if (name == "Document") return create_document(isolate, context);
+    if (name == "EventTarget") {
+        auto target = std::make_unique<StandaloneEventTarget>();
+        auto object = make_host_object(isolate, context, target.get());
+        host_objects_.push_back(std::move(target));
+        return object;
+    }
+    auto* document = static_cast<DocumentHost*>(document_host_);
+    auto node = std::make_unique<DomNode>();
+    node->kind = name == "Text" ? NodeKind::Text : name == "Comment" ? NodeKind::Comment : NodeKind::DocumentFragment;
+    if (node->kind != NodeKind::DocumentFragment && arguments->Length() > 0) {
+        v8::Local<v8::Value> value;
+        v8::Local<v8::String> text;
+        if (!arguments->Get(context, 0).ToLocal(&value) || !value->ToString(context).ToLocal(&text)) return v8::Undefined(isolate);
+        v8::String::Utf8Value utf8(isolate, text);
+        if (*utf8 != nullptr) node->data.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+    }
+    return document->wrap_created_node(isolate, context, std::move(node));
+}
+
 void PageState::install_page(const std::string& base_url,
                              const std::string& html) {
     bootstrap_ = PageBootstrap{html, base_url};
@@ -11837,10 +12100,54 @@ void PageState::install_page(const std::string& base_url,
         state_->with_scope(
             [this, &base_url](v8::Isolate* isolate,
                               v8::Local<v8::Context> context) {
+            install_web_interfaces(isolate, context, &web_interface_factory,
+                v8::External::New(isolate, this, v8::kExternalPointerTypeTagDefault));
+            set_window_host(isolate, context, window_events_.get());
+            install_host_interface(isolate, context, window_events_.get());
             for (const auto& host : host_objects_) {
                 install_host_object(isolate, context, host.get());
             }
             v8::Local<v8::Object> global = context->Global();
+            auto* document = static_cast<DocumentHost*>(document_host_);
+            v8::Local<v8::Value> document_object;
+            if (!global->Get(context, v8_string(isolate, "document")).ToLocal(&document_object)) return;
+            document->set_wrapper(isolate, document_object.As<v8::Object>());
+            // Register tag-specific member sets without creating JS instances.
+            for (const char* tag : {"html", "head", "body", "title", "div", "span", "p",
+                    "form", "script", "meta", "a", "area", "input", "button", "select",
+                    "textarea", "option", "canvas", "img", "iframe", "link", "style"}) {
+                DomNode node;
+                node.tag = tag;
+                ElementHost host(&node, document);
+                install_host_interface(isolate, context, &host);
+            }
+            for (auto kind : {NodeKind::Text, NodeKind::Comment, NodeKind::DocumentFragment}) {
+                DomNode node;
+                node.kind = kind;
+                if (kind == NodeKind::DocumentFragment) {
+                    DocumentFragmentHost host(&node, document);
+                    install_host_interface(isolate, context, &host);
+                } else {
+                    CharacterDataHost host(&node, document);
+                    install_host_interface(isolate, context, &host);
+                }
+            }
+            auto window_prototype = web_interface_prototype(isolate, context, "Window");
+            (void)global->SetPrototype(context, window_prototype);
+            v8::Local<v8::Value> location;
+            if (!global->Get(context, v8_string(isolate, "location")).ToLocal(&location)) return;
+            (void)global->SetPrivate(context, window_location_slot(isolate), location);
+            v8::Local<v8::Function> location_getter;
+            v8::Local<v8::Function> location_setter;
+            if (!make_web_method(isolate, context, "get location", 0, &window_location_get).ToLocal(&location_getter) ||
+                !make_web_method(isolate, context, "set location", 1, &window_location_set).ToLocal(&location_setter)) return;
+            v8::PropertyDescriptor location_descriptor(location_getter, location_setter);
+            location_descriptor.set_enumerable(true);
+            location_descriptor.set_configurable(false);
+            (void)global->DefineProperty(context, v8_string(isolate, "location").As<v8::String>(), location_descriptor);
+            install_global_function(isolate, context, global, "fetch", &offline_fetch);
+            install_global_function(isolate, context, global, "open", &blocked_window_open);
+
             (void)global->Set(
                 context, v8::String::NewFromUtf8Literal(isolate, "window"), global);
             (void)global->Set(
@@ -12202,32 +12509,40 @@ void PageState::install_page(const std::string& base_url,
             }
             // M11-7 Web Storage: two independent, per-Page in-memory stores.
             // The backings live in PageState (so they survive load()); each
-            // generation installs fresh JS Storage objects over them. Methods and
-            // the read-only `length` accessor carry an External to the backing.
+            // generation installs fresh branded Storage instances over them.
+            // Shared prototype members resolve the actual receiver's store.
             {
                 const auto install_storage = [&](const char* name,
                                                  StorageStore* store) {
                     v8::Local<v8::Object> storage = v8::Object::New(isolate);
                     v8::Local<v8::Value> data =
                         v8::External::New(isolate, store, kStorageTag);
+                    (void)storage->SetPrivate(context, storage_brand(isolate), data);
+                    auto prototype = web_interface_prototype(isolate, context, "Storage");
+                    (void)storage->SetPrototype(context, prototype);
                     const auto add_method = [&](const char* method,
                                                 v8::FunctionCallback callback) {
-                        v8::Local<v8::Function> fn =
-                            v8::FunctionTemplate::New(isolate, callback, data)
-                                ->GetFunction(context)
-                                .ToLocalChecked();
-                        (void)storage->Set(context, v8_string(isolate, method),
-                                           fn);
+                        if (prototype->HasOwnProperty(context, v8_string(isolate, method).As<v8::String>()).FromMaybe(true)) return;
+                        v8::Local<v8::Function> fn;
+                        if (!make_web_method(isolate, context, method,
+                                web_method_length("storage", method), callback)
+                                .ToLocal(&fn)) return;
+                        (void)prototype->DefineOwnProperty(context, v8_string(isolate, method).As<v8::String>(), fn);
                     };
                     add_method("getItem", &storage_get_item);
                     add_method("setItem", &storage_set_item);
                     add_method("removeItem", &storage_remove_item);
                     add_method("clear", &storage_clear);
                     add_method("key", &storage_key);
-                    (void)storage->SetNativeDataProperty(
-                        context,
-                        v8::String::NewFromUtf8Literal(isolate, "length"),
-                        &storage_length_getter, nullptr, data, v8::ReadOnly);
+                    if (!prototype->HasOwnProperty(context, v8_string(isolate, "length").As<v8::String>()).FromMaybe(true)) {
+                        v8::Local<v8::Function> getter;
+                        if (!make_web_method(isolate, context, "get length", 0,
+                                &storage_length_getter).ToLocal(&getter)) return;
+                        v8::PropertyDescriptor descriptor(getter, v8::Undefined(isolate));
+                        descriptor.set_enumerable(true);
+                        descriptor.set_configurable(true);
+                        (void)prototype->DefineProperty(context, v8_string(isolate, "length").As<v8::String>(), descriptor);
+                    }
                     (void)global->DefineOwnProperty(
                         context,
                         v8::String::NewFromUtf8(isolate, name)
@@ -12286,26 +12601,17 @@ void PageState::install_page(const std::string& base_url,
             install_event_subclass("KeyboardEvent", keyboard_event_template);
             install_event_subclass("FocusEvent", focus_event_template);
             install_event_subclass("MessageEvent", message_event_template);
-            // M3-4: window becomes an event target. window is the intrinsic global
-            // object, so its three event methods are bare globals whose External
-            // data points at window_events_ (created above). They therefore share
-            // EventTargetHost's exact semantics with document/element.
+            // Window uses the shared EventTarget methods. Event handlers and
+            // postMessage delivery still carry the native listener backing.
             v8::Local<v8::External> window_data = v8::External::New(
                 isolate, static_cast<EventTargetHost*>(window_events_.get()),
                 kWindowEventsTag);
-            auto install_window_event_fn = [&](const char* name,
-                                               v8::FunctionCallback callback) {
-                v8::Local<v8::Function> fn =
-                    v8::FunctionTemplate::New(isolate, callback, window_data)
-                        ->GetFunction(context)
-                        .ToLocalChecked();
-                (void)global->Set(context, v8_string(isolate, name), fn);
-            };
-            install_window_event_fn("addEventListener",
-                                    &window_add_event_listener);
-            install_window_event_fn("removeEventListener",
-                                    &window_remove_event_listener);
-            install_window_event_fn("dispatchEvent", &window_dispatch_event);
+            auto event_target_prototype = web_interface_prototype(isolate, context, "EventTarget");
+            for (const char* name : {"addEventListener", "removeEventListener", "dispatchEvent"}) {
+                v8::Local<v8::Value> function;
+                if (!event_target_prototype->Get(context, v8_string(isolate, name)).ToLocal(&function)) return;
+                (void)global->Set(context, v8_string(isolate, name), function);
+            }
             // M11-51: bounded Window event handler attributes. They share the
             // same WindowEventTarget backing as addEventListener, run after the
             // regular listeners at this target, and expose null when unset.

@@ -39,13 +39,13 @@ def test_delete_define_and_enumeration_on_existing_properties():
               Object.defineProperty(
                   navigator, 'traceOwn',
                   {value: 7, configurable: true});
-              return [typeof d.value, del,
+              return [d === undefined, del,
                       keys.indexOf('userAgent') >= 0,
                       navigator.traceOwn].join('|');
             })();
             """,
             name="ops.js"
-        ) == "string|false|true|7"
+        ) == "true|true|false|7"
         ops = _ops(page)
         assert ("navigator", "userAgent", "delete") in ops
         assert ("navigator", "", "own_keys") in ops
@@ -113,7 +113,7 @@ def test_enumeration_result_order_and_identity_are_unchanged():
     with iv8.Page() as page:
         _load(page)
         before = page.eval("Object.keys(navigator).join(',')")
-        assert "userAgent" in before.split(",")
+        assert before == ""
         page.start_access_trace()
         after = page.eval(
             "for (const k in navigator) {}"
@@ -121,7 +121,7 @@ def test_enumeration_result_order_and_identity_are_unchanged():
             name="ops.js"
         )
         assert after == before
-        assert "userAgent" in after.split(",")
+        assert after == ""
         own_keys = [event for event in _events(page)
                     if event["operation"] == "own_keys"]
         assert own_keys
