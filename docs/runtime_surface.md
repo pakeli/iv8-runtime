@@ -1,6 +1,19 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest verified Web IDL environment repair (`2026-11-07`).** ENV-01 through
+**Latest verified open exposure regression repair (`2026-11-07`).** The default
+Window open stub is withdrawn. The other Web IDL corrections remain available.
+Source `f882344` (tree `c4ba8bee511316e69d1f8f58e865c036a6cec56c`)
+passed Linux `42350637889`, Windows `42350641803` and macOS arm64
+`42350648456` (macos-15), Python 3.11–3.14 each **2050 passed, 2 skipped,
+1 xfailed**. The immutable Chrome probe has 74 matches and one declared
+unavailable-open profile gap. macOS focused checks each passed 172 tests with
+that one expected failure. Installed cp311 acceptance returned NMPA document
+200 and data business code 200 with 10 rows. Customs matched browser-boundary
+controls return 200, while complete original-caller consistency remains under
+investigation. Scope, causal evidence and release records are in
+`docs/native_binding_regression.md`.
+
+**Previous verified Web IDL environment repair (`2026-11-07`).** ENV-01 through
 ENV-06 now cover native method metadata, receiver brands, shared interface
 inheritance and defining-prototype descriptors. Native standalone object state,
 document-root mutation notifications and explicit offline capability behavior
@@ -601,7 +614,7 @@ Execution exclusions include HTTP/WebSocket transport, automatic resource
 loading, committed navigation/history, JavaScript→Python callbacks, a Python-side
 DOM or event API (`Page.document`), CDATA/doctype nodes, layout and geometry.
 The Web IDL repair provides explicit offline fetch rejection and XHR/Worker
-constructor failure, plus a blocked-popup open result. Live tag/class collections
+constructor failure. The follow-up repair keeps Window opening unavailable. Live tag/class collections
 and offline navigation intents are available. `iv8` also exports no browser symbol at module level —
 `test/test_scope_exclusions.py` guards this.
 
