@@ -1128,8 +1128,10 @@ object-model corrections. The Chrome open comparison becomes one declared
 profile gap. The candidate restored NMPA document/data acceptance and Customs
 controlled acceptance. The rejected recomputation's internal field remains open.
 Source f882344 passed all release matrices with `2050 passed, 2 skipped,
-1 xfailed` per lane. NMPA installed-wheel acceptance passed. Complete Customs
-caller consistency is still being investigated. Evidence is in
+1 xfailed` per lane. NMPA installed-wheel acceptance passed. The Customs caller's separate
+second-hop Referer omission was isolated and corrected outside this repository.
+Its original entry then passed three independent runs and a fourth content
+check. The deeper rejected-recomputation field remains open. Evidence is in
 `docs/native_binding_regression.md`.
 
 ## Pending Decisions

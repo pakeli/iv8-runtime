@@ -121,3 +121,33 @@ verified source. Restore commit `605da854b17b82d103c01c1dcbcaa4420f197e91` retur
 original blob `eb730d3e77a17d4d527e67646475385cebb2428c` with a SHA guard.
 Master's strict required Linux/Python 3.13 V8 gate and administrator enforcement
 are retained. PR #10 carries this repair.
+
+## Final caller acceptance on 2026-11-07
+
+A further controlled request-profile comparison isolated the missing second-hop
+Referer in the Customs caller. With fresh sessions, both surrounding original
+controls returned 400. Adding only `Referer` to the second document request
+returned 200 with the business title in three consecutive independent sessions.
+The prior platform/Sec-Fetch-Site claim was retracted after inconsistent replay
+results. The final caller correction adds only the second-hop Referer.
+
+The original Customs main.py was backed up, then its second GET was changed to
+pass `headers={"Referer": index_url}`. Its SHA-256 changed from
+`7ffc85ff4857f88f47567daa21eea0d483ee9243b2d342edc7847fa3ee948d81` to
+`e3c4f96cdec2f85adf433533214647e0e9f759c4d480a450fae906be9f7bec93`.
+Using the installed official cp311 wheel, that entry returned 200 in three
+independent runs. A fourth observed run recorded document 412, script 200,
+then document 200 with the expected business title. The caller edit is outside
+the runtime repository.
+
+NMPA installed-wheel acceptance returned document 200, the expected title,
+HTTP 200 and business code 200 for the existing data query, with 10 rows.
+The two resolved operational conditions are default open exposure and the
+Customs caller's missing second-hop Referer. The deeper internal reason that
+the open-enabled lifecycle recomputation produces a rejected Cookie remains
+unresolved. No stable encrypted-output equivalence is claimed.
+
+PR #10 merged as `9bc6f2ee34112565d02c4f9f515d6427c9fcb980`. Its final
+handoff head was `1ea46cd7e655c0aeb9100e1cdb639465813a6cc5`, with V8 gates
+`42351794476` and `42351799839`. Main V8 CI `42352227223` passed. Runtime and
+test sources in the merged tree match the release-verified source f882344.
