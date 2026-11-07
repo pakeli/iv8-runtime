@@ -151,3 +151,31 @@ PR #10 merged as `9bc6f2ee34112565d02c4f9f515d6427c9fcb980`. Its final
 handoff head was `1ea46cd7e655c0aeb9100e1cdb639465813a6cc5`, with V8 gates
 `42351794476` and `42351799839`. Main V8 CI `42352227223` passed. Runtime and
 test sources in the merged tree match the release-verified source f882344.
+
+## Current master rebuild on 2026-11-07
+
+At the user's request, source `9a0d20786bf289adce494fdb6e75242fb55c9195`,
+tree `904b2cfa2477a91803ceebb5602611d79dfc18bd`, was rebuilt as V8-linked
+wheels for Python 3.11–3.14. The pinned V8 15.0.245.19 monolith was restored
+from its platform caches. All 12 wheel lanes reported **2050 passed, 2 skipped,
+1 xfailed**. macOS focused runs each reported **172 passed, 1 xfailed**.
+The expected profile gap is the unavailable global.open entry.
+
+| Platform | Run | Artifacts |
+| --- | --- | --- |
+| Linux x64 | `42353755315` | `13567246115`, cp311–cp314 |
+| Windows x64 | `42353765215` | cp311 `13566867411`, cp312 `13566219965`, cp313 `13566008836`, cp314 `13566697573` |
+| macOS arm64 | `42353779252` | cp311 `13566253261`, cp312 `13566193499`, cp313 `13567021892`, cp314 `13566677629` |
+
+macOS driver `9cfa8d566384d004e88c8dd882f0ed3efa5d6dfa` pinned all five checkouts to the rebuilt source.
+Restore commit `6f32bc15b9d770bab16a47635248bcd917e050bb` returned the helper workflow to original blob
+`eb730d3e77a17d4d527e67646475385cebb2428c` using the current-content SHA guard.
+Main V8 CI `42352867708` passed on the same source.
+
+The cp311 macOS archive matched GitHub's SHA-256
+`c9073847eb81eea5f3c2f1333605baffdf8d976e7b96245153373ed9d7a17ed4`.
+Its extracted wheel SHA-256 is `907dba73cf0d2f29849f09275691787de650d33f6153fcca7b3a2cd1c07cc411`.
+The verified wheel and build receipt are retained in ignored
+`data/rebuild-2026-11-07/`. The rebuilt runtime/test sources are identical to
+the prior f882344 release. The installed iv8-test runtime retains the verified
+NMPA and Customs caller acceptance recorded above.
