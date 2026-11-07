@@ -65,8 +65,8 @@ def test_parent_node():
         _loaded(page)
         assert page.eval("document.getElementById('para').parentNode.id") == "main"
         assert page.eval("document.getElementById('main').parentNode.tagName") == "BODY"
-        # documentElement has no parent element -> null (document is not a node).
-        assert page.eval("document.documentElement.parentNode === null") is True
+        # The document is the root Node and has no parent element.
+        assert page.eval("document.documentElement.parentNode === document") is True
 
 
 @on_only

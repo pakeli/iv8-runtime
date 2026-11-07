@@ -46,6 +46,8 @@ if(IV8_LINK_V8)
       src/core/js_exception.cpp
       src/core/js_value.cpp
       src/core/host_object.cpp
+      src/core/web_method.cpp
+      src/core/web_interface.cpp
       src/core/access_trace.cpp
       src/core/access_summary.cpp
       src/core/selector_parser.cpp

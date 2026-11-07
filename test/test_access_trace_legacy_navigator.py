@@ -36,17 +36,15 @@ def test_legacy_navigator_reads_and_java_enabled_call_are_traced():
                  event["operation"]) for event in events] == [
             ("navigator", "navigator", "plugins", "get"),
             ("navigator", "navigator", "mimeTypes", "get"),
-            ("navigator", "navigator", "javaEnabled", "get"),
             ("navigator", "navigator", "javaEnabled", "call"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)
         assert all(event["resource_name"] == "probe.js" for event in events)
         navigator_ids = {event["object_id"] for event in events
-                         if event["member"] != "javaEnabled"
-                         or event["operation"] == "get"}
+                         if event["object_type"] == "navigator"}
         assert len(navigator_ids) == 1
-        # The call uses its own stable native token, not the navigator host.
-        assert events[3]["object_id"] != events[0]["object_id"]
+        # The shared native method dispatches through the actual Navigator host.
+        assert events[2]["object_id"] == events[0]["object_id"]
 
 
 @on_only
@@ -72,12 +70,12 @@ def test_legacy_navigator_keeps_identity_shape_and_read_only_behavior():
             """
             (() => {
               const d = Object.getOwnPropertyDescriptor(
-                  navigator, 'javaEnabled');
+                  Navigator.prototype, 'javaEnabled');
               return [typeof d.value, d.writable, d.enumerable,
                       d.configurable].join('|');
             })();
             """
-        ) == "function|false|true|false"
+        ) == "function|true|true|true"
         assert page.eval(
             """
             navigator.plugins = [1];
@@ -86,15 +84,18 @@ def test_legacy_navigator_keeps_identity_shape_and_read_only_behavior():
             [navigator.plugins.length, navigator.mimeTypes.length,
              navigator.javaEnabled()].join(',');
             """
-        ) == "0,0,false"
+        ) == "0,0,true"
 
+        page.eval("delete navigator.javaEnabled")
+        with pytest.raises(iv8.JSError, match="Illegal invocation"):
+            page.eval("const detached = navigator.javaEnabled; detached();")
         page.start_access_trace()
         assert page.eval(
-            "const f = navigator.javaEnabled; f();", name="probe.js"
+            "const f = navigator.javaEnabled; f.call(navigator);", name="probe.js"
         ) is False
         assert [(event["member"], event["operation"])
                 for event in _events(page)] == [
-            ("javaEnabled", "get"), ("javaEnabled", "call")]
+            ("javaEnabled", "call")]
 
 
 @on_only
@@ -112,11 +113,10 @@ def test_legacy_navigator_filter_and_generation():
         events = _events(page)
         assert [(event["member"], event["operation"]) for event in events] == [
             ("plugins", "get"),
-            ("javaEnabled", "get"),
             ("javaEnabled", "call"),
         ]
         first_plugin_id = events[0]["object_id"]
-        first_call_id = events[2]["object_id"]
+        first_call_id = events[1]["object_id"]
         assert events[0]["generation"] == 2
 
         page.load(HTML, BASE)
@@ -126,6 +126,6 @@ def test_legacy_navigator_filter_and_generation():
             event for event in _events(page)
             if event["source_kind"] == "eval"
         ]
-        assert [event["generation"] for event in events] == [2, 2, 2, 3, 3, 3]
-        assert events[3]["object_id"] != first_plugin_id
-        assert events[5]["object_id"] != first_call_id
+        assert [event["generation"] for event in events] == [2, 2, 3, 3]
+        assert events[2]["object_id"] != first_plugin_id
+        assert events[3]["object_id"] != first_call_id

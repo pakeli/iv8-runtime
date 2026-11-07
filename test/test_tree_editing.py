@@ -182,9 +182,9 @@ def test_error_rules():
             "document.getElementById('root').insertBefore("
             "document.createElement('i'), document.getElementById('other'))"
         ) == "TypeError"
-        # non-element child -> TypeError (document, a number, null).
+        # A Document is a Node with invalid hierarchy. Other invalid arguments fail conversion.
         assert _err_name(page,
-            "document.getElementById('root').appendChild(document)") == "TypeError"
+            "document.getElementById('root').appendChild(document)") == "HierarchyRequestError"
         assert _err_name(page,
             "document.getElementById('root').appendChild(42)") == "TypeError"
         assert _err_name(page,

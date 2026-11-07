@@ -43,7 +43,7 @@ def test_parser_emits_text_comments_and_element_only_document_children():
               ].join('|');
             })();
             """
-        ) == ("1|HTML|undefined|5|3|1|3| A |3| B tail|3|3,8,3|xy|inside|"
+        ) == ("1|HTML|object|5|3|1|3| A |3| B tail|3|3,8,3|xy|inside|"
               "T A xy B tail")
         assert page.eval("document.title") == "T"
 
@@ -74,7 +74,7 @@ def test_creation_shape_for_text_comment_and_fragment():
             """
         ) == ("3|#text|a😀|a😀|3|a😀|null|null|0|"
               "null|null|true|false|8|#comment|note|11|#document-fragment|"
-              "null|0|0|null|null|false|undefined|undefined|undefined")
+              "null|0|0|null|null|false|function|undefined|function")
 
 
 @on_only
@@ -261,7 +261,7 @@ def test_clone_equality_contains_and_connectivity_across_kinds():
                 textClone.nodeType, textClone.isEqualNode(t),
                 fClone.nodeType, fClone.isEqualNode(f),
                 d.contains(t), t.contains(t), t.contains(d),
-                typeof document.contains === 'undefined',
+                document.contains(t),
                 t.isConnected, f.firstChild.isConnected
               ].join('|');
             })();
@@ -296,7 +296,7 @@ def test_tree_editing_accepts_text_nodes_and_fragments():
                       typeof a.appendChild].join('/');
             })();
             """
-        ) == "ba|2/bxy|3,3,3/xy|2/TypeError/undefined"
+        ) == "ba|2/bxy|3,3,3/xy|2/TypeError/function"
 
 
 @on_only

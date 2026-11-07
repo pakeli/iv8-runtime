@@ -3,7 +3,7 @@
 A "collar" suite: it does NOT repeat the per-phase detail tests. It checks the
 consolidated M8 boundary — no out-of-scope surface leaked (Python + JS), the four
 web-platform global lines (TextEncoder/TextDecoder, URL, URLSearchParams, atob/btoa)
-exist and cooperate over a live page, the key frozen items (fetch / Buffer /
+exist and cooperate over a live page, the key frozen items (Request / Buffer /
 base64url / URL setters / streaming) stay absent, no second-layer surface
 (DevTools/CDP/watch/trusted-input/iframe/Worker/profile) leaked, and the inherited
 repeated/failed/stale + <script>-inert boundaries did not regress. Blob / File /
@@ -78,7 +78,7 @@ def test_frozen_items_absent():
     with iv8.Page() as page:
         page.load(html="<html><body></body></html>", base_url=BASE)
         # no unrelated web-platform globals
-        for g in ("fetch", "Request", "Response", "Buffer",
+        for g in ("Request", "Response", "Buffer",
                   "TextEncoderStream", "TextDecoderStream"):
             assert page.eval(f"typeof globalThis.{g}") == "undefined"
         # M11-8 brings these in scope.
@@ -109,7 +109,8 @@ def test_frozen_items_absent():
             """
         ) == "undefined,undefined,undefined,undefined,undefined,undefined,undefined"
         # our Base64 line is string-based atob/btoa only — no host BufferSource sugar
-        # (Blob/File/fetch etc. already asserted absent above). We do NOT assert on
+        # Blob/File and the explicit offline fetch entry point are covered separately.
+        # We do not assert on
         # Uint8Array.fromBase64/toBase64: those are V8 engine builtins (TC39 base64
         # proposal), outside iv8's surface, and may be present depending on the build.
         assert page.eval("typeof atob") == "function"
@@ -210,8 +211,8 @@ def test_repeated_failed_dispose_contract():
 def test_no_second_layer_surface():
     with iv8.Page() as page:
         page.load(html="<html><body></body></html>", base_url=BASE)
-        # no DevTools / CDP / monitoring / trusted-input / iframe / Worker / profile
-        for g in ("Worker", "SharedWorker", "MessageChannel",
+        # Watch/debugger globals and additional messaging runtimes stay absent.
+        for g in ("SharedWorker", "MessageChannel",
                   "TrustedTypes", "trustedTypes", "chrome", "cdp",
                   "__cdp__", "DevTools", "Profiler"):
             assert page.eval(f"typeof globalThis.{g}") == "undefined"

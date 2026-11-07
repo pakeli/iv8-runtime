@@ -113,6 +113,13 @@ public:
                           const std::string& name);
     void dispose();
 
+    // Internal Web IDL factories. Called under the context operation guard.
+    v8::Local<v8::Value> create_document(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, bool html_document = false);
+    v8::Local<v8::Value> create_web_interface(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, const std::string& name,
+        v8::Local<v8::Array> arguments);
+
     // Step 5g: internal factory used only by the JS matchMedia bootstrap; returns
     // a cached HostObject backing for one query result. Not bound to Python.
     HostObject* media_query_list_host(const std::u16string& media, bool matches);

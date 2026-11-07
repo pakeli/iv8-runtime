@@ -15,6 +15,7 @@ enum class NodeKind : std::uint8_t {
     Element = 1,
     Text = 3,
     Comment = 8,
+    Document = 9,
     DocumentFragment = 11,
 };
 
@@ -47,10 +48,8 @@ public:
     // Names of the native-backed methods.
     virtual std::vector<std::string> method_names() const = 0;
 
-    // Browser IDL attributes opt into shared prototype accessors. Other hosts
-    // retain their historical own-property shape. The key identifies one
-    // interface within this context, never across isolates or generations.
-    virtual std::vector<std::string> prototype_property_names() const { return {}; }
+    // Registered Web IDL interfaces share native members on defining prototypes.
+    // Other hosts retain their existing own-property shape.
     virtual std::string prototype_key() const { return {}; }
 
     // Produce the value for property `name`. Runs inside the isolate/context
@@ -95,6 +94,13 @@ public:
     virtual std::string trace_object_type() const { return "host_object"; }
     virtual std::string trace_label() const { return global_name(); }
 };
+
+// Populate an interface's members without constructing a wrapper. Bootstrap
+// calls this for tag-specific interfaces before any target script executes.
+void install_host_interface(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                             HostObject* host);
+void set_window_host(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                      HostObject* host);
 
 // Build (WITHOUT installing) a JS object backed by `host`: an ObjectTemplate with
 // one internal field holding the HostObject*, read-only accessors for its

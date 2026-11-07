@@ -40,7 +40,7 @@ def test_has_and_descriptor_wrappers_record_host_object_queries():
                   navigator, 'userAgent');
               const e = Reflect.getOwnPropertyDescriptor(
                   navigator, 'userAgent');
-              return [a, b, c, typeof d.value, d.writable, e.enumerable,
+              return [a, b, c, d === undefined, e === undefined,
                       Object.getOwnPropertyDescriptor(
                           navigator, 'missing') === undefined,
                       Reflect.has(navigator, 'missing')].join('|');
@@ -48,7 +48,7 @@ def test_has_and_descriptor_wrappers_record_host_object_queries():
             """,
             name="queries.js"
         )
-        assert result == "true|true|true|string|false|true|true|false"
+        assert result == "false|false|true|true|true|true|false"
 
         events = _query_events(page)
         assert [(event["member"], event["operation"], event["object_type"])
@@ -67,10 +67,10 @@ def test_has_and_descriptor_wrappers_record_host_object_queries():
         assert all(event["outcome"] == "returned" for event in events)
         assert [event["return_summary"] for event in events
                 if event["operation"] == "has"] == [
-            "boolean:true", "boolean:true", "boolean:true", "boolean:false"]
+            "boolean:false", "boolean:false", "boolean:true", "boolean:false"]
         assert [event["return_summary"] for event in events
                 if event["operation"] == "get_own_property_descriptor"] == [
-            "object", "object", "undefined"]
+            "undefined", "undefined", "undefined"]
 
 
 @on_only

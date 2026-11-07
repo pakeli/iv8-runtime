@@ -377,3 +377,22 @@ The M1 architecture is correctly realized when:
 - the binding layer contains no substantial execution logic;
 - tests cover lifecycle and failure transitions;
 - no browser-runtime feature has leaked into M1.
+
+
+## 13. Page interface registry and native document ownership
+
+The approved Web IDL repair on `2026-11-07` adds a context-private registry for
+Page's interface constructors, prototypes and native member identities. Registry
+objects are reachable only from V8 private slots in their owning context. Their
+callback data identifies the defining interface. Native backing fields validate
+receivers independently of the mutable JavaScript prototype chain.
+
+PageState owns standalone EventTarget and Document backings alongside the loaded
+document for the current generation. DocumentHost derives from NodeHost and owns
+its root DomNode, canonical wrapper and all descendant storage. Root children use
+the same vector as the document node. Each document releases its wrapper and
+listener persistent handles through the existing isolate-alive teardown hook.
+A reload invalidates the complete context and its registry before replacing
+native backings. The operation guard and GIL boundary apply to all constructor
+and method callbacks. `docs/webidl_environment_semantics.md` defines the approved
+surface and capability behavior.

@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-11-04`
+Last reviewed: `2026-11-07`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -1099,6 +1099,24 @@ V8 CI `42064100130` and the independent 27/27 report probe passed. The original
 macOS workflow was restored. Contract and artifacts: `docs/browser_compatibility_repair.md`.
 This explicitly supersedes the relevant historical snapshot/own-data-property
 contracts, without expanding the M1 JSContext or enabling networking.
+
+### 55. Web IDL object semantics and explicit offline capability failures
+
+Approved on `2026-11-07` after the user's environment semantics checklist.
+Implement ENV-01 through ENV-06 in the order of method binding, interface
+inheritance and descriptors/enumeration. A context-private registry owns native
+constructors and shared prototypes. Defining-interface brands survive prototype
+mutation and functions dispatch on the actual receiver. Document owns a root Node
+and its canonical wrapper. Standalone objects share the generation's lifetime.
+
+The user selected object models and explicit failure behavior for execution
+capabilities. Fetch rejects its Promise and XHR/Worker construction throws
+`NotSupportedError`. Open returns null. Cross-document moves fail before
+mutation while automatic adoption stays with the later import/adopt work.
+Source `f42acae` was release-verified on all three platforms, Python 3.11–3.14,
+each `2050 passed, 2 skipped`. The installed cp311 wheel matched all 75 original
+capture probes. The contract and source/run/artifact evidence are
+`docs/webidl_environment_semantics.md` and `docs/webidl_environment_report.md`.
 
 ## Pending Decisions
 
