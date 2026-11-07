@@ -1,5 +1,15 @@
 # iv8-runtime Runtime Surface Index
 
+**Latest implemented regression repair (`2026-11-07`), release verification
+pending.** The default Window open stub is withdrawn after same-input NMPA
+controls proved its exposure triggered replacement of a previously accepted
+Cookie. The remaining Web IDL repair is retained. The candidate returns NMPA
+HTTP 200 and business code 200 with 10 rows. Customs candidate controls also
+return 200 with tracing enabled or disabled. The Chrome comparison has 74
+matches and one declared unavailable-open profile gap. The installed user
+environment is temporarily restored to 15edd82 during verification. The boundary,
+causal evidence and release record are in `docs/native_binding_regression.md`.
+
 **Latest verified Web IDL environment repair (`2026-11-07`).** ENV-01 through
 ENV-06 now cover native method metadata, receiver brands, shared interface
 inheritance and defining-prototype descriptors. Native standalone object state,
@@ -601,7 +611,7 @@ Execution exclusions include HTTP/WebSocket transport, automatic resource
 loading, committed navigation/history, JavaScript→Python callbacks, a Python-side
 DOM or event API (`Page.document`), CDATA/doctype nodes, layout and geometry.
 The Web IDL repair provides explicit offline fetch rejection and XHR/Worker
-constructor failure, plus a blocked-popup open result. Live tag/class collections
+constructor failure. The follow-up repair keeps Window opening unavailable. Live tag/class collections
 and offline navigation intents are available. `iv8` also exports no browser symbol at module level —
 `test/test_scope_exclusions.py` guards this.
 

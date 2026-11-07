@@ -9222,9 +9222,6 @@ void offline_fetch(const v8::FunctionCallbackInfo<v8::Value>& info) {
     info.GetReturnValue().Set(resolver->GetPromise());
 }
 
-void blocked_window_open(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    info.GetReturnValue().Set(v8::Null(info.GetIsolate()));
-}
 
 v8::Local<v8::Private> window_location_slot(v8::Isolate* isolate) {
     return v8::Private::ForApi(isolate,
@@ -12122,7 +12119,6 @@ void PageState::install_page(const std::string& base_url,
             location_descriptor.set_configurable(false);
             (void)global->DefineProperty(context, v8_string(isolate, "location").As<v8::String>(), location_descriptor);
             install_global_function(isolate, context, global, "fetch", &offline_fetch);
-            install_global_function(isolate, context, global, "open", &blocked_window_open);
 
             (void)global->Set(
                 context, v8::String::NewFromUtf8Literal(isolate, "window"), global);

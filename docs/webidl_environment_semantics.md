@@ -57,7 +57,9 @@ object-model and explicit-failure scope on 2026-11-07.
   interface prototype chains. Construction throws an Error named
   `NotSupportedError` explaining that execution is unavailable in the offline
   Page runtime.
-- `open()` returns the blocked-popup result, `null`.
+- The follow-up regression repair withdraws the default `open` stub. Window
+  opening is unavailable in this offline profile. See
+  `docs/native_binding_regression.md` for the boundary correction and evidence.
 - `Document`, `EventTarget`, `Text`, `Comment` and `DocumentFragment` support
   native construction. Calling them without `new` throws `TypeError`.
   The other registered DOM/BOM interfaces throw `Illegal constructor`.

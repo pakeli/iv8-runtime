@@ -1,5 +1,15 @@
 # CLAUDE.md
 
+**Latest implemented regression repair (`2026-11-07`), release verification
+pending.** The default Window open stub is withdrawn after same-input NMPA
+controls proved its exposure triggered replacement of a previously accepted
+Cookie. The remaining Web IDL repair is retained. The candidate returns NMPA
+HTTP 200 and business code 200 with 10 rows. Customs candidate controls also
+return 200 with tracing enabled or disabled. The Chrome comparison has 74
+matches and one declared unavailable-open profile gap. The installed user
+environment is temporarily restored to 15edd82 during verification. The boundary,
+causal evidence and release record are in `docs/native_binding_regression.md`.
+
 **Latest verified Web IDL environment repair (`2026-11-07`).** ENV-01 through
 ENV-06 now cover native method metadata, receiver brands, shared interface
 inheritance and defining-prototype descriptors. Native standalone object state,

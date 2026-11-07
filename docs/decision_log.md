@@ -1118,6 +1118,17 @@ each `2050 passed, 2 skipped`. The installed cp311 wheel matched all 75 original
 capture probes. The contract and source/run/artifact evidence are
 `docs/webidl_environment_semantics.md` and `docs/webidl_environment_report.md`.
 
+### 56. Withdraw default open exposure after the NMPA regression
+
+On `2026-11-07` the user reported NMPA returning 400 after the Web IDL repair.
+Matched-input old/new/delete-open/restore-open controls isolated the new open
+exposure. The pre-lifecycle Cookie was accepted and the overwritten post-lifecycle
+Cookie was rejected. The default stub is withdrawn while keeping the other
+object-model corrections. The Chrome open comparison becomes one declared
+profile gap. The candidate restored NMPA document/data acceptance and Customs
+controlled acceptance. The rejected recomputation's internal field remains open.
+Release verification is pending in `docs/native_binding_regression.md`.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
