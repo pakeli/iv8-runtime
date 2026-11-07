@@ -1,7 +1,6 @@
 # Web IDL environment semantics repair
 
-Approved on **2026-11-07**. Implementation is complete and release verification is
-pending. This batch follows the user's `iv8环境语义问题清单.md` and its 75
+Approved and release-verified on **2026-11-07**. This batch follows the user's `iv8环境语义问题清单.md` and its 75
 deterministic Chrome comparisons.
 
 ## Acceptance and sequence
@@ -87,13 +86,13 @@ governed by the existing kernel contracts.
 
 ## Verification record
 
-The implementation proceeded in the sequence above. Every stage starts with focused native tests and then the full
-suite. The integrated source requires Linux x64, Windows x64 and macOS arm64
-release verification for Python 3.11–3.14. Record actual source commits, trees,
-run IDs, artifact IDs and passed/skipped counts before marking the batch verified.
-The latest verified batch at the start of this work is source `15edd82`, tree
-`905d1f671bc31fd25b2aee78c13258a6318ec36a`, with `1931 passed, 2 skipped` in
-every release lane.
+The implementation proceeded in the sequence above, with focused checks before
+full-suite verification. Source `f42acae`, tree
+`3d2d9351d45815e85f53f0f91fa4ad805fff49f8`, passed Linux x64, Windows x64
+and macOS arm64 release matrices for Python 3.11–3.14. Every lane reported
+**2050 passed, 2 skipped**. The macOS focused set reported **189 passed** in
+every interpreter. The installed cp311 wheel matched the user's original
+capture probe **75/75** and the previous browser report **27/27**.
 
 Native method reads remain observable through the instance interceptor. Methods
 are ordinary prototype data properties and attributes are real function

@@ -1,16 +1,20 @@
 # Next Tasks
 
-**Latest implemented Web IDL environment repair (`2026-11-07`), release
-verification pending.** ENV-01 through ENV-06 now cover native method metadata,
-receiver brands, shared interface inheritance and defining-prototype descriptors.
-All 75 supplied Chrome comparisons match. Native Document/EventTarget/node
-construction and explicit offline fetch/XHR/Worker/open behavior are included.
-The prior browser compatibility repair below remains the latest fully verified
-release. Boundary and evidence are in `docs/webidl_environment_semantics.md` and
-`docs/webidl_environment_report.md`. Finish this repair's release verification
-before resuming M11-53.
+**Latest verified Web IDL environment repair (`2026-11-07`).** ENV-01 through
+ENV-06 now cover native method metadata, receiver brands, shared interface
+inheritance and defining-prototype descriptors. Native standalone object state,
+document-root mutation notifications and explicit offline capability behavior
+are included. Source `f42acae` (tree
+`3d2d9351d45815e85f53f0f91fa4ad805fff49f8`) passed Linux `42326713519`,
+Windows `42326717311` and macOS arm64 `42326726715` (macos-15), Python
+3.11–3.14 each **2050 passed, 2 skipped** (2,052 collected). macOS focused
+checks each **189 passed**. V8 CI `42326682563` / `42326787518` passed.
+The installed cp311 wheel matched the user's original capture **75/75** and
+the previous browser report **27/27**. Boundary, artifact IDs, helper restoration
+and deployment evidence are in `docs/webidl_environment_semantics.md` and
+`docs/webidl_environment_report.md`. M11-53 remains the next numbered feature.
 
-**Latest verified browser compatibility repair (`2026-11-06`):** reflected
+**Previous verified browser compatibility repair (`2026-11-06`):** reflected
 meta/script/anchor properties, stable node wrappers, live tag/class collections,
 IDL accessors/brands, trailing-body recovery, document tree edits, document.all,
 bounded capability behavior, offline navigation intents and opt-in async errors.
@@ -88,7 +92,7 @@ At the user's direction, **Window now has higher priority than Document**:
 2. **Later — Document continuation.** `document.write`/`writeln`/`open`/`close`
    and `importNode`/`adoptNode` move behind the Window slices. The bounded
    document.all repair is verified above. The approved Web IDL interface and
-   descriptor batch is implemented and awaiting release verification above.
+   descriptor batch is verified above.
    Remaining legacy collection overloads follow the later Document work.
 3. Remaining headless-browser gaps and the open decisions in
    `docs/current_status.md` follow.

@@ -1113,7 +1113,9 @@ The user selected object models and explicit failure behavior for execution
 capabilities. Fetch rejects its Promise and XHR/Worker construction throws
 `NotSupportedError`. Open returns null. Cross-document moves fail before
 mutation while automatic adoption stays with the later import/adopt work.
-Release verification is pending. The contract and report are
+Source `f42acae` was release-verified on all three platforms, Python 3.11–3.14,
+each `2050 passed, 2 skipped`. The installed cp311 wheel matched all 75 original
+capture probes. The contract and source/run/artifact evidence are
 `docs/webidl_environment_semantics.md` and `docs/webidl_environment_report.md`.
 
 ## Pending Decisions
