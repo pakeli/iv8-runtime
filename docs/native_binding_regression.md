@@ -1,6 +1,6 @@
 # Window open exposure regression repair
 
-User-reported on 2026-11-07. Implementation and release verification are pending.
+User-reported and release-verified on 2026-11-07.
 
 ## Proven regression and boundary correction
 
@@ -85,3 +85,39 @@ The 109-byte check returned false and the other two returned undefined.
 Those observations identify the inspected API boundary and do not decode the
 rejected recomputation's internal field. The uninstrumented HTTP controls above
 provide the acceptance evidence for the API exposure correction.
+
+## Verified source and release artifacts
+
+Source `f88234402bc5ca3ac84d14dd952557a6a4a6deed`, tree
+`c4ba8bee511316e69d1f8f58e865c036a6cec56c`, passed all three release
+matrices, Python 3.11–3.14. Every lane reported **2050 passed, 2 skipped,
+1 xfailed** (2,053 collected). The expected failure is the unavailable-open
+Chrome comparison. macOS focused runs each reported **172 passed, 1 xfailed**.
+PR V8 CI `42350703567` passed.
+
+| Platform | Run | Artifacts |
+| --- | --- | --- |
+| Linux x64 | `42350637889` | `13565632568`, cp311–cp314 |
+| Windows x64 | `42350641803` | cp311 `13565462312`, cp312 `13565517282`, cp313 `13565203744`, cp314 `13565316806` |
+| macOS arm64, macos-15 | `42350648456` | cp311 `13565846482`, cp312 `13565611883`, cp313 `13565841531`, cp314 `13565901352` |
+
+The cp311 macOS artifact matched GitHub's archive digest
+`5b9d39f27ce60df8a96386e33b13debc55ff1d22ca69075ee63a7b7930944f11`.
+The wheel SHA-256 is
+`ba67ffcb8d8fcdc80cd3e8dcb9a2e52772f21df9c458a09db4218dd7d09e5eef`.
+It was installed into `iv8-test` and its native bytes matched the verified wheel.
+The existing NMPA caller then returned document HTTP 200, a valid title,
+business code 200 and 10 data rows with tracing enabled.
+
+Customs acceptance is bounded to the matched browser consumption controls above.
+The original caller also produced 400 in direct checks. A two-header change
+once returned 200, but repeated same-Cookie/header controls were inconsistent.
+That header cause was retracted and the caller was restored to its original
+SHA-256 `7ffc85ff4857f88f47567daa21eea0d483ee9243b2d342edc7847fa3ee948d81`.
+Full Customs caller consistency remains under investigation.
+
+macOS driver `234880907a3a0d44ebfa15357ba8be84521c7c03` pinned build-v8 and all wheel checkouts to the
+verified source. Restore commit `605da854b17b82d103c01c1dcbcaa4420f197e91` returned the helper workflow to
+original blob `eb730d3e77a17d4d527e67646475385cebb2428c` with a SHA guard.
+Master's strict required Linux/Python 3.13 V8 gate and administrator enforcement
+are retained. PR #10 carries this repair.
