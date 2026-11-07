@@ -397,7 +397,16 @@ void idl_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     AccessTrace* trace = active_trace(isolate);
     const auto seq = record_access(trace, host, key, AccessOperation::kSet);
     v8::TryCatch caught(isolate);
-    host->set_property(isolate, context, key, value);
+    auto native_value = value;
+    if (key == "nodeValue" || key == "textContent") {
+        if (native_value->IsNullOrUndefined()) {
+            native_value = v8str(isolate, "");
+        } else {
+            v8::Local<v8::String> text;
+            if (native_value->ToString(context).ToLocal(&text)) native_value = text;
+        }
+    }
+    if (!caught.HasCaught()) host->set_property(isolate, context, key, native_value);
     if (seq != 0) {
         try {
             AccessCompletion completion;

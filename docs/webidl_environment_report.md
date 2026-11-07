@@ -26,9 +26,10 @@ method identity, Node constants and additional HTML tag interface identities.
 ## Local verification
 
 The first binding stage passed **1949 passed, 2 skipped** locally. The integrated
-static-linked macOS arm64/Python 3.13 wheel passed **135 focused tests**, followed
-by **2048 passed, 2 skipped** (2,050 collected). This includes the final lifecycle
-assertion. Full release lane verification is pending.
+static-linked macOS arm64/Python 3.13 wheel passed **189 focused tests**, followed
+by **2050 passed, 2 skipped** (2,052 collected). This includes the final lifecycle
+assertion, nullable Node setter regression and document-root observer coverage. Full release lane
+verification is pending.
 
 The initial development loop resolved V8 symbols from the prior pinned wheel.
 The integrated checkpoint above used the normal CMake static-monolith build.

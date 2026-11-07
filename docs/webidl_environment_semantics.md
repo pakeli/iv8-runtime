@@ -72,10 +72,13 @@ throws `WrongDocumentError` before moving nodes. Automatic adoption belongs with
 the deferred import/adopt work.
 
 Document root edits validate child kinds and the single-element constraint before
-moving nodes. Root outerHTML writes and adjacent HTML parsing fail with
+moving nodes and reuse the existing child-list mutation notifications.
+Root outerHTML writes and adjacent HTML parsing fail with
 `NoModificationAllowedError`. Variadic edits convert all arguments before moving
 nodes and retain their original parent/reference when arguments include the
-receiver. Text/Comment inherit EventTarget methods and use the existing tree
+receiver. Nullable Node value setters normalize null/undefined to empty text.
+Element.nodeValue writes preserve its children and null node value. Text/Comment
+inherit EventTarget methods and use the existing tree
 event dispatch. The earlier event listener dispatch contract still applies.
 
 Canvas uses the existing unavailable-context result. M1's Python JSContext API,

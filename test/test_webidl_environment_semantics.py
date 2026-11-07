@@ -130,10 +130,11 @@ def test_standalone_document_and_node_constructors():
             root.parentNode === doc, doc.documentElement === root, doc.contains(text),
             clone.isEqualNode(doc), clone.documentElement.ownerDocument === clone,
             direct.data, direct.ownerDocument === document,
-            new Comment('note').data, new DocumentFragment().nodeType];
+            new Comment('note').data, new DocumentFragment().nodeType,
+            new Text(undefined).data, new Comment(undefined).data];
         })()""") == ["[object Document]", "Document", "application/xml", "about:blank", "about:blank",
             None, None, None, "Root", "Element", True, True, True, True, True, True,
-            "a\0b", True, "note", 11]
+            "a\0b", True, "note", 11, "", ""]
 
 
 def test_event_target_state_inheritance_and_native_brands():
@@ -310,3 +311,43 @@ def test_interface_state_tears_down_on_reload_and_disposal():
     page.dispose()
     with pytest.raises(iv8.JSContextDisposedError):
         page.eval("new Document()")
+
+
+def test_inherited_nullable_node_setters_keep_node_kind_semantics():
+    with iv8.Page() as page:
+        page.start_access_trace()
+        assert evaluate(page, """(() => {
+          const element = document.createElement('div'), text = document.createTextNode('x');
+          element.appendChild(text);
+          element.nodeValue = 'ignored';
+          const kept = element.firstChild === text && element.nodeValue === null;
+          text.nodeValue = null;
+          const cleared = text.data;
+          text.textContent = undefined;
+          let failure;
+          try { element.nodeValue = {toString() {throw Error('conversion');}}; }
+          catch (error) {failure = error.message;}
+          return [kept, cleared, text.data, failure, element.firstChild === text];
+        })()""") == [True, "", "", "conversion", True]
+        events = page.read_access_trace()["events"]
+        node_value_sets = [event for event in events if event["object_type"] == "text"
+                           and event["member"] == "nodeValue" and event["operation"] == "set"]
+        assert node_value_sets[0]["value_summary"] == "null"
+
+
+def test_document_node_mutations_reach_existing_observers():
+    with iv8.Page() as page:
+        page.load("<html><body></body></html>", "https://idl.test/")
+        page.eval("""
+          globalThis.rootRecords = [];
+          globalThis.rootObserver = new MutationObserver(records => {
+            for (const record of records) rootRecords.push([record.target === document,
+              record.addedNodes.length, record.removedNodes.length]);
+          });
+          rootObserver.observe(document, {childList:true});
+          const marker = document.createComment('root');
+          document.appendChild(marker);
+          document.removeChild(marker);
+        """)
+        page.run_jobs()
+        assert evaluate(page, "rootRecords") == [[True, 1, 0], [True, 0, 1]]

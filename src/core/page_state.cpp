@@ -4254,10 +4254,9 @@ public:
             auto host = static_cast<NodeHost*>(host_object_backing(args[0]));
             if (host->document() != this) return fail("WrongDocumentError", "Node belongs to another document");
             if (name == "removeChild") {
-                auto found = std::find(roots_.begin(), roots_.end(), child);
-                if (found == roots_.end()) return fail("NotFoundError", "Node is not a child of document");
-                roots_.erase(found);
-                child->parent = nullptr;
+                std::string error;
+                if (!remove_dom_node(isolate, context, &document_node_, child, &error))
+                    return fail("NotFoundError", "Node is not a child of document");
                 return wrap_node(isolate, context, child);
             }
             DomNode* reference = nullptr;
@@ -4271,38 +4270,12 @@ public:
                 } else if (name == "replaceChild") return fail("TypeError", "oldChild must be a Node");
             }
             if (child == reference) return wrap_node(isolate, context, child);
-            auto inserted = child->kind == NodeKind::DocumentFragment ? child->children :
-                std::vector<DomNode*>{child};
-            std::size_t elements = 0;
-            for (auto root : roots_) {
-                if (root != child && !(name == "replaceChild" && root == reference) &&
-                    root->kind == NodeKind::Element) ++elements;
-            }
-            for (auto node : inserted) {
-                if (node->kind == NodeKind::Text) return fail("HierarchyRequestError", "Document cannot contain text children");
-                if (node->kind == NodeKind::Element) ++elements;
-            }
-            if (elements > 1) return fail("HierarchyRequestError", "Document can contain only one element child");
-            for (auto node : inserted) {
-                if (node->parent != nullptr) {
-                    std::string error;
-                    if (!remove_dom_node(isolate, context, node->parent, node, &error))
-                        return fail("HierarchyRequestError", "Cannot detach node");
-                }
-                auto previous = std::find(roots_.begin(), roots_.end(), node);
-                if (previous != roots_.end()) roots_.erase(previous);
-                auto position = reference == nullptr ? roots_.end() :
-                    std::find(roots_.begin(), roots_.end(), reference);
-                roots_.insert(position, node);
-                node->parent = &document_node_;
-            }
-            if (child->kind == NodeKind::DocumentFragment) child->children.clear();
-            if (name == "replaceChild") {
-                roots_.erase(std::find(roots_.begin(), roots_.end(), reference));
-                reference->parent = nullptr;
-                return wrap_node(isolate, context, reference);
-            }
-            return wrap_node(isolate, context, child);
+            std::string error;
+            const bool changed = name == "replaceChild"
+                ? replace_dom_node(isolate, context, &document_node_, child, reference, &error)
+                : insert_dom_node(isolate, context, &document_node_, child, reference, &error);
+            if (!changed) return fail("HierarchyRequestError", error.c_str());
+            return wrap_node(isolate, context, name == "replaceChild" ? reference : child);
         }
         if (name == "cloneNode") {
             auto result = page_->create_document(isolate, context, html_document_);
@@ -5131,9 +5104,8 @@ void DocumentHost::queue_child_list(
             }
             bool target_matches = false;
             if (registration.target_is_document) {
-                // The document node itself is never mutated through JS; a
-                // subtree registration observes connected descendants only.
-                target_matches = registration.subtree && is_in_tree(parent);
+                target_matches = parent == &document_node_ ||
+                    (registration.subtree && is_in_tree(parent));
             } else {
                 target_matches =
                     registration.target == parent ||
@@ -5432,7 +5404,7 @@ void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
     } else if (host->is_node()) {
         NodeHost* node_host = static_cast<NodeHost*>(host);
         if (node_host->document() != state->owner) {
-            throw_mo_type_error(isolate, "observe: target is from another page");
+            throw_mo_type_error(isolate, "observe: target is from another document");
             return;
         }
         target_node = node_host->node();
@@ -7303,6 +7275,7 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
 // no longer see the removed nodes; no separate index needs updating.
 void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
                                const std::string& name, v8::Local<v8::Value> value) {
+    if (name == "nodeValue") return;
     // M11-16: select.selectedIndex = i — single-select model; -1 clears all,
     // out-of-range values are ignored.
     if (name == "selectedIndex") {
@@ -12010,10 +11983,13 @@ v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     node->kind = name == "Text" ? NodeKind::Text : name == "Comment" ? NodeKind::Comment : NodeKind::DocumentFragment;
     if (node->kind != NodeKind::DocumentFragment && arguments->Length() > 0) {
         v8::Local<v8::Value> value;
-        v8::Local<v8::String> text;
-        if (!arguments->Get(context, 0).ToLocal(&value) || !value->ToString(context).ToLocal(&text)) return v8::Undefined(isolate);
-        v8::String::Utf8Value utf8(isolate, text);
-        if (*utf8 != nullptr) node->data.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+        if (!arguments->Get(context, 0).ToLocal(&value)) return v8::Undefined(isolate);
+        if (!value->IsUndefined()) {
+            v8::Local<v8::String> text;
+            if (!value->ToString(context).ToLocal(&text)) return v8::Undefined(isolate);
+            v8::String::Utf8Value utf8(isolate, text);
+            if (*utf8 != nullptr) node->data.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+        }
     }
     return document->wrap_created_node(isolate, context, std::move(node));
 }
