@@ -1,0 +1,701 @@
+#!/usr/bin/env python3
+"""Move audit for the page_state.cpp split (docs/page_state_split_plan.md, 0.3).
+
+Proves that a "pure move" change relocated C++ code without editing it.
+
+Both sides of a change (a base git ref and a head ref or the working tree) are
+read for the same set of files. Each side is tokenized (comments and layout are
+dropped), split into namespace-scope entities (a function/class/variable
+definition, a declaration, or a preprocessor directive), and the entities are
+compared as multisets of normalized token streams. Which file an entity lives
+in, and its line number, do not matter; its tokens do.
+
+Gate: the number of *definition* differences (entities with a body or an
+initializer). A pure-move PR must report 0. Declarations, preprocessor
+directives and namespace changes are listed for review but do not fail the
+gate, because a split legitimately adds forward declarations, #includes and
+header guards.
+
+Normalization (reported when applied): a leading `inline` / `static` specifier
+on a *function* definition is ignored, because moving a file-local function
+into a header requires it. Specifiers on variables are never ignored: whether a
+namespace-scope variable is `static`, `constexpr` or `inline` decides whether
+it has one address program-wide (plan section 3.1).
+
+Usage:
+    tools/audit_move.py --base master                  # changed C++ files vs working tree
+    tools/audit_move.py --base master --head HEAD      # committed head only
+    tools/audit_move.py --base REF src/core/page_state.cpp src/core/browser/web/crypto.cpp
+
+Exit status: 0 = no definition differences, 1 = differences, 2 = usage error.
+Requires only the Python standard library and git.
+"""
+
+from __future__ import annotations
+
+import argparse
+import collections
+import dataclasses
+import difflib
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+CPP_SUFFIXES = (".cpp", ".cc", ".cxx", ".h", ".hpp", ".hh", ".inc")
+
+# --- Tokenizer -----------------------------------------------------------------
+
+_PUNCTUATORS = sorted(
+    """
+    ->* <<= >>= <=> ... :: -> ++ -- << >> <= >= == != && || += -= *= /= %= &= |= ^=
+    .* ## { } [ ] ( ) ; : , . ? ~ ! + - * / % ^ & | = < > #
+    """.split(),
+    key=len,
+    reverse=True,
+)
+_STRING_PREFIXES = {"u8", "u", "U", "L", "R", "u8R", "uR", "UR", "LR"}
+_IDENT_START = re.compile(r"[A-Za-z_]")
+_IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_NUMBER = re.compile(r"\.?[0-9](?:[0-9A-Za-z_.]|'(?=[0-9A-Za-z])|(?<=[eEpP])[+-])*")
+
+
+@dataclasses.dataclass(frozen=True)
+class Token:
+    kind: str  # "ident" | "number" | "string" | "char" | "punct" | "directive"
+    text: str
+    path: str
+    line: int
+
+
+class TokenizeError(Exception):
+    pass
+
+
+def _directive_text(raw: str) -> str:
+    """Normalize a preprocessor line: drop comments, collapse whitespace."""
+    out = []
+    i = 0
+    in_str = False
+    while i < len(raw):
+        c = raw[i]
+        if in_str:
+            out.append(c)
+            if c == "\\" and i + 1 < len(raw):
+                out.append(raw[i + 1])
+                i += 2
+                continue
+            if c == '"':
+                in_str = False
+        elif c == '"':
+            in_str = True
+            out.append(c)
+        elif raw.startswith("//", i):
+            break
+        elif raw.startswith("/*", i):
+            end = raw.find("*/", i + 2)
+            i = len(raw) if end < 0 else end + 2
+            out.append(" ")
+            continue
+        else:
+            out.append(c)
+        i += 1
+    text = " ".join("".join(out).split())
+    # "# include" and "#include" are the same directive.
+    return re.sub(r"^#\s*", "#", text)
+
+
+def tokenize(source: str, path: str) -> list[Token]:
+    tokens: list[Token] = []
+    i = 0
+    n = len(source)
+    line = 1
+    at_line_start = True
+
+    def err(msg: str) -> TokenizeError:
+        return TokenizeError(f"{path}:{line}: {msg}")
+
+    while i < n:
+        c = source[i]
+        if c == "\n":
+            line += 1
+            i += 1
+            at_line_start = True
+            continue
+        if c in " \t\r\f\v":
+            i += 1
+            continue
+        if c == "\\" and source.startswith("\n", i + 1):
+            line += 1
+            i += 2
+            continue
+        if source.startswith("//", i):
+            end = source.find("\n", i)
+            i = n if end < 0 else end
+            continue
+        if source.startswith("/*", i):
+            end = source.find("*/", i + 2)
+            if end < 0:
+                raise err("unterminated block comment")
+            line += source.count("\n", i, end)
+            i = end + 2
+            continue
+        if c == "#" and at_line_start:
+            start, start_line = i, line
+            while i < n:
+                if source[i] == "\\" and source.startswith("\n", i + 1):
+                    line += 1
+                    i += 2
+                    continue
+                if source[i] == "\n":
+                    break
+                if source.startswith("/*", i):
+                    end = source.find("*/", i + 2)
+                    if end < 0:
+                        raise err("unterminated block comment")
+                    line += source.count("\n", i, end)
+                    i = end + 2
+                    continue
+                i += 1
+            raw = source[start:i].replace("\\\n", " ")
+            tokens.append(Token("directive", _directive_text(raw), path, start_line))
+            continue
+        at_line_start = False
+
+        if _IDENT_START.match(c):
+            m = _IDENT.match(source, i)
+            word = m.group(0)
+            after = m.end()
+            if word in _STRING_PREFIXES and after < n and source[after] == '"':
+                i, line = _string(source, i, after, word.endswith("R"), tokens, path, line, err)
+                continue
+            if word in {"u8", "u", "U", "L"} and after < n and source[after] == "'":
+                i, line = _char(source, i, after, tokens, path, line, err)
+                continue
+            tokens.append(Token("ident", word, path, line))
+            i = after
+            continue
+        if c.isdigit() or (c == "." and i + 1 < n and source[i + 1].isdigit()):
+            m = _NUMBER.match(source, i)
+            tokens.append(Token("number", m.group(0), path, line))
+            i = m.end()
+            continue
+        if c == '"':
+            i, line = _string(source, i, i, False, tokens, path, line, err)
+            continue
+        if c == "'":
+            i, line = _char(source, i, i, tokens, path, line, err)
+            continue
+        for p in _PUNCTUATORS:
+            if source.startswith(p, i):
+                tokens.append(Token("punct", p, path, line))
+                i += len(p)
+                break
+        else:
+            raise err(f"unexpected character {c!r}")
+    return tokens
+
+
+def _string(source, start, quote, raw, tokens, path, line, err):
+    """Append a (possibly prefixed / raw) string literal; return (end, line)."""
+    if raw:
+        open_paren = source.find("(", quote + 1)
+        if open_paren < 0:
+            raise err("malformed raw string literal")
+        delim = source[quote + 1 : open_paren]
+        closing = ")" + delim + '"'
+        end = source.find(closing, open_paren + 1)
+        if end < 0:
+            raise err(f"unterminated raw string literal R\"{delim}(")
+        end += len(closing)
+    else:
+        end = quote + 1
+        while True:
+            if end >= len(source) or source[end] == "\n":
+                raise err("unterminated string literal")
+            if source[end] == "\\":
+                end += 2
+                continue
+            if source[end] == '"':
+                end += 1
+                break
+            end += 1
+    # User-defined literal suffix, e.g. "abc"sv.
+    m = _IDENT.match(source, end)
+    if m:
+        end = m.end()
+    text = source[start:end]
+    tokens.append(Token("string", text, path, line))
+    return end, line + text.count("\n")
+
+
+def _char(source, start, quote, tokens, path, line, err):
+    end = quote + 1
+    while True:
+        if end >= len(source) or source[end] == "\n":
+            raise err("unterminated character literal")
+        if source[end] == "\\":
+            end += 2
+            continue
+        if source[end] == "'":
+            end += 1
+            break
+        end += 1
+    tokens.append(Token("char", source[start:end], path, line))
+    return end, line
+
+
+# --- Entity extraction --------------------------------------------------------
+
+DEFINITION = "definition"
+DECLARATION = "declaration"
+DIRECTIVE = "directive"
+INCLUDE = "include"
+
+
+@dataclasses.dataclass
+class Entity:
+    kind: str
+    tokens: list[Token]
+    namespace: str
+    normalized: tuple[str, ...] = ()
+    name: str = ""
+    dropped_specifiers: tuple[str, ...] = ()
+
+    @property
+    def location(self) -> str:
+        first = self.tokens[0]
+        return f"{first.path}:{first.line}"
+
+
+_TYPE_KEYWORDS = {"class", "struct", "union", "enum"}
+_FUNCTION_SPECIFIERS = {"inline", "static"}
+
+
+def _skip_template_header(texts: list[str]) -> int:
+    """Index just past leading `template <...>` groups."""
+    i = 0
+    while i < len(texts) and texts[i] == "template" and i + 1 < len(texts) and texts[i + 1] == "<":
+        depth = 0
+        i += 1
+        while i < len(texts):
+            if texts[i] == "<":
+                depth += 1
+            elif texts[i] == ">":
+                depth -= 1
+            elif texts[i] == ">>":
+                depth -= 2
+            i += 1
+            if depth <= 0:
+                break
+    return i
+
+
+def _needs_semicolon(texts: list[str]) -> bool:
+    """After a top-level `}` closes: does the entity continue to a `;`?
+
+    True for class/struct/union/enum definitions and for variables whose
+    initializer contains braces (brace-init, lambdas). False for functions.
+    Only tokens outside parentheses count, so default arguments (`int x = 0`)
+    and parameter types (`struct tm*`) do not turn a function into a variable.
+    """
+    head = texts[_skip_template_header(texts):]
+    parens = 0
+    seen_paren = False
+    for idx, t in enumerate(head):
+        if t == "(":
+            parens += 1
+            seen_paren = True
+        elif t == ")":
+            parens -= 1
+        elif parens == 0:
+            if t == "{":
+                return False
+            if t == "=" and (idx == 0 or head[idx - 1] != "operator"):
+                return True
+            if t in _TYPE_KEYWORDS and not seen_paren:
+                return True
+    return False
+
+
+def extract_entities(tokens: list[Token]) -> list[Entity]:
+    entities: list[Entity] = []
+    stack: list[str] = []  # namespace path components; "" marks extern "C" {
+    current: list[Token] = []
+    depth = 0
+    parens = 0  # parentheses open in the current entity (default arguments)
+    closed_body = False
+    i = 0
+
+    def ns() -> str:
+        return "::".join(s for s in stack if not s.startswith("\0")) or "(global)"
+
+    def flush(kind: str) -> None:
+        nonlocal current, closed_body, parens
+        if current:
+            entities.append(Entity(kind, current, ns()))
+        current = []
+        closed_body = False
+        parens = 0
+
+    while i < len(tokens):
+        tok = tokens[i]
+        if closed_body:
+            # A function definition ended at its closing brace; the next token
+            # starts a new entity (a stray `;` is kept attached).
+            if tok.text == ";":
+                current.append(tok)
+                i += 1
+            flush(DEFINITION)
+            continue
+        if tok.kind == "directive":
+            if depth == 0 and not current:
+                kind = INCLUDE if tok.text.startswith(("#include", "#pragma once")) else DIRECTIVE
+                entities.append(Entity(kind, [tok], ns()))
+            else:
+                current.append(tok)
+            i += 1
+            continue
+
+        if depth == 0:
+            texts = [t.text for t in current]
+            if tok.text == "{" and _opens_scope(texts):
+                stack.extend(_scope_names(texts))
+                current = []
+                i += 1
+                continue
+            if tok.text == "}" and not current:
+                if not stack:
+                    raise TokenizeError(f"{tok.path}:{tok.line}: unbalanced '}}' at namespace scope")
+                # Pop one `namespace a::b::c {` group (recorded as a marker).
+                while stack:
+                    if stack.pop().startswith("\0"):
+                        break
+                i += 1
+                continue
+
+        current.append(tok)
+        if tok.text == "(":
+            parens += 1
+        elif tok.text == ")":
+            parens -= 1
+        elif tok.text == "{":
+            depth += 1
+        elif tok.text == "}":
+            depth -= 1
+            if depth < 0:
+                raise TokenizeError(f"{tok.path}:{tok.line}: unbalanced '}}'")
+            if depth == 0 and parens == 0 and not _needs_semicolon([t.text for t in current]):
+                # A brace group inside a constructor's member-initializer list
+                # (`: a_{1}, b_{2} {`) is followed by `,` or the body's `{`.
+                nxt = _next_code_token(tokens, i + 1)
+                closed_body = nxt is None or nxt.text not in {",", "{"}
+        elif tok.text == ";" and depth == 0:
+            flush(_semicolon_entity_kind([t.text for t in current]))
+        i += 1
+
+    if closed_body:
+        flush(DEFINITION)
+    if current:
+        raise TokenizeError(f"{current[0].path}:{current[0].line}: unterminated declaration")
+    if depth != 0 or stack:
+        raise TokenizeError("unbalanced braces or namespaces at end of input")
+    return entities
+
+
+def _semicolon_entity_kind(texts: list[str]) -> str:
+    """Kind of a namespace-scope entity that ends with `;`.
+
+    Declarations: function prototypes, forward class declarations, `extern`
+    declarations, using-directives and using-declarations. Everything else --
+    including a variable without an initializer (`static char k;` is a
+    definition) and alias declarations (`using X = Y;`) -- is a definition.
+    """
+    if "{" in texts:
+        return DEFINITION
+    head = texts[_skip_template_header(texts):]
+    if head[:1] in (["extern"], ["friend"]) or head[:2] == ["using", "namespace"]:
+        return DECLARATION
+    if head[:1] == ["using"] and "=" not in head:
+        return DECLARATION
+    if "=" in head and not (head.index("=") > 0 and head[head.index("=") - 1] == "operator"):
+        # `= default;` / `= delete;` keep a prototype a declaration.
+        tail = head[head.index("=") + 1 :]
+        return DECLARATION if tail[:1] in (["default"], ["delete"]) and "(" in head else DEFINITION
+    if head and head[0] in _TYPE_KEYWORDS and len(head) <= 4:
+        return DECLARATION  # class X; / enum class X : int;
+    if "(" in head:
+        return DECLARATION  # function prototype
+    return DEFINITION
+
+
+def _next_code_token(tokens: list[Token], start: int) -> Token | None:
+    for t in tokens[start:]:
+        if t.kind != "directive":
+            return t
+    return None
+
+
+def _opens_scope(texts: list[str]) -> bool:
+    if texts[:1] == ["namespace"] or texts[:2] == ["inline", "namespace"]:
+        return "=" not in texts
+    return texts[:1] == ["extern"] and len(texts) == 2 and texts[1].startswith('"')
+
+
+def _scope_names(texts: list[str]) -> list[str]:
+    """Stack entries for `namespace a::b {` (a marker first, popped as a group)."""
+    if texts[0] == "extern":
+        return ["\0", 'extern "C"']
+    names = [t for t in texts if t not in {"namespace", "inline", "::"}]
+    return ["\0"] + (names or ["(anonymous)"])
+
+
+# --- Normalization and naming -------------------------------------------------
+
+
+def normalize(entity: Entity) -> None:
+    texts = [t.text for t in entity.tokens]
+    if entity.kind == DEFINITION and "{" in texts and not _needs_semicolon(texts):
+        # Function definition: ignore leading inline/static (see module doc).
+        start = _skip_template_header(texts)
+        dropped = []
+        while start < len(texts) and texts[start] in _FUNCTION_SPECIFIERS:
+            dropped.append(texts.pop(start))
+        entity.dropped_specifiers = tuple(dropped)
+    entity.normalized = tuple(texts)
+    entity.name = _entity_name(texts) if entity.kind in (DEFINITION, DECLARATION) else texts[0]
+
+
+def _entity_name(texts: list[str]) -> str:
+    head = texts[_skip_template_header(texts):]
+    stop = len(head)
+    for idx, t in enumerate(head):
+        if t in {"{", ";"} or (t == "=" and (idx == 0 or head[idx - 1] != "operator")):
+            stop = idx
+            break
+    prefix = head[:stop]
+    for idx, t in enumerate(prefix):
+        if t in _TYPE_KEYWORDS:
+            rest = [x for x in prefix[idx + 1 :] if x not in {"class", "struct", "final"}]
+            names = [x for x in rest if _IDENT.fullmatch(x)]
+            return f"{t} {names[0]}" if names else t
+        if t == "(":
+            return _qualified_before(prefix, idx) + "()"
+    if prefix[:1] == ["using"] and len(prefix) > 1:
+        return "using " + prefix[1]
+    names = [x for x in prefix if _IDENT.fullmatch(x)]
+    return names[-1] if names else " ".join(prefix[:3])
+
+
+def _qualified_before(texts: list[str], idx: int) -> str:
+    parts: list[str] = []
+    j = idx - 1
+    if j >= 0 and texts[j] not in {"::"} and not _IDENT.fullmatch(texts[j]):
+        # operator overloads: `operator==(`, `operator()(`
+        k = j
+        while k >= 0 and texts[k] != "operator":
+            k -= 1
+        if k >= 0:
+            return _qualified_before(texts, k) + "operator" + "".join(texts[k + 1 : idx])
+    while j >= 0 and (_IDENT.fullmatch(texts[j]) or texts[j] in {"::", "~"}):
+        parts.append(texts[j])
+        j -= 1
+        if parts[-1] not in {"::", "~"} and j >= 0 and texts[j] not in {"::", "~"}:
+            break
+    return "".join(reversed(parts))
+
+
+# --- Sources ------------------------------------------------------------------
+
+
+def _git(*args: str) -> str:
+    result = subprocess.run(["git", *args], capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
+    return result.stdout
+
+
+def read_side(ref: str | None, paths: list[str]) -> dict[str, str]:
+    """{path: source} for files that exist on this side (ref None = worktree)."""
+    out = {}
+    for path in paths:
+        if ref is None:
+            p = Path(path)
+            if p.is_file():
+                out[path] = p.read_text(encoding="utf-8")
+        else:
+            result = subprocess.run(
+                ["git", "show", f"{ref}:{path}"], capture_output=True, text=True, encoding="utf-8"
+            )
+            if result.returncode == 0:
+                out[path] = result.stdout
+    return out
+
+
+def changed_cpp_files(base: str, head: str | None) -> list[str]:
+    args = ["diff", "--name-only", "--no-renames", base]
+    if head is not None:
+        args.append(head)
+    names = _git(*args, "--").splitlines()
+    if head is None:
+        names += _git("ls-files", "--others", "--exclude-standard").splitlines()
+    return sorted({n for n in names if n.endswith(CPP_SUFFIXES)})
+
+
+def entities_of(sources: dict[str, str]) -> list[Entity]:
+    out = []
+    for path, text in sorted(sources.items()):
+        for entity in extract_entities(tokenize(text, path)):
+            normalize(entity)
+            out.append(entity)
+    return out
+
+
+# --- Comparison ---------------------------------------------------------------
+
+
+@dataclasses.dataclass
+class Report:
+    old: list[Entity]
+    new: list[Entity]
+    matched: list[tuple[Entity, Entity]]
+    removed: list[Entity]
+    added: list[Entity]
+
+    def of_kind(self, items: list[Entity], kinds: set[str]) -> list[Entity]:
+        return [e for e in items if e.kind in kinds]
+
+    @property
+    def definition_differences(self) -> int:
+        return len(self.of_kind(self.removed, {DEFINITION})) + len(self.of_kind(self.added, {DEFINITION}))
+
+
+def compare(old: list[Entity], new: list[Entity]) -> Report:
+    """Multiset match on (kind, normalized tokens); same-file partners first so
+    that duplicated entities (e.g. `#include <string>`) are attributed sensibly."""
+    pool: dict[tuple, list[Entity]] = collections.defaultdict(list)
+    for e in new:
+        pool[(e.kind, e.normalized)].append(e)
+    matched, unmatched = [], []
+    for same_file_only in (True, False):
+        for e in (old if same_file_only else unmatched_old):
+            bucket = pool.get((e.kind, e.normalized))
+            partner = None
+            if bucket:
+                if same_file_only:
+                    partner = next((b for b in bucket if b.tokens[0].path == e.tokens[0].path), None)
+                else:
+                    partner = bucket[0]
+            if partner is not None:
+                bucket.remove(partner)
+                matched.append((e, partner))
+            else:
+                unmatched.append(e)
+        if same_file_only:
+            unmatched_old, unmatched = unmatched, []
+    removed = unmatched
+    added = [e for bucket in pool.values() for e in bucket]
+    added.sort(key=lambda e: (e.tokens[0].path, e.tokens[0].line))
+    return Report(old, new, matched, removed, added)
+
+
+def _render(entity: Entity) -> list[str]:
+    """Token stream broken into lines at ; { } for a readable diff."""
+    lines, cur = [], []
+    for t in entity.normalized:
+        cur.append(t)
+        if t in {";", "{", "}"} or t.startswith("#"):
+            lines.append(" ".join(cur))
+            cur = []
+    if cur:
+        lines.append(" ".join(cur))
+    return lines
+
+
+def print_report(report: Report, args, out=sys.stdout) -> None:
+    p = lambda *a: print(*a, file=out)  # noqa: E731
+    gated = report.definition_differences
+    p(f"audit_move: base={args.base} head={args.head or '(working tree)'}")
+    p(f"files: {', '.join(args.files) if args.files else '(none)'}")
+    old_defs = len(report.of_kind(report.old, {DEFINITION}))
+    new_defs = len(report.of_kind(report.new, {DEFINITION}))
+    moved = sum(1 for a, b in report.matched if a.location.split(":")[0] != b.location.split(":")[0])
+    p(f"definitions: base {old_defs}, head {new_defs}, identical "
+      f"{sum(1 for a, _ in report.matched if a.kind == DEFINITION)} ({moved} entities changed file)")
+
+    removed_defs = report.of_kind(report.removed, {DEFINITION})
+    added_defs = report.of_kind(report.added, {DEFINITION})
+    if gated:
+        p("")
+        p(f"DEFINITION DIFFERENCES: {gated}")
+        added_by_name = collections.defaultdict(list)
+        for e in added_defs:
+            added_by_name[e.name].append(e)
+        for e in removed_defs:
+            partner = added_by_name[e.name].pop(0) if added_by_name.get(e.name) else None
+            if partner is None:
+                p(f"  - removed  {e.name}  [{e.namespace}]  {e.location}")
+                continue
+            p(f"  ~ changed  {e.name}  {e.location} -> {partner.location}")
+            diff = difflib.unified_diff(_render(e), _render(partner), "base", "head", lineterm="", n=1)
+            for line in list(diff)[2:]:
+                p(f"      {line}")
+        for name in added_by_name:
+            for e in added_by_name[name]:
+                p(f"  + added    {e.name}  [{e.namespace}]  {e.location}")
+
+    info = []
+    for e in report.of_kind(report.removed, {DECLARATION, DIRECTIVE, INCLUDE}):
+        info.append(f"  - {e.kind:<11} {' '.join(e.normalized)[:100]}  ({e.location})")
+    for e in report.of_kind(report.added, {DECLARATION, DIRECTIVE, INCLUDE}):
+        info.append(f"  + {e.kind:<11} {' '.join(e.normalized)[:100]}  ({e.location})")
+    ns_changes = collections.Counter(
+        (a.namespace, b.namespace) for a, b in report.matched if a.namespace != b.namespace
+    )
+    for (src, dst), count in sorted(ns_changes.items()):
+        info.append(f"  ~ namespace   {src} -> {dst}: {count} entities")
+    spec_changes = [
+        (a, b) for a, b in report.matched if a.dropped_specifiers != b.dropped_specifiers
+    ]
+    for a, b in spec_changes:
+        info.append(
+            f"  ~ specifiers  {a.name}: {' '.join(a.dropped_specifiers) or '(none)'} -> "
+            f"{' '.join(b.dropped_specifiers) or '(none)'}  ({b.location})"
+        )
+    if info:
+        p("")
+        p(f"review (not gated): {len(info)}")
+        shown = info if args.verbose else info[:40]
+        for line in shown:
+            p(line)
+        if len(shown) < len(info):
+            p(f"  ... {len(info) - len(shown)} more (use --verbose)")
+
+    p("")
+    p(f"RESULT: {gated} definition difference{'s' if gated != 1 else ''}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--base", required=True, help="git ref of the code before the move")
+    parser.add_argument("--head", help="git ref after the move (default: working tree)")
+    parser.add_argument("--verbose", action="store_true", help="list every review item")
+    parser.add_argument("files", nargs="*",
+                        help="files compared on both sides (default: C++ files changed since --base)")
+    args = parser.parse_args(argv)
+    try:
+        if not args.files:
+            args.files = changed_cpp_files(args.base, args.head)
+        report = compare(
+            entities_of(read_side(args.base, args.files)),
+            entities_of(read_side(args.head, args.files)),
+        )
+    except (RuntimeError, TokenizeError) as exc:
+        print(f"audit_move: error: {exc}", file=sys.stderr)
+        return 2
+    print_report(report, args)
+    return 1 if report.definition_differences else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

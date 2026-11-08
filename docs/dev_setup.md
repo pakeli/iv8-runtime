@@ -54,6 +54,50 @@ python -m pytest test -v
 python -m pytest test/test_watch_object_keys.py -v
 ```
 
+### Local real-V8 loop (macOS arm64)
+
+With the pinned monolith in `data/v8/` (`BUILD_INFO.txt` reports
+`PLATFORM=macos-arm64`, `V8_VERSION` matching `cmake/v8_pin.cmake`), CMake links
+V8 automatically. A rebuild after editing `src/` takes well under a minute:
+
+```bash
+python3.13 -m venv .venv && . .venv/bin/activate
+python -m pip install "pytest>=7" "scikit-build-core>=0.10,<2" "pybind11>=3.0,<4" cmake ninja
+MACOSX_DEPLOYMENT_TARGET=11.0 CMAKE_ARGS="-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0" \
+  python -m pip wheel . --no-deps --no-build-isolation -w dist
+python -m pip install --force-reinstall --no-deps dist/iv8-*-cp313-*.whl
+cd /tmp && python -c "import iv8; assert iv8._v8_linked" && python -m pytest "$OLDPWD/test" -q
+```
+
+- Run pytest outside the source tree (as CI does) so the installed wheel, not
+  `python/iv8`, is imported.
+- `--no-build-isolation` reuses the venv's build tools and the incremental
+  `build/<wheel_tag>` tree. It also avoids pip fetching build dependencies
+  through a filtering proxy.
+- The DevTools/watch tests bind a localhost port. In a sandbox that forbids
+  local binding they fail with `PermissionError` (21 tests at `2026-11-08`). That
+  is an environment limit, not a regression. The expected full result matches
+  CI, e.g. `2050 passed, 2 skipped, 1 xfailed` on Python 3.13 at `2026-11-08`.
+
+### Audit a code move (`tools/audit_move.py`)
+
+Pure-move PRs of the `page_state.cpp` split (`docs/page_state_split_plan.md`)
+must show **0 definition differences**; paste the output into the PR:
+
+```bash
+python3 tools/audit_move.py --base master                # changed C++ files vs working tree
+python3 tools/audit_move.py --base master --head HEAD    # committed state only
+python3 -m pytest tools/test_audit_move.py -q            # the tool's own tests
+```
+
+The tool tokenizes both sides, splits namespace-scope entities and compares
+token streams, ignoring files, line numbers, comments and layout. Only
+definitions (bodies/initializers) are gated, counted as removed + added. New
+`#include`s, forward declarations, directives, namespace changes, and an
+`inline`/`static` added to a moved *function* are listed for review. Variable
+specifiers are never ignored. Class members moved out of a class body (split
+stage 3.3) are not decomposed yet; extend the tool before that PR.
+
 ## 4. Platform Notes
 
 ### Linux

@@ -1,5 +1,7 @@
 # Current Status
 
+**page_state.cpp split, stage 0 (`2026-11-08`, three-platform verification pending).** Structure only. 0.2 (`iv8::browser`, `internal/common.h`, inline trace tokens, PCH) merged in `c1d4e34`. 0.3 adds `tools/audit_move.py`. Progress: `docs/page_state_split.md`. M11-53 remains the next numbered feature.
+
 **Latest verified open exposure regression repair (`2026-11-07`).** The default
 Window open stub is withdrawn. The other Web IDL corrections remain available.
 Source `f882344` (tree `c4ba8bee511316e69d1f8f58e865c036a6cec56c`)
