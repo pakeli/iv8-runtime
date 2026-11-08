@@ -59,6 +59,7 @@ if(IV8_LINK_V8)
       src/core/base64.cpp
       src/core/html_entities.cpp
       src/core/page_state.cpp
+      src/core/browser/internal/common.cpp
       src/binding/context_binding.cpp
       src/binding/page_binding.cpp)
 endif()
@@ -76,6 +77,18 @@ target_compile_definitions(_core PRIVATE
 if(IV8_LINK_V8)
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/v8_link.cmake)
   iv8_link_v8_monolith(_core)
+
+  # Precompile the two heavy header sets every V8-linked TU includes. Order
+  # matches the codebase convention: pybind11 (Python.h) first, then V8 through
+  # v8_headers.h, which undefines Python's COMPILER macro. Added ahead of the
+  # page_state.cpp split (docs/page_state_split_plan.md §3.7), which multiplies
+  # the number of TUs. Disable with -DIV8_PRECOMPILE_HEADERS=OFF.
+  option(IV8_PRECOMPILE_HEADERS "Precompile pybind11 and V8 headers" ON)
+  if(IV8_PRECOMPILE_HEADERS AND NOT CMAKE_VERSION VERSION_LESS 3.16)
+    target_precompile_headers(_core PRIVATE
+        <pybind11/pybind11.h>
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/iv8/v8_headers.h")
+  endif()
 
   # Bundle V8's license(s) into the wheel next to the package (required to
   # redistribute the statically-linked V8). Present only in V8-linked builds.

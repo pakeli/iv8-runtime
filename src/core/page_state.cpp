@@ -41,6 +41,8 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 #include "iv8/web_interface.h"
 #include "iv8/web_method.h"
 
+#include "browser/internal/common.h"
+
 // M9-1: V8 Inspector (CDP) attach base. Included after context_host.h so the
 // v8_headers.h COMPILER-macro workaround has already run before any V8 header.
 #include "v8-inspector.h"
@@ -69,12 +71,16 @@ struct MediaQueryListStore {
     std::unordered_map<std::u16string, std::unique_ptr<HostObject>> by_key;
 };
 
-namespace {
+// Page runtime internals. Formerly an anonymous namespace; named so the planned
+// split of this file (docs/page_state_split_plan.md) can share these symbols
+// across translation units. The using-directive after the closing brace keeps
+// unqualified lookup from the iv8-scope code below unchanged.
+namespace browser {
 
-// M9-2 forward declarations (definitions lower in this TU): the isolate->owning-
-// ContextState recovery, and the watch-hit recorder used by the host-method
-// dispatch points (some of which are defined above the recorder's definition).
-ContextState* state_from_isolate(v8::Isolate* isolate);
+// M9-2 forward declarations (definitions lower in this TU): the watch-hit
+// recorder used by the host-method dispatch points (some of which are defined
+// above the recorder's definition). state_from_isolate() now lives in
+// browser/internal/common.h.
 void watch_record(v8::Isolate* isolate, const std::string& receiver,
                   const std::string& method);
 std::uint64_t access_trace_record(v8::Isolate* isolate, const void* identity,
@@ -321,19 +327,7 @@ private:
     std::unordered_map<std::string, int> counts_;
 };
 
-v8::Local<v8::Value> v8_string(v8::Isolate* isolate, const std::string& s) {
-    return v8::String::NewFromUtf8(isolate, s.c_str(), v8::NewStringType::kNormal,
-                                   static_cast<int>(s.size()))
-        .ToLocalChecked();
-}
-
-v8::Local<v8::Value> dom_exception(v8::Isolate* isolate, const char* name,
-                                     const std::string& message) {
-    auto error = v8::Exception::Error(v8_string(isolate, message).As<v8::String>());
-    (void)error.As<v8::Object>()->Set(isolate->GetCurrentContext(),
-        v8_string(isolate, "name"), v8_string(isolate, name));
-    return error;
-}
+// v8_string() and dom_exception() live in browser/internal/common.h.
 
 // --- M11-7 Web Storage -------------------------------------------------------
 //
@@ -589,8 +583,7 @@ private:
 // prototype, and cached identity match the M11-43 surface, but its native
 // method callbacks record with this stable native identity. The parent
 // navigator.storage getter is recorded by NavigatorHost's normal property
-// accessor.
-constexpr char kStorageManagerTraceToken = 0;
+// accessor. kStorageManagerTraceToken is defined in browser/internal/common.h.
 
 v8::Local<v8::Value> resolved_promise(v8::Isolate* isolate,
                                       v8::Local<v8::Context> context,
@@ -666,7 +659,7 @@ v8::Local<v8::Object> make_storage_manager_object(
 // plain objects (so prototypes and descriptors match M11-44), but their native
 // accessors/callbacks record accesses. Status identity is the fixed per-name
 // descriptor, so repeated statuses for the same permission share an object_id.
-constexpr char kPermissionsTraceToken = 0;
+// kPermissionsTraceToken is defined in browser/internal/common.h.
 // V8 15.0 requires a tag on External::New / External::Value.
 constexpr v8::ExternalPointerTypeTag kPermissionStatusTag =
     v8::kExternalPointerTypeTagDefault;
@@ -945,7 +938,7 @@ void make_media_query_list_callback(
 // Step 5h: legacy navigator metadata. The arrays stay plain frozen arrays (read
 // through NavigatorHost's traced getter); javaEnabled stays a read-only property
 // whose cached native function records the call and returns false.
-constexpr char kJavaEnabledTraceToken = 0;
+// kJavaEnabledTraceToken is defined in browser/internal/common.h.
 
 // M2-3 minimal navigator (read-only), configurable since M11-1 and extended by
 // M11-24/M11-27. Values come from the page's HostEnvironment, which the Python
@@ -7602,10 +7595,9 @@ void watch_record(v8::Isolate* isolate, const std::string& receiver,
 // Step 5 call coverage for runtime-owned plain BOM objects. These are
 // independent native callbacks, not HostObject methods, so they use explicit
 // stable native tokens for object identity. Property reads on these objects are
-// a later group and are not implied by these calls.
-static char kPerformanceTraceToken;
-static char kCryptoTraceToken;
-static char kStorageTraceToken;
+// a later group and are not implied by these calls. kPerformanceTraceToken,
+// kCryptoTraceToken and kStorageTraceToken are defined in
+// browser/internal/common.h.
 
 std::uint64_t access_trace_record(v8::Isolate* isolate, const void* identity,
                                   const char* object_type, const char* label,
@@ -8066,10 +8058,6 @@ void NodeHost::dispatch_event(v8::Isolate* isolate,
 // These are bare global functions (not a host object). Each recovers the owning
 // ContextState from the isolate embedder-data slot and delegates to its timer
 // registry. They run during eval, i.e. under the context operation guard.
-
-ContextState* state_from_isolate(v8::Isolate* isolate) {
-    return static_cast<ContextState*>(isolate->GetData(kIsolateStateSlot));
-}
 
 void register_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info,
                              bool repeating) {
@@ -11161,7 +11149,9 @@ void has_own_property_wrapper(const v8::FunctionCallbackInfo<v8::Value>& info) {
     (void)call_wrapped_original(info, context, info.This());
 }
 
-}  // namespace
+}  // namespace browser
+
+using namespace browser;
 
 // M9-1: the current generation's V8 Inspector objects (opaque in the header). The
 // channel is owned by the embedder and must outlive the session; declaration order
@@ -11175,6 +11165,10 @@ struct DevToolsInspector {
 
 PageState::PageState(HostEnvironment environment)
     : environment_(std::move(environment)) {
+    // Split-plan stage 0.2: the access-trace identity tokens must resolve to one
+    // address program-wide. Fails loudly (every Page construction) if a token
+    // ever regresses to a per-translation-unit copy.
+    verify_trace_token_identity(IV8_BROWSER_LOCAL_TRACE_TOKEN_ADDRESSES());
     // M9-3: the watch registry requests an Inspector pause through this Page (set
     // once; the registry outlives no generation and is a member of this Page).
     watch_registry_.set_pause_requester([this]() { request_inspector_pause(); });
