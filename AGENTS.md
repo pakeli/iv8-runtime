@@ -33,6 +33,35 @@ This file defines project-specific guidance for the `iv8-runtime` repository.
 - Do not add abstractions for unapproved future features.
 - Do not introduce Boost.Python, Node.js, QuickJS, or another JavaScript engine.
 
+## Browser Compatibility Rules
+
+- Use the target real browser as the reference for each hosted `Page` API's
+  presence, implementation kind, observable shape, and behavior. Record browser
+  version and execution conditions with comparison fixtures.
+- Within each approved API slice, provide the native methods exposed by the
+  reference browser through native bindings, including their engine-generated
+  `Function.prototype.toString` behavior. Track missing browser APIs and profile
+  differences explicitly in the runtime surface and task queue.
+- Derive each function's `name`, `length`, native source, own `prototype`,
+  constructability, inheritance, descriptors, receiver rules, identity, results,
+  and exceptions from that API's browser reference. Set constructor behavior and
+  prototype ownership accordingly, including browser-supported constructors.
+- Choose the creation path that matches the browser-observed function kind.
+  `make_web_method` fits the current named, non-constructable native operations.
+  Constructor bindings and other function kinds follow their reference behavior
+  and approved contracts.
+- Apply browser comparisons to HostObject methods, Window globals, Storage
+  callbacks, and separate native callback installation paths. Add or extend
+  offline fixtures and focused tests for each new or changed binding, with
+  per-API browser-derived expectations such as those in
+  `test/test_webidl_environment_semantics.py`.
+- Preserve **anonymous native + constructable + own `prototype`** as the concrete
+  Customs mismatch found on 2026-11-07. Those controls reproduced HTTP 400 with
+  that combination and HTTP 200 after correcting either naming or
+  constructability. Use the browser reference to determine each API's required
+  shape. Evidence and attribution limits are in `docs/native_binding_regression.md`
+  under "Native method binding attribution".
+
 ## Repository Layout
 
 - Store architecture and planning documents under `docs/`.

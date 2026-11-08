@@ -34,6 +34,17 @@ milestone contracts. Constructor creation and ordinary method creation
 have distinct constructability rules. Methods carry defining-interface metadata
 for receiver checks, including cross-tag Node/Element members.
 
+For each API, browser captures define presence, implementation kind, function
+metadata, construction, own `prototype`, inheritance, descriptors and call
+behavior. Browser-native methods in approved slices require native bindings.
+Choose the factory and constructor behavior to match that API's browser reference,
+then add or extend its offline comparison cases. The current named,
+non-constructable operations use `make_web_method`. The 2026-11-07 positive and
+reverse Customs controls reproduced a rejection with anonymous native source
+combined with constructability and an own `prototype` for the affected methods.
+See `native_binding_regression.md` under "Native method binding attribution" and
+`AGENTS.md` "Browser Compatibility Rules".
+
 Window and HTMLDocument participate in EventTarget inheritance. Document exposes
 its Node behavior and document-specific tree constraints. Standalone EventTarget
 and Document construction have meaningful native state. Element factories select

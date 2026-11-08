@@ -1134,6 +1134,31 @@ Its original entry then passed three independent runs and a fourth content
 check. The deeper rejected-recomputation field remains open. Evidence is in
 `docs/native_binding_regression.md`.
 
+### 57. Match Web API bindings to the reference browser
+
+Decided and clarified `2026-11-07` at the user's request after the Customs
+attribution controls.
+
+Browser consistency determines API presence, implementation kind, shape and
+behavior. Each approved API slice provides native bindings for methods exposed
+natively by the reference browser. Capture per-API expectations for names,
+arities, native source, constructability, own `prototype`, inheritance,
+descriptors, receivers, identity, results and exceptions. Select factories and
+constructor behavior to match that reference, including supported constructors.
+Record missing APIs and profile differences in the runtime surface and task queue.
+
+The combination **anonymous native + constructable + own `prototype`** reproduced
+Customs HTTP 400 for the affected methods. Correcting only naming/native source
+or only constructability on old source `15edd82` each produced 200 in all three
+same-input comparisons. Reintroducing the combination on `f882344` produced 400
+in all three comparisons. Each API's required shape comes from its browser
+reference. The exact individual API and encoded Cookie field remain unresolved.
+
+Record this requirement in `AGENTS.md` and `CLAUDE.md`, and extend the existing
+offline browser comparisons for each new or changed native binding. Detailed
+controls and the independent open/Referer timeline are in
+`docs/native_binding_regression.md` under "Native method binding attribution".
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.
