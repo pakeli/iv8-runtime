@@ -1,5 +1,15 @@
 # CLAUDE.md
 
+**Browser compatibility development rule (`2026-11-07`).** Match each API's
+presence, implementation kind, shape and behavior to the reference browser.
+Browser-native methods in approved API slices require native bindings. Derive
+names, arities, native source, construction, own `prototype`, descriptors,
+inheritance, receivers and identity from per-API browser evidence, and test those
+expectations. The combination **anonymous native + constructable + own
+`prototype`** reproduced Customs HTTP 400 for the affected methods. Follow
+`AGENTS.md` "Browser Compatibility Rules" and `docs/native_binding_regression.md`
+under "Native method binding attribution".
+
 **Latest verified open exposure regression repair (`2026-11-07`).** The default
 Window open stub is withdrawn. The other Web IDL corrections remain available.
 Source `f882344` (tree `c4ba8bee511316e69d1f8f58e865c036a6cec56c`)
@@ -61,6 +71,37 @@ Then scan the latest 20 commits with:
 ```powershell
 git log --oneline --decorate -n 20
 ```
+
+## Git and Pull Request Workflow
+
+Configured for local Claude Code on `2026-11-08`.
+
+This setup applies to the terminal-based Claude Code CLI and Desktop's Code tab
+with a Local environment opened on `/Users/lil/Desktop/iv8-runtime`. In Desktop,
+select the `</>` Code entry, choose Local, and open that project folder before
+starting a session. Chat/Cowork sessions and cloud sessions have their own command
+execution environments and GitHub access. A folder attached to a Chat/Cowork
+session provides that session's configured file access, while shell execution
+and repository authorization depend on its execution environment.
+
+1. Read `AGENTS.md` and inspect `git status` and the existing diff before editing.
+   Keep unrelated work separate and stage the specific files belonging to the task.
+2. Work on a task branch or an isolated worktree. Run focused tests first and the
+   remaining verification required by the approved task and repository contracts.
+3. When the user requests publishing, commit the reviewed task files, push the
+   branch to `origin`, and create a pull request targeting `master` with the change
+   summary and actual verification results.
+4. Check the PR's latest head and required CI. The protected `master` branch
+   requires `Linux x64 / Python 3.13 / V8` to pass. Complete any additional release
+   lanes required by the task before claiming the work verified.
+5. When task authorization includes merging, merge the verified PR head using
+   `--match-head-commit` and the repository's normal protected-branch workflow.
+6. Report the branch, commit SHA, PR URL, test results and CI state to the user.
+
+The local `.claude/settings.local.json` grants the corresponding commit, push and
+PR tool permissions and allows GitHub network access in the sandbox. Git uses
+the authenticated GitHub CLI credential helper for `github.com`. Local settings
+are excluded through `.git/info/exclude`.
 
 ## Project Reality Check
 

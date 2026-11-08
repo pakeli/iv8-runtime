@@ -179,3 +179,102 @@ The verified wheel and build receipt are retained in ignored
 `data/rebuild-2026-11-07/`. The rebuilt runtime/test sources are identical to
 the prior f882344 release. The installed iv8-test runtime retains the verified
 NMPA and Customs caller acceptance recorded above.
+
+## Native method binding attribution
+
+Recorded `2026-11-07` at the user's request as evidence for browser-consistent
+development and review. The user clarified that each API's browser behavior
+defines the required shape and implementation kind. The controls separate the
+original Customs failure from the later open exposure regression and the
+caller's missing second-hop Referer.
+
+The current Customs and NMPA callers supply identical navigator, screen and
+window environment dictionaries. The same captured Customs HTML, matching JS,
+first-hop Cookie O, URL and accepted browser request headers, including Referer,
+were used across native versions. Canvas getContext returned null in the browser
+reference. Each native case generated and consumed three P values.
+
+Four binding dimensions were varied across all 16 combinations on `f882344`.
+They were naming/native source, arity, constructability and receiver validation.
+The combination **anonymous native + constructable + own `prototype`** returned
+400 in all three comparisons, including combinations that also restored old
+arity or receiver behavior. The other combinations returned 200 in all three
+comparisons. The same-batch old `15edd82` control returned 400. Live browser,
+offline browser recomputation and restored-browser controls returned 200.
+
+An independent reverse control applied minimal binding corrections to `15edd82`.
+The old prototype chains, descriptors, length=0 and receiver handling were
+retained in these diagnostic candidates.
+
+| Native version or diagnostic candidate | Results from three same-input comparisons |
+| --- | --- |
+| Old `15edd82` | 400 / 400 / 400 |
+| Old source with only declared names and named native source | 200 / 200 / 200 |
+| Old source with only construction rejected and own prototype absent | 200 / 200 / 200 |
+| Old source with both corrections | 200 / 200 / 200 |
+| Current source with anonymous and constructable methods restored | 400 / 400 / 400 |
+| Old source repeated at the end | 400 / 400 / 400 |
+| Current `f882344` repeated at the end | 200 / 200 / 200 |
+
+Live browser, offline recomputation and restored-browser controls again returned
+200. Every successful response contained the expected business title.
+
+The changes applied to groups of native methods. The exact individual API and
+detection-value-to-Cookie mapping remain unresolved. Time and randomness were
+unfrozen. These controls establish observed request acceptance and the binding
+regression pattern, with encrypted-output equivalence still unresolved. The
+open-triggered lifecycle recomputation remains a separate unresolved internal
+field, with API-exposure causality recorded above.
+
+### Development and review requirements
+
+1. Capture each API's presence, implementation kind, shape and behavior from the
+   target real browser, including browser version and execution conditions.
+   Within each approved slice, implement browser-native methods through native
+   bindings and track missing APIs and profile differences explicitly.
+2. Match per-API names, arities, `Function.prototype.toString` output, own
+   `prototype`, constructability, inheritance, descriptors, receivers, identity,
+   return values and exceptions to that reference. Browser-supported constructors
+   retain their reference construction behavior and prototype ownership.
+3. Choose the factory and V8 constructor behavior that produce the observed
+   browser semantics. The current named, non-constructable native operations use
+   `make_web_method`. For these operations, the browser-derived expectations
+   include `kThrow`, absence of an own `prototype`, and `TypeError` on construction.
+4. Review every affected installation path, including HostObject methods, Window
+   globals, Storage callbacks and separate native utility callbacks.
+5. Add or extend offline browser fixtures and focused tests for each new or
+   changed binding. The existing `test_native_method_metadata` checks name, arity,
+   exact native source, own properties and construction together for its approved
+   operation set. Derive expectations for additional function kinds from their
+   browser captures. Receiver and identity cases cover the related call behavior.
+
+The Customs combination above remains a concrete regression case. Per-API browser
+evidence supplies the compatibility requirements for future work.
+
+`AGENTS.md` carries these requirements for future development. `CLAUDE.md` and
+decision 57 in `docs/decision_log.md` preserve them across handoffs.
+
+The documentation follow-up on `2026-11-07` ran the existing metadata and brand
+tests against the verified `f882344` macOS arm64/Python 3.11 runtime. The focused
+result was **17 passed, 103 deselected**.
+
+```sh
+python -m pytest test/test_webidl_environment_semantics.py \
+  -k 'native_method_metadata or native_method_brand' -q
+```
+
+### Local diagnostic evidence
+
+The isolated diagnostic builds and captured inputs are under ignored
+`data/open-cookie-deep-2026-11-07/`. The portable results above summarize these
+local artifacts. Raw Cookies remain in private local inputs.
+
+| Artifact within that directory | SHA-256 |
+| --- | --- |
+| `timeline-cross/boundary-results.json` | `b5bd09c5cfe53ee3b5dfe01dbbf480f569b0f2794f8cece0cb483f5d9bbcf8f2` |
+| `binding-combinations/boundary-results.json` | `cc1131e7e4e7561ed784d39f1bf6b3dfdbbf05f308724d801fa1d0b04a8836bd` |
+| `old-rescue-cross/boundary-results.json` | `b4fbda3ad11f4158a334b4a08d1d3f3065c1eda1a5167bae535221f76a1bfe19` |
+
+The local index is `attribution-summary.json`. Native diagnostic candidates were
+built and run in isolated targets. The detailed caller record is
+`/Users/lil/Desktop/iv8-test/海关/reverse-records/请求链路.md`.
