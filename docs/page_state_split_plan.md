@@ -272,6 +272,7 @@ internal  <-  dom  <-  host  <-  window / bom / web  <-  page_state*.cpp
 
 从目前阅读代码已经看到的：
 
+- 阶段 1.1 的独立编译检查发现 `btoa` 中 `int` 循环索引与 V8 返回的无符号长度比较会产生 `-Wsign-compare`。本次按零定义差异保留原实现，独立检查使用 `-Wno-error=sign-compare` 记录这项既有告警，后续另行清理。
 - 三段 JS bootstrap（`scheduler.postTask`、BOM extras 中的 `matchMedia` 等、`postMessage`）的 `toString` 与原生函数不一致，违反 CLAUDE.md 的原生绑定规则。拆分后它们集中在 `bootstrap/`，下一阶段逐个改成原生实现。
 - `scheduler` 是 `Object.create(null)` 创建的，没有 `Scheduler` 接口和原型链。
 - 所有 `ExternalPointerTypeTag` 都是默认值，无法在内部字段层面防止类型混淆。

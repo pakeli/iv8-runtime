@@ -16,6 +16,7 @@ every lane `2050 passed, 2 skipped, 1 xfailed`.
 | 0.1 local real-V8 loop | pakeli/iv8-runtime#15 | `973ac99` | local macOS matrix passed | 13,052 | — |
 | 0.2 `iv8::browser`, `internal/common.h`, inline tokens, PCH | pakeli/iv8-runtime#14 | `ae4163b` (merge `c1d4e34`) | V8 CI `42466767787`, `42467387443`; release-windows `42466768875` | 13,052 | n/a (intentional changes; tool added in 0.3) |
 | 0.3 `tools/audit_move.py` and regression fixes | pakeli/iv8-runtime#15 | `973ac99` | V8 CI `43467102840`, `43467112845` passed | 13,052 | 56 audit cases passed in required CI |
+| 1.1 crypto, Base64 globals, encoding and shared helpers | follow-up PR | implementation awaiting required CI | local real-V8 tests passed | 12,637 | 431 identical definitions, 0 differences |
 
 Stage 0 native matrix passed all 12 lanes. Linux/Windows used hosted CI and macOS arm64 used the local release matrix described below.
 
@@ -74,3 +75,25 @@ Restore commit `d35dd5b637249b38a3226dba69c9554c71708cb4` restored the original
 helper workflow blob `eb730d3e77a17d4d527e67646475385cebb2428c` using a SHA guard.
 The merge gate is `Linux x64 / Python 3.13 / V8` with strict status checks and
 administrator enforcement. Stage 1.1 extracts crypto, Base64 globals and encoding.
+
+## Stage 1.1 local verification
+
+The three leaf modules live under `src/core/browser/web/`. Platform RNG code is
+owned by `crypto.cpp`. Shared ASCII normalization lives in `internal/common.cpp`,
+and shared watch/access recording lives in `internal/trace_hooks.cpp`. The Page
+installer uses the private callback declarations. `page_state.cpp` decreases
+from 13,052 to **12,637 lines**.
+
+The move audit matches **431 definitions with 0 differences**. Local macOS
+arm64/Python 3.11 focused crypto, Base64, encoding, tracing, Web IDL and watch tests
+reported **192 passed, 1 xfailed**. The full real-V8 suite reported
+**2090 passed, 2 skipped, 1 xfailed**, and all **56 audit tests** passed.
+Reflection snapshots matched all eight affected functions and the order of all
+258 global keys. Logs and snapshots are under ignored
+`data/stage1-1-2026-11-14/` in the primary checkout.
+
+Standalone warning checks without precompiled headers exposed an existing
+`btoa` signed/unsigned length comparison. Its baseline source is retained by the
+zero-difference move. The warning is recorded in the plan's issue list, and the
+standalone check allows that warning while treating other warnings as errors.
+Required CI and the final source/tree will be recorded before merging this PR.

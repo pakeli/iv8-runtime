@@ -5,7 +5,8 @@
 // Private to src/core: not installed and not part of the public include/ tree.
 // Stage 0.2 of docs/page_state_split_plan.md. Everything here must keep a single
 // definition program-wide once page_state.cpp is split into several translation
-// units, so helpers are `inline` and identity tokens are `inline constexpr`.
+// units. Header-defined helpers use `inline` and tokens use `inline constexpr`.
+// Out-of-line helpers have one definition in common.cpp.
 
 #include <array>
 #include <cstddef>
@@ -53,6 +54,9 @@ void verify_trace_token_identity(const TraceTokenAddresses& local);
         &::iv8::browser::kPerformanceTraceToken,                             \
         &::iv8::browser::kCryptoTraceToken,                                  \
         &::iv8::browser::kStorageTraceToken})
+
+// Shared string normalization defined once in common.cpp.
+extern std::string ascii_lower(std::string s);
 
 // --- Shared V8 helpers -------------------------------------------------------
 

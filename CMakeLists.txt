@@ -60,6 +60,10 @@ if(IV8_LINK_V8)
       src/core/html_entities.cpp
       src/core/page_state.cpp
       src/core/browser/internal/common.cpp
+      src/core/browser/internal/trace_hooks.cpp
+      src/core/browser/web/crypto.cpp
+      src/core/browser/web/base64_globals.cpp
+      src/core/browser/web/encoding.cpp
       src/binding/context_binding.cpp
       src/binding/page_binding.cpp)
 endif()

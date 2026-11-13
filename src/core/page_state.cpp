@@ -10,27 +10,13 @@
 #include <cstring>
 #include <functional>
 #include <memory>
-#include <random>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#if defined(_WIN32)
-// advapi32 (linked for V8 builds) exposes the OS RNG as SystemFunction036
-// (RtlGenRandom). Declaring it directly avoids pulling windows.h into this TU.
-extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
-    void* random_buffer, unsigned long random_buffer_length);
-#elif defined(__linux__)
-#include <cerrno>
-#include <fcntl.h>
-#include <sys/random.h>
-#include <unistd.h>
-#endif
-
 #include "iv8/access_summary.h"
-#include "iv8/base64.h"
 #include "iv8/browser_compatibility.h"
 #include "iv8/context_host.h"
 #include "iv8/dom_url.h"
@@ -42,6 +28,10 @@ extern "C" __declspec(dllimport) unsigned char __stdcall SystemFunction036(
 #include "iv8/web_method.h"
 
 #include "browser/internal/common.h"
+#include "browser/internal/trace_hooks.h"
+#include "browser/web/base64_globals.h"
+#include "browser/web/crypto.h"
+#include "browser/web/encoding.h"
 
 // M9-1: V8 Inspector (CDP) attach base. Included after context_host.h so the
 // v8_headers.h COMPILER-macro workaround has already run before any V8 header.
@@ -76,76 +66,6 @@ struct MediaQueryListStore {
 // across translation units. The using-directive after the closing brace keeps
 // unqualified lookup from the iv8-scope code below unchanged.
 namespace browser {
-
-// M9-2 forward declarations (definitions lower in this TU): the watch-hit
-// recorder used by the host-method dispatch points (some of which are defined
-// above the recorder's definition). state_from_isolate() now lives in
-// browser/internal/common.h.
-void watch_record(v8::Isolate* isolate, const std::string& receiver,
-                  const std::string& method);
-std::uint64_t access_trace_record(v8::Isolate* isolate, const void* identity,
-                                  const char* object_type, const char* label,
-                                  const char* member, AccessOperation operation);
-
-// M11-33: OS-backed entropy for crypto.getRandomValues() / randomUUID(). This is
-// deliberately the runtime's ONE non-deterministic surface: supported builds use
-// the platform CSPRNG (advapi32 SystemFunction036 on Windows; getrandom with a
-// /dev/urandom fallback on Linux; std::random_device elsewhere). It never falls
-// back to a deterministic PRNG.
-bool fill_os_random_bytes(std::uint8_t* out, std::size_t length) {
-#if defined(_WIN32)
-    if (length == 0) {
-        return true;
-    }
-    return SystemFunction036(out, static_cast<unsigned long>(length)) != 0;
-#elif defined(__linux__)
-    std::size_t done = 0;
-    while (done < length) {
-        const ssize_t n = ::getrandom(out + done, length - done, 0);
-        if (n < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-            break;
-        }
-        done += static_cast<std::size_t>(n);
-    }
-    if (done == length) {
-        return true;
-    }
-    const int fd = ::open("/dev/urandom", O_RDONLY);
-    if (fd < 0) {
-        return false;
-    }
-    while (done < length) {
-        const ssize_t n = ::read(fd, out + done, length - done);
-        if (n < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-            ::close(fd);
-            return false;
-        }
-        if (n == 0) {
-            ::close(fd);
-            return false;
-        }
-        done += static_cast<std::size_t>(n);
-    }
-    ::close(fd);
-    return true;
-#else
-    try {
-        std::random_device random_device;
-        for (std::size_t i = 0; i < length; i++) {
-            out[i] = static_cast<std::uint8_t>(random_device() & 0xFFu);
-        }
-        return true;
-    } catch (...) {
-        return false;
-    }
-#endif
-}
 
 // M2-1 framework probe: a neutral, native-backed host object used ONLY to
 // validate the Host Object Framework (installation, property getter plumbing,
@@ -1296,13 +1216,6 @@ constexpr char kDefaultBaseUrl[] = "https://iv8.invalid/";
 // HTML5 parser and NOT a DOM: it serves exactly documentElement / body / title /
 // getElementById / querySelector(#id | tagname | .class). No Node/Element layer,
 // no mutation, no textContent/attributes/children exposed.
-
-std::string ascii_lower(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
-        return static_cast<char>(std::tolower(c));
-    });
-    return s;
-}
 
 std::string ascii_upper(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
@@ -7576,39 +7489,6 @@ void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> cont
     document_->set_text_content(isolate, context, node_, str_value);
 }
 
-// M9-2: record a host-method call hit if the "receiver.method" path is watched.
-// Cheap no-op when watching is disabled (the common case): the enabled() check is
-// a lock-free atomic read, and the path string is built only when it may match.
-void watch_record(v8::Isolate* isolate, const std::string& receiver,
-                  const std::string& method) {
-    ContextState* state = state_from_isolate(isolate);
-    if (state == nullptr) {
-        return;
-    }
-    WatchRegistry* registry = state->watch_registry();
-    if (registry == nullptr || !registry->enabled()) {
-        return;
-    }
-    registry->maybe_record(receiver + "." + method);
-}
-
-// Step 5 call coverage for runtime-owned plain BOM objects. These are
-// independent native callbacks, not HostObject methods, so they use explicit
-// stable native tokens for object identity. Property reads on these objects are
-// a later group and are not implied by these calls. kPerformanceTraceToken,
-// kCryptoTraceToken and kStorageTraceToken are defined in
-// browser/internal/common.h.
-
-std::uint64_t access_trace_record(v8::Isolate* isolate, const void* identity,
-                                  const char* object_type, const char* label,
-                                  const char* member, AccessOperation operation) {
-    AccessTrace* trace = access_trace_from_isolate(isolate);
-    if (trace != nullptr && trace->enabled()) {
-        return trace->record(identity, object_type, label, member, operation);
-    }
-    return 0;
-}
-
 // M11-32: fire the minimal `invalid` event at a control. It is a target-only,
 // non-bubbling event with the standard read fields; it is a plain object (like
 // the M3-4 lifecycle events), not a full Event instance, so preventDefault /
@@ -9079,107 +8959,6 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
 })();
 )JS";
 
-// --- M11-33 crypto.getRandomValues / crypto.randomUUID -----------------------
-//
-// A deliberately small Crypto slice: only OS-backed random bytes and UUID v4.
-// getRandomValues follows the browser typed-array contract (integer TypedArrays
-// only, 65536-byte quota, returns the SAME view, fills the view's byte range).
-// There is no crypto.subtle surface yet. The OS entropy source is the runtime's
-// single non-deterministic API; see fill_os_random_bytes().
-bool is_integer_typed_array(v8::Local<v8::Value> value) {
-    return value->IsInt8Array() || value->IsUint8Array() ||
-           value->IsUint8ClampedArray() || value->IsInt16Array() ||
-           value->IsUint16Array() || value->IsInt32Array() ||
-           value->IsUint32Array() || value->IsBigInt64Array() ||
-           value->IsBigUint64Array();
-}
-
-void crypto_get_random_values_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "crypto", "getRandomValues");
-    const std::uint64_t seq = access_trace_record(
-        info.GetIsolate(), &kCryptoTraceToken, "crypto", "crypto", "getRandomValues",
-        AccessOperation::kCall);
-    AccessCallCompletion completion(info.GetIsolate(), seq, info);
-    v8::Isolate* isolate = info.GetIsolate();
-    if (info.Length() < 1 || !is_integer_typed_array(info[0])) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(
-                isolate,
-                "getRandomValues: argument must be an integer TypedArray")));
-        return;
-    }
-    v8::Local<v8::ArrayBufferView> view =
-        info[0].As<v8::ArrayBufferView>();
-    v8::Local<v8::ArrayBuffer> buffer = view->Buffer();
-    if (buffer->WasDetached()) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(
-                isolate, "getRandomValues: buffer is detached")));
-        return;
-    }
-    const std::size_t length = view->ByteLength();
-    if (length > 65536) {
-        // The WHATWG API uses a DOMException (QuotaExceededError); this runtime
-        // has no DOMException, so the deterministic substitute is RangeError.
-        isolate->ThrowException(v8::Exception::RangeError(
-            v8::String::NewFromUtf8Literal(
-                isolate,
-                "getRandomValues: requested length exceeds 65536 bytes")));
-        return;
-    }
-    if (length == 0) {
-        info.GetReturnValue().Set(info[0]);
-        return;
-    }
-    auto* data = static_cast<std::uint8_t*>(buffer->Data());
-    if (data == nullptr) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(
-                isolate, "getRandomValues: buffer is detached")));
-        return;
-    }
-    if (!fill_os_random_bytes(data + view->ByteOffset(), length)) {
-        isolate->ThrowException(v8::Exception::Error(
-            v8::String::NewFromUtf8Literal(
-                isolate, "getRandomValues: OS random source failed")));
-        return;
-    }
-    info.GetReturnValue().Set(info[0]);
-}
-
-void crypto_random_uuid_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "crypto", "randomUUID");
-    const std::uint64_t seq = access_trace_record(
-        info.GetIsolate(), &kCryptoTraceToken, "crypto", "crypto", "randomUUID",
-        AccessOperation::kCall);
-    AccessCallCompletion completion(info.GetIsolate(), seq, info);
-    v8::Isolate* isolate = info.GetIsolate();
-    std::uint8_t bytes[16];
-    if (!fill_os_random_bytes(bytes, sizeof(bytes))) {
-        isolate->ThrowException(v8::Exception::Error(
-            v8::String::NewFromUtf8Literal(
-                isolate, "randomUUID: OS random source failed")));
-        return;
-    }
-    bytes[6] = static_cast<std::uint8_t>((bytes[6] & 0x0F) | 0x40);  // v4
-    bytes[8] = static_cast<std::uint8_t>((bytes[8] & 0x3F) | 0x80);  // RFC 4122
-    static const char kHex[] = "0123456789abcdef";
-    char text[36];
-    std::size_t out = 0;
-    for (std::size_t i = 0; i < sizeof(bytes); i++) {
-        if (i == 4 || i == 6 || i == 8 || i == 10) {
-            text[out++] = '-';
-        }
-        text[out++] = kHex[bytes[i] >> 4];
-        text[out++] = kHex[bytes[i] & 0x0F];
-    }
-    info.GetReturnValue().Set(
-        v8::String::NewFromUtf8(isolate, text, v8::NewStringType::kNormal, 36)
-            .ToLocalChecked());
-}
-
 v8::Local<v8::Value> unsupported_capability(v8::Isolate* isolate,
                                                  const std::string& capability) {
     auto error = v8::Exception::Error(v8_string(isolate,
@@ -9700,137 +9479,6 @@ constexpr char kWindowPostMessageBootstrap[] = R"JS(
   });
 })();
 )JS";
-
-// M8-1 TextEncoder / TextDecoder — a minimal UTF-8-only encoding surface. The actual
-// UTF-8 conversion is delegated to V8 itself (String::Utf8Value for encode,
-// String::NewFromUtf8 for decode), so multi-byte / lone-surrogate handling is exactly
-// whatever V8 does (lenient: bad bytes decode to U+FFFD). No encodeInto / streaming /
-// BOM stripping / non-UTF-8 labels / fatal-error behaviour.
-
-// `new TextEncoder()` — no per-instance state (encode() + encoding live on the
-// prototype). Requires a construct call.
-void text_encoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    if (!info.IsConstructCall()) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(
-                isolate, "TextEncoder constructor requires 'new'")));
-    }
-}
-
-// encoder.encode(input) -> Uint8Array of String(input) as UTF-8 (encode("") -> []).
-void text_encoder_encode(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::String> str;
-    if (!info[0]->ToString(context).ToLocal(&str)) {
-        return;  // a throwing ToString already scheduled the exception
-    }
-    v8::String::Utf8Value utf8(isolate, str);
-    const std::size_t len =
-        (*utf8 != nullptr) ? static_cast<std::size_t>(utf8.length()) : 0;
-    v8::Local<v8::ArrayBuffer> buffer = v8::ArrayBuffer::New(isolate, len);
-    if (len > 0) {
-        std::memcpy(buffer->Data(), *utf8, len);
-    }
-    info.GetReturnValue().Set(v8::Uint8Array::New(buffer, 0, len));
-}
-
-// `new TextDecoder(label?, options?)`. label: undefined/absent, or a string that
-// ASCII-trims + lowercases to "" / "utf-8" / "utf8" -> UTF-8; anything else is a
-// RangeError. options.fatal / options.ignoreBOM are captured as read-only booleans
-// but do NOT change behaviour this phase (decode stays lenient UTF-8). Requires new.
-void text_decoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    if (!info.IsConstructCall()) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(
-                isolate, "TextDecoder constructor requires 'new'")));
-        return;
-    }
-    v8::Local<v8::Value> label = info[0];
-    if (!label->IsUndefined()) {
-        v8::Local<v8::String> str;
-        if (!label->ToString(context).ToLocal(&str)) {
-            return;  // ToString threw
-        }
-        v8::String::Utf8Value utf8(isolate, str);
-        std::string s = (*utf8 != nullptr)
-                            ? std::string(*utf8,
-                                          static_cast<std::size_t>(utf8.length()))
-                            : std::string();
-        std::size_t a = 0, b = s.size();
-        while (a < b && std::isspace(static_cast<unsigned char>(s[a]))) a++;
-        while (b > a && std::isspace(static_cast<unsigned char>(s[b - 1]))) b--;
-        const std::string norm = ascii_lower(s.substr(a, b - a));
-        if (norm != "" && norm != "utf-8" && norm != "utf8") {
-            isolate->ThrowException(v8::Exception::RangeError(
-                v8::String::NewFromUtf8Literal(
-                    isolate, "TextDecoder: only the UTF-8 label is supported")));
-            return;
-        }
-    }
-    bool fatal = false, ignore_bom = false;
-    if (info.Length() > 1 && info[1]->IsObject()) {
-        v8::Local<v8::Object> opts = info[1].As<v8::Object>();
-        v8::Local<v8::Value> v;
-        if (opts->Get(context, v8_string(isolate, "fatal")).ToLocal(&v)) {
-            fatal = v->BooleanValue(isolate);
-        }
-        if (opts->Get(context, v8_string(isolate, "ignoreBOM")).ToLocal(&v)) {
-            ignore_bom = v->BooleanValue(isolate);
-        }
-    }
-    v8::Local<v8::Object> self = info.This();
-    (void)self->DefineOwnProperty(
-        context, v8::String::NewFromUtf8Literal(isolate, "fatal"),
-        v8::Boolean::New(isolate, fatal), v8::ReadOnly);
-    (void)self->DefineOwnProperty(
-        context, v8::String::NewFromUtf8Literal(isolate, "ignoreBOM"),
-        v8::Boolean::New(isolate, ignore_bom), v8::ReadOnly);
-}
-
-// decoder.decode(input?) -> String. undefined/absent -> ""; an ArrayBuffer or any
-// ArrayBufferView (TypedArray / DataView) -> its bytes as lenient UTF-8 (no BOM
-// stripping); any other argument -> TypeError.
-void text_decoder_decode(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Value> input = info[0];
-    if (input->IsUndefined()) {
-        info.GetReturnValue().Set(v8::String::Empty(isolate));
-        return;
-    }
-    const std::uint8_t* data = nullptr;
-    std::size_t len = 0;
-    if (input->IsArrayBuffer()) {
-        v8::Local<v8::ArrayBuffer> buf = input.As<v8::ArrayBuffer>();
-        data = static_cast<const std::uint8_t*>(buf->Data());
-        len = buf->ByteLength();
-    } else if (input->IsArrayBufferView()) {
-        v8::Local<v8::ArrayBufferView> view = input.As<v8::ArrayBufferView>();
-        v8::Local<v8::ArrayBuffer> buf = view->Buffer();
-        data = static_cast<const std::uint8_t*>(buf->Data()) + view->ByteOffset();
-        len = view->ByteLength();
-    } else {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(
-                isolate, "TextDecoder.decode: input must be a BufferSource")));
-        return;
-    }
-    if (len == 0) {
-        info.GetReturnValue().Set(v8::String::Empty(isolate));
-        return;
-    }
-    v8::Local<v8::String> out;
-    if (v8::String::NewFromUtf8(isolate, reinterpret_cast<const char*>(data),
-                                v8::NewStringType::kNormal, static_cast<int>(len))
-            .ToLocal(&out)) {
-        info.GetReturnValue().Set(out);
-    } else {
-        info.GetReturnValue().Set(v8::String::Empty(isolate));
-    }
-}
 
 // `new URL(input, base?)`. input / base go through String(...); resolution failure
 // (relative input with no usable base) is a TypeError. Fields are read-only own data
@@ -10666,69 +10314,6 @@ void file_reader_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
                            v8::Null(isolate));
     (void)info.This()->Set(context, v8_string(isolate, "error"),
                            v8::Null(isolate));
-}
-
-// M8-4 atob / btoa — minimal standard Base64. btoa operates on a "binary string"
-// (each UTF-16 code unit must be <= 0xFF; its low 8 bits is the byte); atob returns a
-// binary string (each output byte becomes a Latin-1 code unit 0..255, via
-// NewFromOneByte). ASCII whitespace in atob input is ignored. Both error paths throw a
-// JS TypeError (the project has no DOMException/InvalidCharacterError). No base64url /
-// ArrayBuffer API / streaming / auto UTF-8.
-void btoa_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::String> str;
-    if (!info[0]->ToString(context).ToLocal(&str)) {
-        return;  // ToString threw
-    }
-    v8::String::Value units(isolate, str);  // UTF-16 code units
-    std::string bytes;
-    if (*units != nullptr) {
-        bytes.reserve(static_cast<std::size_t>(units.length()));
-        for (int i = 0; i < units.length(); i++) {
-            const std::uint16_t u = (*units)[i];
-            if (u > 0xFF) {
-                isolate->ThrowException(v8::Exception::TypeError(
-                    v8::String::NewFromUtf8Literal(
-                        isolate,
-                        "btoa: string contains characters outside the Latin1 range")));
-                return;
-            }
-            bytes += static_cast<char>(u & 0xFF);
-        }
-    }
-    info.GetReturnValue().Set(v8_string(isolate, base64_encode(bytes)));
-}
-
-void atob_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::String> str;
-    if (!info[0]->ToString(context).ToLocal(&str)) {
-        return;  // ToString threw
-    }
-    v8::String::Utf8Value utf8(isolate, str);  // valid base64 is ASCII
-    const std::string input =
-        (*utf8 != nullptr)
-            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
-            : std::string();
-    std::string decoded;
-    if (!base64_decode(input, decoded)) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(
-                isolate, "atob: the string to be decoded is not correctly encoded")));
-        return;
-    }
-    // Each decoded byte becomes a Latin-1 code unit (0..255) — a "binary string".
-    v8::Local<v8::String> result;
-    if (v8::String::NewFromOneByte(
-            isolate, reinterpret_cast<const std::uint8_t*>(decoded.data()),
-            v8::NewStringType::kNormal, static_cast<int>(decoded.size()))
-            .ToLocal(&result)) {
-        info.GetReturnValue().Set(result);
-    } else {
-        info.GetReturnValue().Set(v8::String::Empty(isolate));
-    }
 }
 
 // M9-1: convert an Inspector StringView (CDP protocol message) to a UTF-8
