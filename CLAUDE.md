@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-**Page source split preparation verified (`2026-11-14`).** Stage 0 source `973ac99` (tree `6751ff9c9f419d9b67054677744eef8a3d4f4646`) passed 56 audit checks and all 12 native wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Linux and Windows used hosted release CI. macOS arm64 used a local four-version release matrix after hosted runners reported capacity exhaustion. Stage 1.1 (crypto, Base64 globals and encoding extraction) follows. Evidence and artifacts are in `docs/page_state_split.md`. M11-53 remains the next numbered feature.
+**Page source split stage 1.1 implemented (`2026-11-14`).** Source `a3dcb20` (tree `ca1c0c7d0618a8c88b9191b67159de18add43206`) extracts crypto, Base64 globals and encoding, with shared ASCII and trace helpers in `internal`. `page_state.cpp` is **12,637 lines**. The move audit reports **431 identical definitions, 0 differences**. Local real-V8 tests and required Linux CI passed **2090 tests, 2 skipped, 1 xfailed**, plus 56 audit checks. The full stage 1 release matrix follows the remaining leaf-module slices. Next is stage 1.2 (URL and structured clone). Evidence is in `docs/page_state_split.md`.
+
+**Page source split preparation verified (`2026-11-14`).** Stage 0 source `973ac99` (tree `6751ff9c9f419d9b67054677744eef8a3d4f4646`) passed 56 audit checks and all 12 native wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Linux and Windows used hosted release CI. macOS arm64 used a local four-version release matrix after hosted runners reported capacity exhaustion. Stage 1 continues with the approved leaf-module slices. Evidence and artifacts are in `docs/page_state_split.md`. M11-53 remains the next numbered feature.
 
 **Browser compatibility development rule (`2026-11-07`).** Match each API's
 presence, implementation kind, shape and behavior to the reference browser.

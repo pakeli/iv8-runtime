@@ -1176,6 +1176,21 @@ wheel digests. The temporary macOS helper workflow was restored with a SHA guard
 `docs/page_state_split.md` records the verification routes and artifact evidence.
 Stage 1.1 starts with crypto, Base64 globals and UTF-8 encoding callbacks.
 
+### 59. Extract leaf callbacks with shared internal dependencies
+
+Implemented `2026-11-14` in stage 1.1 on source `a3dcb20`. Crypto/RNG, Base64
+globals and encoding callbacks live in private `browser/web` modules. Shared
+ASCII normalization and watch/access recording have their definitions in
+`browser/internal`, so leaf modules use shared helpers through internal headers.
+The Page installer keeps the original callback installation sequence.
+
+The audit matched 431 definitions with zero differences. Eight affected function
+reflection profiles and all 258 global keys matched the baseline. Local real-V8
+and required Linux CI reported `2090 passed, 2 skipped, 1 xfailed`, with 56 audit
+checks. Existing signed comparison and aggregate initializer warnings were
+recorded for later cleanup. Stage 1.2 follows, with full platform verification
+at the end of the complete leaf-module stage under decision 58.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

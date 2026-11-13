@@ -421,5 +421,12 @@ objects and monitoring, then split `install_page`.
 Stage 0 acceptance is recorded on source `973ac99` in `docs/page_state_split.md`.
 Linux and Windows used hosted CI. macOS arm64 used the same four-version
 build/install/test matrix locally after hosted runner capacity failures. All
-12 lanes passed with `2090 passed, 2 skipped, 1 xfailed`. Stage 1.1 is the next
-source extraction.
+12 lanes passed with `2090 passed, 2 skipped, 1 xfailed`.
+
+Stage 1.1 source `a3dcb20` extracts `web/crypto`, `web/base64_globals` and
+`web/encoding`. Shared ASCII normalization is defined in `internal/common.cpp`
+and watch/access recording in `internal/trace_hooks.cpp`. Private headers expose
+callbacks to the existing Page installer. Platform entropy headers and the OS
+RNG stay with the crypto module. Local full real-V8 tests and the required
+Linux/Python 3.13 V8 check passed under the per-PR policy. The full stage 1
+release matrix follows the remaining leaf slices.
