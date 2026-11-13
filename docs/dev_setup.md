@@ -77,7 +77,7 @@ cd /tmp && python -c "import iv8; assert iv8._v8_linked" && python -m pytest "$O
 - The DevTools/watch tests bind a localhost port. In a sandbox that forbids
   local binding they fail with `PermissionError` (21 tests at `2026-11-08`). That
   is an environment limit, not a regression. The expected full result matches
-  CI, e.g. `2050 passed, 2 skipped, 1 xfailed` on Python 3.13 at `2026-11-08`.
+  CI, e.g. `2090 passed, 2 skipped, 1 xfailed` after the audit regressions at `2026-11-14`.
 
 ### Audit a code move (`tools/audit_move.py`)
 

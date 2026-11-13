@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+**Page source split preparation verified (`2026-11-14`).** Stage 0 source `973ac99` (tree `6751ff9c9f419d9b67054677744eef8a3d4f4646`) passed 56 audit checks and all 12 native wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Linux and Windows used hosted release CI. macOS arm64 used a local four-version release matrix after hosted runners reported capacity exhaustion. Stage 1.1 (crypto, Base64 globals and encoding extraction) follows. Evidence and artifacts are in `docs/page_state_split.md`. M11-53 remains the next numbered feature.
+
 **Browser compatibility development rule (`2026-11-07`).** Match each API's
 presence, implementation kind, shape and behavior to the reference browser.
 Browser-native methods in approved API slices require native bindings. Derive

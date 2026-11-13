@@ -417,3 +417,9 @@ unchanged.
 At the end of stage 0, `page_state.cpp` still holds all runtime code apart from
 `internal/common.*`. Later stages move leaf modules, the DOM data layer, host
 objects and monitoring, then split `install_page`.
+
+Stage 0 acceptance is recorded on source `973ac99` in `docs/page_state_split.md`.
+Linux and Windows used hosted CI. macOS arm64 used the same four-version
+build/install/test matrix locally after hosted runner capacity failures. All
+12 lanes passed with `2090 passed, 2 skipped, 1 xfailed`. Stage 1.1 is the next
+source extraction.

@@ -13,11 +13,11 @@ every lane `2050 passed, 2 skipped, 1 xfailed`.
 
 | Step | PR | Source commit | CI | `page_state.cpp` lines | Audit |
 |---|---|---|---|---|---|
-| 0.1 local real-V8 loop | (this PR) | (this PR) | — | — | — |
+| 0.1 local real-V8 loop | pakeli/iv8-runtime#15 | `973ac99` | local macOS matrix passed | 13,052 | — |
 | 0.2 `iv8::browser`, `internal/common.h`, inline tokens, PCH | pakeli/iv8-runtime#14 | `ae4163b` (merge `c1d4e34`) | V8 CI `42466767787`, `42467387443`; release-windows `42466768875` | 13,052 | n/a (intentional changes; tool added in 0.3) |
-| 0.3 `tools/audit_move.py` and regression fixes | pakeli/iv8-runtime#15 | verification pending | required V8 CI includes audit tests | 13,052 | focused 56 passed locally |
+| 0.3 `tools/audit_move.py` and regression fixes | pakeli/iv8-runtime#15 | `973ac99` | V8 CI `43467102840`, `43467112845` passed | 13,052 | 56 audit cases passed in required CI |
 
-Stage 0 three-platform matrix: pending.
+Stage 0 native matrix passed all 12 lanes. Linux/Windows used hosted CI and macOS arm64 used the local release matrix described below.
 
 ## Notes
 
@@ -30,22 +30,47 @@ Stage 0 three-platform matrix: pending.
 - 0.3: `tools/audit_move.py` gates top-level definitions. It does not yet
   decompose class members moved out of a class body. Extend it before stage 3.3.
 
-## Local audit regression follow-up
+## Stage 0 verification (`2026-11-14`)
 
-The working-tree follow-up after `9095c2b` fixes variable-definition and directive
-literal false negatives. Brace/direct initializers retain their storage
-specifiers and values. Directive literals retain their exact contents, including
-whitespace, escaped quotes and raw strings. Ambiguous parenthesized declarations
-are conservatively gated as definitions.
+Verified source `973ac99d98855a0cf98015429905e6c3e79698fc`, tree
+`6751ff9c9f419d9b67054677744eef8a3d4f4646`. The tool regressions preserve brace/
+direct initializer values and linkage, and preserve directive literal contents.
+Ambiguous parenthesized declarations are conservatively gated as definitions.
+The normal runtime suite collects the 40 new cases under `test/`; required V8 CI
+also runs the original 16 tool self-tests, for **56 focused cases**. All 56 passed.
+The three browser source files self-matched with **431 identical definitions,
+0 differences**.
 
-The new `test/test_audit_move_regressions.py` contains 40 cases, including CLI
-failure checks for changed definitions and a successful move across files. It is
-collected by the normal `pytest test` invocation. Together with the original
-tool self-tests, the focused result is **56 passed**. Local macOS arm64/Python
-3.11 full-suite verification against the V8-linked `9095c2b` runtime and current
-tests reported **2090 passed, 2 skipped, 1 xfailed**. The three browser source
-files self-matched with **431 identical definitions, 0 differences**.
+| Platform and verification route | Run / local record | Artifacts | Per-lane result |
+|---|---|---|---|
+| Linux x64 hosted CI, cp311–cp314 | `43467351418` | `14059742327` | 2090 passed, 2 skipped, 1 xfailed |
+| Windows x64 hosted CI, cp311–cp314 | `43467364824` | cp311 `14059147858`, cp312 `14057929154`, cp313 `14058793673`, cp314 `14059148001` | 2090 passed, 2 skipped, 1 xfailed |
+| macOS arm64 local release matrix, cp311–cp314 | `data/stage0-2026-11-14/local-macos/receipt.json` | Local wheels and digests below | 2090 passed, 2 skipped, 1 xfailed |
 
-The required Linux/Python 3.13 V8 job now runs all 56 audit tests before its V8
-build and runtime suite. These results cover local verification of this
-follow-up. Release and CI records for the follow-up remain pending.
+The local macOS matrix repeated the release workflow's pinned V8 build, wheel
+build, clean installation and full test commands for all four interpreters.
+It ran on macOS **26.5 arm64**, produced `macosx_11_0_arm64` wheels and checked
+that each clean interpreter loaded its installed V8-linked wheel. Python versions
+were 3.11.18, 3.12.4, 3.13.5 and 3.14.8.
+
+| Local artifact ID | SHA-256 |
+|---|---|
+| `local-macos/cp311/wheel/iv8-0.0.1-cp311-cp311-macosx_11_0_arm64.whl` | `3f4369a64103132529d6a6ee16573d8ff238a3d37de536c578045f998074ac1c` |
+| `local-macos/cp312/wheel/iv8-0.0.1-cp312-cp312-macosx_11_0_arm64.whl` | `78c5fdd9cdae67ad46ff0c643855ce1f8401f311d7c7b97c4f84e777208d6abf` |
+| `local-macos/cp313/wheel/iv8-0.0.1-cp313-cp313-macosx_11_0_arm64.whl` | `4bf8636b2734d0817a71b9e025d63805ee050c2eb426690b76428066286e47a0` |
+| `local-macos/cp314/wheel/iv8-0.0.1-cp314-cp314-macosx_11_0_arm64.whl` | `aad70288d453ad112513b64c870d214b256195ad6652a7312fce907e113b7a6f` |
+
+All local paths are relative to ignored `data/stage0-2026-11-14/`. The index
+`verification.json` records the source/tree, hosted artifacts and local results.
+
+The hosted macOS 15 run `43467373389` ended before acquiring a runner. Its job
+annotations reported arm64 capacity constraints. A macOS 26 arm64 fallback run
+`43470590030` was dispatched with both source checkouts pinned to `973ac99` and
+also waited for hosted capacity. The local matrix supplies macOS native validation
+for this stage, with the hosted runner failures recorded separately.
+
+The fallback driver commit was `a79c353b9a0ab7604c18fb98bcbb249b3e2f3b3d`.
+Restore commit `d35dd5b637249b38a3226dba69c9554c71708cb4` restored the original
+helper workflow blob `eb730d3e77a17d4d527e67646475385cebb2428c` using a SHA guard.
+The merge gate is `Linux x64 / Python 3.13 / V8` with strict status checks and
+administrator enforcement. Stage 1.1 extracts crypto, Base64 globals and encoding.

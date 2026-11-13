@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-11-07`
+Last reviewed: `2026-11-14`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -1158,6 +1158,23 @@ Record this requirement in `AGENTS.md` and `CLAUDE.md`, and extend the existing
 offline browser comparisons for each new or changed native binding. Detailed
 controls and the independent open/Referer timeline are in
 `docs/native_binding_regression.md` under "Native method binding attribution".
+
+### 58. Prepare the Page runtime source split and enforce move auditing
+
+Confirmed `2026-11-08`, stage 0 validated `2026-11-14`. The source split uses
+`iv8::browser`, shared inline trace tokens with cross-TU identity checks, private
+common helpers and optional precompiled headers. Pure moves require zero gated
+definition differences. Required V8 CI runs the 56 audit and regression cases.
+Each PR requires local full real-V8 tests and the protected Linux/Python 3.13 V8
+check. Each stage ends with the three-platform Python 3.11–3.14 release matrix.
+
+Stage 0 source `973ac99` passed Linux and Windows release CI and the equivalent
+local macOS arm64 release matrix, each lane `2090 passed, 2 skipped, 1 xfailed`.
+Hosted macOS jobs exhausted runner capacity. The local fallback used four clean
+wheel installations on macOS 26.5 and recorded source trees, Python versions and
+wheel digests. The temporary macOS helper workflow was restored with a SHA guard.
+`docs/page_state_split.md` records the verification routes and artifact evidence.
+Stage 1.1 starts with crypto, Base64 globals and UTF-8 encoding callbacks.
 
 ## Pending Decisions
 

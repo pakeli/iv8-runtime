@@ -1,6 +1,6 @@
 # Next Tasks
 
-**page_state.cpp split, stage 0 (`2026-11-08`, three-platform verification pending).** Structure only. 0.2 (`iv8::browser`, `internal/common.h`, inline trace tokens, PCH) merged in `c1d4e34`. 0.3 adds `tools/audit_move.py`. Progress: `docs/page_state_split.md`. M11-53 remains the next numbered feature.
+**Page source split preparation verified (`2026-11-14`).** Stage 0 source `973ac99` (tree `6751ff9c9f419d9b67054677744eef8a3d4f4646`) passed 56 audit checks and all 12 native wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Linux and Windows used hosted release CI. macOS arm64 used a local four-version release matrix after hosted runners reported capacity exhaustion. Stage 1.1 (crypto, Base64 globals and encoding extraction) follows. Evidence and artifacts are in `docs/page_state_split.md`. M11-53 remains the next numbered feature.
 
 **Latest verified open exposure regression repair (`2026-11-07`).** The default
 Window open stub is withdrawn. The other Web IDL corrections remain available.
@@ -42,12 +42,15 @@ Contract, artifact IDs, source/driver restoration and remaining limits:
 `docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
 numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-07`
+Last reviewed: `2026-11-14`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — Window-first (`2026-11-03`)
+## Current execution order — Page runtime source split (`2026-11-14`)
+
+The active maintenance task is stage 1.1 of `docs/page_state_split_plan.md`.
+The numbered Window feature queue below resumes after the approved source split.
 
 User-requested monitoring UX verified (`2026-11-04`): readable
 `read_access_trace(format="text")`, preserving default raw logs and aggregation.
@@ -99,7 +102,7 @@ artifact IDs, and local differential/UBSan results. Resume M11-53 afterward.
 
 At the user's direction, **Window now has higher priority than Document**:
 
-1. **Active — Window continuation.** M11-51 (Window event handler attributes;
+1. **Queued feature work — Window continuation.** M11-51 (Window event handler attributes;
    Priority 3aq below) and M11-52 (Window messaging; Priority 3ar below) are
    verified. M11-53 is a deterministic focus/visibility model
    (`getComputedStyle` only if a CSS model is approved) before returning to
