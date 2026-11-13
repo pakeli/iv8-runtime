@@ -87,7 +87,7 @@ must show **0 definition differences**; paste the output into the PR:
 ```bash
 python3 tools/audit_move.py --base master                # changed C++ files vs working tree
 python3 tools/audit_move.py --base master --head HEAD    # committed state only
-python3 -m pytest tools/test_audit_move.py -q            # the tool's own tests
+python3 -m pytest tools/test_audit_move.py test/test_audit_move_regressions.py -q
 ```
 
 The tool tokenizes both sides, splits namespace-scope entities and compares
@@ -97,6 +97,14 @@ definitions (bodies/initializers) are gated, counted as removed + added. New
 `inline`/`static` added to a moved *function* are listed for review. Variable
 specifiers are never ignored. Class members moved out of a class body (split
 stage 3.3) are not decomposed yet; extend the tool before that PR.
+
+Brace- and parenthesis-initialized variables retain their storage specifiers and
+initializer tokens. Parenthesized declarations whose type names cannot be
+resolved by the tokenizer are conservatively counted as definitions. Adding or
+changing an ambiguous forward declaration can therefore require manual review.
+Directive normalization preserves string and character literal contents,
+including whitespace, raw strings and comment markers inside literals. Spacing
+that distinguishes function-like and object-like macros is preserved as well.
 
 ## 4. Platform Notes
 

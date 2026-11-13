@@ -22,6 +22,9 @@ into a header requires it. Specifiers on variables are never ignored: whether a
 namespace-scope variable is `static`, `constexpr` or `inline` decides whether
 it has one address program-wide (plan section 3.1).
 
+Parenthesized declarations that cannot be distinguished from variable
+initializers without resolving C++ types are conservatively gated as definitions.
+
 Usage:
     tools/audit_move.py --base master                  # changed C++ files vs working tree
     tools/audit_move.py --base master --head HEAD      # committed head only
@@ -72,35 +75,47 @@ class TokenizeError(Exception):
     pass
 
 
-def _directive_text(raw: str) -> str:
-    """Normalize a preprocessor line: drop comments, collapse whitespace."""
+def _directive_text(raw: str, path: str, line: int) -> str:
+    """Normalize directive layout while preserving literal contents and spacing
+    between a macro name and its opening parenthesis."""
     out = []
     i = 0
-    in_str = False
+
+    def err(message):
+        return TokenizeError(f"{path}:{line}: {message}")
+
     while i < len(raw):
         c = raw[i]
-        if in_str:
-            out.append(c)
-            if c == "\\" and i + 1 < len(raw):
-                out.append(raw[i + 1])
-                i += 2
-                continue
-            if c == '"':
-                in_str = False
-        elif c == '"':
-            in_str = True
-            out.append(c)
-        elif raw.startswith("//", i):
+        literals = []
+        literal_end = _literal_at(raw, i, literals, path, line, err)
+        if literal_end is not None:
+            i, line = literal_end
+            out.append(literals[0].text)
+            continue
+        word = _IDENT.match(raw, i) or _NUMBER.match(raw, i)
+        if word:
+            out.append(word.group(0))
+            i = word.end()
+            continue
+        if raw.startswith("\\\n", i):
+            line += 1
+            i += 2
+            continue
+        if raw.startswith("//", i):
             break
-        elif raw.startswith("/*", i):
+        if raw.startswith("/*", i):
             end = raw.find("*/", i + 2)
             i = len(raw) if end < 0 else end + 2
-            out.append(" ")
+            if not out or out[-1] != " ":
+                out.append(" ")
             continue
+        if c.isspace():
+            if not out or out[-1] != " ":
+                out.append(" ")
         else:
             out.append(c)
         i += 1
-    text = " ".join("".join(out).split())
+    text = "".join(out).strip()
     # "# include" and "#include" are the same directive.
     return re.sub(r"^#\s*", "#", text)
 
@@ -142,6 +157,7 @@ def tokenize(source: str, path: str) -> list[Token]:
             continue
         if c == "#" and at_line_start:
             start, start_line = i, line
+            in_line_comment = False
             while i < n:
                 if source[i] == "\\" and source.startswith("\n", i + 1):
                     line += 1
@@ -149,6 +165,21 @@ def tokenize(source: str, path: str) -> list[Token]:
                     continue
                 if source[i] == "\n":
                     break
+                if in_line_comment:
+                    i += 1
+                    continue
+                if source.startswith("//", i):
+                    in_line_comment = True
+                    i += 2
+                    continue
+                literal_end = _literal_at(source, i, [], path, line, err)
+                if literal_end is not None:
+                    i, line = literal_end
+                    continue
+                word = _IDENT.match(source, i) or _NUMBER.match(source, i)
+                if word:
+                    i = word.end()
+                    continue
                 if source.startswith("/*", i):
                     end = source.find("*/", i + 2)
                     if end < 0:
@@ -157,21 +188,19 @@ def tokenize(source: str, path: str) -> list[Token]:
                     i = end + 2
                     continue
                 i += 1
-            raw = source[start:i].replace("\\\n", " ")
-            tokens.append(Token("directive", _directive_text(raw), path, start_line))
+            raw = source[start:i]
+            tokens.append(Token("directive", _directive_text(raw, path, start_line), path, start_line))
             continue
         at_line_start = False
 
+        literal_end = _literal_at(source, i, tokens, path, line, err)
+        if literal_end is not None:
+            i, line = literal_end
+            continue
         if _IDENT_START.match(c):
             m = _IDENT.match(source, i)
             word = m.group(0)
             after = m.end()
-            if word in _STRING_PREFIXES and after < n and source[after] == '"':
-                i, line = _string(source, i, after, word.endswith("R"), tokens, path, line, err)
-                continue
-            if word in {"u8", "u", "U", "L"} and after < n and source[after] == "'":
-                i, line = _char(source, i, after, tokens, path, line, err)
-                continue
             tokens.append(Token("ident", word, path, line))
             i = after
             continue
@@ -179,12 +208,6 @@ def tokenize(source: str, path: str) -> list[Token]:
             m = _NUMBER.match(source, i)
             tokens.append(Token("number", m.group(0), path, line))
             i = m.end()
-            continue
-        if c == '"':
-            i, line = _string(source, i, i, False, tokens, path, line, err)
-            continue
-        if c == "'":
-            i, line = _char(source, i, i, tokens, path, line, err)
             continue
         for p in _PUNCTUATORS:
             if source.startswith(p, i):
@@ -194,6 +217,18 @@ def tokenize(source: str, path: str) -> list[Token]:
         else:
             raise err(f"unexpected character {c!r}")
     return tokens
+
+
+def _literal_at(source, start, tokens, path, line, err):
+    """Consume a string or character literal at a token boundary, if present."""
+    word = _IDENT.match(source, start)
+    prefix = word.group(0) if word else ""
+    quote = word.end() if word else start
+    if quote < len(source) and source[quote] == '"' and prefix in _STRING_PREFIXES | {""}:
+        return _string(source, start, quote, prefix.endswith("R"), tokens, path, line, err)
+    if quote < len(source) and source[quote] == "'" and prefix in {"", "u8", "u", "U", "L"}:
+        return _char(source, start, quote, tokens, path, line, err)
+    return None
 
 
 def _string(source, start, quote, raw, tokens, path, line, err):
@@ -270,6 +305,13 @@ class Entity:
 
 _TYPE_KEYWORDS = {"class", "struct", "union", "enum"}
 _FUNCTION_SPECIFIERS = {"inline", "static"}
+_TYPE_WORDS = {
+    "void", "bool", "char", "char8_t", "char16_t", "char32_t", "wchar_t",
+    "short", "int", "long", "float", "double", "signed", "unsigned",
+    "const", "volatile", "auto", "typename", "class", "struct", "enum", "union",
+}
+_TYPE_QUERIES = {"decltype", "sizeof", "alignof", "alignas", "typeid", "noexcept",
+                 "__attribute__", "__declspec"}
 
 
 def _skip_template_header(texts: list[str]) -> int:
@@ -291,6 +333,56 @@ def _skip_template_header(texts: list[str]) -> int:
     return i
 
 
+def _closing_delimiter(texts: list[str], start: int, opening: str, closing: str) -> int:
+    depth = 0
+    index = start
+    while index < len(texts):
+        token = texts[index]
+        if opening == "<" and token in {"(", "[", "{"}:
+            nested_closing = {"(": ")", "[": "]", "{": "}"}[token]
+            index = _closing_delimiter(texts, index, token, nested_closing) + 1
+            continue
+        if token == opening:
+            depth += 1
+        elif token == closing:
+            depth -= 1
+        elif closing == ">" and token == ">>":
+            depth -= 2
+        if depth <= 0:
+            return index
+        index += 1
+    raise TokenizeError(f"unclosed {opening!r} in declaration")
+
+
+def _declarator_parentheses(texts: list[str]) -> tuple[int, int] | None:
+    """Find the declarator's parentheses, skipping type queries, templates and
+    array/attribute brackets. Both functions and direct initializers use them."""
+    index = _skip_template_header(texts)
+    while index < len(texts):
+        token = texts[index]
+        previous = texts[index - 1] if index else ""
+        if token in {"{", ";"} or (token == "=" and previous != "operator"):
+            return None
+        if token in _TYPE_QUERIES and texts[index + 1:index + 2] == ["("]:
+            index = _closing_delimiter(texts, index + 1, "(", ")") + 1
+            continue
+        if token == "[":
+            index = _closing_delimiter(texts, index, "[", "]") + 1
+            continue
+        if token == "<" and previous != "operator":
+            index = _closing_delimiter(texts, index, "<", ">") + 1
+            if texts[index:index + 1] == ["("]:
+                end = _closing_delimiter(texts, index, "(", ")")
+                if _clearly_function_parameters(texts[index + 1:end]):
+                    return index, end
+            continue
+        if token == "(" and previous not in _TYPE_WORDS:
+            if _IDENT.fullmatch(previous) or "operator" in texts[:index]:
+                return index, _closing_delimiter(texts, index, "(", ")")
+        index += 1
+    return None
+
+
 def _needs_semicolon(texts: list[str]) -> bool:
     """After a top-level `}` closes: does the entity continue to a `;`?
 
@@ -299,23 +391,22 @@ def _needs_semicolon(texts: list[str]) -> bool:
     Only tokens outside parentheses count, so default arguments (`int x = 0`)
     and parameter types (`struct tm*`) do not turn a function into a variable.
     """
-    head = texts[_skip_template_header(texts):]
-    parens = 0
-    seen_paren = False
-    for idx, t in enumerate(head):
-        if t == "(":
-            parens += 1
-            seen_paren = True
-        elif t == ")":
-            parens -= 1
-        elif parens == 0:
-            if t == "{":
-                return False
-            if t == "=" and (idx == 0 or head[idx - 1] != "operator"):
-                return True
-            if t in _TYPE_KEYWORDS and not seen_paren:
-                return True
-    return False
+    clause = _declarator_parentheses(texts)
+    if clause is None:
+        return True
+    tail = texts[clause[1] + 1:]
+    return not tail or tail[0] in {",", "=", ";"} or "{" not in tail
+
+
+def _clearly_function_parameters(texts: list[str]) -> bool:
+    """Recognize an unambiguous parameter list. A single unknown identifier
+    could name a type or an initializer value, so its changes stay gated."""
+    if not texts or texts[0] == "...":
+        return True
+    if texts[0] in _TYPE_WORDS:
+        return len(texts) == 1 or texts[1] not in {"(", "{"}
+    # A type followed directly by a parameter name cannot be an expression.
+    return len(texts) > 1 and bool(_IDENT.fullmatch(texts[0]) and _IDENT.fullmatch(texts[1]))
 
 
 def extract_entities(tokens: list[Token]) -> list[Entity]:
@@ -414,18 +505,19 @@ def _semicolon_entity_kind(texts: list[str]) -> str:
     if "{" in texts:
         return DEFINITION
     head = texts[_skip_template_header(texts):]
-    if head[:1] in (["extern"], ["friend"]) or head[:2] == ["using", "namespace"]:
-        return DECLARATION
     if head[:1] == ["using"] and "=" not in head:
         return DECLARATION
     if "=" in head and not (head.index("=") > 0 and head[head.index("=") - 1] == "operator"):
         # `= default;` / `= delete;` keep a prototype a declaration.
         tail = head[head.index("=") + 1 :]
         return DECLARATION if tail[:1] in (["default"], ["delete"]) and "(" in head else DEFINITION
+    if head[:1] in (["extern"], ["friend"]):
+        return DECLARATION
     if head and head[0] in _TYPE_KEYWORDS and len(head) <= 4:
         return DECLARATION  # class X; / enum class X : int;
-    if "(" in head:
-        return DECLARATION  # function prototype
+    clause = _declarator_parentheses(head)
+    if clause is not None and _clearly_function_parameters(head[clause[0] + 1:clause[1]]):
+        return DECLARATION
     return DEFINITION
 
 
