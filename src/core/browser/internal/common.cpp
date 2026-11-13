@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include <algorithm>
+#include <cctype>
 #include <stdexcept>
 
 namespace iv8::browser {
@@ -15,6 +17,13 @@ void verify_trace_token_identity(const TraceTokenAddresses& local) {
             "addresses in different translation units (they must be inline "
             "variables; see src/core/browser/internal/common.h)");
     }
+}
+
+std::string ascii_lower(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    return s;
 }
 
 }  // namespace iv8::browser

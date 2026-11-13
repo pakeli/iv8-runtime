@@ -16,6 +16,7 @@ every lane `2050 passed, 2 skipped, 1 xfailed`.
 | 0.1 local real-V8 loop | pakeli/iv8-runtime#15 | `973ac99` | local macOS matrix passed | 13,052 | — |
 | 0.2 `iv8::browser`, `internal/common.h`, inline tokens, PCH | pakeli/iv8-runtime#14 | `ae4163b` (merge `c1d4e34`) | V8 CI `42466767787`, `42467387443`; release-windows `42466768875` | 13,052 | n/a (intentional changes; tool added in 0.3) |
 | 0.3 `tools/audit_move.py` and regression fixes | pakeli/iv8-runtime#15 | `973ac99` | V8 CI `43467102840`, `43467112845` passed | 13,052 | 56 audit cases passed in required CI |
+| 1.1 crypto, Base64 globals, encoding and shared helpers | pakeli/iv8-runtime#16 | `a3dcb20` | V8 CI `43477576437`, `43477909432` passed | 12,637 | 431 identical definitions, 0 differences |
 
 Stage 0 native matrix passed all 12 lanes. Linux/Windows used hosted CI and macOS arm64 used the local release matrix described below.
 
@@ -73,4 +74,35 @@ The fallback driver commit was `a79c353b9a0ab7604c18fb98bcbb249b3e2f3b3d`.
 Restore commit `d35dd5b637249b38a3226dba69c9554c71708cb4` restored the original
 helper workflow blob `eb730d3e77a17d4d527e67646475385cebb2428c` using a SHA guard.
 The merge gate is `Linux x64 / Python 3.13 / V8` with strict status checks and
-administrator enforcement. Stage 1.1 extracts crypto, Base64 globals and encoding.
+administrator enforcement. PR #15 merged as `fcefbf1`; its final V8 checks were
+`43473957475` and `43473968706`. Main V8 CI `43475218937` passed.
+
+## Stage 1.1 verification (`2026-11-14`)
+
+The three leaf modules live under `src/core/browser/web/`. Platform RNG code is
+owned by `crypto.cpp`. Shared ASCII normalization lives in `internal/common.cpp`,
+and shared watch/access recording lives in `internal/trace_hooks.cpp`. The Page
+installer uses the private callback declarations. `page_state.cpp` decreases
+from 13,052 to **12,637 lines**.
+
+The move audit matches **431 definitions with 0 differences**. Local macOS
+arm64/Python 3.11 focused crypto, Base64, encoding, tracing, Web IDL and watch tests
+reported **192 passed, 1 xfailed**. The full real-V8 suite reported
+**2090 passed, 2 skipped, 1 xfailed**, and all **56 audit tests** passed.
+Reflection snapshots matched all eight affected functions and the order of all
+258 global keys. Logs and snapshots are under ignored
+`data/stage1-1-2026-11-14/` in the primary checkout.
+
+Verified source `a3dcb200ebea4a899a56526271968ffe5af586e9`, tree
+`ca1c0c7d0618a8c88b9191b67159de18add43206`. Required V8 CI `43477576437` and
+`43477909432` passed. The latter recorded 56 audit tests and the complete
+`2090 passed, 2 skipped, 1 xfailed` runtime suite.
+
+Standalone checks compiled all five browser translation units without PCH under
+`-Wall -Wextra -Werror`. Exceptions cover unused V8 header parameters and the
+existing `btoa` signed/unsigned comparison and `WatchHit` partial aggregate
+initializers. Those existing warnings are recorded for later cleanup in the
+plan's issue list. The source move preserves their original definitions.
+
+Stage 1.2 extracts URL and structured-clone code. The complete stage 1 platform
+matrix follows the remaining leaf slices, under the approved per-stage policy.
