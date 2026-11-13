@@ -396,3 +396,30 @@ A reload invalidates the complete context and its registry before replacing
 native backings. The operation guard and GIL boundary apply to all constructor
 and method callbacks. `docs/webidl_environment_semantics.md` defines the approved
 surface and capability behavior.
+
+## 14. Page runtime source layout (page_state.cpp split)
+
+The `2026-11-08` structural split (`docs/page_state_split_plan.md`, progress in
+`docs/page_state_split.md`) moves the Page runtime out of the single
+`src/core/page_state.cpp` translation unit into `src/core/browser/`. It does not
+change behavior, and the process/isolate/Page/monitoring separation above is
+unchanged.
+
+- Internals live in namespace `iv8::browser`, formerly an anonymous namespace.
+  Helpers used by a single file stay in that file's own anonymous namespace.
+- `src/core/browser/internal/common.h` (private, not under `include/`) holds the
+  shared V8 helpers and the access-trace identity tokens. The tokens are
+  `inline constexpr` so their addresses stay unique program-wide.
+  `PageState`'s constructor verifies this across translation units.
+- V8-linked builds precompile pybind11 and `v8_headers.h`
+  (`IV8_PRECOMPILE_HEADERS`).
+
+At the end of stage 0, `page_state.cpp` still holds all runtime code apart from
+`internal/common.*`. Later stages move leaf modules, the DOM data layer, host
+objects and monitoring, then split `install_page`.
+
+Stage 0 acceptance is recorded on source `973ac99` in `docs/page_state_split.md`.
+Linux and Windows used hosted CI. macOS arm64 used the same four-version
+build/install/test matrix locally after hosted runner capacity failures. All
+12 lanes passed with `2090 passed, 2 skipped, 1 xfailed`. Stage 1.1 is the next
+source extraction.
