@@ -274,3 +274,14 @@ standalone host headers/sources and **83 audit tests** passed. Focused tests:
 **201 passed, 1 xfailed**; full real-V8 tests: **2090 passed, 2 skipped,
 1 xfailed**. All **27 root object graphs** matched. `page_state.cpp` is **6,058
 lines**. Required V8 CI gates this slice; stage release acceptance remains pending.
+
+## Stage 3.5 — document tree mutation (`2026-11-14`)
+
+Ten unchanged DocumentHost tree/fragment/variadic-node implementations move into
+`host/document_tree_mutation.cpp`. They continue to use the same node pools,
+validation, detach/insert ordering and observer notification methods.
+The move audit matched **182 definitions, 0 differences**. Native syntax/link,
+standalone host headers/sources and **83 audit tests** passed. Focused tree/HTML/
+observer tests passed **137 tests**; the full real-V8 suite passed **2090 tests,
+2 skipped, 1 xfailed**. All **27 root object graphs** matched.
+`page_state.cpp` is **5,299 lines**. Required V8 CI gates this slice.
