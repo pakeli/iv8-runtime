@@ -86,7 +86,7 @@ worker wall bounds and no persisted Cookie/sensor values. It is not a product
 HTTP implementation and changes XHR method source; any live result using it
 must carry that qualification. No live request was made by the blocked command.
 
-Status: native release verified; server validation awaits explicit data-send approval.
+Status: native release verified. The bounded, explicitly authorized live result is recorded below; target Cookie state0 was not reached.
 No server-pass or final _abck root-cause claim.
 
 
@@ -117,3 +117,50 @@ original pushState TypeError at column 503099. Thus the parent object's absence
 is causally confirmed for the first local execution failure. It does not prove
 the cause of any server-side rejection or _abck state. Evidence is
 `history-removed-control/result.json`; live Jetstar requests have not run.
+
+
+## Authorized live verification (`2026-11-14`)
+
+The user explicitly approved a fresh session limited to www.jetstar.com, page and
+original collector retrieval plus at most two collector POSTs, with session
+Cookies/IP/device features/sensor_data, no account, no redirects and no persisted
+Cookie/sensor values. The earlier automatic-approval rejection is historical;
+authorization was received before any live POST.
+
+The first two entry checks stopped after homepage200 because the current HTML
+lists two different B3Co2H scripts. They issued zero POSTs. The final run selected
+the actual homepage src whose complete path matches the prior real collector
+request. Its freshly retrieved source hash matches the cached original:
+`1d9baa8754ebad40dc7d52940bef7ac6ec17710a26231968fc86c99808f13565`.
+
+| Checkpoint in the successful test setup | Result |
+|---|---|
+| Homepage / original collector GET | 200 / 200 |
+| Before-History SDK, same source/session/profile/adapter | pushState TypeError at column503099; zero POSTs |
+| History SDK | load completes; two POSTs; no first SDK error observed within bounded pumps |
+| Original collector POSTs | 201 / 201; body lengths1892 / 2751 |
+| Server-updated Cookie state | remains -1; final length805 |
+| Current state0 acceptance criterion | not reached |
+
+The test adapter bytes and environment were identical for both SDK cases. No
+baseline POST was allowed; all real POSTs came from the repaired SDK. Across the
+entire authorized test, three homepage GETs, one collector GET and exactly two
+POST attempts occurred. The two-POST budget is exhausted and sending stopped.
+
+This proves History's role in the first execution failure and the restored
+ability to run this collector into the test transport. It does not prove
+History's contribution to server scoring, nor that all business requests are
+rejected. No flight-search or account operation was performed.
+
+Remaining conditions are material: the JS XHR test adapter is non-native and may
+affect fingerprint collection; minimal HTML omits another current B3Co2H script
+and other upstream state; time/randomness are not frozen; curl TLS/profile and
+native-browser equivalence are not established. Further environment fixes need
+separate changes and per-repair evidence rather than attributing this server
+state to an untested API gap.
+
+Private local evidence (no raw Cookie/sensor persistence): ignored
+`data/jetstar-native-2026-11-14/live-history-03/result.json` and
+`online-history-verdict.json`. Request/response status, lengths, hashes and SDK
+identities are retained there. Runtime implementation/build/test files are
+unchanged by this verdict update.

@@ -1260,7 +1260,11 @@ Local verification passes 30 focused / 2120 runtime / 83 audit tests (runtime:
 the same full-suite counts. A same-build deletion control restores the original
 pushState failure, proving the first blocker. The unchanged
 collector passes load and next reaches unsupported XHR, so no final server
-root-cause or success claim is made. Stage 4 and larger subsystems remain held.
+root-cause or success claim is made. A subsequent, explicitly approved same-session
+comparison runs the original collector into two HTTP201 POSTs after History, but
+Cookie state stays -1. All two authorized POSTs are used; profile/adapter/upstream
+conditions remain open and no additional factor is attributed. Stage 4 and larger
+subsystems remain held.
 
 ## Pending Decisions
 

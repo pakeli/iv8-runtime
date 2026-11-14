@@ -493,6 +493,7 @@ unchanged. M1 execution/isolate/GIL/operation-guard ownership stays intact.
 Reference, bounded semantics and incremental integration criteria are in
 `docs/jetstar_environment_repair.md`; stage 4 monitoring extraction remains held.
 
-JET-01 source `dd67e49` passed all 12 native release lanes. Server verification
-is a separate approval-gated integration activity, not a product transport
-capability. Stage 4 remains held.
+JET-01 source `dd67e49` passed all 12 native release lanes. The explicitly approved server test
+uses an external JS transport adapter, not a product HTTP capability. It reaches
+two201 replies while Cookie state stays -1; the test budget is exhausted and
+remaining input/transport equivalence gaps are recorded separately. Stage 4 remains held.

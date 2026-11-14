@@ -1,6 +1,6 @@
 # Next Tasks
 
-**JET-01 History native release verified; server test pending (`2026-11-14`).** Source `dd67e49` (tree `060be77ce4668b1e1f6ce5aab084b9d310d6b74e`) passes all **12 Linux/Windows/macOS Python 3.11–3.14 lanes**, each **2120 passed, 2 skipped, 1 xfailed**. Local History tests **30 passed**; audit regressions **83 passed**. The unchanged Jetstar collector now completes load; its next error is asynchronous XHR unavailability. Removing history in a separate same-build negative control restores the original pushState error. Server success remains unverified and live data sending awaits explicit user approval. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
+**JET-01 History native release verified; bounded live test still state -1 (`2026-11-14`).** Native source `dd67e49` passes all 12 platform lanes (**2120 passed, 2 skipped, 1 xfailed** each). After explicit user data-send approval, a same-session comparison with the unchanged original collector and identical JS test XHR adapter confirmed: old SDK fails at pushState with zero POSTs; the History SDK loads and emits two real POSTs, both HTTP201, but final `_abck` remains **-1**. The authorized two-POST budget is exhausted. This confirms the first execution blocker, with no server-pass or final root-cause claim. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
 
 **Page split stage 3 verified (`2026-11-14`).** Source `2f02535` (tree `e0b9d47029c9ce78d37013d49ddcbd4368a7e817`) completes all seven host-object slices. `page_state.cpp` decreases from **8,774 to 2,852 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. The complete member-aware move audit matches **282 definitions, 0 differences**; **83 audit checks**, **29 object/prototype snapshots** and independent native compilation passed. Next is stage 4 monitoring extraction, outside this completed request. Evidence: `docs/page_state_split.md`.
 
@@ -59,8 +59,9 @@ task queue for Claude after chat-history loss.
 
 Stages 1 and 2 are verified; the user authorized stage 3 on `2026-11-14`.
 Stage 3 is verified. The user explicitly held stage 4 and authorized incremental
-Jetstar compatibility work. Complete JET-01 History release checks and keep
-per-repair local execution/server verdicts separate before adding another factor.
+Jetstar compatibility work. JET-01 native release checks are complete. Its authorized live comparison sent
+two POSTs (both201), but the final Cookie state stayed -1. Keep per-repair
+execution/server verdicts separate; this round has zero POST budget remaining.
 Navigator/profile and permission configuration form the small follow-up slice;
 iframe/Intl/graphics and product networking require their own approved boundaries.
 

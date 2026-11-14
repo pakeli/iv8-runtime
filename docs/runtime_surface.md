@@ -1,6 +1,6 @@
 # iv8-runtime Runtime Surface Index
 
-**JET-01 History native release verified; server test pending (`2026-11-14`).** Source `dd67e49` (tree `060be77ce4668b1e1f6ce5aab084b9d310d6b74e`) passes all **12 Linux/Windows/macOS Python 3.11–3.14 lanes**, each **2120 passed, 2 skipped, 1 xfailed**. Local History tests **30 passed**; audit regressions **83 passed**. The unchanged Jetstar collector now completes load; its next error is asynchronous XHR unavailability. Removing history in a separate same-build negative control restores the original pushState error. Server success remains unverified and live data sending awaits explicit user approval. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
+**JET-01 History native release verified; bounded live test still state -1 (`2026-11-14`).** Native source `dd67e49` passes all 12 platform lanes (**2120 passed, 2 skipped, 1 xfailed** each). After explicit user data-send approval, a same-session comparison with the unchanged original collector and identical JS test XHR adapter confirmed: old SDK fails at pushState with zero POSTs; the History SDK loads and emits two real POSTs, both HTTP201, but final `_abck` remains **-1**. The authorized two-POST budget is exhausted. This confirms the first execution blocker, with no server-pass or final root-cause claim. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
 
 **Page split stage 3 verified (`2026-11-14`).** Source `2f02535` (tree `e0b9d47029c9ce78d37013d49ddcbd4368a7e817`) completes all seven host-object slices. `page_state.cpp` decreases from **8,774 to 2,852 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. The complete member-aware move audit matches **282 definitions, 0 differences**; **83 audit checks**, **29 object/prototype snapshots** and independent native compilation passed. Next is stage 4 monitoring extraction, outside this completed request. Evidence: `docs/page_state_split.md`.
 
@@ -295,7 +295,7 @@ pause evidence (M9-3).
 
 Installed per generation by `install_page`:
 
-- **JET-01 bounded History (native release verified; server test pending)** — native
+- **JET-01 bounded History (native release verified; live target state not reached)** — native
   History object/prototype and methods; cloned state, same-document same-origin
   HTTP(S) push/replace, length and scrollRestoration. Location and Document URL
   reflect successful commits. Back/forward/go record offline traversal/reload
