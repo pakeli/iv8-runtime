@@ -19,6 +19,12 @@ every lane `2050 passed, 2 skipped, 1 xfailed`.
 | 1.1 crypto, Base64 globals, encoding and shared helpers | pakeli/iv8-runtime#16 | `a3dcb20` | V8 CI `43477576437`, `43477909432` passed | 12,637 | 431 identical definitions, 0 differences |
 | 1.2–1.8 remaining leaf modules | pakeli/iv8-runtime#17 | `f5dbea5` | 12 hosted release lanes passed | 10,065 | 403 identical definitions, 0 differences |
 | 2.1–2.4 pure C++ DOM data layer | pakeli/iv8-runtime#18 | `be5bdb4` | 12 hosted release lanes passed | 8,774 | 317 identical definitions, 0 differences |
+| 3.1 event targets | pakeli/iv8-runtime#19 | `4851127` | V8 CI `43558729900 / 43558735606` passed | 8,436 | 237 identical definitions, 0 differences |
+| 3.2 node declarations | pakeli/iv8-runtime#20 | `ebc7d5d` | V8 CI `43559124965 / 43559130046` passed | 8,048 | 235 identical definitions, 0 differences |
+| 3.3 DocumentHost members | pakeli/iv8-runtime#21 | `15dc26c` | V8 CI `43559837029 / 43559841756` passed | 6,957 | 276 identical definitions, 0 differences |
+| 3.4 collections and observers | pakeli/iv8-runtime#22 | `9d10cc9` | V8 CI `43560219147 / 43560228129` passed | 6,058 | 227 identical definitions, 0 differences |
+| 3.5 tree mutation | pakeli/iv8-runtime#23 | `4e67a6e` | V8 CI `43560598278 / 43560605912` passed | 5,299 | 182 identical definitions, 0 differences |
+| 3.6 node implementations | pakeli/iv8-runtime#24 | `e178ae4` | V8 CI `43561011629 / 43561017074` passed | 3,953 | 172 identical definitions, 0 differences |
 
 Stage 0 native matrix passed all 12 lanes. Linux/Windows used hosted CI and macOS arm64 used the local release matrix described below.
 
@@ -300,3 +306,29 @@ Focused tests: **235 passed, 1 xfailed**; complete real-V8 suite: **2090 passed,
 2 skipped, 1 xfailed**. All **27 root object graphs** matched. Required V8 CI
 gates this slice; only the Window/BOM/web slice remains before stage release
 acceptance.
+
+## Stage 3.7 — Window, Screen and Blob/FileReader (`2026-11-14`)
+
+The final slice extracts Screen and WindowEventTarget into unchanged inline-class
+headers, Window event handlers and postMessage native callbacks into their own
+modules, Window functions and metadata into dedicated sources, and Blob/FileReader
+callbacks into the web module. FileReader state retains its host-layer generation
+owner. The unchanged JS postMessage bootstrap remains in `bootstrap_scripts`.
+Page retains the original installer and its sequence. Shared tags have one
+constant definition and extern declarations; the event-handler array declaration
+retains its complete 18-entry bound for the installer's range iteration.
+
+Step 3.6 PR #24 merged as `3fc5171` after V8 checks `43561011629` and
+`43561017074`. The final slice audit matched **158 definitions, 0 differences**.
+The complete stage audit from stage 2 master `7c2f5aa`, using
+`--class-members DocumentHost`, matched **282 definitions, 0 differences**
+(210 changed file). Every new module is below 1,200 lines.
+
+Native syntax/link and independent module headers/sources without PCH passed
+under the established strict-warning exceptions. Focused Window/Blob/Web IDL
+tests passed **195 tests, 1 xfailed**; the complete real-V8 suite passed
+**2090 tests, 2 skipped, 1 xfailed**, and **83 audit tests** passed.
+The reflection comparison adds Blob and File to the 27 earlier roots, yielding
+**29 exact object/prototype graphs** against the installed stage 2 baseline.
+`page_state.cpp` is **2,852 lines**. Three-platform release verification follows
+the final stage PR; stage 4 is outside the current request.

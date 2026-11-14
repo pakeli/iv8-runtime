@@ -1235,9 +1235,10 @@ DocumentHost` audit gates its declaration contract/data and qualified method
 implementations independently, preserving defaults, access, qualifiers and all
 initializers. Unsupported member declarators fail closed; 27 added regressions
 bring focused audit checks to 83. Generation-owned FileReader state stays in the
-host layer; the later web module consumes it through DocumentHost. Local tests
-and reflection match the verified stage 2 baseline. Full-stage release acceptance
-remains pending until all seven slices complete.
+host layer; the later web module consumes it through DocumentHost. All seven slices are implemented; local tests
+and 29 reflected object graphs match the verified stage 2 baseline. The complete
+move audit matches 282 definitions with zero differences. Full-stage release
+acceptance remains pending until all three-platform wheel lanes pass.
 
 ## Pending Decisions
 
