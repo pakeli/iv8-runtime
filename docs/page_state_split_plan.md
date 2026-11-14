@@ -1,6 +1,6 @@
 # page_state.cpp 拆分方案
 
-状态：**阶段 0 验收完成，阶段 1.1 已通过单 PR 检查，下一步阶段 1.2**（方案确认于 `2026-11-08`）。基线为 `src/core/page_state.cpp`，13,058 行、570 KB。
+状态：**阶段 0、阶段 1 验收完成，下一步阶段 2**（方案确认于 `2026-11-08`）。基线为 `src/core/page_state.cpp`，13,058 行、570 KB。
 
 这是一项内部维护工作，不是 M11-53。它不改变任何 Python 或 JS 可见行为，也不改变绑定机制。
 
@@ -174,7 +174,7 @@ internal  <-  dom  <-  host  <-  window / bom / web  <-  page_state*.cpp
 
 ## 4. 分阶段步骤
 
-每一步都是一个独立 PR，满足三条硬性要求：**能编译、行为不变、Linux / Py3.13 V8 CI 通过**。
+按 `2026-11-14` 用户确认，阶段一剩余内容与阶段二分别汇总为阶段 PR。每个阶段先完成语法检查、搬运审计与测试，再提交 PR 并执行 V8 链接构建和平台验收。阶段二完成后等待用户确认。
 
 ### 阶段 0：准备（2–3 个 PR）
 
@@ -190,7 +190,7 @@ internal  <-  dom  <-  host  <-  window / bom / web  <-  page_state*.cpp
   - 给 CMake 加上新的源文件列表和预编译头。
 - **0.3 搬运审计脚本 `tools/audit_move.py`。** 先用 libclang 或简单的花括号匹配，提取旧文件里每个顶层定义的规范化 token 流；再提取新文件集合的同一组定义，逐个比对。纯搬运的 PR 必须输出"0 处差异"，结果贴在 PR 描述里。这样审查者不用逐行读几千行的 diff。
 
-### 阶段 1：叶子模块（约 8 个 PR，风险最低）
+### 阶段 1：叶子模块（已完成；1.1 独立 PR，1.2–1.8 汇总 PR）
 
 这些模块只依赖 `internal/` 和 `ContextState`，与 DOM 无关，可以并行处理：
 
@@ -205,7 +205,7 @@ internal  <-  dom  <-  host  <-  window / bom / web  <-  page_state*.cpp
 
 完成后预计 `page_state.cpp` 减少约 2,800 行。
 
-### 阶段 2：DOM 数据层（约 4 个 PR，不依赖 V8）
+### 阶段 2：DOM 数据层（按确认汇总为一个阶段 PR，不依赖 V8）
 
 1. `dom/dom_node`（含 detach / siblings）
 2. `dom/html_parser`、`dom/html_serializer`

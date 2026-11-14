@@ -428,5 +428,13 @@ Stage 1.1 source `a3dcb20` extracts `web/crypto`, `web/base64_globals` and
 and watch/access recording in `internal/trace_hooks.cpp`. Private headers expose
 callbacks to the existing Page installer. Platform entropy headers and the OS
 RNG stay with the crypto module. Local full real-V8 tests and the required
-Linux/Python 3.13 V8 check passed under the per-PR policy. The full stage 1
-release matrix follows the remaining leaf slices.
+Linux/Python 3.13 V8 check passed under the per-PR policy.
+
+Complete stage 1 source `f5dbea5` also extracts URL, structured clone, performance,
+event/capability callbacks, BOM hosts and the three unchanged JS bootstrap
+scripts. Small host classes retain their inline definitions in private headers.
+`PerformanceStore` and `MediaQueryListStore` keep their existing `iv8` types and
+Page ownership. Shared non-DOM event helpers live in `internal/event_support`.
+Extern constant declarations preserve one definition for cross-file identities.
+The installer retains its original sequence and bootstrap array sizes. All 12
+Linux/Windows/macOS release lanes passed; see `docs/page_state_split.md`.
