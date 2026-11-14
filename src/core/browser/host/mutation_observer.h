@@ -47,4 +47,11 @@ struct MutationObserverState {
     bool alive = true;
 };
 
+extern const v8::ExternalPointerTypeTag kMutationObserverTag;
+void mutation_observer_delivery(const v8::FunctionCallbackInfo<v8::Value>& info);
+void mutation_observer_constructor(const v8::FunctionCallbackInfo<v8::Value>& info);
+void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info);
+void mo_disconnect(const v8::FunctionCallbackInfo<v8::Value>& info);
+void mo_take_records(const v8::FunctionCallbackInfo<v8::Value>& info);
+
 }  // namespace iv8::browser

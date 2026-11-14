@@ -60,6 +60,9 @@ if(IV8_LINK_V8)
       src/core/html_entities.cpp
       src/core/page_state.cpp
       src/core/browser/host/document_host.cpp
+      src/core/browser/host/live_collection.cpp
+      src/core/browser/host/mutation_observer.cpp
+      src/core/browser/host/class_list.cpp
       src/core/browser/internal/text.cpp
       src/core/browser/dom/dom_node.cpp
       src/core/browser/dom/html_parser.cpp
