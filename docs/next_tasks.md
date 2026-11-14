@@ -1,6 +1,6 @@
 # Next Tasks
 
-**Page split stage 3 implemented, release verification pending (`2026-11-14`).** All seven host-object slices are implemented; `page_state.cpp` is **2,852 lines** (stage 2: 8,774). The complete member-aware move audit matches **282 definitions, 0 differences**. Native syntax/link, independent host/Window/BOM/web compilation, **83 audit tests**, **29 reflected object graphs** and the full real-V8 suite passed: **2090 passed, 2 skipped, 1 xfailed**. The final stage PR precedes the three-platform Python 3.11–3.14 release matrix. Progress: `docs/page_state_split.md`.
+**Page split stage 3 verified (`2026-11-14`).** Source `2f02535` (tree `e0b9d47029c9ce78d37013d49ddcbd4368a7e817`) completes all seven host-object slices. `page_state.cpp` decreases from **8,774 to 2,852 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. The complete member-aware move audit matches **282 definitions, 0 differences**; **83 audit checks**, **29 object/prototype snapshots** and independent native compilation passed. Next is stage 4 monitoring extraction, outside this completed request. Evidence: `docs/page_state_split.md`.
 
 **Page split stage 2 verified (`2026-11-14`).** Source `be5bdb4` (tree `cda6b32a807e3243a4ecb2b578e97d81eda92ded`) completes the pure C++ DOM data layer. `page_state.cpp` is **8,774 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Seven pure translation units passed independent strict compilation; the move audit matched **317 definitions with 0 differences**, 20,000 DOM differential cases passed under UBSan, 56 audit checks passed, and 17 reflected object graphs matched. Stage 3 was authorized on `2026-11-14`. Evidence: `docs/page_state_split.md`.
 
@@ -56,9 +56,9 @@ task queue for Claude after chat-history loss.
 ## Current execution order — Page runtime source split (`2026-11-14`)
 
 Stages 1 and 2 are verified; the user authorized stage 3 on `2026-11-14`.
-All stage 3 slices are implemented. Complete the final PR and all release lanes
-before claiming the stage verified. Stage 4 (monitoring extraction) remains next
-and is outside the current stage 3 request. The numbered Window feature queue resumes after the source split.
+Stage 3 is verified, including every release lane. Next is stage 4: extract
+DevToolsInspector and Reflect monitoring hooks. It is outside the completed
+stage 3 request; wait for the user to start it. The numbered Window feature queue resumes after the source split.
 
 User-requested monitoring UX verified (`2026-11-04`): readable
 `read_access_trace(format="text")`, preserving default raw logs and aggregation.

@@ -471,3 +471,8 @@ while Blob/FileReader callbacks live in `web`. All use the same original V8
 binding creation paths and Page-owned resources. Window metadata member definitions
 move files while their state stays in PageState. The installer, JS bootstraps and
 monitoring remain under their existing owners; monitoring extraction is stage 4.
+
+Complete stage 3 source `2f02535` passed all 12 hosted native release lanes.
+The full member-aware audit, standalone compilation and 29 object graphs
+validate the unchanged ownership and binding contracts. Source/tree, run and
+artifact evidence is in `docs/page_state_split.md`. Stage 4 remains next.
