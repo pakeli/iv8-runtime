@@ -1222,6 +1222,23 @@ Python 3.11–3.14 release lanes with the same full-suite counts. Artifact IDs a
 source/helper restoration records are in `docs/page_state_split.md`. Wait for
 the user's confirmation before starting stage 3.
 
+### 62. Split host objects with a member-aware move gate
+
+Stage 3 authorized `2026-11-14`. Its seven slices proceed in dependency order,
+with local syntax/full real-V8 tests before each PR, protected V8 CI before each
+merge, and all release lanes before complete-stage acceptance. The leaf APIs,
+installer order, ownership, bindings and native method shapes stay unchanged.
+
+Steps 3.1–3.2 move whole event/node-host declarations into private headers. Step
+3.3 separates 45 inline DocumentHost bodies. The explicit `--class-members
+DocumentHost` audit gates its declaration contract/data and qualified method
+implementations independently, preserving defaults, access, qualifiers and all
+initializers. Unsupported member declarators fail closed; 27 added regressions
+bring focused audit checks to 83. Generation-owned FileReader state stays in the
+host layer; the later web module consumes it through DocumentHost. Local tests
+and reflection match the verified stage 2 baseline. Full-stage release acceptance
+remains pending until all seven slices complete.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

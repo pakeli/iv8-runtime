@@ -25,6 +25,13 @@ it has one address program-wide (plan section 3.1).
 Parenthesized declarations that cannot be distinguished from variable
 initializers without resolving C++ types are conservatively gated as definitions.
 
+Opt-in --class-members CLASS decomposes the named class into its complete
+declaration/data contract and separately qualified member definitions. It
+preserves access, defaults, qualifiers and initializers while permitting inline
+bodies to move out of the class. Ordinary members, constructors and destructors
+are supported; unsupported member declarators fail closed. Other classes retain
+the original whole-definition gate.
+
 Usage:
     tools/audit_move.py --base master                  # changed C++ files vs working tree
     tools/audit_move.py --base master --head HEAD      # committed head only
@@ -69,6 +76,8 @@ class Token:
     text: str
     path: str
     line: int
+    start: int = dataclasses.field(default=0, compare=False)
+    end: int = dataclasses.field(default=0, compare=False)
 
 
 class TokenizeError(Exception):
@@ -189,7 +198,7 @@ def tokenize(source: str, path: str) -> list[Token]:
                     continue
                 i += 1
             raw = source[start:i]
-            tokens.append(Token("directive", _directive_text(raw, path, start_line), path, start_line))
+            tokens.append(Token("directive", _directive_text(raw, path, start_line), path, start_line, start, i))
             continue
         at_line_start = False
 
@@ -201,17 +210,17 @@ def tokenize(source: str, path: str) -> list[Token]:
             m = _IDENT.match(source, i)
             word = m.group(0)
             after = m.end()
-            tokens.append(Token("ident", word, path, line))
+            tokens.append(Token("ident", word, path, line, i, after))
             i = after
             continue
         if c.isdigit() or (c == "." and i + 1 < n and source[i + 1].isdigit()):
             m = _NUMBER.match(source, i)
-            tokens.append(Token("number", m.group(0), path, line))
+            tokens.append(Token("number", m.group(0), path, line, i, m.end()))
             i = m.end()
             continue
         for p in _PUNCTUATORS:
             if source.startswith(p, i):
-                tokens.append(Token("punct", p, path, line))
+                tokens.append(Token("punct", p, path, line, i, i + len(p)))
                 i += len(p)
                 break
         else:
@@ -260,7 +269,7 @@ def _string(source, start, quote, raw, tokens, path, line, err):
     if m:
         end = m.end()
     text = source[start:end]
-    tokens.append(Token("string", text, path, line))
+    tokens.append(Token("string", text, path, line, start, end))
     return end, line + text.count("\n")
 
 
@@ -276,7 +285,7 @@ def _char(source, start, quote, tokens, path, line, err):
             end += 1
             break
         end += 1
-    tokens.append(Token("char", source[start:end], path, line))
+    tokens.append(Token("char", source[start:end], path, line, start, end))
     return end, line
 
 
@@ -634,12 +643,133 @@ def changed_cpp_files(base: str, head: str | None) -> list[str]:
     return sorted({n for n in names if n.endswith(CPP_SUFFIXES)})
 
 
-def entities_of(sources: dict[str, str]) -> list[Entity]:
+def member_function_parts(tokens: list[Token]) -> tuple[int, int, int, int]:
+    """Return name start, parameter delimiters and body start for a method.
+
+    This deliberately rejects unsupported declarators instead of weakening the
+    definition gate. Constructor brace initializers precede the final body.
+    """
+    texts = [token.text for token in tokens]
+    clause = _declarator_parentheses(texts)
+    if clause is None or "friend" in texts[:clause[0]] or "operator" in texts[:clause[0]]:
+        raise TokenizeError("member audit requires an ordinary member or constructor declarator")
+    opening, closing = clause
+    name = opening - 1
+    if name > 0 and texts[name - 1] == "~":
+        name -= 1
+    depth = 0
+    for index in range(len(texts) - 1, -1, -1):
+        if texts[index] == "}":
+            depth += 1
+        elif texts[index] == "{":
+            depth -= 1
+            if depth == 0:
+                if index <= closing or "try" in texts[closing + 1:index]:
+                    break
+                return name, opening, closing, index
+    raise TokenizeError("member audit could not identify a function body")
+
+
+def member_declaration_tokens(tokens: list[Token]) -> list[Token]:
+    """Keep the complete declaration contract, excluding body/ctor initializers."""
+    _, _, closing, body = member_function_parts(tokens)
+    end = body
+    index = closing + 1
+    while index < body:
+        if tokens[index].text == "(":
+            index = _closing_delimiter([token.text for token in tokens], index, "(", ")") + 1
+            continue
+        if tokens[index].text == ":":
+            end = index
+            break
+        index += 1
+    return tokens[:end] + [dataclasses.replace(tokens[body], text=";")]
+
+
+def _without_parameter_defaults(tokens: list[Token]) -> list[Token]:
+    result: list[Token] = []
+    stack: list[str] = []
+    skipping = False
+    pairs = {")": "(", "]": "[", "}": "{", ">": "<"}
+    for token in tokens:
+        text = token.text
+        if not stack and text == "=":
+            skipping = True
+            continue
+        if not stack and text == ",":
+            skipping = False
+        if not skipping:
+            result.append(token)
+        if text in {"(", "[", "{"} or (skipping and text == "<"):
+            stack.append(text)
+        elif text in pairs and stack and stack[-1] == pairs[text]:
+            stack.pop()
+        elif text == ">>" and stack[-2:] == ["<", "<"]:
+            del stack[-2:]
+    if stack:
+        raise TokenizeError("member audit cannot resolve this parameter default")
+    return result
+
+
+def _member_implementation(entity: Entity, owner: str) -> Entity:
+    tokens = entity.tokens
+    name, opening, closing, body = member_function_parts(tokens)
+    prefix = [token for token in tokens[:name]
+              if token.text not in {"virtual", "static", "explicit"}]
+    qualifier = [dataclasses.replace(tokens[name], text=text) for text in (owner, "::")]
+    parameters = _without_parameter_defaults(tokens[opening + 1:closing])
+    suffix = [token for token in tokens[closing + 1:body] if token.text not in {"override", "final"}]
+    canonical = (prefix + qualifier + tokens[name:opening + 1] + parameters
+                 + tokens[closing:closing + 1] + suffix + tokens[body:])
+    return Entity(DEFINITION, canonical, entity.namespace)
+
+
+def _decompose_class(entity: Entity, owner: str) -> list[Entity]:
+    tokens = entity.tokens
+    opening = next(index for index, token in enumerate(tokens) if token.text == "{")
+    closing = max(index for index, token in enumerate(tokens) if token.text == "}")
+    body = tokens[opening + 1:closing]
+    clean: list[Token] = []
+    depth = 0
+    index = 0
+    while index < len(body):
+        text = body[index].text
+        if (depth == 0 and text in {"public", "protected", "private"}
+                and index + 1 < len(body) and body[index + 1].text == ":"):
+            index += 2
+            continue
+        clean.append(body[index])
+        depth += (text == "{") - (text == "}")
+        index += 1
+    positions = {id(token): index for index, token in enumerate(tokens)}
+    replacements = []
+    implementations = []
+    for member in extract_entities(clean):
+        texts = [token.text for token in member.tokens]
+        if member.kind != DEFINITION or _needs_semicolon(texts):
+            continue
+        replacements.append((positions[id(member.tokens[0])],
+                             positions[id(member.tokens[-1])] + 1,
+                             member_declaration_tokens(member.tokens)))
+        implementations.append(_member_implementation(member, owner))
+    skeleton = list(tokens)
+    for start, end, declaration in reversed(replacements):
+        skeleton[start:end] = declaration
+    return [dataclasses.replace(entity, tokens=skeleton), *implementations]
+
+
+def entities_of(sources: dict[str, str], member_classes: tuple[str, ...] = ()) -> list[Entity]:
     out = []
     for path, text in sorted(sources.items()):
         for entity in extract_entities(tokenize(text, path)):
-            normalize(entity)
-            out.append(entity)
+            texts = [token.text for token in entity.tokens]
+            owner = texts[1] if len(texts) > 1 and texts[0] in {"class", "struct"} else ""
+            parts = (_decompose_class(entity, owner)
+                     if owner in member_classes and entity.kind == DEFINITION and "{" in texts
+                     else [entity])
+            for part in parts:
+                normalize(part)
+                out.append(part)
     return out
 
 
@@ -772,6 +902,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--base", required=True, help="git ref of the code before the move")
     parser.add_argument("--head", help="git ref after the move (default: working tree)")
     parser.add_argument("--verbose", action="store_true", help="list every review item")
+    parser.add_argument("--class-members", action="append", default=[], metavar="CLASS",
+                        help="audit inline-to-out-of-line moves for the named class (repeatable)")
     parser.add_argument("files", nargs="*",
                         help="files compared on both sides (default: C++ files changed since --base)")
     args = parser.parse_args(argv)
@@ -779,8 +911,8 @@ def main(argv: list[str] | None = None) -> int:
         if not args.files:
             args.files = changed_cpp_files(args.base, args.head)
         report = compare(
-            entities_of(read_side(args.base, args.files)),
-            entities_of(read_side(args.head, args.files)),
+            entities_of(read_side(args.base, args.files), tuple(args.class_members)),
+            entities_of(read_side(args.head, args.files), tuple(args.class_members)),
         )
     except (RuntimeError, TokenizeError) as exc:
         print(f"audit_move: error: {exc}", file=sys.stderr)

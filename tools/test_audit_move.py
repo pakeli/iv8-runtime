@@ -16,6 +16,126 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import audit_move as am  # noqa: E402
 
 
+INLINE_MEMBERS = r'''
+namespace iv8::browser {
+class Doc : public Base {
+public:
+    explicit Doc(int value = 3) : value_{value}, other_(5) { value_ += other_; }
+    ~Doc() noexcept override { close(); }
+    int get(int delta = 0) const noexcept { return value_ + delta; }
+    static int scale(int value) { return value * 2; }
+    virtual const char* label() const { return "label"; }
+private:
+    int value_ = 7;
+    int other_;
+};
+}
+'''
+OUTLINE_MEMBERS = r'''
+namespace iv8::browser {
+class Doc : public Base {
+public:
+    explicit Doc(int value = 3);
+    ~Doc() noexcept override;
+    int get(int delta = 0) const noexcept;
+    static int scale(int value);
+    virtual const char* label() const;
+private:
+    int value_ = 7;
+    int other_;
+};
+Doc::Doc(int value) : value_{value}, other_(5) { value_ += other_; }
+Doc::~Doc() noexcept { close(); }
+int Doc::get(int delta) const noexcept { return value_ + delta; }
+int Doc::scale(int value) { return value * 2; }
+const char* Doc::label() const { return "label"; }
+}
+'''
+
+
+def member_audit(old=INLINE_MEMBERS, new=OUTLINE_MEMBERS):
+    return am.compare(am.entities_of({'a.cpp': old}, ('Doc',)),
+                      am.entities_of({'b.cpp': new}, ('Doc',)))
+
+
+def test_member_move_preserves_constructor_destructor_defaults_and_contract():
+    report = member_audit()
+    assert report.definition_differences == 0
+    assert len([item for item in report.old if item.kind == am.DEFINITION]) == 6
+
+
+@pytest.mark.parametrize(('before', 'after'), [
+    ('value_ + delta', 'value_ - delta'),
+    ('value * 2', 'value * 3'),
+    ('"label"', '"changed"'),
+    ('value_{value}', 'value_{9}'),
+    ('other_(5)', 'other_(6)'),
+    ('close();', 'other();'),
+    ('int value = 3', 'int value = 4'),
+    ('int value_ = 7', 'int value_ = 8'),
+    ('int other_;', 'long other_;'),
+    ('public:', 'protected:'),
+    ('static int scale', 'int scale'),
+    ('virtual const char* label', 'const char* label'),
+    ('explicit Doc', 'Doc'),
+    ('noexcept override;', 'override;'),
+    ('const noexcept;', 'noexcept;'),
+    ('public Base', 'public Different'),
+    ('delta = 0', 'delta = 1'),
+])
+def test_member_audit_gates_body_and_class_contract_changes(before, after):
+    assert before in OUTLINE_MEMBERS
+    assert member_audit(new=OUTLINE_MEMBERS.replace(before, after, 1)).definition_differences > 0
+
+
+def test_member_audit_gates_missing_implementation():
+    text = OUTLINE_MEMBERS.replace('int Doc::scale(int value) { return value * 2; }', '')
+    assert member_audit(new=text).definition_differences > 0
+
+
+def test_member_audit_gates_duplicate_implementation():
+    assert member_audit(new=OUTLINE_MEMBERS + '\nint Doc::scale(int value) { return value * 2; }').definition_differences > 0
+
+
+def test_member_audit_is_opt_in():
+    assert audit({'a.cpp': INLINE_MEMBERS}, {'b.cpp': OUTLINE_MEMBERS}).definition_differences > 0
+
+
+def test_member_audit_preserves_nested_data_definitions_and_lambda_initializers():
+    field = 'struct Nested { int count = 2; }; int value_ = [] { return 7; }();'
+    old = INLINE_MEMBERS.replace('int value_ = 7;', field)
+    new = OUTLINE_MEMBERS.replace('int value_ = 7;', field)
+    assert member_audit(old, new).definition_differences == 0
+    assert member_audit(old, new.replace('count = 2', 'count = 3')).definition_differences > 0
+
+
+def test_member_audit_preserves_nested_parameter_defaults():
+    old = 'class Doc { public: int f(int n = helper(1, 2), int m = 3) { return n + m; } };'
+    new = 'class Doc { public: int f(int n = helper(1, 2), int m = 3); }; int Doc::f(int n, int m) { return n + m; }'
+    assert member_audit(old, new).definition_differences == 0
+
+
+@pytest.mark.parametrize('method', ['int operator()() { return 1; }', 'friend int helper() { return 1; }'])
+def test_member_audit_rejects_unsupported_declarators(method):
+    with pytest.raises(am.TokenizeError):
+        am.entities_of({'a.cpp': 'class Doc { ' + method + ' };'}, ('Doc',))
+
+
+def test_token_source_offsets_cover_literals_comments_and_braces():
+    source = 'int f(/* skip */ int x) { return x + sizeof(R"x(})x"); }'
+    for token in am.tokenize(source, 'test.cpp'):
+        assert source[token.start:token.end] == token.text
+
+
+def test_member_audit_cli_gates_an_implementation_change(monkeypatch):
+    sources = {'before': INLINE_MEMBERS, 'after': OUTLINE_MEMBERS}
+    monkeypatch.setattr(am, 'read_side', lambda ref, paths: {'sample.cpp': sources[ref]})
+    arguments = ['--base', 'before', '--head', 'after', '--class-members', 'Doc', 'sample.cpp']
+    assert am.main(arguments) == 0
+    sources['after'] = OUTLINE_MEMBERS.replace('value * 2', 'value * 3')
+    assert am.main(arguments) == 1
+
+
 def audit(old: dict[str, str], new: dict[str, str]) -> am.Report:
     return am.compare(am.entities_of(old), am.entities_of(new))
 

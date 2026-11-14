@@ -1,6 +1,6 @@
 # Next Tasks
 
-**Page split stage 3 active (`2026-11-14`).** The user authorized the host-object stage. Step 3.1 is merged (PR #19). Step 3.2 extracts the unchanged Node/Element/CharacterData/Fragment class declarations into `host/node_hosts.h`, retaining their existing inline bodies and out-of-line implementation locations. Syntax/build, local tests and reflection precede PR submission; the protected V8 check gates each slice. Full platform release acceptance follows the complete stage. Progress: `docs/page_state_split.md`.
+**Page split stage 3 active (`2026-11-14`).** The user authorized the host-object stage. Steps 3.1–3.2 are merged (PRs #19–#20). Step 3.3 extracts 45 inline DocumentHost methods into `host/document_host.cpp` and keeps its declaration contract and generation-owned state in private headers. The opt-in member audit checks class contracts and relocated definitions. Syntax/build, local tests and reflection precede PR submission; the protected V8 check gates each slice. Full platform release acceptance follows the complete stage. Progress: `docs/page_state_split.md`.
 
 **Page split stage 2 verified (`2026-11-14`).** Source `be5bdb4` (tree `cda6b32a807e3243a4ecb2b578e97d81eda92ded`) completes the pure C++ DOM data layer. `page_state.cpp` is **8,774 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Seven pure translation units passed independent strict compilation; the move audit matched **317 definitions with 0 differences**, 20,000 DOM differential cases passed under UBSan, 56 audit checks passed, and 17 reflected object graphs matched. Stage 3 was authorized on `2026-11-14`. Evidence: `docs/page_state_split.md`.
 
@@ -56,8 +56,8 @@ task queue for Claude after chat-history loss.
 ## Current execution order — Page runtime source split (`2026-11-14`)
 
 Stages 1 and 2 are verified; the user authorized stage 3 on `2026-11-14`.
-Execute the seven host-object slices in dependency order, beginning with event
-targets. The numbered Window feature queue resumes after the source split.
+Steps 3.1–3.2 are merged; continue the seven slices in dependency order with
+DocumentHost member extraction (3.3). The numbered Window feature queue resumes after the source split.
 
 User-requested monitoring UX verified (`2026-11-04`): readable
 `read_access_trace(format="text")`, preserving default raw logs and aggregation.

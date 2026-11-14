@@ -233,3 +233,29 @@ Page until step 3.6; the document back-pointer is forward-declared.
 PCH passed. Focused tests: **235 passed, 1 xfailed**; full real-V8 tests:
 **2090 passed, 2 skipped, 1 xfailed**. All **56 audit tests** passed, and **27
 reflected root object graphs** matched. The required V8 check gates this slice.
+
+## Stage 3.3 — DocumentHost members (`2026-11-14`)
+
+PR #20 merged as `1defe22` after V8 checks `43559124965` and `43559130046`.
+The **45** previously inline DocumentHost methods now have out-of-line bodies in
+`host/document_host.cpp`; `document_host.h` retains the class declaration,
+defaults, access levels and member layout. The unchanged state/binding types live
+in their host headers. `host/file_reader_state.h` holds the generation-owned
+FileReader state so DocumentHost need not depend on the later web callback module.
+Callback implementations remain in Page for steps 3.4 and 3.7.
+
+The move audit's opt-in `--class-members DocumentHost` decomposes only the named
+class into its complete declaration/data contract and qualified method bodies.
+Constructors/destructors, default arguments, access, qualifiers, field and
+constructor initializers are gated. Unsupported member declarators fail closed;
+other classes keep their existing whole-definition gate. **27 new regressions**
+cover accepted moves, changed bodies/contracts, missing/duplicate implementations,
+unsupported declarators, token source spans and CLI exit status, for **83 passed**
+audit checks including the original 56.
+
+The native syntax/link build passed. The member-aware move audit reports
+**276 identical definitions, 0 differences**. Focused tests passed **235 tests,
+1 xfailed**, full real-V8 tests passed **2090 tests, 2 skipped, 1 xfailed**, and
+**27 reflected root object graphs** matched. Independent host headers and the
+new source compile without PCH under the established strict-warning exceptions.
+`page_state.cpp` is **6,957 lines**. Required V8 CI follows this PR.

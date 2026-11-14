@@ -226,7 +226,7 @@ internal  <-  dom  <-  host  <-  window / bom / web  <-  page_state*.cpp
 6. `host/element_properties`、`host/element_methods`、`host/character_data_host`、`host/document_fragment_host`
 7. `bom/screen`、`window/window_event_target`、`window/window_event_handlers`、`window/post_message`、`window/window_functions`、`window/window_metadata`、`web/blob_file_reader`（依赖 `DocumentHost`，所以放在这里）
 
-第 3 步是整个方案里唯一一个**大批量移动内联函数体**的 PR，审计脚本必须覆盖到它。
+第 3 步是整个方案里唯一一个**大批量移动内联函数体**的 PR，审计脚本必须覆盖到它。阶段 3.3 使用 `tools/audit_move.py --class-members DocumentHost`：类声明/数据布局与成员函数体分别门控，默认参数、访问级别、修饰符、构造初始化器与函数体均保留检查；不支持的成员声明会明确失败。
 
 ### 阶段 4：分离监控层（约 2 个 PR）
 
