@@ -86,5 +86,34 @@ worker wall bounds and no persisted Cookie/sensor values. It is not a product
 HTTP implementation and changes XHR method source; any live result using it
 must carry that qualification. No live request was made by the blocked command.
 
-Status: locally verified; platform release/server verification pending.
+Status: native release verified; server validation awaits explicit data-send approval.
 No server-pass or final _abck root-cause claim.
+
+
+## Native release verification (`2026-11-14`)
+
+Verified source `dd67e49e0b183da06086fc71d1c4a96f783d1600`, tree
+`060be77ce4668b1e1f6ce5aab084b9d310d6b74e`.
+
+| Platform (Python 3.11–3.14) | Run | Artifact IDs | Per-lane result |
+|---|---|---|---|
+| linux | `43571858718` | `iv8-linux-manylinux2_28-wheels`: `14104354052` | 2120 passed, 2 skipped, 1 xfailed |
+| windows | `43571861832` | `iv8-windows-wheel-cp3.11`: `14103494722`, `iv8-windows-wheel-cp3.12`: `14104358699`, `iv8-windows-wheel-cp3.13`: `14104513241`, `iv8-windows-wheel-cp3.14`: `14103669480` | 2120 passed, 2 skipped, 1 xfailed |
+| macos | `43571934345` | `iv8-macos-arm64-wheel-cp3.11`: `14105225568`, `iv8-macos-arm64-wheel-cp3.12`: `14104662497`, `iv8-macos-arm64-wheel-cp3.13`: `14105020965`, `iv8-macos-arm64-wheel-cp3.14`: `14105270055` | 2120 passed, 2 skipped, 1 xfailed |
+
+All 12 hosted lanes pass with pinned V8 15.0.245.19. Required V8 checks
+`43571708966` and `43571716293` pass. The macOS helper pins both checkouts
+to the same implementation source; restore commit
+`a525e69738327d2978ed3a2355ee7eb092a2fdc7` restores original workflow blob
+`eb730d3e77a17d4d527e67646475385cebb2428c` under a SHA guard.
+
+The release receipt is ignored `data/jetstar-native-2026-11-14/build-verification.json`.
+Later handoff commits change documentation only and retain the verified
+implementation/build/test sources.
+
+A same-native-build negative control deletes only window.history in a separate
+setup script, retaining the original collector bytes. Load again fails with the
+original pushState TypeError at column 503099. Thus the parent object's absence
+is causally confirmed for the first local execution failure. It does not prove
+the cause of any server-side rejection or _abck state. Evidence is
+`history-removed-control/result.json`; live Jetstar requests have not run.

@@ -1256,7 +1256,9 @@ History surface/behavior uses an isolated Chrome157 reference, while old
 Chrome156 captures remain immutable. State serialization's Delegate has matching
 no-RTTI/PCH-free compilation; Page-owned V8 handle teardown remains unchanged.
 Local verification passes 30 focused / 2120 runtime / 83 audit tests (runtime:
-2 skipped, 1 xfailed). Platform release verification is pending. The unchanged
+2 skipped, 1 xfailed). Source `dd67e49` passed all 12 platform release lanes with
+the same full-suite counts. A same-build deletion control restores the original
+pushState failure, proving the first blocker. The unchanged
 collector passes load and next reaches unsupported XHR, so no final server
 root-cause or success claim is made. Stage 4 and larger subsystems remain held.
 
