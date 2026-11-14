@@ -1,4 +1,4 @@
-name: release-macos-page-stage3-2f02535-20261114
+name: release-macos
 
 # Phase 9 / D: build macOS arm64 wheels (cp311-cp314) with V8 linked, on
 # GitHub's macos-15 (Apple Silicon) runner. Mirrors release-linux.yml /
@@ -29,8 +29,6 @@ jobs:
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: 2f02535fe2ec1a0131ea192f0446935f3129f4d1
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -66,8 +64,6 @@ jobs:
         python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: 2f02535fe2ec1a0131ea192f0446935f3129f4d1
       - name: Restore V8 monolith cache (with retries)
         id: v8cache
         uses: ./.github/actions/restore-v8-cache
