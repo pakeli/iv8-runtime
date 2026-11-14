@@ -133,5 +133,5 @@ and Linux/Android platform ambiguity are preserved. The function performs no
 configuration repair and asserts no universal browser identity rule.
 
 Implementation is complete; verification receipts are recorded in
-`docs/offline_scenarios_report.md`. All-platform release verification remains
-separate from local diagnostic-tool acceptance.
+`docs/offline_scenarios_report.md`. Subsequent cross-platform coverage of these
+tests is recorded by `docs/named_access_restore_report.md`.

@@ -1,8 +1,10 @@
 # Next Tasks
 
-**Caller configuration alignment locally accepted (`2026-11-14`).** The user clarified that request/Page configuration consistency takes priority over speculative runtime repair. Shared configuration and per-request identity guards are applied to Customs/NMPA/Epub; the private project Jetstar driver explicitly uses supported macOS `chrome150` in both installed clients. Local full suite: **2314 passed, 2 skipped, 1 xfailed**. No live request or SDK/native change. See `docs/request_configuration_report.md`; new all-platform release verification is pending. Select further runtime work only from demonstrated browser/API differences; M11-53 remains the next numbered feature and stage 4 remains held.
+**NAMED-01 release verified (`2026-11-15`).** Source `374c81b` restores Window/form named access and preserves History. All 12 release lanes pass 56 focused tests, then Linux/macOS **2340 passed, 2 skipped, 1 xfailed** or Windows **2338 passed, 4 skipped, 1 xfailed**. Mainline integration is PR #29; exact receipts are in `docs/named_access_restore_report.md`. Preserve this combined regression gate for future SDK replacement. M11-53 stays the next numbered feature; stage 4 remains held. The separate candidate callback-metadata diff remains a tracked follow-up, not part of this port.
 
-**Latest implemented tooling (`2026-11-14`): unified offline scenarios and environment diagnostics.** `tools/run_offline_scenarios.py` now unifies local replay, asset/runtime hashes, process/time budgets, first observed errors, checks and environment consistency. Usage/boundary: `docs/offline_scenarios.md`; local verification: `docs/offline_scenarios_report.md`. This tools-only change does not advance the browser milestone or claim an all-platform release.
+**Previous caller configuration alignment (`2026-11-14`).** Shared identity and per-request guards are deployed; native/client distinction and external receipts are in `docs/request_configuration_report.md`. Its tests are now covered by the NAMED-01 release. Continue selecting repairs from observed mismatches rather than configuration warnings alone.
+
+**Previous tooling (`2026-11-14`): unified offline scenarios and environment diagnostics.** Its boundary and historical local evidence remain in `docs/offline_scenarios.md` / `docs/offline_scenarios_report.md`; the subsequent NAMED-01 release includes its tests.
 
 **JET-01 History native release verified; bounded live test still state -1 (`2026-11-14`).** Native source `dd67e49` passes all 12 platform lanes (**2120 passed, 2 skipped, 1 xfailed** each). After explicit user data-send approval, a same-session comparison with the unchanged original collector and identical JS test XHR adapter confirmed: old SDK fails at pushState with zero POSTs; the History SDK loads and emits two real POSTs, both HTTP201, but final `_abck` remains **-1**. The authorized two-POST budget is exhausted. This confirms the first execution blocker, with no server-pass or final root-cause claim. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
 
@@ -54,22 +56,21 @@ Contract, artifact IDs, source/driver restoration and remaining limits:
 `docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
 numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-14`
+Last reviewed: `2026-11-15`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — configuration consistency before runtime repair (`2026-11-14`)
+## Current execution order — after NAMED-01 restoration (`2026-11-15`)
 
-Unified offline diagnostics and the subsequent caller configuration alignment
-are implemented and locally accepted. The user clarified that HTTP client and
-Page inputs must agree before attributing failures to missing runtime APIs.
-See `docs/offline_scenarios_report.md` and `docs/request_configuration_report.md`.
-Use the shared request configuration and pinned replay for subsequent checks.
-Navigator/permissions fixes require observed browser/API evidence; configuration
-warnings alone do not justify a runtime patch. M11-53 focus/visibility remains
-the next numbered feature. Page time-model changes, product networking,
-iframe/Worker and graphics remain separate proposals.
+Offline diagnostics, caller configuration alignment and the user-prioritized
+named-access restoration are implemented; the combined release passes all 12
+lanes. Keep History and named-access acceptance together before any future SDK
+replacement. Review the separate candidate callback-metadata diff only within
+its own browser-derived boundary. M11-53 focus/visibility remains the next
+numbered feature. Navigator/permissions repairs need observed API evidence;
+Page time-model changes, product networking, iframe/Worker and graphics remain
+separate proposals.
 
 Stages 1 and 2 are verified; the user authorized stage 3 on `2026-11-14`.
 Stage 3 is verified. The user explicitly held stage 4 and authorized incremental

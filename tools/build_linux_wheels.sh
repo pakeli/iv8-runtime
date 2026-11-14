@@ -86,6 +86,7 @@ for PY in "${PYTHONS[@]}"; do
   "$PY/bin/python" -m venv "$venv"
   "$venv/bin/pip" install -q "$whl" "pytest>=7"
   ( cd /tmp && "$venv/bin/python" -c "import iv8; assert 'site-packages' in iv8.__file__, iv8.__file__; assert iv8._v8_linked, 'V8 not linked'; print('$tag import ok:', iv8._v8_runtime_version)" )
+  ( cd /tmp && "$venv/bin/python" -m pytest "$ROOT/test/test_history.py" "$ROOT/test/test_epub_named_properties.py" -q )
   ( cd /tmp && "$venv/bin/python" -m pytest "$ROOT/test" )
 done
 

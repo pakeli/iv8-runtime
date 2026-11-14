@@ -243,6 +243,21 @@ v8::Local<v8::Object> web_interface_prototype(
     return prototype;
 }
 
+bool replace_window_properties_prototype(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> prototype) {
+    auto parent = web_interface_prototype(isolate, context, "EventTarget");
+    auto window = web_interface_prototype(isolate, context, "Window");
+    if (prototype.IsEmpty() || parent.IsEmpty() || window.IsEmpty()) return false;
+    const auto registry_slot = v8::Private::ForApi(isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8.webidl.prototype.WindowProperties"));
+    return prototype->SetPrototype(context, parent).FromMaybe(false) &&
+        prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
+            v8::String::NewFromUtf8Literal(isolate, "WindowProperties"),
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum)).FromMaybe(false) &&
+        window->SetPrototype(context, prototype).FromMaybe(false) &&
+        context->Global()->SetPrivate(context, registry_slot, prototype).FromMaybe(false);
+}
+
 void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context,
                              v8::FunctionCallback factory, v8::Local<v8::Value> data) {
     v8::Local<v8::Function> function;

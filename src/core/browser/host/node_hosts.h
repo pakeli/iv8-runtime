@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "iv8/browser_compatibility.h"
@@ -52,6 +53,15 @@ public:
     std::string trace_object_type() const override { return "element"; }
     std::string trace_label() const override { return node_->tag; }
     std::string prototype_key() const override { return html_document_ ? html_element_interface(node_->tag) : "Element"; }
+    bool has_named_properties() const override {
+        return html_document_ && node_->tag == "form";
+    }
+    std::vector<std::string> named_property_names() const override;
+    v8::MaybeLocal<v8::Value> named_property(
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const std::string& name) override;
+    std::vector<DomNode*> named_controls() const;
+    void prune_past_named_controls();
 
     std::vector<std::string> property_names() const override {
         std::vector<std::string> names = {
@@ -315,6 +325,9 @@ public:
 
 
 private:
+    // Successful single-control lookups remember names in access order. Backing
+    // nodes remain owned by the DocumentHost for this complete Page generation.
+    std::vector<std::pair<std::string, DomNode*>> past_named_controls_;
     bool html_document_ = true;
     // M4-A-3/M11-48: shared node-argument helper lives in NodeHost::node_of_arg.
     DomNode* node_of_arg(v8::Local<v8::Value> value) {

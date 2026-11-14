@@ -15,6 +15,9 @@
 namespace iv8::browser {
 
 std::vector<DomNode*> DocumentHost::collection_nodes(const LiveCollectionBinding& binding) const {
+    if (binding.kind == "window-name" || binding.kind == "form-name") {
+        return named_collection_nodes(binding);
+    }
     const auto tokens = split_class_tokens(binding.query);
     const auto predicate = binding.kind == "tag" ? tag_predicate(binding.query) :
         std::function<bool(const DomNode*)>([tokens](const DomNode* node) {
