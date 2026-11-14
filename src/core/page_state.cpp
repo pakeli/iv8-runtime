@@ -31,6 +31,13 @@
 #include "browser/host/event_target.h"
 #include "browser/host/node_hosts.h"
 #include "browser/host/document_host.h"
+#include "browser/bom/screen.h"
+#include "browser/window/window_event_target.h"
+#include "browser/window/window_functions.h"
+#include "browser/window/window_event_handlers.h"
+#include "browser/window/post_message.h"
+#include "browser/web/blob_file_reader.h"
+#include "browser/window/window_metadata.h"
 #include "browser/dom/dom_node.h"
 #include "browser/dom/html_parser.h"
 #include "browser/dom/html_serializer.h"
@@ -237,71 +244,7 @@ class DocumentHost;  // ElementHost holds a back-pointer to its document
 // owning context's isolate is disposed (PageState wires this into ContextState's
 // teardown hook).
 
-class ScreenHost : public EventTargetHost {
-public:
-    explicit ScreenHost(const HostEnvironment* environment)
-        : environment_(environment), orientation_(environment) {}
 
-    std::string global_name() const override { return "screen"; }
-    std::string prototype_key() const override { return "Screen"; }
-    std::string trace_object_type() const override { return "screen"; }
-
-    std::vector<std::string> property_names() const override {
-        return {"width",      "height",     "availWidth", "availHeight",
-                "availLeft",  "availTop",   "colorDepth", "pixelDepth",
-                "orientation"};
-    }
-
-    std::vector<std::string> method_names() const override { return event_method_names(); }
-
-    v8::Local<v8::Value> get_property(v8::Isolate* isolate,
-                                      v8::Local<v8::Context> context,
-                                      const std::string& name) override {
-        if (name == "width") {
-            return v8::Integer::New(isolate, environment_->screen_width);
-        }
-        if (name == "height") {
-            return v8::Integer::New(isolate, environment_->screen_height);
-        }
-        if (name == "availWidth") {
-            return v8::Integer::New(isolate, environment_->avail_width);
-        }
-        if (name == "availHeight") {
-            return v8::Integer::New(isolate, environment_->avail_height);
-        }
-        // M11-35: reported available origin (independent configured values).
-        if (name == "availLeft") {
-            return v8::Integer::New(isolate, environment_->avail_left);
-        }
-        if (name == "availTop") {
-            return v8::Integer::New(isolate, environment_->avail_top);
-        }
-        if (name == "colorDepth") {
-            return v8::Integer::New(isolate, environment_->color_depth);
-        }
-        if (name == "pixelDepth") {
-            return v8::Integer::New(isolate, environment_->pixel_depth);
-        }
-        // M11-35: deterministic orientation derived from the reported screen
-        // dimensions. Step 5 exposes it as a nested HostObject.
-        if (name == "orientation") {
-            return make_host_object(isolate, context, &orientation_);
-        }
-        return v8::Undefined(isolate);
-    }
-
-    v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
-        const v8::FunctionCallbackInfo<v8::Value>& args) override {
-        v8::Local<v8::Value> result;
-        if (handle_event_method(isolate, context, name, args, result)) return result;
-        return v8::Undefined(isolate);
-    }
-
-private:
-    const HostEnvironment* environment_;
-    ScreenOrientationHost orientation_;
-};
 
 // M3-4 window event target. window / globalThis / self stay the intrinsic global
 // object (M2-2, so window === globalThis === self and globals live on it); this
@@ -309,121 +252,7 @@ private:
 // add/remove/dispatch semantics (inherited from EventTargetHost). It is NOT
 // installed as a named global host object. Shared EventTarget methods resolve
 // its backing through the context's private Window host slot.
-class WindowEventTarget : public EventTargetHost {
-public:
-    std::string global_name() const override { return {}; }
-    std::string prototype_key() const override { return "Window"; }
-    std::string trace_object_type() const override { return "window"; }
-    std::string trace_label() const override { return "window"; }
-    std::vector<std::string> property_names() const override { return {}; }
-    std::vector<std::string> method_names() const override { return event_method_names(); }
-    v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
-                                      const std::string&) override {
-        return v8::Undefined(isolate);
-    }
-    v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
-        const v8::FunctionCallbackInfo<v8::Value>& args) override {
-        watch_record(isolate, "window", name);
-        v8::Local<v8::Value> result;
-        if (handle_event_method(isolate, context, name, args, result)) return result;
-        return v8::Undefined(isolate);
-    }
 
-    // M11-51: release IDL event handler attributes with the ordinary listeners.
-    void release_v8_handles() noexcept override {
-        EventTargetHost::release_v8_handles();
-        for (auto& entry : event_handlers_) {
-            entry.second.Reset();
-        }
-        event_handlers_.clear();
-    }
-
-    v8::Local<v8::Value> get_event_handler(v8::Isolate* isolate,
-                                           const std::string& name) {
-        auto it = event_handlers_.find(event_type_for_handler(name));
-        if (it == event_handlers_.end() || it->second.IsEmpty()) {
-            return v8::Null(isolate);
-        }
-        return it->second.Get(isolate);
-    }
-
-    void set_event_handler(v8::Isolate* isolate, const std::string& name,
-                           v8::Local<v8::Value> value) {
-        const std::string type = event_type_for_handler(name);
-        auto it = event_handlers_.find(type);
-        if (!value->IsFunction()) {
-            // WebIDL EventHandler? treats non-callable (including null and
-            // undefined) as null.
-            if (it != event_handlers_.end()) {
-                it->second.Reset();
-                event_handlers_.erase(it);
-            }
-            return;
-        }
-        v8::Local<v8::Function> callback = value.As<v8::Function>();
-        if (it == event_handlers_.end()) {
-            event_handlers_.emplace(
-                type, v8::Global<v8::Function>(isolate, callback));
-        } else {
-            it->second.Reset(isolate, callback);
-        }
-    }
-
-protected:
-    // M11-51: IDL event handler attributes are non-capture listeners. They run
-    // after the regular listener snapshot at this target, for at-target (2) and
-    // bubbling (3) phases; the capture phase (1) never invokes them. A handler's
-    // false return marks a cancelable event as defaultPrevented, and thrown
-    // exceptions are swallowed like listener errors.
-    void invoke_event_handler(v8::Isolate* isolate,
-                              v8::Local<v8::Context> context,
-                              v8::Local<v8::Object> event,
-                              v8::Local<v8::Value> receiver, int phase,
-                              const std::string& type) override {
-        if (phase == 1) {
-            return;
-        }
-        auto it = event_handlers_.find(type);
-        if (it == event_handlers_.end() || it->second.IsEmpty()) {
-            return;
-        }
-        v8::Local<v8::Function> handler = it->second.Get(isolate);
-        v8::Local<v8::Value> event_arg = event;
-        v8::Local<v8::Value> result;
-        v8::TryCatch try_catch(isolate);
-        const bool called =
-            handler->Call(context, receiver, 1, &event_arg).ToLocal(&result);
-        if (!called || try_catch.HasCaught()) {
-            state_from_isolate(isolate)->record_async_error(isolate, context, try_catch, "listener");
-            try_catch.Reset();
-            return;
-        }
-        if (!result->IsFalse()) {
-            return;
-        }
-        v8::Local<v8::Value> cancelable;
-        if (event->Get(context, v8_string(isolate, "cancelable"))
-                .ToLocal(&cancelable) &&
-            cancelable->BooleanValue(isolate)) {
-            (void)event->Set(context, v8_string(isolate, "defaultPrevented"),
-                             v8::True(isolate));
-        }
-    }
-
-private:
-    // Handler accessors are named `on<type>`; dispatch looks handlers up by the
-    // bare event type (`load`, `message`, ...). Normalize at the get/set boundary
-    // so both paths share one key space.
-    static std::string event_type_for_handler(const std::string& name) {
-        if (name.size() > 2 && name[0] == 'o' && name[1] == 'n') {
-            return name.substr(2);
-        }
-        return name;
-    }
-
-    std::unordered_map<std::string, v8::Global<v8::Function>> event_handlers_;
-};
 
 // M11-8 FileReader state. The listener store reuses EventTargetHost; the object
 // itself is a plain JS instance whose prototype methods dispatch back here via a
@@ -630,32 +459,11 @@ private:
 // ContextState from the isolate embedder-data slot and delegates to its timer
 // registry. They run during eval, i.e. under the context operation guard.
 
-void register_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info,
-                             bool repeating) {
-    v8::Isolate* isolate = info.GetIsolate();
-    ContextState* state = state_from_isolate(isolate);
-    if (state == nullptr || info.Length() < 1 || !info[0]->IsFunction()) {
-        return;  // invalid call: no timer registered, returns undefined
-    }
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::Function> callback = info[0].As<v8::Function>();
-    std::int32_t delay = 0;
-    if (info.Length() > 1) {
-        delay = info[1]->Int32Value(context).FromMaybe(0);
-    }
-    const std::int64_t id = state->register_timer(callback, delay, repeating);
-    info.GetReturnValue().Set(static_cast<double>(id));
-}
 
-void set_timeout_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "setTimeout");  // M9-2
-    register_timer_callback(info, /*repeating=*/false);
-}
 
-void set_interval_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "setInterval");  // M9-2
-    register_timer_callback(info, /*repeating=*/true);
-}
+
+
+
 
 // --- M11-4 microtasks: JS-visible queueMicrotask.
 //
@@ -666,17 +474,7 @@ void set_interval_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // Page.run_jobs() performs the checkpoint. The callback must be a function;
 // unlike the permissive rAF/idle host functions, a non-callable argument throws
 // a JS TypeError before anything is queued.
-void queue_microtask_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "queueMicrotask");  // M9-2
-    v8::Isolate* isolate = info.GetIsolate();
-    if (info.Length() < 1 || !info[0]->IsFunction()) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(
-                isolate, "queueMicrotask: callback must be a function")));
-        return;
-    }
-    isolate->EnqueueMicrotask(info[0].As<v8::Function>());
-}
+
 
 // --- M11-2 animation frames: JS-visible requestAnimationFrame /
 // cancelAnimationFrame. Bare global functions like the M2-4 timers, reaching the
@@ -688,34 +486,11 @@ void queue_microtask_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // timestamp as the callback's only argument; legacy frames do not advance that
 // clock. Nothing fires until Page.run_animation_frame() (or the M11-30 facade)
 // runs the queue.
-void request_animation_frame_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "requestAnimationFrame");  // M9-2
-    v8::Isolate* isolate = info.GetIsolate();
-    ContextState* state = state_from_isolate(isolate);
-    if (state == nullptr || info.Length() < 1 || !info[0]->IsFunction()) {
-        return;  // invalid call: nothing queued, returns undefined
-    }
-    const std::int64_t handle =
-        state->register_animation_frame(info[0].As<v8::Function>());
-    info.GetReturnValue().Set(static_cast<double>(handle));
-}
+
 
 // cancelAnimationFrame(handle): drop a not-yet-run callback. Its handle space is
 // separate from the timer ids, so it does NOT cancel a setTimeout/setInterval.
-void cancel_animation_frame_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "cancelAnimationFrame");  // M9-2
-    v8::Isolate* isolate = info.GetIsolate();
-    ContextState* state = state_from_isolate(isolate);
-    if (state == nullptr || info.Length() < 1) {
-        return;
-    }
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    const std::int64_t handle =
-        static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
-    state->cancel_animation_frame(handle);
-}
+
 
 // --- M11-3 idle callbacks: JS-visible requestIdleCallback / cancelIdleCallback.
 // Bare global functions like the M2-4 timers and the M11-2 frame globals, reaching
@@ -732,84 +507,15 @@ void cancel_animation_frame_callback(
 // this phase rejects a malformed value loudly rather than silently reinterpreting
 // it. A valid `timeout` is RECORDED ONLY: no real timeout firing semantics exist
 // this phase (there is no clock). Unknown option keys are ignored.
-void request_idle_callback_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "requestIdleCallback");  // M9-2
-    v8::Isolate* isolate = info.GetIsolate();
-    ContextState* state = state_from_isolate(isolate);
-    if (state == nullptr || info.Length() < 1 || !info[0]->IsFunction()) {
-        return;  // invalid call: nothing queued, returns undefined
-    }
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    std::int32_t timeout = -1;  // absent
-    if (info.Length() > 1 && !info[1]->IsUndefined() && !info[1]->IsNull()) {
-        if (!info[1]->IsObject()) {
-            isolate->ThrowException(v8::Exception::TypeError(
-                v8::String::NewFromUtf8Literal(
-                    isolate, "requestIdleCallback: options must be an object")));
-            return;
-        }
-        v8::Local<v8::Object> options = info[1].As<v8::Object>();
-        v8::Local<v8::Value> value;
-        if (!options->Get(context, v8_string(isolate, "timeout")).ToLocal(&value)) {
-            return;  // the getter threw
-        }
-        if (!value->IsUndefined()) {
-            if (!value->IsNumber()) {
-                isolate->ThrowException(v8::Exception::TypeError(
-                    v8::String::NewFromUtf8Literal(
-                        isolate,
-                        "requestIdleCallback: options.timeout must be a number")));
-                return;
-            }
-            const double ms = value.As<v8::Number>()->Value();
-            if (std::isnan(ms) || std::isinf(ms) || ms < 0.0) {
-                isolate->ThrowException(v8::Exception::TypeError(
-                    v8::String::NewFromUtf8Literal(
-                        isolate,
-                        "requestIdleCallback: options.timeout must be a "
-                        "non-negative finite number")));
-                return;
-            }
-            // Clamp to int32 range; the value is recorded only, never a deadline.
-            timeout = static_cast<std::int32_t>(
-                ms > 2147483647.0 ? 2147483647.0 : ms);
-        }
-    }
-    const std::int64_t handle =
-        state->register_idle_callback(info[0].As<v8::Function>(), timeout);
-    info.GetReturnValue().Set(static_cast<double>(handle));
-}
+
 
 // cancelIdleCallback(handle): drop a not-yet-run callback. Its handle space is
 // separate from the timer ids and the animation-frame handles, so it cancels
 // neither a setTimeout/setInterval nor a requestAnimationFrame.
-void cancel_idle_callback_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "cancelIdleCallback");  // M9-2
-    v8::Isolate* isolate = info.GetIsolate();
-    ContextState* state = state_from_isolate(isolate);
-    if (state == nullptr || info.Length() < 1) {
-        return;
-    }
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    const std::int64_t handle =
-        static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
-    state->cancel_idle_callback(handle);
-}
+
 
 // Shared by clearTimeout and clearInterval (single id space, like browsers).
-void clear_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    ContextState* state = state_from_isolate(isolate);
-    if (state == nullptr || info.Length() < 1) {
-        return;
-    }
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    const std::int64_t id =
-        static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
-    state->clear_timer(id);
-}
+
 
 // --- M11-36 deterministic dialogs ------------------------------------------
 //
@@ -817,23 +523,13 @@ void clear_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // dialog globals are deterministic stubs: alert/print do nothing, confirm
 // returns false, and prompt returns null. They never block and never mutate
 // page state.
-void alert_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "alert");
-}
 
-void confirm_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "confirm");
-    info.GetReturnValue().Set(v8::False(info.GetIsolate()));
-}
 
-void prompt_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "prompt");
-    info.GetReturnValue().Set(v8::Null(info.GetIsolate()));
-}
 
-void print_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "print");
-}
+
+
+
+
 
 // --- M11-50 deterministic window scroll / focus / OS-window stubs ------------
 //
@@ -842,49 +538,6 @@ void print_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // accept any arguments, change no state, and return undefined. scrollX/scrollY
 // and the pageXOffset/pageYOffset aliases consequently stay 0 (see
 // window_metadata_value). Each call still participates in the M9-2 watch channel.
-void window_scroll_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "scroll");
-}
-
-void window_scroll_to_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "scrollTo");
-}
-
-void window_scroll_by_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "scrollBy");
-}
-
-void window_focus_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "focus");
-}
-
-void window_blur_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "blur");
-}
-
-void window_move_by_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "moveBy");
-}
-
-void window_move_to_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "moveTo");
-}
-
-void window_resize_by_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "resizeBy");
-}
-
-void window_resize_to_callback(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "resizeTo");
-}
-
-void window_stop_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "stop");
-}
 
 
 
@@ -911,47 +564,32 @@ void window_stop_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 
 
-v8::Local<v8::Private> window_location_slot(v8::Isolate* isolate) {
-    return v8::Private::ForApi(isolate,
-        v8::String::NewFromUtf8Literal(isolate, "iv8.window.location"));
-}
 
-void window_location_get(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    auto isolate = info.GetIsolate();
-    auto context = isolate->GetCurrentContext();
-    if (info.This() != context->Global()) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(isolate, "Illegal invocation")));
-        return;
-    }
-    v8::Local<v8::Value> location;
-    if (context->Global()->GetPrivate(context, window_location_slot(isolate)).ToLocal(&location))
-        info.GetReturnValue().Set(location);
-}
 
-void window_location_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    auto isolate = info.GetIsolate();
-    auto context = isolate->GetCurrentContext();
-    if (info.This() != context->Global()) {
-        isolate->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(isolate, "Illegal invocation")));
-        return;
-    }
-    v8::Local<v8::Value> location;
-    if (!context->Global()->GetPrivate(context, window_location_slot(isolate)).ToLocal(&location) ||
-        !location->IsObject()) return;
-    auto value = info.Length() ? info[0] : v8::Local<v8::Value>(v8::Undefined(isolate));
-    (void)location.As<v8::Object>()->Set(context, v8_string(isolate, "href"), value);
-}
 
-void install_global_function(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                             v8::Local<v8::Object> global, const std::string& name,
-                             v8::FunctionCallback callback) {
-    v8::Local<v8::Function> fn;
-    if (!make_web_method(isolate, context, name,
-            web_method_length("window", name), callback).ToLocal(&fn)) return;
-    (void)global->Set(context, v8_string(isolate, name), fn);
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // --- M11-6 event subclasses --------------------------------------------------
@@ -976,8 +614,7 @@ void install_global_function(v8::Isolate* isolate, v8::Local<v8::Context> contex
 // functions' Data. V8 15.0 requires an ExternalPointerTypeTag on External::New /
 // External::Value; the default suffices for this single pointer type and MUST
 // match between New (install_page) and Value (below).
-constexpr v8::ExternalPointerTypeTag kWindowEventsTag =
-    v8::kExternalPointerTypeTagDefault;
+
 
 
 
@@ -986,65 +623,22 @@ constexpr v8::ExternalPointerTypeTag kWindowEventsTag =
 // handler, assigning null/undefined/non-callable clears it, and the getter
 // reports null when unset. The supported names are a bounded set of common
 // Window handlers; arbitrary `onfoo` names remain ordinary global properties.
-const char* const kWindowEventHandlerNames[] = {
-    "onload",        "onunload",        "onbeforeunload", "onerror",
-    "onresize",      "onscroll",        "onfocus",        "onblur",
-    "onhashchange",  "onpopstate",      "onmessage",      "onstorage",
-    "ononline",      "onoffline",       "onpagehide",     "onpageshow",
-    "onunhandledrejection",              "onrejectionhandled",
-};
 
-std::string window_handler_name(v8::Isolate* isolate,
-                                v8::Local<v8::Name> property) {
-    v8::String::Utf8Value utf8(isolate, property);
-    return *utf8 != nullptr
-               ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
-               : std::string();
-}
 
-void window_event_handler_getter(
-    v8::Local<v8::Name> property,
-    const v8::PropertyCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    auto* target = static_cast<WindowEventTarget*>(
-        info.Data().As<v8::External>()->Value(kWindowEventsTag));
-    info.GetReturnValue().Set(
-        target->get_event_handler(isolate,
-                                  window_handler_name(isolate, property)));
-}
 
-void window_event_handler_setter(
-    v8::Local<v8::Name> property, v8::Local<v8::Value> value,
-    const v8::PropertyCallbackInfo<void>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    auto* target = static_cast<WindowEventTarget*>(
-        info.Data().As<v8::External>()->Value(kWindowEventsTag));
-    target->set_event_handler(isolate, window_handler_name(isolate, property),
-                              value);
-}
+
+
+
+
 
 // M11-52: window.postMessage is a JS bootstrap wrapper around these hidden
 // natives. The wrapper validates/coerces arguments, clones the message with the
 // captured structuredClone, builds a MessageEvent, and schedules the dispatch
 // on the captured setTimeout queue. dispatch() itself runs from that timer task
 // and uses the ordinary window event-target path (listeners + onmessage).
-void window_post_message_dispatch(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    if (info.Length() < 1 || !info[0]->IsObject()) {
-        return;
-    }
-    auto* target = static_cast<EventTargetHost*>(
-        info.Data().As<v8::External>()->Value(kWindowEventsTag));
-    target->dispatch_event(isolate, context, info[0].As<v8::Object>(),
-                           context->Global());
-}
 
-void window_post_message_record(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", "postMessage");
-}
+
+
 
 
 
@@ -1068,569 +662,72 @@ void window_post_message_record(
 // at a generation-owned state; reads complete on the existing run_jobs()
 // microtask checkpoint, so no new pump is introduced.
 
-constexpr v8::ExternalPointerTypeTag kBlobTag =
-    v8::kExternalPointerTypeTagDefault;
-constexpr v8::ExternalPointerTypeTag kFileReaderTag =
-    v8::kExternalPointerTypeTagDefault;
 
-v8::Local<v8::Private> blob_bytes_key(v8::Isolate* isolate) {
-    return v8::Private::ForApi(
-        isolate, v8::String::NewFromUtf8Literal(isolate, "iv8::Blob::bytes"));
-}
 
-v8::Local<v8::Private> blob_type_key(v8::Isolate* isolate) {
-    return v8::Private::ForApi(
-        isolate, v8::String::NewFromUtf8Literal(isolate, "iv8::Blob::type"));
-}
 
-v8::Local<v8::Private> file_reader_state_key(v8::Isolate* isolate) {
-    return v8::Private::ForApi(
-        isolate,
-        v8::String::NewFromUtf8Literal(isolate, "iv8::FileReader::state"));
-}
 
-void throw_blob_type_error(v8::Isolate* isolate, const char* message) {
-    isolate->ThrowException(v8::Exception::TypeError(
-        v8::String::NewFromUtf8(isolate, message).ToLocalChecked()));
-}
 
-bool blob_read_bytes(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                     v8::Local<v8::Value> value,
-                     std::vector<std::uint8_t>* out) {
-    out->clear();
-    if (!value->IsObject()) {
-        return false;
-    }
-    v8::Local<v8::Value> stored;
-    if (!value.As<v8::Object>()
-             ->GetPrivate(context, blob_bytes_key(isolate))
-             .ToLocal(&stored) ||
-        !stored->IsArrayBuffer()) {
-        return false;
-    }
-    const v8::Local<v8::ArrayBuffer> buffer = stored.As<v8::ArrayBuffer>();
-    const std::size_t length = buffer->ByteLength();
-    if (length > 0) {
-        const auto* data = static_cast<const std::uint8_t*>(buffer->Data());
-        out->assign(data, data + length);
-    }
-    return true;
-}
 
-void append_bytes(std::vector<std::uint8_t>* out, const std::uint8_t* data,
-                  std::size_t length) {
-    if (length > 0) {
-        out->insert(out->end(), data, data + length);
-    }
-}
 
-bool blob_append_part(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                      v8::Local<v8::Value> value,
-                      std::vector<std::uint8_t>* out) {
-    std::vector<std::uint8_t> bytes;
-    if (blob_read_bytes(isolate, context, value, &bytes)) {
-        append_bytes(out, bytes.data(), bytes.size());
-        return true;
-    }
-    if (value->IsArrayBuffer()) {
-        const v8::Local<v8::ArrayBuffer> buffer = value.As<v8::ArrayBuffer>();
-        append_bytes(out,
-                     static_cast<const std::uint8_t*>(buffer->Data()),
-                     buffer->ByteLength());
-        return true;
-    }
-    if (value->IsArrayBufferView()) {
-        const v8::Local<v8::ArrayBufferView> view =
-            value.As<v8::ArrayBufferView>();
-        const auto* base =
-            static_cast<const std::uint8_t*>(view->Buffer()->Data());
-        append_bytes(out, base + view->ByteOffset(), view->ByteLength());
-        return true;
-    }
-    v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
-        return false;
-    }
-    v8::String::Utf8Value utf8(isolate, str);
-    if (*utf8 != nullptr) {
-        append_bytes(out, reinterpret_cast<const std::uint8_t*>(*utf8),
-                     static_cast<std::size_t>(utf8.length()));
-    }
-    return true;
-}
 
-bool blob_type_from_options(v8::Isolate* isolate,
-                            v8::Local<v8::Context> context,
-                            v8::Local<v8::Value> options, std::string* out) {
-    out->clear();
-    if (!options->IsObject()) {
-        return true;
-    }
-    v8::Local<v8::Value> value;
-    if (!options.As<v8::Object>()
-             ->Get(context, v8_string(isolate, "type"))
-             .ToLocal(&value)) {
-        return false;
-    }
-    if (value->IsUndefined()) {
-        return true;
-    }
-    v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
-        return false;
-    }
-    v8::String::Utf8Value utf8(isolate, str);
-    if (*utf8 != nullptr) {
-        *out = ascii_lower(
-            std::string(*utf8, static_cast<std::size_t>(utf8.length())));
-    }
-    return true;
-}
 
-void set_blob_field(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                    v8::Local<v8::Object> self, const char* name,
-                    v8::Local<v8::Value> value) {
-    (void)self->DefineOwnProperty(
-        context, v8::String::NewFromUtf8(isolate, name).ToLocalChecked(), value,
-        v8::ReadOnly);
-}
 
-bool blob_initialize(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                     v8::Local<v8::Value> parts, v8::Local<v8::Value> options,
-                     v8::Local<v8::Object> self) {
-    std::vector<std::uint8_t> bytes;
-    if (!parts->IsUndefined() && !parts->IsNull()) {
-        if (!parts->IsArray()) {
-            throw_blob_type_error(isolate, "Blob: parts must be an Array");
-            return false;
-        }
-        const v8::Local<v8::Array> array = parts.As<v8::Array>();
-        const std::uint32_t length = array->Length();
-        for (std::uint32_t i = 0; i < length; i++) {
-            v8::Local<v8::Value> part;
-            if (!array->Get(context, i).ToLocal(&part)) {
-                return false;
-            }
-            if (!blob_append_part(isolate, context, part, &bytes)) {
-                return false;
-            }
-        }
-    }
-    std::string type;
-    if (!blob_type_from_options(isolate, context, options, &type)) {
-        return false;
-    }
-    v8::Local<v8::ArrayBuffer> buffer =
-        v8::ArrayBuffer::New(isolate, bytes.size());
-    if (!bytes.empty()) {
-        std::memcpy(buffer->Data(), bytes.data(), bytes.size());
-    }
-    (void)self->SetPrivate(context, blob_bytes_key(isolate), buffer);
-    (void)self->SetPrivate(context, blob_type_key(isolate),
-                           v8_string(isolate, type));
-    set_blob_field(isolate, context, self, "size",
-                   v8::Number::New(isolate, static_cast<double>(bytes.size())));
-    set_blob_field(isolate, context, self, "type", v8_string(isolate, type));
-    return true;
-}
 
-void blob_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    if (!event_construct_check(info, "Blob")) {
-        return;
-    }
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    (void)blob_initialize(isolate, context, info[0], info[1], info.This());
-}
 
-void file_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    if (!event_construct_check(info, "File")) {
-        return;
-    }
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    if (!blob_initialize(isolate, context, info[0], info[2], info.This())) {
-        return;
-    }
-    std::string name;
-    if (info.Length() > 1 && !info[1]->IsUndefined()) {
-        v8::Local<v8::String> str;
-        if (!info[1]->ToString(context).ToLocal(&str)) {
-            return;
-        }
-        v8::String::Utf8Value utf8(isolate, str);
-        if (*utf8 != nullptr) {
-            name.assign(*utf8, static_cast<std::size_t>(utf8.length()));
-        }
-    }
-    set_blob_field(isolate, context, info.This(), "name",
-                   v8_string(isolate, name));
-    double last_modified = 0;
-    if (info.Length() > 2 && info[2]->IsObject()) {
-        v8::Local<v8::Value> value;
-        if (!info[2]
-                 .As<v8::Object>()
-                 ->Get(context, v8_string(isolate, "lastModified"))
-                 .ToLocal(&value)) {
-            return;
-        }
-        if (!value->IsUndefined()) {
-            v8::Local<v8::Number> number;
-            if (!value->ToNumber(context).ToLocal(&number)) {
-                return;
-            }
-            const double value_number = number->Value();
-            if (std::isfinite(value_number)) {
-                last_modified = std::trunc(value_number);
-            }
-        }
-    }
-    set_blob_field(isolate, context, info.This(), "lastModified",
-                   v8::Number::New(isolate, last_modified));
-}
 
-DocumentHost* document_from_blob_data(v8::Local<v8::Value> data) {
-    if (!data->IsExternal()) {
-        return nullptr;
-    }
-    return static_cast<DocumentHost*>(
-        data.As<v8::External>()->Value(kBlobTag));
-}
 
-bool blob_bytes_or_throw(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                         v8::Local<v8::Object> self,
-                         std::vector<std::uint8_t>* out) {
-    if (blob_read_bytes(isolate, context, self, out)) {
-        return true;
-    }
-    throw_blob_type_error(isolate, "Illegal invocation");
-    return false;
-}
 
-bool blob_index_arg(v8::Local<v8::Context> context, v8::Local<v8::Value> value,
-                    std::size_t size, std::size_t default_value,
-                    std::size_t* out) {
-    if (value->IsUndefined()) {
-        *out = default_value;
-        return true;
-    }
-    v8::Local<v8::Number> number;
-    if (!value->ToNumber(context).ToLocal(&number)) {
-        return false;
-    }
-    double index = number->Value();
-    if (std::isnan(index)) {
-        index = 0;
-    }
-    if (index < 0) {
-        index = static_cast<double>(size) + index;
-    }
-    if (index < 0) {
-        index = 0;
-    }
-    if (index > static_cast<double>(size)) {
-        index = static_cast<double>(size);
-    }
-    *out = static_cast<std::size_t>(index);
-    return true;
-}
 
-void blob_slice(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    std::vector<std::uint8_t> bytes;
-    if (!blob_bytes_or_throw(isolate, context, info.This(), &bytes)) {
-        return;
-    }
-    std::size_t start = 0;
-    std::size_t end = bytes.size();
-    if (!blob_index_arg(context, info[0], bytes.size(), 0, &start) ||
-        !blob_index_arg(context, info[1], bytes.size(), bytes.size(), &end)) {
-        return;
-    }
-    if (end < start) {
-        end = start;
-    }
-    std::string type;
-    if (info.Length() > 2 && !info[2]->IsUndefined()) {
-        v8::Local<v8::String> str;
-        if (!info[2]->ToString(context).ToLocal(&str)) {
-            return;
-        }
-        v8::String::Utf8Value utf8(isolate, str);
-        if (*utf8 != nullptr) {
-            type = ascii_lower(
-                std::string(*utf8, static_cast<std::size_t>(utf8.length())));
-        }
-    }
-    DocumentHost* document = document_from_blob_data(info.Data());
-    if (document == nullptr) {
-        throw_blob_type_error(isolate, "Blob.slice: invalid receiver");
-        return;
-    }
-    v8::Local<v8::Function> constructor = document->blob_constructor(isolate);
-    if (constructor.IsEmpty()) {
-        throw_blob_type_error(isolate, "Blob.slice: Blob is unavailable");
-        return;
-    }
-    v8::Local<v8::ArrayBuffer> buffer =
-        v8::ArrayBuffer::New(isolate, end - start);
-    if (end > start) {
-        std::memcpy(buffer->Data(), bytes.data() + start, end - start);
-    }
-    v8::Local<v8::Array> parts = v8::Array::New(isolate, 1);
-    (void)parts->Set(context, 0, buffer);
-    v8::Local<v8::Object> options = v8::Object::New(isolate);
-    (void)options->Set(context, v8_string(isolate, "type"),
-                       v8_string(isolate, type));
-    v8::Local<v8::Value> argv[2] = {parts, options};
-    v8::Local<v8::Object> result;
-    if (constructor->NewInstance(context, 2, argv).ToLocal(&result)) {
-        info.GetReturnValue().Set(result);
-    }
-}
 
-void blob_text(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    std::vector<std::uint8_t> bytes;
-    if (!blob_bytes_or_throw(isolate, context, info.This(), &bytes)) {
-        return;
-    }
-    v8::Local<v8::Promise::Resolver> resolver;
-    if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) {
-        return;
-    }
-    v8::Local<v8::String> text = v8::String::Empty(isolate);
-    if (!bytes.empty() &&
-        !v8::String::NewFromUtf8(isolate,
-                                 reinterpret_cast<const char*>(bytes.data()),
-                                 v8::NewStringType::kNormal,
-                                 static_cast<int>(bytes.size()))
-             .ToLocal(&text)) {
-        return;
-    }
-    (void)resolver->Resolve(context, text);
-    info.GetReturnValue().Set(resolver->GetPromise());
-}
 
-void blob_array_buffer(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    std::vector<std::uint8_t> bytes;
-    if (!blob_bytes_or_throw(isolate, context, info.This(), &bytes)) {
-        return;
-    }
-    v8::Local<v8::Promise::Resolver> resolver;
-    if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) {
-        return;
-    }
-    v8::Local<v8::ArrayBuffer> buffer =
-        v8::ArrayBuffer::New(isolate, bytes.size());
-    if (!bytes.empty()) {
-        std::memcpy(buffer->Data(), bytes.data(), bytes.size());
-    }
-    (void)resolver->Resolve(context, buffer);
-    info.GetReturnValue().Set(resolver->GetPromise());
-}
 
-FileReaderState* file_reader_state_from(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    if (!info.This()->IsObject()) {
-        return nullptr;
-    }
-    v8::Local<v8::Value> value;
-    if (!info.This()
-             ->GetPrivate(context, file_reader_state_key(isolate))
-             .ToLocal(&value) ||
-        !value->IsExternal()) {
-        return nullptr;
-    }
-    return static_cast<FileReaderState*>(
-        value.As<v8::External>()->Value(kFileReaderTag));
-}
 
-FileReaderState* file_reader_state_or_throw(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    FileReaderState* state = file_reader_state_from(info);
-    if (state == nullptr) {
-        throw_blob_type_error(info.GetIsolate(), "Illegal invocation");
-    }
-    return state;
-}
 
-void file_reader_delivery(const v8::FunctionCallbackInfo<v8::Value>& info);
 
-void file_reader_schedule(v8::Isolate* isolate,
-                          v8::Local<v8::Context> context,
-                          FileReaderState* state) {
-    v8::Local<v8::Function> delivery;
-    if (!v8::Function::New(context, &file_reader_delivery,
-                           v8::External::New(isolate, state, kFileReaderTag))
-             .ToLocal(&delivery)) {
-        return;
-    }
-    isolate->EnqueueMicrotask(delivery);
-}
 
-void file_reader_delivery(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    if (!info.Data()->IsExternal()) {
-        return;
-    }
-    auto* state = static_cast<FileReaderState*>(
-        info.Data().As<v8::External>()->Value(kFileReaderTag));
-    if (state == nullptr || !state->alive || !state->pending ||
-        state->self.IsEmpty()) {
-        return;
-    }
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::Object> self = state->self.Get(isolate);
-    state->pending = false;
-    (void)self->Set(context, v8_string(isolate, "readyState"),
-                    v8::Integer::New(isolate, 2));
-    if (state->mode == FileReaderState::Mode::Text) {
-        v8::Local<v8::Value> result = v8::String::Empty(isolate);
-        if (!state->bytes.empty()) {
-            v8::Local<v8::String> text;
-            if (v8::String::NewFromUtf8(
-                    isolate,
-                    reinterpret_cast<const char*>(state->bytes.data()),
-                    v8::NewStringType::kNormal,
-                    static_cast<int>(state->bytes.size()))
-                    .ToLocal(&text)) {
-                result = text;
-            }
-        }
-        (void)self->Set(context, v8_string(isolate, "result"), result);
-    } else {
-        v8::Local<v8::ArrayBuffer> buffer =
-            v8::ArrayBuffer::New(isolate, state->bytes.size());
-        if (!state->bytes.empty()) {
-            std::memcpy(buffer->Data(), state->bytes.data(),
-                        state->bytes.size());
-        }
-        (void)self->Set(context, v8_string(isolate, "result"), buffer);
-    }
-    state->mode = FileReaderState::Mode::None;
-    state->bytes.clear();
-    state->events.dispatch_native(isolate, context, "load", self);
-    state->events.dispatch_native(isolate, context, "loadend", self);
-}
 
-void file_reader_begin(const v8::FunctionCallbackInfo<v8::Value>& info,
-                       bool as_text) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    FileReaderState* state = file_reader_state_or_throw(info);
-    if (state == nullptr) {
-        return;
-    }
-    if (state->pending) {
-        throw_blob_type_error(isolate, "FileReader is already reading");
-        return;
-    }
-    std::vector<std::uint8_t> bytes;
-    if (info.Length() < 1 ||
-        !blob_read_bytes(isolate, context, info[0], &bytes)) {
-        throw_blob_type_error(isolate,
-                              "FileReader: argument must be a Blob");
-        return;
-    }
-    state->bytes = std::move(bytes);
-    state->mode = as_text ? FileReaderState::Mode::Text
-                          : FileReaderState::Mode::ArrayBuffer;
-    state->pending = true;
-    v8::Local<v8::Object> self = info.This();
-    (void)self->Set(context, v8_string(isolate, "readyState"),
-                    v8::Integer::New(isolate, 1));
-    (void)self->Set(context, v8_string(isolate, "result"), v8::Null(isolate));
-    state->events.dispatch_native(isolate, context, "loadstart", self);
-    file_reader_schedule(isolate, context, state);
-}
 
-void file_reader_read_as_text(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    file_reader_begin(info, true);
-}
 
-void file_reader_read_as_array_buffer(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    file_reader_begin(info, false);
-}
 
-void file_reader_abort(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    FileReaderState* state = file_reader_state_or_throw(info);
-    if (state == nullptr || !state->pending) {
-        return;
-    }
-    state->pending = false;
-    state->mode = FileReaderState::Mode::None;
-    state->bytes.clear();
-    v8::Local<v8::Object> self = info.This();
-    (void)self->Set(context, v8_string(isolate, "readyState"),
-                    v8::Integer::New(isolate, 2));
-    (void)self->Set(context, v8_string(isolate, "result"), v8::Null(isolate));
-    state->events.dispatch_native(isolate, context, "abort", self);
-    state->events.dispatch_native(isolate, context, "loadend", self);
-}
 
-void file_reader_event_method(const v8::FunctionCallbackInfo<v8::Value>& info,
-                              const char* name) {
-    FileReaderState* state = file_reader_state_or_throw(info);
-    if (state == nullptr) {
-        return;
-    }
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::Value> out;
-    if (state->events.handle_event_method(isolate, context, name, info, out)) {
-        info.GetReturnValue().Set(out);
-    }
-}
 
-void file_reader_add_event_listener(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    file_reader_event_method(info, "addEventListener");
-}
 
-void file_reader_remove_event_listener(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    file_reader_event_method(info, "removeEventListener");
-}
 
-void file_reader_dispatch_event(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    file_reader_event_method(info, "dispatchEvent");
-}
 
-void file_reader_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    if (!event_construct_check(info, "FileReader")) {
-        return;
-    }
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    DocumentHost* document = document_from_blob_data(info.Data());
-    if (document == nullptr) {
-        throw_blob_type_error(isolate, "FileReader: invalid constructor");
-        return;
-    }
-    FileReaderState* state =
-        document->create_file_reader(isolate, info.This());
-    (void)info.This()->SetPrivate(
-        context, file_reader_state_key(isolate),
-        v8::External::New(isolate, state, kFileReaderTag));
-    (void)info.This()->Set(context, v8_string(isolate, "readyState"),
-                           v8::Integer::New(isolate, 0));
-    (void)info.This()->Set(context, v8_string(isolate, "result"),
-                           v8::Null(isolate));
-    (void)info.This()->Set(context, v8_string(isolate, "error"),
-                           v8::Null(isolate));
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // M9-1: convert an Inspector StringView (CDP protocol message) to a UTF-8
 // std::string. CDP JSON is normally 8-bit; a 16-bit buffer is transcoded via V8
@@ -2590,244 +1687,46 @@ py::dict PageState::read_access_trace(bool clear) {
 // M11-35: window.name is a Page-level mutable string. The accessor data carries
 // the owning PageState pointer; the PageState outlives every generation, and the
 // context is torn down before it, so no callback can outlive it.
-constexpr v8::ExternalPointerTypeTag kWindowNameTag =
-    v8::kExternalPointerTypeTagDefault;
 
-void window_name_getter(v8::Local<v8::Name>,
-                        const v8::PropertyCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    auto* page = static_cast<PageState*>(
-        info.Data().As<v8::External>()->Value(kWindowNameTag));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", "name", AccessOperation::kGet);
-    AccessPropertyCompletion completion(isolate, seq, info);
-    info.GetReturnValue().Set(v8_string(isolate, page->window_name()));
-}
 
-void window_name_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
-                        const v8::PropertyCallbackInfo<void>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    auto* page = static_cast<PageState*>(
-        info.Data().As<v8::External>()->Value(kWindowNameTag));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", "name", AccessOperation::kSet);
-    AccessPropertySetCompletion completion(isolate, seq, info, value);
-    v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
-        return;  // coercion threw; leave the stored name unchanged
-    }
-    v8::String::Utf8Value utf8(isolate, str);
-    page->set_window_name(
-        *utf8 != nullptr
-            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
-            : std::string());
-}
+
+
+
 
 // M11-50: window.status is a writable string that resets with each generation.
 // It shares window.name's coercion and trace shape, but is PageState state that
 // install_page() clears on every new document.
-void window_status_getter(v8::Local<v8::Name>,
-                          const v8::PropertyCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    auto* page = static_cast<PageState*>(
-        info.Data().As<v8::External>()->Value(kWindowNameTag));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", "status", AccessOperation::kGet);
-    AccessPropertyCompletion completion(isolate, seq, info);
-    info.GetReturnValue().Set(v8_string(isolate, page->window_status()));
-}
 
-void window_status_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
-                          const v8::PropertyCallbackInfo<void>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    auto* page = static_cast<PageState*>(
-        info.Data().As<v8::External>()->Value(kWindowNameTag));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", "status", AccessOperation::kSet);
-    AccessPropertySetCompletion completion(isolate, seq, info, value);
-    v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
-        return;  // coercion threw; leave the stored status unchanged
-    }
-    v8::String::Utf8Value utf8(isolate, str);
-    page->set_window_status(
-        *utf8 != nullptr
-            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
-            : std::string());
-}
+
+
 
 // Step 5i: window.parent / top / frames / opener are traced accessors.
 // parent/frames/opener are replaceable (the setter stores the new value per
 // generation); top stays read-only. Values and assignment results are unchanged.
-constexpr v8::ExternalPointerTypeTag kWindowAliasTag =
-    v8::kExternalPointerTypeTagDefault;
 
-void window_alias_getter(v8::Local<v8::Name> property,
-                         const v8::PropertyCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    auto* page = static_cast<PageState*>(
-        info.Data().As<v8::External>()->Value(kWindowAliasTag));
-    if (page == nullptr) {
-        return;
-    }
-    v8::String::Utf8Value utf8(isolate, property);
-    const std::string name(*utf8 != nullptr ? *utf8 : "");
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", name.c_str(),
-        AccessOperation::kGet);
-    AccessPropertyCompletion completion(isolate, seq, info);
-    info.GetReturnValue().Set(page->window_alias_value(
-        isolate, isolate->GetCurrentContext(), name));
-}
 
-void window_alias_setter(v8::Local<v8::Name> property,
-                         v8::Local<v8::Value> value,
-                         const v8::PropertyCallbackInfo<void>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    auto* page = static_cast<PageState*>(
-        info.Data().As<v8::External>()->Value(kWindowAliasTag));
-    if (page == nullptr) {
-        return;
-    }
-    v8::String::Utf8Value utf8(isolate, property);
-    const std::string name(*utf8 != nullptr ? *utf8 : "");
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", name.c_str(),
-        AccessOperation::kSet);
-    AccessPropertySetCompletion completion(isolate, seq, info, value);
-    page->set_window_alias(isolate, name, value);
-}
+
+
+
 
 // M11-35: a deterministic secure-context bit derived from the base URL (no host
 // OS or network access): https/wss/file are secure; http/ws are secure only for
 // loopback hosts; everything else is insecure.
-bool is_secure_context_url(const std::string& base_url) {
-    const std::string lower = ascii_lower(base_url);
-    if (lower.rfind("https://", 0) == 0 || lower.rfind("wss://", 0) == 0 ||
-        lower.rfind("file://", 0) == 0) {
-        return true;
-    }
-    if (lower.rfind("http://", 0) == 0 || lower.rfind("ws://", 0) == 0) {
-        const UrlParts parts = decompose_url(base_url);
-        const std::string host = ascii_lower(parts.hostname);
-        return host == "localhost" || host == "127.0.0.1" ||
-               host == "::1" || host == "[::1]";
-    }
-    return false;
-}
+
 
 // Host-access trace, step 5: the value source for the generic window metadata
 // accessors. Values are computed from fixed Page state; no JS object is touched.
-v8::Local<v8::Value> PageState::window_metadata_value(
-    v8::Isolate* isolate, const std::string& name) const {
-    if (name == "devicePixelRatio") {
-        return v8::Number::New(isolate, environment_.device_pixel_ratio);
-    }
-    if (name == "innerWidth") {
-        return v8::Integer::New(isolate, environment_.inner_width);
-    }
-    if (name == "innerHeight") {
-        return v8::Integer::New(isolate, environment_.inner_height);
-    }
-    if (name == "outerWidth") {
-        return v8::Integer::New(isolate, environment_.outer_width);
-    }
-    if (name == "outerHeight") {
-        return v8::Integer::New(isolate, environment_.outer_height);
-    }
-    if (name == "screenX" || name == "screenLeft") {
-        return v8::Integer::New(isolate, environment_.screen_x);
-    }
-    if (name == "screenY" || name == "screenTop") {
-        return v8::Integer::New(isolate, environment_.screen_y);
-    }
-    if (name == "length") {
-        return v8::Integer::New(isolate, 0);
-    }
-    if (name == "isSecureContext") {
-        return v8::Boolean::New(isolate,
-                               is_secure_context_url(bootstrap_.base_url));
-    }
-    if (name == "origin") {
-        return v8_string(isolate, decompose_url(bootstrap_.base_url).origin);
-    }
-    if (name == "crossOriginIsolated" || name == "closed") {
-        return v8::False(isolate);
-    }
-    if (name == "frameElement") {
-        return v8::Null(isolate);
-    }
-    // M11-50: there is no layout engine, so the viewport never scrolls; the
-    // legacy pageXOffset/pageYOffset names alias scrollX/scrollY.
-    if (name == "scrollX" || name == "pageXOffset" ||
-        name == "scrollY" || name == "pageYOffset") {
-        return v8::Integer::New(isolate, 0);
-    }
-    return v8::Undefined(isolate);
-}
 
-v8::Local<v8::Value> PageState::window_alias_value(
-    v8::Isolate* isolate, v8::Local<v8::Context> context,
-    const std::string& name) const {
-    if (name == "parent") {
-        return window_parent_override_.IsEmpty()
-                   ? v8::Local<v8::Value>(context->Global())
-                   : window_parent_override_.Get(isolate);
-    }
-    if (name == "frames") {
-        return window_frames_override_.IsEmpty()
-                   ? v8::Local<v8::Value>(context->Global())
-                   : window_frames_override_.Get(isolate);
-    }
-    if (name == "top") {
-        return context->Global();
-    }
-    if (name == "opener") {
-        return window_opener_override_.IsEmpty()
-                   ? v8::Local<v8::Value>(v8::Null(isolate))
-                   : window_opener_override_.Get(isolate);
-    }
-    return v8::Undefined(isolate);
-}
 
-void PageState::set_window_alias(v8::Isolate* isolate, const std::string& name,
-                                 v8::Local<v8::Value> value) {
-    if (name == "parent") {
-        window_parent_override_.Reset(isolate, value);
-    } else if (name == "frames") {
-        window_frames_override_.Reset(isolate, value);
-    } else if (name == "opener") {
-        window_opener_override_.Reset(isolate, value);
-    }
-}
 
-void PageState::reset_window_aliases() noexcept {
-    window_parent_override_.Reset();
-    window_frames_override_.Reset();
-    window_opener_override_.Reset();
-}
 
-constexpr v8::ExternalPointerTypeTag kWindowTraceTag =
-    v8::kExternalPointerTypeTagDefault;
 
-void window_metadata_getter(v8::Local<v8::Name> property,
-                            const v8::PropertyCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    auto* page = static_cast<PageState*>(
-        info.Data().As<v8::External>()->Value(kWindowTraceTag));
-    v8::String::Utf8Value utf8(isolate, property);
-    if (*utf8 == nullptr) {
-        return;
-    }
-    const std::string name(*utf8, static_cast<std::size_t>(utf8.length()));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", name.c_str(),
-        AccessOperation::kGet);
-    AccessPropertyCompletion completion(isolate, seq, info);
-    info.GetReturnValue().Set(page->window_metadata_value(isolate, name));
-}
+
+
+
+
+
+
 
 HostObject* PageState::media_query_list_host(const std::u16string& media,
                                               bool matches) {

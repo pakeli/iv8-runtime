@@ -1235,9 +1235,12 @@ DocumentHost` audit gates its declaration contract/data and qualified method
 implementations independently, preserving defaults, access, qualifiers and all
 initializers. Unsupported member declarators fail closed; 27 added regressions
 bring focused audit checks to 83. Generation-owned FileReader state stays in the
-host layer; the later web module consumes it through DocumentHost. Local tests
-and reflection match the verified stage 2 baseline. Full-stage release acceptance
-remains pending until all seven slices complete.
+host layer; the later web module consumes it through DocumentHost. All seven slices are implemented; local tests
+and 29 reflected object graphs match the verified stage 2 baseline. The complete
+move audit matches 282 definitions with zero differences. Source `2f02535` passed
+all 12 hosted Linux/Windows/macOS Python 3.11–3.14 release lanes, each
+`2090 passed, 2 skipped, 1 xfailed`. The release receipt and artifact IDs
+are in `docs/page_state_split.md`. Stage 4 remains outside this request.
 
 ## Pending Decisions
 

@@ -59,6 +59,11 @@ if(IV8_LINK_V8)
       src/core/base64.cpp
       src/core/html_entities.cpp
       src/core/page_state.cpp
+      src/core/browser/window/window_functions.cpp
+      src/core/browser/window/window_event_handlers.cpp
+      src/core/browser/window/post_message.cpp
+      src/core/browser/web/blob_file_reader.cpp
+      src/core/browser/window/window_metadata.cpp
       src/core/browser/host/document_host.cpp
       src/core/browser/host/document_tree_mutation.cpp
       src/core/browser/host/element_properties.cpp

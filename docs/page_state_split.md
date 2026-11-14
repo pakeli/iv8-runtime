@@ -19,6 +19,13 @@ every lane `2050 passed, 2 skipped, 1 xfailed`.
 | 1.1 crypto, Base64 globals, encoding and shared helpers | pakeli/iv8-runtime#16 | `a3dcb20` | V8 CI `43477576437`, `43477909432` passed | 12,637 | 431 identical definitions, 0 differences |
 | 1.2–1.8 remaining leaf modules | pakeli/iv8-runtime#17 | `f5dbea5` | 12 hosted release lanes passed | 10,065 | 403 identical definitions, 0 differences |
 | 2.1–2.4 pure C++ DOM data layer | pakeli/iv8-runtime#18 | `be5bdb4` | 12 hosted release lanes passed | 8,774 | 317 identical definitions, 0 differences |
+| 3.1 event targets | pakeli/iv8-runtime#19 | `4851127` | V8 CI `43558729900 / 43558735606` passed | 8,436 | 237 identical definitions, 0 differences |
+| 3.2 node declarations | pakeli/iv8-runtime#20 | `ebc7d5d` | V8 CI `43559124965 / 43559130046` passed | 8,048 | 235 identical definitions, 0 differences |
+| 3.3 DocumentHost members | pakeli/iv8-runtime#21 | `15dc26c` | V8 CI `43559837029 / 43559841756` passed | 6,957 | 276 identical definitions, 0 differences |
+| 3.4 collections and observers | pakeli/iv8-runtime#22 | `9d10cc9` | V8 CI `43560219147 / 43560228129` passed | 6,058 | 227 identical definitions, 0 differences |
+| 3.5 tree mutation | pakeli/iv8-runtime#23 | `4e67a6e` | V8 CI `43560598278 / 43560605912` passed | 5,299 | 182 identical definitions, 0 differences |
+| 3.6 node implementations | pakeli/iv8-runtime#24 | `e178ae4` | V8 CI `43561011629 / 43561017074` passed | 3,953 | 172 identical definitions, 0 differences |
+| 3.7 Window/BOM/Blob and complete stage | pakeli/iv8-runtime#25 | `2f02535` | 12 hosted release lanes passed | 2,852 | slice 158 / complete stage 282 identical, 0 differences |
 
 Stage 0 native matrix passed all 12 lanes. Linux/Windows used hosted CI and macOS arm64 used the local release matrix described below.
 
@@ -300,3 +307,75 @@ Focused tests: **235 passed, 1 xfailed**; complete real-V8 suite: **2090 passed,
 2 skipped, 1 xfailed**. All **27 root object graphs** matched. Required V8 CI
 gates this slice; only the Window/BOM/web slice remains before stage release
 acceptance.
+
+## Stage 3.7 — Window, Screen and Blob/FileReader (`2026-11-14`)
+
+The final slice extracts Screen and WindowEventTarget into unchanged inline-class
+headers, Window event handlers and postMessage native callbacks into their own
+modules, Window functions and metadata into dedicated sources, and Blob/FileReader
+callbacks into the web module. FileReader state retains its host-layer generation
+owner. The unchanged JS postMessage bootstrap remains in `bootstrap_scripts`.
+Page retains the original installer and its sequence. Shared tags have one
+constant definition and extern declarations; the event-handler array declaration
+retains its complete 18-entry bound for the installer's range iteration.
+
+Step 3.6 PR #24 merged as `3fc5171` after V8 checks `43561011629` and
+`43561017074`. The final slice audit matched **158 definitions, 0 differences**.
+The complete stage audit from stage 2 master `7c2f5aa`, using
+`--class-members DocumentHost`, matched **282 definitions, 0 differences**
+(210 changed file). Every new module is below 1,200 lines.
+
+Native syntax/link and independent module headers/sources without PCH passed
+under the established strict-warning exceptions. Focused Window/Blob/Web IDL
+tests passed **195 tests, 1 xfailed**; the complete real-V8 suite passed
+**2090 tests, 2 skipped, 1 xfailed**, and **83 audit tests** passed.
+The reflection comparison adds Blob and File to the 27 earlier roots, yielding
+**29 exact object/prototype graphs** against the installed stage 2 baseline.
+`page_state.cpp` is **2,852 lines**. Three-platform release verification follows
+the final stage PR; stage 4 is outside the current request.
+
+## Complete stage 3 verification (`2026-11-14`)
+
+Verified source `2f02535fe2ec1a0131ea192f0446935f3129f4d1`, tree
+`e0b9d47029c9ce78d37013d49ddcbd4368a7e817`. All seven slices are complete.
+
+| Platform (Python 3.11–3.14) | Run | Artifact IDs | Per-lane result |
+|---|---|---|---|
+| linux | `43561640072` | `linux-manylinux2_28-wheels`: `14100991205` | 2090 passed, 2 skipped, 1 xfailed |
+| windows | `43561646195` | `windows-wheel-cp3.11`: `14100670916`, `windows-wheel-cp3.12`: `14100915884`, `windows-wheel-cp3.13`: `14101155502`, `windows-wheel-cp3.14`: `14100971315` | 2090 passed, 2 skipped, 1 xfailed |
+| macos | `43561700961` | `macos-arm64-wheel-cp3.11`: `14100691893`, `macos-arm64-wheel-cp3.12`: `14100591788`, `macos-arm64-wheel-cp3.13`: `14099629795`, `macos-arm64-wheel-cp3.14`: `14100591807` | 2090 passed, 2 skipped, 1 xfailed |
+
+All 12 native release lanes passed using pinned V8 15.0.245.19. The macOS
+helper pinned both source checkouts to the verified source. Restore commit
+`60757b6032017e026a1f0e24c218facf766bbdb4` restored workflow blob
+`eb730d3e77a17d4d527e67646475385cebb2428c` under a SHA guard. The release
+receipt is ignored `data/page-split-stage3/build-verification.json`;
+`local-verification.json` records local results and hashes.
+
+Required V8 CI `43561633600` and `43561639777` passed on the frozen
+source, including 83 audit cases and the complete runtime suite.
+
+The complete move audit matched 282 definitions, including the separated
+DocumentHost contract and 45 member implementations, with zero differences.
+All 83 audit regressions passed. Local focused final-slice tests reported
+195 passed, 1 xfailed; full real-V8 tests reported 2090 passed, 2 skipped,
+1 xfailed. All 29 reflected object/prototype graphs matched the stage 2
+baseline, including native function source/name/length/own keys and
+descriptors. The existing default-open profile gap retains its expected
+failure; browser-reference fixture expectations remain unchanged.
+
+Independent new host, Window, Screen and Blob module headers/sources
+compiled without PCH under `-Wall -Wextra -Werror`, retaining the already
+documented V8 unused-parameter and existing aggregate/signedness warning
+exceptions. Every extracted module is below 1,200 lines. The installer
+and its binding creation order remain unchanged; monitoring still lives
+in Page for stage 4. `page_state.cpp` is 2,852 lines.
+
+Release verification uses the frozen implementation source. Later handoff
+commits change documentation only; native/build/test sources are checked
+identical before merging. The optional skeleton CI still has retired
+macOS labels; obsolete queued runs are cancelled only after all eight
+Linux/Windows jobs pass. Native macOS validation uses the successful
+four-version hosted release matrix above.
+
+**Stage 3 is complete. Stage 4 is outside this request.**
