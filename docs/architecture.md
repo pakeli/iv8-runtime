@@ -438,3 +438,16 @@ Page ownership. Shared non-DOM event helpers live in `internal/event_support`.
 Extern constant declarations preserve one definition for cross-file identities.
 The installer retains its original sequence and bootstrap array sizes. All 12
 Linux/Windows/macOS release lanes passed; see `docs/page_state_split.md`.
+
+Stage 2 moves DOM node data, parsing/serialization, queries/selectors and form
+control helpers into private `browser/dom` modules. They depend only on the C++
+standard library and existing V8-free selector/entity utilities. Case conversion
+is defined in `internal/text`, included by both pure modules and `common.h`.
+The unchanged `iv8::NodeKind` enum lives in `include/iv8/node_kind.h` so the data
+layer does not include `HostObject` or V8; `host_object.h` includes it transitively.
+Node pools and JS wrapper lifetimes remain owned by Page/DocumentHost. The seven
+pure translation units opt out of PCH and compile without V8/Python headers.
+
+Stage 2 source `be5bdb4` passed standalone strict compilation, 20,000 DOM
+differential cases under UBSan, reflection checks and all 12 hosted native
+release lanes. Stage 3 host-object extraction waits for user confirmation.

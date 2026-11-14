@@ -17,6 +17,8 @@ every lane `2050 passed, 2 skipped, 1 xfailed`.
 | 0.2 `iv8::browser`, `internal/common.h`, inline tokens, PCH | pakeli/iv8-runtime#14 | `ae4163b` (merge `c1d4e34`) | V8 CI `42466767787`, `42467387443`; release-windows `42466768875` | 13,052 | n/a (intentional changes; tool added in 0.3) |
 | 0.3 `tools/audit_move.py` and regression fixes | pakeli/iv8-runtime#15 | `973ac99` | V8 CI `43467102840`, `43467112845` passed | 13,052 | 56 audit cases passed in required CI |
 | 1.1 crypto, Base64 globals, encoding and shared helpers | pakeli/iv8-runtime#16 | `a3dcb20` | V8 CI `43477576437`, `43477909432` passed | 12,637 | 431 identical definitions, 0 differences |
+| 1.2–1.8 remaining leaf modules | pakeli/iv8-runtime#17 | `f5dbea5` | 12 hosted release lanes passed | 10,065 | 403 identical definitions, 0 differences |
+| 2.1–2.4 pure C++ DOM data layer | pakeli/iv8-runtime#18 | `be5bdb4` | 12 hosted release lanes passed | 8,774 | 317 identical definitions, 0 differences |
 
 Stage 0 native matrix passed all 12 lanes. Linux/Windows used hosted CI and macOS arm64 used the local release matrix described below.
 
@@ -140,3 +142,63 @@ helper pinned both source checkouts to the verified source; restore commit
 `eb730d3e77a17d4d527e67646475385cebb2428c`. Required V8 checks
 `43551491659` and `43551496150` passed. The complete receipt and local logs
 are under ignored `data/page-split-stage1/`. Stage 2 follows this acceptance.
+
+## Stage 2 verification (`2026-11-14`)
+
+The pure C++ data layer lives in `browser/dom`: nodes/detach/siblings, HTML
+parsing and serialization, queries and selector matching, form normalization,
+values and validity. Shared case conversion lives in `internal/text`. `NodeKind`
+retains its `iv8` type and numeric values in a V8-free public header included by
+the existing `host_object.h`; Page still owns node pools and host wrappers.
+CMake excludes all seven pure translation units from the V8/Python PCH.
+
+Pre-PR syntax/link checks passed. Each pure translation unit compiled separately
+with `-Wall -Wextra -Werror` and without V8/Python include paths; dependency scans
+confirmed no V8/Python headers. `collect_options` has an out-of-line definition
+so cross-file callers link correctly. `document_insertion_error` keeps its
+unchanged default argument and body inline in the node header. These placement
+changes preserve the public runtime behavior.
+
+The move audit matched **317 definitions, 0 differences**. All **56 audit tests**
+passed. Focused DOM/Web IDL tests reported **153 passed, 1 xfailed**; the complete
+real-V8 suite reported **2090 passed, 2 skipped, 1 xfailed**. Reflection matched
+all **17 root object graphs**, including prototype-chain descriptors.
+
+A standalone C++20 differential executable linked only the new pure modules and
+existing string-only selector/entity utilities. The baseline copied the old
+stage 1 definitions into a separate namespace. **20,000 deterministic cases**
+compared parsed trees, parent/child/sibling identities, script records,
+serialization, selector/query results, form values and validation messages,
+document insertion validation and detaching. UBSan ran with
+`-fno-sanitize-recover=undefined`; all cases matched. Commands, baseline,
+executable and logs are under ignored `data/page-split-stage2/`.
+
+`page_state.cpp` decreases from 10,065 to **8,774 lines**. PR #18 completes all
+four stage 2 slices. Stop after this stage for user confirmation.
+
+Verified source `be5bdb4cc6c41d8bacc45f57b711a9da1aa5dcc4`, tree
+`cda6b32a807e3243a4ecb2b578e97d81eda92ded`.
+
+| Platform (Python 3.11–3.14) | Run | Artifact IDs | Per-lane result |
+|---|---|---|---|
+| linux | `43553093264` | `linux-manylinux2_28-wheels`: `14096893644` | 2090 passed, 2 skipped, 1 xfailed |
+| windows | `43553096281` | `windows-wheel-cp3.11`: `14097500473`, `windows-wheel-cp3.12`: `14096004454`, `windows-wheel-cp3.13`: `14097112010`, `windows-wheel-cp3.14`: `14097037831` | 2090 passed, 2 skipped, 1 xfailed |
+| macos | `43553098353` | `macos-arm64-wheel-cp3.11`: `14097241005`, `macos-arm64-wheel-cp3.12`: `14097216265`, `macos-arm64-wheel-cp3.13`: `14096928056`, `macos-arm64-wheel-cp3.14`: `14097375664` | 2090 passed, 2 skipped, 1 xfailed |
+
+All 12 hosted lanes passed using pinned V8 15.0.245.19. The macOS helper
+pinned both source checkouts to the verified source. Restore commit
+`509441d6a9b4ed73f0c94db6f98fe8967b99b32c` restored workflow blob
+`eb730d3e77a17d4d527e67646475385cebb2428c`. Required V8 checks
+`43553061427` and `43553068202` passed. The complete native release
+receipt is `data/page-split-stage2/build-verification.json`; local commands,
+result counts and hashes are in `local-verification.json` in that directory.
+These records are ignored local build evidence. Later handoff commits change
+documentation only and preserve the verified native/build/test sources.
+
+Stage 1 PR #17 merged as `747667b` after final required checks
+`43552733883` and `43552739184`. The optional skeleton CI still targets
+retired macOS runner labels; its obsolete queued jobs were cancelled only
+after all eight Linux/Windows jobs passed. Native macOS acceptance uses the
+successful four-version hosted release matrix above.
+
+**Stages 1 and 2 are complete. Stage 3 waits for user confirmation.**

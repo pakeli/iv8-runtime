@@ -59,6 +59,13 @@ if(IV8_LINK_V8)
       src/core/base64.cpp
       src/core/html_entities.cpp
       src/core/page_state.cpp
+      src/core/browser/internal/text.cpp
+      src/core/browser/dom/dom_node.cpp
+      src/core/browser/dom/html_parser.cpp
+      src/core/browser/dom/html_serializer.cpp
+      src/core/browser/dom/dom_query.cpp
+      src/core/browser/dom/selector_match.cpp
+      src/core/browser/dom/form_controls.cpp
       src/core/browser/bom/web_storage.cpp
       src/core/browser/bom/navigator_parts.cpp
       src/core/browser/bom/media_query.cpp
@@ -77,6 +84,16 @@ if(IV8_LINK_V8)
       src/binding/context_binding.cpp
       src/binding/page_binding.cpp)
 endif()
+
+set_source_files_properties(
+    src/core/browser/internal/text.cpp
+    src/core/browser/dom/dom_node.cpp
+    src/core/browser/dom/html_parser.cpp
+    src/core/browser/dom/html_serializer.cpp
+    src/core/browser/dom/dom_query.cpp
+    src/core/browser/dom/selector_match.cpp
+    src/core/browser/dom/form_controls.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 
 pybind11_add_module(_core ${_iv8_sources})
 
