@@ -1,10 +1,10 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest implemented, release verification pending (`2026-11-15`): NAMED-01.** Native WindowProperties now resolves active-document IDs and supported named elements; HTML forms resolve the current four control kinds by name/id, including inherited-member masking and bounded past names. Duplicate matches use the current live collection (full RadioNodeList remains a profile gap). Generation/trace behavior and History coexistence are covered. Four local macOS Python lanes each pass 56 focused and **2340 passed, 2 skipped, 1 xfailed** full-suite checks. No new Python export. Boundary/report: `docs/named_access_restore.md` / `docs/named_access_restore_report.md`; 12-lane release verification is pending.
+**Latest release verified (`2026-11-15`): NAMED-01.** Source `374c81b` restores native WindowProperties active-document ID/name resolution and form control name/id access, inherited-member masking and bounded past names, alongside History. All 12 release lanes pass 56 focused tests; Linux/macOS full suites report **2340 passed, 2 skipped, 1 xfailed**, Windows **2338 passed, 4 skipped, 1 xfailed**. Duplicate matches use live collections; RadioNodeList remains a gap. No new Python export. Boundary/report: `docs/named_access_restore.md` / `docs/named_access_restore_report.md`.
 
 **Caller-only configuration alignment (`2026-11-14`).** Portable `request_config` and installed `curl_profile` utilities unify actual HTTP/Page identity declarations and reject contradictory request overrides. They add no iv8 package exports or native/browser surface. Existing project callers are updated with backed-up user-file changes; local full suite reports **2314 passed, 2 skipped, 1 xfailed**, without claiming a new all-platform release. Boundary/evidence: `docs/request_configuration.md` / `docs/request_configuration_report.md`.
 
-**Repository tooling addition (`2026-11-14`): offline scenarios and environment diagnostics.** `tools/run_offline_scenarios.py` consumes pinned local manifests and writes isolated execution/check/environment verdicts with `server: not_tested`. It uses existing Page APIs and adds no distributed package export, native method, network transport or clock behavior. Boundary/usage: `docs/offline_scenarios.md`; local verification versus pending all-platform release: `docs/offline_scenarios_report.md`. Latest released native runtime remains JET-01 below.
+**Previous repository tooling addition (`2026-11-14`): offline scenarios and environment diagnostics.** Its tests are included in the NAMED-01 release above. CLI boundary/usage: `docs/offline_scenarios.md`; original local evidence: `docs/offline_scenarios_report.md`. It adds no distributed package export or network/clock behavior.
 
 **JET-01 History native release verified; bounded live test still state -1 (`2026-11-14`).** Native source `dd67e49` passes all 12 platform lanes (**2120 passed, 2 skipped, 1 xfailed** each). After explicit user data-send approval, a same-session comparison with the unchanged original collector and identical JS test XHR adapter confirmed: old SDK fails at pushState with zero POSTs; the History SDK loads and emits two real POSTs, both HTTP201, but final `_abck` remains **-1**. The authorized two-POST budget is exhausted. This confirms the first execution blocker, with no server-pass or final root-cause claim. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
 
@@ -56,7 +56,7 @@ Contract, artifact IDs, source/driver restoration and remaining limits:
 `docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
 numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-14` · Latest verified numbered milestone: **M11-52**
+Last reviewed: `2026-11-15` · Latest verified numbered milestone: **M11-52**
 (Window messaging — `postMessage` / `MessageEvent`), verified on real V8 (Linux +
 Windows + macOS arm64). It follows **M11-51** (Window event handler attributes),
 **M11-50** (Window scroll/focus/UI completion), **M11-49** (HTML string APIs),

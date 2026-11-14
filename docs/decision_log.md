@@ -1,6 +1,6 @@
 # Decision Log
 
-Last reviewed: `2026-11-14`
+Last reviewed: `2026-11-15`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
@@ -16,9 +16,10 @@ Keep native ownership/generation boundaries and existing form-control scope.
 Separate the prior candidate's unrelated callback-metadata changes. Every
 platform release must run History/named focused checks before the full suite;
 record source/tree/binary identity rather than trusting the unchanged package
-version. Implementation and local wheel acceptance are complete; all-platform
-release verification/mainline integration are pending in
-`docs/named_access_restore_report.md`.
+version. Source `374c81b` passes all 12 release lanes and is integrated through
+PR #29; source/tree/run/artifact and helper restoration evidence is in
+`docs/named_access_restore_report.md`. The separate candidate callback metadata
+diff remains outside this named-access repair.
 
 ### Caller configuration before speculative runtime repair (`2026-11-14`)
 

@@ -1,7 +1,7 @@
 # NAMED-01 — Window/form named access restoration
 
-Date: 2026-11-15. Latest implemented; local acceptance complete, cross-platform
-release verification pending. Boundary: `named_access_restore.md`.
+Date: 2026-11-15. **Release verified:** all 12 platform/Python lanes pass.
+Boundary: `named_access_restore.md`. Mainline integration is through PR #29.
 
 ## Cause and implementation
 
@@ -78,7 +78,43 @@ checks each command's exit code so a later passing command cannot hide focused
 failure. Existing release matrix scope remains Linux x64, Windows x64 and macOS
 arm64, each CPython 3.11–3.14.
 
-Source/tree, CI runs and artifact IDs will be recorded after those 12 lanes
-finish. Until then, do not label NAMED-01 release-verified or replace the latest
-verified JET-01 receipt with local-only counts. No shared user SDK replacement
-or live business request is performed by this acceptance.
+Verified implementation source `374c81b5939c013076582930a061bd2ff83d3882`, tree
+`d16031ea344e5ff182c9d986d2a9ca634c6388e0`. Source-only and PR V8 gates
+`43616056691` / `43616126351` passed. Every release wheel lane ran **56 focused
+tests before its full suite**. Every lane collected 2,343 tests.
+
+| Platform, Python 3.11–3.14 | Run | Per-lane result | Artifact IDs |
+|---|---|---|---|
+| Linux x64 / manylinux_2_28 | `43616130342` | 2340 passed, 2 skipped, 1 xfailed | `14122836375` (all four wheels) |
+| Windows x64 | `43616142584` | 2338 passed, 4 skipped, 1 xfailed | cp311 `14121992268`, cp312 `14122427060`, cp313 `14121977293`, cp314 `14121763036` |
+| macOS arm64 / macos-15 | `43616952704` | 2340 passed, 2 skipped, 1 xfailed | cp311 `14122797345`, cp312 `14121788940`, cp313 `14122578290`, cp314 `14122413531` |
+
+Windows has two additional expected skips for Unix character-device input
+guards; the two V8-free-only skips and unavailable-open expected failure remain
+unchanged. Counts above are parsed from actual release output, not inferred
+from local results. The release suite also covers the preceding offline and
+request-configuration tooling from the separately merged PR #28.
+
+The first macOS feature-branch run `43616158039` could not see the cache scoped
+to `macos-release` and was superseded rather than rebuilding V8. Temporary driver
+`b737c3f953f39d9f9fa3a0d8775b2b1ad8887805` pins both checkout sites to the exact
+implementation source; all five actual job checkouts resolve to that source.
+Restore commit `c5799fdc015473d3f1d77f375165867b622bfcc5` restores original
+workflow blob `eb730d3e77a17d4d527e67646475385cebb2428c` under a SHA guard. No
+branch protection or required check was bypassed.
+
+The macOS cp311 archive's published SHA-256 is
+`be5f7f1347ce105bfaa3d96ebf47554e367e81311c0ca05fdbf00a0bb8c3922c`.
+The completed download matches that digest. Its extracted wheel SHA-256 is
+`1c0ba23a815ee35efce38f27d8825bbff9efa66f47402c2a1de2e1f923622ed3`.
+An isolated local installation of this CI wheel also passes 56 focused tests and
+the complete **2340 passed, 2 skipped, 1 xfailed** suite on the user's host.
+Local release logs, artifact metadata, binary identity, downloads and feature
+probes are retained under ignored `data/named-access-restore-2026-11-15/`,
+especially `release-verification.json` and `local-verification.json`.
+
+Subsequent handoff changes are documentation-only and retain the verified
+implementation/test/build files. No shared user SDK replacement or live
+business request is performed by this acceptance; package version 0.0.1 remains
+compatible with existing callers, with feature/receipt checks identifying the
+combined build.

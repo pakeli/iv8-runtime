@@ -1,8 +1,9 @@
 # Offline scenarios and environment diagnostics — implementation report
 
 Date: 2026-11-14. Latest implemented tooling; local acceptance is recorded below.
-No new all-platform release verification is claimed. Boundary and usage:
-`docs/offline_scenarios.md`.
+This records the tooling slice's original local acceptance. Its tests are now
+covered by the 2026-11-15 NAMED-01 release (`named_access_restore_report.md`).
+Boundary and usage: `docs/offline_scenarios.md`.
 
 ## Implementation
 
@@ -82,6 +83,7 @@ The first sandbox full run had 21 pre-existing localhost-bind permission
 failures. Re-running with local binding permitted passed the full suite; this
 does not introduce external HTTP in any test or scenario.
 
-All-platform release verification is pending. The latest release-verified native
-runtime remains JET-01 (`2120 passed, 2 skipped, 1 xfailed` per lane); do not
-substitute local tooling counts for its release receipt.
+At this slice's original checkpoint, the release-verified native runtime was
+JET-01 (`2120 passed, 2 skipped, 1 xfailed` per lane). The subsequent NAMED-01
+release includes these tooling tests; consult its report for current per-platform
+counts rather than substituting the historical local counts above.

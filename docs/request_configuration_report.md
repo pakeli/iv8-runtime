@@ -1,7 +1,8 @@
 # Request / Page configuration — audit and alignment report
 
-Date: 2026-11-14. Caller configuration work with local acceptance; no new native
-runtime or all-platform release is claimed. Boundary: `request_configuration.md`.
+Date: 2026-11-14. This records the caller configuration slice's local acceptance.
+Its tests are subsequently included in the 2026-11-15 NAMED-01 release
+(`named_access_restore_report.md`). Boundary: `request_configuration.md`.
 
 ## Findings and changes
 
@@ -87,5 +88,6 @@ no browser transport profile to verify, so their overall status stays `unknown`
 with all supplied identity checks passing. Missing Page UAData/high-entropy
 fields, cookies, proxy/IP, time and cross-context behavior remain unchecked.
 No server-pass claim or attribution of prior `_abck=-1` to this configuration
-is made. All-platform tooling release verification remains pending; the latest
-release-verified native runtime is still JET-01.
+is made. Cross-platform coverage of these tooling tests is now recorded by the
+subsequent NAMED-01 release report; the counts above remain this slice's original
+local checkpoint.

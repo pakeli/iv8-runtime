@@ -38,6 +38,7 @@ Keep local acceptance separate from the 12-platform-lane release verdict.
 No live business request or shared-SDK replacement is needed for this port's
 offline execution acceptance. User-owned candidate sources remain unchanged.
 
-Implementation and the four-version local real-V8 acceptance are complete.
-Cross-platform release verification is pending. Evidence is recorded in
+Implementation and verification are complete: all 12 platform/Python release
+lanes pass on source `374c81b`, retaining both History and named access. Exact
+counts, source/tree identity and artifact receipts are recorded in
 `docs/named_access_restore_report.md`.
