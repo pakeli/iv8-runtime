@@ -1,6 +1,6 @@
 # page_state.cpp 拆分方案
 
-状态：**阶段 0、阶段 1、阶段 2 验收完成；等待用户确认后再开始阶段 3**（方案确认于 `2026-11-08`）。基线为 `src/core/page_state.cpp`，13,058 行、570 KB。
+状态：**阶段 0、阶段 1、阶段 2 验收完成；用户于 2026-11-14 确认开始阶段 3**（方案确认于 `2026-11-08`）。基线为 `src/core/page_state.cpp`，13,058 行、570 KB。
 
 这是一项内部维护工作，不是 M11-53。它不改变任何 Python 或 JS 可见行为，也不改变绑定机制。
 
@@ -218,7 +218,7 @@ internal  <-  dom  <-  host  <-  window / bom / web  <-  page_state*.cpp
 
 按依赖顺序进行：
 
-1. `host/event_support`、`host/event_target`（`EventTargetHost`、`StandaloneEventTarget`）
+1. `host/event_target`（`EventTargetHost`、`StandaloneEventTarget`）；阶段一已迁出的共享事件辅助函数保留在 `internal/event_support`，供宿主层与 web 层共同使用
 2. `host/node_hosts.h`：只移动声明，实现暂时留在原处
 3. `host/document_host.h`：把内联函数体移出类定义，放到 `document_host.cpp`；声明移到头文件
 4. `host/live_collection`、`host/class_list`、`host/mutation_observer`
