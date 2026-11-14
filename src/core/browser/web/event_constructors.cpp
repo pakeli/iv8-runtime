@@ -1,5 +1,6 @@
 #include "event_constructors.h"
 
+#include <cmath>
 #include <cstring>
 #include <unordered_set>
 
