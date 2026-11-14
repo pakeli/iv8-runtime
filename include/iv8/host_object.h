@@ -48,6 +48,13 @@ public:
                                               v8::Local<v8::Context> context,
                                               const std::string& name) = 0;
 
+    // Legacy named properties can precede inherited IDL members (HTML forms).
+    // Empty means absent; a failed V8 operation must retain its JS exception.
+    virtual bool has_named_properties() const { return false; }
+    virtual std::vector<std::string> named_property_names() const { return {}; }
+    virtual v8::MaybeLocal<v8::Value> named_property(
+        v8::Isolate*, v8::Local<v8::Context>, const std::string&) { return {}; }
+
     // Writable data properties (default: none -> all properties are read-only).
     // For each name returned here, make_host_object installs a setter that calls
     // set_property; all other properties stay read-only (ReadOnly|DontDelete).

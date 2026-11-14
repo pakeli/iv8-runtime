@@ -51,6 +51,7 @@ void DocumentHost::queue_child_list(
     v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* parent,
     const std::vector<DomNode*>& added, const std::vector<DomNode*>& removed,
     DomNode* previous_sibling, DomNode* next_sibling) {
+    prune_past_named_controls();
     if (observers_.empty()) {
         return;
     }

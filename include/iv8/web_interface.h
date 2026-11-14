@@ -12,6 +12,10 @@ namespace iv8 {
 v8::Local<v8::Object> web_interface_prototype(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
     const std::string& interface_name);
+// Register this generation's native WindowProperties resolver. The caller owns
+// its native state and must stop installation if a V8 operation fails.
+bool replace_window_properties_prototype(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> prototype);
 bool web_interface_inherits(std::string_view interface_name,
                             std::string_view base);
 std::string html_element_interface(std::string_view tag);

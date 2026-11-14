@@ -1,0 +1,74 @@
+{
+  "browser": "156.0.8078.80",
+  "url": "http://epub.cnipa.gov.cn/",
+  "result": {
+    "windowAttached": true,
+    "windowPrototype": {
+      "tag": "[object WindowProperties]",
+      "ownKeys": [
+        "Symbol(Symbol.toStringTag)"
+      ],
+      "parentIsEventTarget": true
+    },
+    "formNamed": {
+      "same": true,
+      "keys": [
+        "0"
+      ],
+      "own": true,
+      "descriptor": {
+        "value": true,
+        "writable": false,
+        "enumerable": false,
+        "configurable": true
+      }
+    },
+    "setterReflects": true,
+    "setterKeepsNamed": true,
+    "deleteResult": true,
+    "afterDelete": true,
+    "defineError": {
+      "name": "TypeError",
+      "message": "Failed to set a named property 'action' on 'HTMLFormElement': Named property setter is not supported."
+    },
+    "id": true,
+    "textContent": true,
+    "innerText": true,
+    "appendChild": true,
+    "constructor": true,
+    "group": {
+      "tag": "[object RadioNodeList]",
+      "length": 2,
+      "same": true,
+      "prototypeNames": [
+        "value",
+        "constructor",
+        "Symbol(Symbol.toStringTag)",
+        "Symbol(Symbol.iterator)"
+      ],
+      "parentNames": [
+        "entries",
+        "keys",
+        "values",
+        "forEach",
+        "length",
+        "item",
+        "constructor",
+        "Symbol(Symbol.toStringTag)",
+        "Symbol(Symbol.iterator)"
+      ],
+      "value": "",
+      "checked": [
+        false,
+        true
+      ],
+      "selected": "b",
+      "afterRemove": 1
+    },
+    "windowRemoved": true,
+    "divNamed": true,
+    "divRenamed": true,
+    "windowExpando": 19,
+    "windowAfterDelete": true
+  }
+}

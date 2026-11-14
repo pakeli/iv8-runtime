@@ -36,6 +36,7 @@
 #include "browser/window/window_functions.h"
 #include "browser/window/history.h"
 #include "browser/window/window_event_handlers.h"
+#include "browser/window/window_named_properties.h"
 #include "browser/window/post_message.h"
 #include "browser/web/blob_file_reader.h"
 #include "browser/window/window_metadata.h"
@@ -1906,6 +1907,7 @@ void PageState::install_page(const std::string& base_url,
                 }
             }
             auto window_prototype = web_interface_prototype(isolate, context, "Window");
+            if (!install_window_named_properties(isolate, context, document)) return;
             (void)global->SetPrototype(context, window_prototype);
             v8::Local<v8::Value> location;
             if (!global->Get(context, v8_string(isolate, "location")).ToLocal(&location)) return;

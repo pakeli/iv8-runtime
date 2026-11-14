@@ -1,6 +1,7 @@
 #include "iv8/host_object.h"
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <cstdio>
@@ -60,14 +61,44 @@ std::uint64_t record_access(AccessTrace* trace, HostObject* host,
                          member, operation);
 }
 
-// Keep existence/attribute queries on the normal lookup path. Without a query
-// handler V8 may use the getter interceptor for `in`, hasOwnProperty, and
-// descriptor operations; a no-op query prevents those from being mistaken for
-// ordinary property reads.
+enum class NamedPropertyLookup { kAbsent, kFound, kException };
+
+NamedPropertyLookup lookup_named_property(
+    HostObject* host, v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Name> property, std::string& member,
+    v8::Local<v8::Value>& result) {
+    if (host == nullptr || !host->has_named_properties() || !property->IsString()) {
+        return NamedPropertyLookup::kAbsent;
+    }
+    v8::TryCatch caught(isolate);
+    v8::String::Utf8Value name(isolate, property);
+    bool found = false;
+    if (*name != nullptr) {
+        member.assign(*name, static_cast<std::size_t>(name.length()));
+        found = host->named_property(isolate, context, member).ToLocal(&result);
+    }
+    if (caught.HasCaught()) {
+        caught.ReThrow();
+        return NamedPropertyLookup::kException;
+    }
+    return found ? NamedPropertyLookup::kFound : NamedPropertyLookup::kAbsent;
+}
+
+// Legacy form names are configurable, non-enumerable, read-only own properties.
+// Other hosts keep queries on their ordinary lookup path; these queries must
+// not be reported as missing-property reads by the access trace.
 v8::Intercepted named_property_query(
-    v8::Local<v8::Name>,
-    const v8::PropertyCallbackInfo<v8::Integer>&) {
-    return v8::Intercepted::kNo;
+    v8::Local<v8::Name> property,
+    const v8::PropertyCallbackInfo<v8::Integer>& info) {
+    std::string member;
+    v8::Local<v8::Value> result;
+    const auto lookup = lookup_named_property(backing_of(info.Holder()),
+        info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), property, member, result);
+    if (lookup == NamedPropertyLookup::kAbsent) return v8::Intercepted::kNo;
+    if (lookup == NamedPropertyLookup::kFound) {
+        info.GetReturnValue().Set(static_cast<int>(v8::ReadOnly | v8::DontEnum));
+    }
+    return v8::Intercepted::kYes;
 }
 
 void record_operation(v8::Isolate* isolate, v8::Local<v8::Object> holder,
@@ -103,7 +134,23 @@ v8::Intercepted named_property_definer(
     const v8::PropertyCallbackInfo<v8::Boolean>& info) {
     record_operation(info.GetIsolate(), info.Holder(), property,
                      AccessOperation::kDefineProperty);
-    return v8::Intercepted::kNo;
+    auto isolate = info.GetIsolate();
+    auto* host = backing_of(info.Holder());
+    std::string member;
+    v8::Local<v8::Value> result;
+    const auto lookup = lookup_named_property(host, isolate,
+        isolate->GetCurrentContext(), property, member, result);
+    if (lookup == NamedPropertyLookup::kAbsent) return v8::Intercepted::kNo;
+    if (lookup == NamedPropertyLookup::kFound) {
+        const auto message = "Failed to set a named property '" + member +
+            "' on '" + host->prototype_key() + "': Named property setter is not supported.";
+        v8::Local<v8::String> exception_message;
+        if (v8::String::NewFromUtf8(isolate, message.data(), v8::NewStringType::kNormal,
+                static_cast<int>(message.size())).ToLocal(&exception_message)) {
+            isolate->ThrowException(v8::Exception::TypeError(exception_message));
+        }
+    }
+    return v8::Intercepted::kYes;
 }
 
 void named_property_enumerator(
@@ -117,7 +164,21 @@ void named_property_enumerator(
                           std::string(), AccessOperation::kOwnKeys);
         }
     }
-    info.GetReturnValue().Set(v8::Array::New(isolate, 0));
+    auto* host = backing_of(info.Holder());
+    const auto names = host != nullptr ? host->named_property_names() : std::vector<std::string>{};
+    if (names.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        isolate->ThrowException(v8::Exception::RangeError(
+            v8::String::NewFromUtf8Literal(isolate, "Too many named properties")));
+        return;
+    }
+    auto result = v8::Array::New(isolate, static_cast<int>(names.size()));
+    for (std::uint32_t index = 0; index < names.size(); ++index) {
+        v8::Local<v8::String> name;
+        if (!v8::String::NewFromUtf8(isolate, names[index].data(), v8::NewStringType::kNormal,
+                static_cast<int>(names[index].size())).ToLocal(&name) ||
+            !result->CreateDataProperty(isolate->GetCurrentContext(), index, name).FromMaybe(false)) return;
+    }
+    info.GetReturnValue().Set(result);
 }
 
 // Walk real own-property descriptors without invoking getters or interceptors.
@@ -178,14 +239,34 @@ bool is_interface_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
     return false;
 }
 
-// Named-property interceptor for absent string keys. kNonMasking keeps the
-// interceptor out of the path for existing own/prototype properties; returning
-// kNo hands the lookup back to V8, so the script still sees undefined and all
-// descriptors/prototype/`in` behavior is unchanged.
+// Form names can mask inherited IDL members. Other hosts retain the existing
+// method-reference and missing-property trace paths without changing lookup.
 v8::Intercepted named_property_getter(
     v8::Local<v8::Name> property,
     const v8::PropertyCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    auto* named_host = backing_of(info.Holder());
+    std::string named_member;
+    v8::Local<v8::Value> named_value;
+    const auto lookup = lookup_named_property(named_host, isolate,
+        isolate->GetCurrentContext(), property, named_member, named_value);
+    if (lookup == NamedPropertyLookup::kException) return v8::Intercepted::kYes;
+    if (lookup == NamedPropertyLookup::kFound) {
+        auto* trace = active_trace(isolate);
+        const auto sequence = record_access(trace, named_host, named_member, AccessOperation::kGet);
+        if (sequence != 0) {
+            try {
+                AccessCompletion completion;
+                completion.outcome = "returned";
+                completion.value_summary = access_value_summary(isolate, named_value);
+                trace->complete(sequence, std::move(completion));
+            } catch (...) {
+                // Diagnostics must not change the named property's result.
+            }
+        }
+        info.GetReturnValue().Set(named_value);
+        return v8::Intercepted::kYes;
+    }
     AccessTrace* trace = access_trace_from_isolate(isolate);
     if (trace == nullptr || !trace->enabled() || !property->IsString()) {
         return v8::Intercepted::kNo;
@@ -218,6 +299,41 @@ v8::Intercepted named_property_setter(
     auto isolate = info.GetIsolate();
     auto* host = backing_of(info.Holder());
     auto* trace = active_trace(isolate);
+    auto context = isolate->GetCurrentContext();
+    std::string named_member;
+    v8::Local<v8::Value> named_value;
+    const auto lookup = lookup_named_property(host, isolate, context, property,
+        named_member, named_value);
+    if (lookup == NamedPropertyLookup::kException) return v8::Intercepted::kYes;
+    if (lookup == NamedPropertyLookup::kFound) {
+        auto prototype_value = info.Holder()->GetPrototype();
+        for (int depth = 0; depth < 1000 && prototype_value->IsObject(); ++depth) {
+            auto prototype = prototype_value.As<v8::Object>();
+            v8::Local<v8::Value> descriptor;
+            if (!prototype->GetOwnPropertyDescriptor(context, property).ToLocal(&descriptor)) return v8::Intercepted::kYes;
+            if (descriptor->IsObject()) {
+                auto descriptor_object = descriptor.As<v8::Object>();
+                const auto setter_key = v8::String::NewFromUtf8Literal(isolate, "set");
+                const auto has_setter = descriptor_object->HasOwnProperty(context, setter_key);
+                if (has_setter.IsNothing()) return v8::Intercepted::kYes;
+                if (has_setter.FromMaybe(false)) {
+                    v8::Local<v8::Value> setter;
+                    if (!descriptor_object->Get(context, setter_key).ToLocal(&setter)) return v8::Intercepted::kYes;
+                    if (setter->IsFunction()) {
+                        v8::Local<v8::Value> arguments[] = {value};
+                        v8::Local<v8::Value> ignored;
+                        if (!setter.As<v8::Function>()->Call(context, info.Holder(), 1, arguments).ToLocal(&ignored)) return v8::Intercepted::kYes;
+                        info.GetReturnValue().Set(true);
+                        return v8::Intercepted::kYes;
+                    }
+                }
+                break;
+            }
+            prototype_value = prototype->GetPrototype();
+        }
+        info.GetReturnValue().Set(false);
+        return v8::Intercepted::kYes;
+    }
     if (host == nullptr || trace == nullptr || !property->IsString()) return v8::Intercepted::kNo;
     v8::String::Utf8Value text(isolate, property);
     const std::string member(*text != nullptr ? *text : "");
@@ -700,8 +816,8 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
     // the named descriptor callback for some internal property bookkeeping
     // (for example, adding the per-wrapper matchMedia onchange property), which
     // cannot be distinguished from an explicit descriptor query.
-    // Every callback returns kNo (or an empty enumerator list) so normal lookup,
-    // descriptors, deletion, and enumeration remain authoritative.
+    // Named form controls additionally supply their legacy native property
+    // semantics. Other hosts retain normal lookup, descriptors and enumeration.
     const auto handler_flags = static_cast<v8::PropertyHandlerFlags>(
         static_cast<int>(v8::PropertyHandlerFlags::kOnlyInterceptStrings));
     tmpl->SetHandler(v8::NamedPropertyHandlerConfiguration(

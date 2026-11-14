@@ -7,6 +7,19 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Restore named access before further runtime work (`2026-11-15`)
+
+The user prioritized porting the existing Epub Window/form named-access patch
+to the current mainline modules, preserving History, incorporating its browser
+fixture/regressions into release acceptance and building combined wheels.
+Keep native ownership/generation boundaries and existing form-control scope.
+Separate the prior candidate's unrelated callback-metadata changes. Every
+platform release must run History/named focused checks before the full suite;
+record source/tree/binary identity rather than trusting the unchanged package
+version. Implementation and local wheel acceptance are complete; all-platform
+release verification/mainline integration are pending in
+`docs/named_access_restore_report.md`.
+
 ### Caller configuration before speculative runtime repair (`2026-11-14`)
 
 After offline diagnostics, the user identified HTTP/Page input consistency as

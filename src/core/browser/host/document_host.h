@@ -68,11 +68,21 @@ public:
 
     const std::string& base_url() const;
     void set_current_url(const std::string& url) { url_ = url; }
+    PageState* page_state() const { return page_; }
+
+    v8::MaybeLocal<v8::Value> window_named_property(
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const std::string& name);
+    // Run on every child-list mutation even when nobody observes mutations, so
+    // moving/removing a control cannot resurrect a form's remembered old name.
+    void prune_past_named_controls();
 
     v8::Local<v8::Object> live_collection(v8::Isolate* isolate,
         v8::Local<v8::Context> context, DomNode* root, const std::string& kind,
         const std::string& query, bool all = false);
     std::vector<DomNode*> collection_nodes(const LiveCollectionBinding& binding) const;
+    std::vector<DomNode*> named_collection_nodes(
+        const LiveCollectionBinding& binding) const;
 
     // M11-14: deep/shallow detached clone. The clone is inserted into the
     // detached pool (never into roots_), so document queries ignore it.

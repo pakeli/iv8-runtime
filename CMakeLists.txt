@@ -66,10 +66,12 @@ if(IV8_LINK_V8)
       src/core/browser/window/post_message.cpp
       src/core/browser/web/blob_file_reader.cpp
       src/core/browser/window/window_metadata.cpp
+      src/core/browser/window/window_named_properties.cpp
       src/core/browser/host/document_host.cpp
       src/core/browser/host/document_tree_mutation.cpp
       src/core/browser/host/element_properties.cpp
       src/core/browser/host/element_methods.cpp
+      src/core/browser/host/named_properties.cpp
       src/core/browser/host/character_data_host.cpp
       src/core/browser/host/document_fragment_host.cpp
       src/core/browser/host/live_collection.cpp
