@@ -1,5 +1,9 @@
 # Next Tasks
 
+**Caller configuration alignment locally accepted (`2026-11-14`).** The user clarified that request/Page configuration consistency takes priority over speculative runtime repair. Shared configuration and per-request identity guards are applied to Customs/NMPA/Epub; the private project Jetstar driver explicitly uses supported macOS `chrome150` in both installed clients. Local full suite: **2314 passed, 2 skipped, 1 xfailed**. No live request or SDK/native change. See `docs/request_configuration_report.md`; new all-platform release verification is pending. Select further runtime work only from demonstrated browser/API differences; M11-53 remains the next numbered feature and stage 4 remains held.
+
+**Latest implemented tooling (`2026-11-14`): unified offline scenarios and environment diagnostics.** `tools/run_offline_scenarios.py` now unifies local replay, asset/runtime hashes, process/time budgets, first observed errors, checks and environment consistency. Usage/boundary: `docs/offline_scenarios.md`; local verification: `docs/offline_scenarios_report.md`. This tools-only change does not advance the browser milestone or claim an all-platform release.
+
 **JET-01 History native release verified; bounded live test still state -1 (`2026-11-14`).** Native source `dd67e49` passes all 12 platform lanes (**2120 passed, 2 skipped, 1 xfailed** each). After explicit user data-send approval, a same-session comparison with the unchanged original collector and identical JS test XHR adapter confirmed: old SDK fails at pushState with zero POSTs; the History SDK loads and emits two real POSTs, both HTTP201, but final `_abck` remains **-1**. The authorized two-POST budget is exhausted. This confirms the first execution blocker, with no server-pass or final root-cause claim. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
 
 **Page split stage 3 verified (`2026-11-14`).** Source `2f02535` (tree `e0b9d47029c9ce78d37013d49ddcbd4368a7e817`) completes all seven host-object slices. `page_state.cpp` decreases from **8,774 to 2,852 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. The complete member-aware move audit matches **282 definitions, 0 differences**; **83 audit checks**, **29 object/prototype snapshots** and independent native compilation passed. Next is stage 4 monitoring extraction, outside this completed request. Evidence: `docs/page_state_split.md`.
@@ -55,7 +59,17 @@ Last reviewed: `2026-11-14`
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — Jetstar incremental repair (`2026-11-14`)
+## Current execution order — configuration consistency before runtime repair (`2026-11-14`)
+
+Unified offline diagnostics and the subsequent caller configuration alignment
+are implemented and locally accepted. The user clarified that HTTP client and
+Page inputs must agree before attributing failures to missing runtime APIs.
+See `docs/offline_scenarios_report.md` and `docs/request_configuration_report.md`.
+Use the shared request configuration and pinned replay for subsequent checks.
+Navigator/permissions fixes require observed browser/API evidence; configuration
+warnings alone do not justify a runtime patch. M11-53 focus/visibility remains
+the next numbered feature. Page time-model changes, product networking,
+iframe/Worker and graphics remain separate proposals.
 
 Stages 1 and 2 are verified; the user authorized stage 3 on `2026-11-14`.
 Stage 3 is verified. The user explicitly held stage 4 and authorized incremental

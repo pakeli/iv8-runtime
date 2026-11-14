@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "base_url": "https://offline.test/start",
+  "steps": [
+    {
+      "action": "jobs"
+    },
+    {
+      "action": "advance",
+      "ms": 10,
+      "max_steps": 100
+    }
+  ],
+  "id": "asynchronous-first-failure",
+  "html": {
+    "path": "async_error.html",
+    "sha256": "9d4866c9f0f615759880eef441aed6ee8cee4f46a3c98d24163c1f1b9868bc2c"
+  },
+  "resources": [
+    {
+      "path": "async_error.js",
+      "sha256": "c417164708a9e7e0462d6c0a8403a9b7614a36305a24f324b604885daf7e3a4e",
+      "url": "https://offline.test/async_error.js"
+    }
+  ],
+  "expected_error": {
+    "phase": "step:1",
+    "channel": "asynchronous",
+    "name": "RangeError",
+    "resource_name": "https://offline.test/async_error.js"
+  }
+}

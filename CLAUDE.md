@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+**Latest local acceptance (`2026-11-14`): caller HTTP/Page configuration alignment.** Read `docs/request_configuration.md` and `docs/request_configuration_report.md`. Existing Customs/NMPA/Epub callers use one environment/header source and reject request-specific identity drift; private project Jetstar uses explicit macOS `chrome150`, supported under curl_cffi 0.16.3 and 0.17.0. Historical captures and native SDK remain unchanged. Local suite: **2314 passed, 2 skipped, 1 xfailed**; all-platform release verification pending. No new live requests. Configuration findings are not proof of a missing runtime API or server-rejection cause. M11-53 remains next; stage 4 remains held.
+
+**Previous implemented repository tooling (`2026-11-14`): unified offline replay and environment diagnostics.** Read `docs/offline_scenarios.md` for manifest schema, CLI and evidence limits, and `docs/offline_scenarios_report.md` for local acceptance. Reports separate execution, checks, environment and server (`not_tested`); matched negative controls do not imply successful execution. These utilities do not change Page/native contracts. The subsequent caller configuration task takes precedence over speculative Navigator/profile/permissions repair; M11-53 remains next and stage 4 remains held.
+
 **JET-01 History native release verified; bounded live test still state -1 (`2026-11-14`).** Native source `dd67e49` passes all 12 platform lanes (**2120 passed, 2 skipped, 1 xfailed** each). After explicit user data-send approval, a same-session comparison with the unchanged original collector and identical JS test XHR adapter confirmed: old SDK fails at pushState with zero POSTs; the History SDK loads and emits two real POSTs, both HTTP201, but final `_abck` remains **-1**. The authorized two-POST budget is exhausted. This confirms the first execution blocker, with no server-pass or final root-cause claim. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
 
 **Page split stage 3 verified (`2026-11-14`).** Source `2f02535` (tree `e0b9d47029c9ce78d37013d49ddcbd4368a7e817`) completes all seven host-object slices. `page_state.cpp` decreases from **8,774 to 2,852 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. The complete member-aware move audit matches **282 definitions, 0 differences**; **83 audit checks**, **29 object/prototype snapshots** and independent native compilation passed. Next is stage 4 monitoring extraction, outside this completed request. Evidence: `docs/page_state_split.md`.
@@ -243,8 +247,9 @@ are excluded through `.git/info/exclude`.
   status after the repo move.
 - When a slice expands the JS/Python surface, grep `test/` for every newly added
   member name and refresh the historical frozen-surface guards in the same
-  change. Full runtime tests only run in CI, so a missed guard shows up as a red
-  verification run even though the wheel build succeeded.
+  change. Run focused tests and the full suite against the installed real-V8
+  wheel locally, then perform the required CI/release checks. A successful wheel
+  build alone does not establish runtime acceptance.
 
 ## Expected Session Flow
 

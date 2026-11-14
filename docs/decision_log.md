@@ -7,6 +7,34 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Caller configuration before speculative runtime repair (`2026-11-14`)
+
+After offline diagnostics, the user identified HTTP/Page input consistency as
+the next task. Audit actual callers and installed client versions, derive HTTP
+identity and Page environment from one configuration, and reject contradictory
+per-request overrides. Pin an explicitly supported curl profile rather than a
+moving alias. Preserve old browser captures and keep SDK/community evidence
+separate. Apply only offline-verified caller edits with backups/SHA guards; send
+no live requests. Configuration equality does not establish TLS equivalence,
+Cookie state agreement or a server-pass root cause. Native browser repairs
+require their own observed mismatch and boundary. Local implementation and
+receipts: `docs/request_configuration.md` / `docs/request_configuration_report.md`.
+
+### Offline diagnostics before further runtime expansion (`2026-11-14`)
+
+The user selected unified offline scenario regression and environment consistency
+diagnostics as the immediate task. Implement them as repository utilities under
+`tools/`, reusing Page resource maps, explicit pumps, asynchronous errors and
+trace aggregation. Keep public Python/native contracts unchanged. Pin local
+inputs and actual SDK bytes, isolate each run, bound work and redact application
+values. Treat expected regression, successful execution, configuration checks
+and server acceptance as separate verdicts. Browser/transport metadata remains
+declared evidence; the offline tool makes no requests. Usage and boundary:
+`docs/offline_scenarios.md`; verification: `docs/offline_scenarios_report.md`.
+The current runtime follow-up stays Navigator/profile/permissions; M11-53 stays
+the next numbered feature. No approval of time/network/Realm/graphics expansion
+is implied, and stage 4 stays held.
+
 ### 1. Start from a narrow V8 kernel, not a full browser
 
 - Original baseline is M1: `JSContext`, evaluation, conversion, exceptions,

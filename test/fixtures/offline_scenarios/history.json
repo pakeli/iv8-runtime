@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "base_url": "https://offline.test/start",
+  "steps": [
+    {
+      "action": "jobs"
+    },
+    {
+      "action": "advance",
+      "ms": 10,
+      "max_steps": 100
+    }
+  ],
+  "id": "history-lifecycle",
+  "html": {
+    "path": "history.html",
+    "sha256": "8090876f3be564da7aa9559ed8878971e9ebdf3e0e938e325ef751b85f8f0979"
+  },
+  "resources": [
+    {
+      "path": "collector.js",
+      "sha256": "442cd050a5c23a7cffd2529c264a42899325f6b9720cb318a67d201c1fdcd88a",
+      "url": "https://offline.test/collector.js"
+    }
+  ],
+  "checks": [
+    {
+      "id": "event-order",
+      "expression": "scenarioEvents",
+      "expected": [
+        "collector",
+        "microtask",
+        "timer"
+      ]
+    },
+    {
+      "id": "history-state",
+      "expression": "history.state.sample",
+      "expected": 1
+    },
+    {
+      "id": "url-consistency",
+      "expression": "[location.href,document.URL,document.documentURI,document.baseURI]",
+      "expected": [
+        "https://offline.test/next#offline",
+        "https://offline.test/next#offline",
+        "https://offline.test/next#offline",
+        "https://offline.test/next#offline"
+      ]
+    },
+    {
+      "id": "native-shape",
+      "expression": "[history.pushState.name,history.pushState.length,Object.hasOwn(history.pushState,'prototype'),Function.prototype.toString.call(history.pushState)]",
+      "expected": [
+        "pushState",
+        2,
+        false,
+        "function pushState() { [native code] }"
+      ]
+    }
+  ]
+}

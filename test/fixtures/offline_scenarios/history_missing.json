@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "base_url": "https://offline.test/start",
+  "steps": [
+    {
+      "action": "jobs"
+    },
+    {
+      "action": "advance",
+      "ms": 10,
+      "max_steps": 100
+    }
+  ],
+  "id": "history-absence-control",
+  "html": {
+    "path": "history_missing.html",
+    "sha256": "86e9ba16455481cdf68937db1338c2428e337b8f409d103c541d931ec7a3e478"
+  },
+  "resources": [
+    {
+      "path": "remove_history.js",
+      "sha256": "e68870f6cb77e13eeaf24c3dff3252e193ea0b0b4180bffa0c10422c1da816e8",
+      "url": "https://offline.test/remove_history.js"
+    },
+    {
+      "path": "collector.js",
+      "sha256": "442cd050a5c23a7cffd2529c264a42899325f6b9720cb318a67d201c1fdcd88a",
+      "url": "https://offline.test/collector.js"
+    }
+  ],
+  "expected_error": {
+    "phase": "load",
+    "channel": "synchronous",
+    "name": "ReferenceError",
+    "resource_name": "https://offline.test/collector.js"
+  }
+}
