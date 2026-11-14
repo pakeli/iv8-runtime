@@ -455,3 +455,10 @@ release lanes. Stage 3 was authorized by the user on `2026-11-14`.
 Step 3.1 moves the unchanged event-target classes into private
 `browser/host/event_target.h`. Listener handle ownership and teardown remain
 unchanged; shared event helpers stay in `internal/event_support` for web callers.
+
+Step 3.3 separates DocumentHost's declaration/data layout from its 45 inline
+member implementations. Binding/observer and FileReader state definitions remain
+in the host layer, preserving generation ownership and avoiding an upward host
+dependency on web callbacks. The member-aware audit gates both the declaration
+contract and qualified method implementations; the runtime binding and teardown
+contracts remain unchanged.
