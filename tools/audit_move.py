@@ -751,7 +751,8 @@ def _decompose_class(entity: Entity, owner: str) -> list[Entity]:
         replacements.append((positions[id(member.tokens[0])],
                              positions[id(member.tokens[-1])] + 1,
                              member_declaration_tokens(member.tokens)))
-        implementations.append(_member_implementation(member, owner))
+        implementations.append(_member_implementation(
+            dataclasses.replace(member, namespace=entity.namespace), owner))
     skeleton = list(tokens)
     for start, end, declaration in reversed(replacements):
         skeleton[start:end] = declaration

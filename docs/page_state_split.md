@@ -259,3 +259,18 @@ The native syntax/link build passed. The member-aware move audit reports
 **27 reflected root object graphs** matched. Independent host headers and the
 new source compile without PCH under the established strict-warning exceptions.
 `page_state.cpp` is **6,957 lines**. Required V8 CI follows this PR.
+
+## Stage 3.4 — collections and observers (`2026-11-14`)
+
+PR #21 passed V8 checks `43559837029` and `43559841756` and merged before this
+slice. The live-collection, classList and MutationObserver definitions move into
+three host implementation modules. Page calls the same callbacks during install;
+the observer tag retains one definition with an extern declaration for the
+installer. The move gate's member diagnostics now retain the owning namespace,
+with an existing regression strengthened to check that attribution.
+
+The audit matched **227 definitions, 0 differences**. Native syntax/link,
+standalone host headers/sources and **83 audit tests** passed. Focused tests:
+**201 passed, 1 xfailed**; full real-V8 tests: **2090 passed, 2 skipped,
+1 xfailed**. All **27 root object graphs** matched. `page_state.cpp` is **6,058
+lines**. Required V8 CI gates this slice; stage release acceptance remains pending.

@@ -62,6 +62,7 @@ def test_member_move_preserves_constructor_destructor_defaults_and_contract():
     report = member_audit()
     assert report.definition_differences == 0
     assert len([item for item in report.old if item.kind == am.DEFINITION]) == 6
+    assert all(old.namespace == new.namespace for old, new in report.matched)
 
 
 @pytest.mark.parametrize(('before', 'after'), [

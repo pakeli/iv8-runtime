@@ -16,4 +16,6 @@ struct ClassListBinding {
     DomNode* node = nullptr;
 };
 
+extern v8::Local<v8::Value> make_class_list(v8::Isolate* isolate, v8::Local<v8::Context> context, DocumentHost* doc, DomNode* node);
+
 }  // namespace iv8::browser

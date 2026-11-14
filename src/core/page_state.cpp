@@ -216,7 +216,6 @@ class DocumentHost;  // ElementHost holds a back-pointer to its document
 // teardown hook). No JS-GC finalizer unregisters an observer in this phase.
 
 
-void mutation_observer_delivery(const v8::FunctionCallbackInfo<v8::Value>& info);
 
 
 
@@ -472,180 +471,27 @@ std::string reflected_element_attribute(const DomNode* node, const std::string& 
 // that tears down the context invalidates everything together.
 
 
-std::vector<DomNode*> DocumentHost::collection_nodes(const LiveCollectionBinding& binding) const {
-    const auto tokens = split_class_tokens(binding.query);
-    const auto predicate = binding.kind == "tag" ? tag_predicate(binding.query) :
-        std::function<bool(const DomNode*)>([tokens](const DomNode* node) {
-            return !tokens.empty() && has_all_class_tokens(node, tokens);
-        });
-    if (binding.root == nullptr) return collect(predicate);
-    std::vector<DomNode*> nodes;
-    for (auto child : binding.root->children) collect_matching(child, predicate, nodes);
-    return nodes;
-}
 
-LiveCollectionBinding* collection_binding(v8::Local<v8::Object> object) {
-    if (object->InternalFieldCount() != 2) return nullptr;
-    return static_cast<LiveCollectionBinding*>(object->GetAlignedPointerFromInternalField(0, v8::kEmbedderDataTypeTagDefault));
-}
 
-v8::Intercepted collection_index(std::uint32_t index,
-    const v8::PropertyCallbackInfo<v8::Value>& info) {
-    auto binding = collection_binding(info.Holder());
-    if (binding == nullptr) return v8::Intercepted::kNo;
-    auto nodes = binding->document->collection_nodes(*binding);
-    if (index >= nodes.size()) return v8::Intercepted::kNo;
-    info.GetReturnValue().Set(binding->document->wrap_node(info.GetIsolate(),
-        info.GetIsolate()->GetCurrentContext(), nodes[index]));
-    return v8::Intercepted::kYes;
-}
 
-v8::Intercepted collection_index_query(std::uint32_t index,
-    const v8::PropertyCallbackInfo<v8::Integer>& info) {
-    auto binding = collection_binding(info.Holder());
-    if (binding == nullptr || index >= binding->document->collection_nodes(*binding).size())
-        return v8::Intercepted::kNo;
-    info.GetReturnValue().Set(static_cast<int>(v8::ReadOnly));
-    return v8::Intercepted::kYes;
-}
 
-void collection_indices(const v8::PropertyCallbackInfo<v8::Array>& info) {
-    auto binding = collection_binding(info.Holder());
-    if (binding == nullptr) return;
-    auto nodes = binding->document->collection_nodes(*binding);
-    auto array = v8::Array::New(info.GetIsolate(), static_cast<int>(nodes.size()));
-    for (std::uint32_t index = 0; index < nodes.size(); ++index)
-        (void)array->Set(info.GetIsolate()->GetCurrentContext(), index,
-            v8::Integer::NewFromUnsigned(info.GetIsolate(), index));
-    info.GetReturnValue().Set(array);
-}
 
-DomNode* collection_named(LiveCollectionBinding* binding, const std::string& name) {
-    if (name.empty()) return nullptr;
-    for (auto node : binding->document->collection_nodes(*binding)) {
-        auto found = node->attributes.find("name");
-        if (node->id == name || (found != node->attributes.end() && found->second == name))
-            return node;
-    }
-    return nullptr;
-}
 
-v8::Intercepted collection_name(v8::Local<v8::Name> name,
-    const v8::PropertyCallbackInfo<v8::Value>& info) {
-    if (!name->IsString()) return v8::Intercepted::kNo;
-    auto binding = collection_binding(info.Holder());
-    if (binding == nullptr) return v8::Intercepted::kNo;
-    v8::String::Utf8Value text(info.GetIsolate(), name);
-    auto node = collection_named(binding, *text != nullptr ? *text : "");
-    if (node == nullptr) return v8::Intercepted::kNo;
-    info.GetReturnValue().Set(binding->document->wrap_node(info.GetIsolate(),
-        info.GetIsolate()->GetCurrentContext(), node));
-    return v8::Intercepted::kYes;
-}
 
-void collection_length(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    auto binding = collection_binding(info.This());
-    if (binding == nullptr) {
-        info.GetIsolate()->ThrowException(v8::Exception::TypeError(
-            v8::String::NewFromUtf8Literal(info.GetIsolate(), "Illegal invocation")));
-        return;
-    }
-    info.GetReturnValue().Set(static_cast<std::uint32_t>(
-        binding->document->collection_nodes(*binding).size()));
-}
 
-void collection_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    auto isolate = info.GetIsolate();
-    auto context = isolate->GetCurrentContext();
-    auto binding = collection_binding(info.This());
-    if (binding == nullptr) {
-        isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8Literal(isolate, "Illegal invocation")));
-        return;
-    }
-    v8::Local<v8::Value> argument = info.Length() ? info[0] :
-        v8::Local<v8::Value>(v8::Undefined(isolate));
-    DomNode* node = nullptr;
-    const bool named = info.Data()->IsTrue();
-    if (named) {
-        v8::Local<v8::String> name;
-        if (!argument->ToString(context).ToLocal(&name)) return;
-        v8::String::Utf8Value text(isolate, name);
-        node = collection_named(binding, *text != nullptr ? *text : "");
-    } else {
-        auto index = argument->Uint32Value(context);
-        if (index.IsNothing()) return;
-        auto nodes = binding->document->collection_nodes(*binding);
-        if (index.FromJust() < nodes.size()) node = nodes[index.FromJust()];
-    }
-    info.GetReturnValue().Set(binding->document->wrap_node(isolate, context, node));
-}
 
-void all_collection_call(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    auto isolate = info.GetIsolate();
-    auto context = isolate->GetCurrentContext();
-    auto binding = static_cast<LiveCollectionBinding*>(info.Data().As<v8::External>()->Value(v8::kExternalPointerTypeTagDefault));
-    if (info.Length() == 0) { info.GetReturnValue().Set(v8::Null(isolate)); return; }
-    v8::Local<v8::String> value;
-    if (!info[0]->ToString(context).ToLocal(&value)) return;
-    v8::String::Utf8Value name(isolate, value);
-    DomNode* node = collection_named(binding, *name != nullptr ? *name : "");
-    info.GetReturnValue().Set(binding->document->wrap_node(isolate, context, node));
-}
 
-v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
-    v8::Local<v8::Context> context, DomNode* root, const std::string& kind,
-    const std::string& query, bool all) {
-    auto binding = std::make_unique<LiveCollectionBinding>(LiveCollectionBinding{this, root, kind, query});
-    auto raw = binding.get();
-    collections_.push_back(std::move(binding));
-    auto object_template = v8::ObjectTemplate::New(isolate);
-    object_template->SetInternalFieldCount(2); // Distinct from a HostObject wrapper.
-    object_template->SetHandler(v8::IndexedPropertyHandlerConfiguration(
-        &collection_index, nullptr, &collection_index_query, nullptr, &collection_indices));
-    object_template->SetHandler(v8::NamedPropertyHandlerConfiguration(&collection_name,
-        nullptr, nullptr, nullptr, nullptr, v8::Local<v8::Value>(),
-        v8::PropertyHandlerFlags::kNonMasking));
-    if (all) {
-        object_template->MarkAsUndetectable();
-        object_template->SetCallAsFunctionHandler(&all_collection_call,
-            v8::External::New(isolate, raw, v8::kExternalPointerTypeTagDefault));
-    }
-    v8::Local<v8::Object> object;
-    if (!object_template->NewInstance(context).ToLocal(&object)) return v8::Object::New(isolate);
-    object->SetAlignedPointerInInternalField(0, raw, v8::kEmbedderDataTypeTagDefault);
-    auto cache_key = v8::Private::ForApi(isolate, v8::String::NewFromUtf8Literal(isolate,
-        "iv8.collection.prototypes"));
-    v8::Local<v8::Value> cached;
-    if (!context->Global()->GetPrivate(context, cache_key).ToLocal(&cached)) return object;
-    v8::Local<v8::Object> prototypes = cached->IsObject() ? cached.As<v8::Object>() : v8::Object::New(isolate);
-    (void)context->Global()->SetPrivate(context, cache_key, prototypes);
-    const auto class_name = v8_string(isolate, all ? "HTMLAllCollection" : "HTMLCollection").As<v8::String>();
-    if (!prototypes->Get(context, class_name).ToLocal(&cached)) return object;
-    v8::Local<v8::Object> prototype;
-    if (cached->IsObject()) prototype = cached.As<v8::Object>();
-    else {
-        prototype = v8::Object::New(isolate);
-        v8::Local<v8::Function> getter;
-        if (!v8::Function::New(context, &collection_length).ToLocal(&getter)) return object;
-        v8::PropertyDescriptor length(getter, v8::Undefined(isolate));
-        length.set_enumerable(true); length.set_configurable(true);
-        (void)prototype->DefineProperty(context, v8::String::NewFromUtf8Literal(isolate, "length"), length);
-        for (const auto& name : {"item", "namedItem"}) {
-            v8::Local<v8::Function> method;
-            if (!v8::Function::New(context, &collection_item,
-                    v8::Boolean::New(isolate, std::string(name) == "namedItem")).ToLocal(&method)) return object;
-            (void)prototype->Set(context, v8_string(isolate, name), method);
-        }
-        (void)prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-            class_name, static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
-        v8::Local<v8::Value> iterator;
-        if (v8::Array::New(isolate)->Get(context, v8::Symbol::GetIterator(isolate)).ToLocal(&iterator))
-            (void)prototype->DefineOwnProperty(context, v8::Symbol::GetIterator(isolate), iterator, v8::DontEnum);
-        (void)prototypes->Set(context, class_name, prototype);
-    }
-    (void)object->SetPrototype(context, prototype);
-    return object;
-}
+
+
+
+
+
+
+
+
+
+
+
 
 // --- M11-5 MutationObserver native registry / delivery -----------------------
 
@@ -653,816 +499,71 @@ v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
 // requires an ExternalPointerTypeTag on External::New / External::Value; the
 // default suffices and MUST match between New and Value call sites (same rule as
 // kWindowEventsTag below, see 52ded6e).
-constexpr v8::ExternalPointerTypeTag kMutationObserverTag =
-    v8::kExternalPointerTypeTagDefault;
 
-MutationObserverState* DocumentHost::create_mutation_observer(
-    v8::Isolate* isolate, v8::Local<v8::Function> callback,
-    v8::Local<v8::Object> self) {
-    auto state = std::make_unique<MutationObserverState>();
-    state->owner = this;
-    state->callback.Reset(isolate, callback);
-    state->self.Reset(isolate, self);
-    MutationObserverState* raw = state.get();
-    observers_.push_back(std::move(state));
-    return raw;
-}
 
-void DocumentHost::schedule_mutation_delivery(
-    v8::Isolate* isolate, v8::Local<v8::Context> context,
-    MutationObserverState* state) {
-    if (state == nullptr || state->delivery_queued || !state->alive) {
-        return;
-    }
-    state->delivery_queued = true;
-    v8::Local<v8::Function> delivery;
-    if (!v8::Function::New(context, &mutation_observer_delivery,
-                           v8::External::New(isolate, state,
-                                             kMutationObserverTag))
-             .ToLocal(&delivery)) {
-        state->delivery_queued = false;
-        return;
-    }
-    isolate->EnqueueMicrotask(delivery);
-}
 
-void DocumentHost::queue_child_list(
-    v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* parent,
-    const std::vector<DomNode*>& added, const std::vector<DomNode*>& removed,
-    DomNode* previous_sibling, DomNode* next_sibling) {
-    if (observers_.empty()) {
-        return;
-    }
-    for (const std::unique_ptr<MutationObserverState>& observer : observers_) {
-        if (!observer->alive) {
-            continue;
-        }
-        bool matched = false;
-        for (const MutationObserverRegistration& registration :
-             observer->registrations) {
-            if (!registration.child_list) {
-                continue;
-            }
-            bool target_matches = false;
-            if (registration.target_is_document) {
-                target_matches = parent == &document_node_ ||
-                    (registration.subtree && is_in_tree(parent));
-            } else {
-                target_matches =
-                    registration.target == parent ||
-                    (registration.subtree &&
-                     is_self_or_ancestor(registration.target, parent));
-            }
-            if (!target_matches) {
-                continue;
-            }
-            MutationRecordData record;
-            record.type = MutationRecordData::Type::ChildList;
-            record.target = parent;
-            record.added = added;
-            record.removed = removed;
-            record.previous_sibling = previous_sibling;
-            record.next_sibling = next_sibling;
-            observer->pending.push_back(std::move(record));
-            matched = true;
-            break;
-        }
-        if (matched) {
-            schedule_mutation_delivery(isolate, context, observer.get());
-        }
-    }
-}
 
-void DocumentHost::queue_attribute(v8::Isolate* isolate,
-                                   v8::Local<v8::Context> context,
-                                   DomNode* target, const std::string& name,
-                                   bool has_old_value,
-                                   const std::string& old_value) {
-    if (observers_.empty()) {
-        return;
-    }
-    for (const std::unique_ptr<MutationObserverState>& observer : observers_) {
-        if (!observer->alive) {
-            continue;
-        }
-        bool matched = false;
-        for (const MutationObserverRegistration& registration :
-             observer->registrations) {
-            if (!registration.attributes) {
-                continue;
-            }
-            bool target_matches = false;
-            if (registration.target_is_document) {
-                target_matches = registration.subtree && is_in_tree(target);
-            } else {
-                target_matches =
-                    registration.target == target ||
-                    (registration.subtree &&
-                     is_self_or_ancestor(registration.target, target));
-            }
-            if (!target_matches) {
-                continue;
-            }
-            if (registration.has_attribute_filter &&
-                std::find(registration.attribute_filter.begin(),
-                          registration.attribute_filter.end(),
-                          name) == registration.attribute_filter.end()) {
-                continue;
-            }
-            MutationRecordData record;
-            record.type = MutationRecordData::Type::Attributes;
-            record.target = target;
-            record.attribute_name = name;
-            record.has_old_value =
-                registration.attribute_old_value && has_old_value;
-            if (record.has_old_value) {
-                record.old_value = old_value;
-            }
-            observer->pending.push_back(std::move(record));
-            matched = true;
-            break;
-        }
-        if (matched) {
-            schedule_mutation_delivery(isolate, context, observer.get());
-        }
-    }
-}
 
-void DocumentHost::queue_character_data(v8::Isolate* isolate,
-                                        v8::Local<v8::Context> context,
-                                        DomNode* target,
-                                        const std::string& old_value) {
-    if (observers_.empty()) {
-        return;
-    }
-    for (const std::unique_ptr<MutationObserverState>& observer : observers_) {
-        if (!observer->alive) {
-            continue;
-        }
-        bool matched = false;
-        for (const MutationObserverRegistration& registration :
-             observer->registrations) {
-            if (!registration.character_data) {
-                continue;
-            }
-            bool target_matches = false;
-            if (registration.target_is_document) {
-                target_matches = registration.subtree && is_in_tree(target);
-            } else {
-                target_matches =
-                    registration.target == target ||
-                    (registration.subtree &&
-                     is_self_or_ancestor(registration.target, target));
-            }
-            if (!target_matches) {
-                continue;
-            }
-            MutationRecordData record;
-            record.type = MutationRecordData::Type::CharacterData;
-            record.target = target;
-            record.has_old_value = registration.character_data_old_value;
-            if (record.has_old_value) {
-                record.old_value = old_value;
-            }
-            observer->pending.push_back(std::move(record));
-            matched = true;
-            break;
-        }
-        if (matched) {
-            schedule_mutation_delivery(isolate, context, observer.get());
-        }
-    }
-}
 
-v8::Local<v8::Array> DocumentHost::build_records_array(
-    v8::Isolate* isolate, v8::Local<v8::Context> context,
-    const std::vector<MutationRecordData>& records) {
-    v8::Local<v8::Array> array =
-        v8::Array::New(isolate, static_cast<int>(records.size()));
-    for (std::size_t i = 0; i < records.size(); ++i) {
-        const MutationRecordData& record = records[i];
-        const bool child_list =
-            record.type == MutationRecordData::Type::ChildList;
-        const bool attributes =
-            record.type == MutationRecordData::Type::Attributes;
-        v8::Local<v8::Object> object = v8::Object::New(isolate);
-        (void)object->Set(
-            context, v8_string(isolate, "type"),
-            v8_string(isolate, child_list
-                                  ? "childList"
-                                  : (attributes ? "attributes"
-                                                : "characterData")));
-        (void)object->Set(context, v8_string(isolate, "target"),
-                          wrap_node(isolate, context, record.target));
-        (void)object->Set(context, v8_string(isolate, "addedNodes"),
-                          nodes_array(isolate, context, record.added));
-        (void)object->Set(context, v8_string(isolate, "removedNodes"),
-                          nodes_array(isolate, context, record.removed));
-        (void)object->Set(context, v8_string(isolate, "previousSibling"),
-                          wrap_node(isolate, context,
-                                       record.previous_sibling));
-        (void)object->Set(context, v8_string(isolate, "nextSibling"),
-                          wrap_node(isolate, context, record.next_sibling));
-        if (attributes) {
-            (void)object->Set(context, v8_string(isolate, "attributeName"),
-                              v8_string(isolate, record.attribute_name));
-        } else {
-            (void)object->Set(context, v8_string(isolate, "attributeName"),
-                              v8::Null(isolate));
-        }
-        (void)object->Set(context, v8_string(isolate, "attributeNamespace"),
-                          v8::Null(isolate));
-        if (record.has_old_value) {
-            (void)object->Set(context, v8_string(isolate, "oldValue"),
-                              v8_string(isolate, record.old_value));
-        } else {
-            (void)object->Set(context, v8_string(isolate, "oldValue"),
-                              v8::Null(isolate));
-        }
-        (void)array->Set(context, static_cast<std::uint32_t>(i), object);
-    }
-    return array;
-}
 
-void mutation_observer_delivery(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    if (!info.Data()->IsExternal()) {
-        return;
-    }
-    auto* state = static_cast<MutationObserverState*>(
-        info.Data().As<v8::External>()->Value(kMutationObserverTag));
-    if (state == nullptr || !state->alive || state->owner == nullptr) {
-        return;
-    }
-    state->delivery_queued = false;
-    if (state->pending.empty()) {
-        return;
-    }
-    std::vector<MutationRecordData> records;
-    records.swap(state->pending);
-    v8::Local<v8::Array> array =
-        state->owner->build_records_array(isolate, context, records);
-    if (state->callback.IsEmpty() || state->self.IsEmpty()) {
-        return;
-    }
-    v8::Local<v8::Function> callback = state->callback.Get(isolate);
-    v8::Local<v8::Object> self = state->self.Get(isolate);
-    v8::Local<v8::Value> argv[2] = {array.As<v8::Value>(),
-                                    self.As<v8::Value>()};
-    v8::TryCatch try_catch(isolate);
-    (void)callback->Call(context, self.As<v8::Value>(), 2, argv);
-    if (try_catch.HasCaught()) {
-        try_catch.Reset();
-    }
-}
+
+
+
+
+
+
+
+
 
 // --- M11-5 MutationObserver JS API -------------------------------------------
 
-v8::Local<v8::Private> mo_private_key(v8::Isolate* isolate) {
-    return v8::Private::ForApi(
-        isolate, v8::String::NewFromUtf8Literal(
-                     isolate, "iv8::MutationObserver::state"));
-}
 
-void throw_mo_type_error(v8::Isolate* isolate, const char* message) {
-    isolate->ThrowException(v8::Exception::TypeError(
-        v8_string(isolate, std::string(message)).As<v8::String>()));
-}
 
-MutationObserverState* mo_state_from_this(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    v8::Local<v8::Value> value;
-    if (!info.This()
-             ->GetPrivate(context, mo_private_key(isolate))
-             .ToLocal(&value)) {
-        return nullptr;
-    }
-    if (!value->IsExternal()) {
-        return nullptr;
-    }
-    return static_cast<MutationObserverState*>(
-        value.As<v8::External>()->Value(kMutationObserverTag));
-}
 
-void mutation_observer_constructor(
-    const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    if (!info.IsConstructCall()) {
-        throw_mo_type_error(isolate,
-                            "MutationObserver constructor requires 'new'");
-        return;
-    }
-    DocumentHost* document = nullptr;
-    if (info.Data()->IsExternal()) {
-        document = static_cast<DocumentHost*>(
-            info.Data().As<v8::External>()->Value(kMutationObserverTag));
-    }
-    if (document == nullptr) {
-        throw_mo_type_error(isolate, "MutationObserver: invalid constructor");
-        return;
-    }
-    if (info.Length() < 1 || !info[0]->IsFunction()) {
-        throw_mo_type_error(isolate,
-                            "MutationObserver: callback must be a function");
-        return;
-    }
-    v8::Local<v8::Object> self = info.This();
-    MutationObserverState* state = document->create_mutation_observer(
-        isolate, info[0].As<v8::Function>(), self);
-    (void)self->SetPrivate(
-        context, mo_private_key(isolate),
-        v8::External::New(isolate, state, kMutationObserverTag));
-}
 
-void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    MutationObserverState* state = mo_state_from_this(info);
-    if (state == nullptr) {
-        throw_mo_type_error(isolate, "Illegal invocation");
-        return;
-    }
-    if (info.Length() < 1) {
-        throw_mo_type_error(isolate, "observe: target is required");
-        return;
-    }
-    HostObject* host = host_object_backing(info[0]);
-    bool target_is_document = false;
-    DomNode* target_node = nullptr;
-    if (host == nullptr) {
-        throw_mo_type_error(isolate,
-                            "observe: target must be an element or document");
-        return;
-    }
-    if (state->owner != nullptr &&
-        static_cast<HostObject*>(state->owner) == host) {
-        target_is_document = true;
-    } else if (host->is_node()) {
-        NodeHost* node_host = static_cast<NodeHost*>(host);
-        if (node_host->document() != state->owner) {
-            throw_mo_type_error(isolate, "observe: target is from another document");
-            return;
-        }
-        target_node = node_host->node();
-    } else {
-        throw_mo_type_error(isolate,
-                            "observe: target must be a node or document");
-        return;
-    }
-    if (info.Length() < 2 || !info[1]->IsObject()) {
-        throw_mo_type_error(isolate, "observe: options must be an object");
-        return;
-    }
-    v8::Local<v8::Object> options = info[1].As<v8::Object>();
-    const auto get_bool = [&](const char* key, bool* out) -> bool {
-        v8::Local<v8::Value> value;
-        if (!options->Get(context, v8_string(isolate, key)).ToLocal(&value)) {
-            return false;
-        }
-        *out = value->BooleanValue(isolate);
-        return true;
-    };
-    bool child_list = false;
-    bool attributes = false;
-    bool character_data = false;
-    bool subtree = false;
-    bool attribute_old_value = false;
-    bool character_data_old_value = false;
-    if (!get_bool("childList", &child_list) ||
-        !get_bool("attributes", &attributes) ||
-        !get_bool("characterData", &character_data) ||
-        !get_bool("subtree", &subtree) ||
-        !get_bool("attributeOldValue", &attribute_old_value) ||
-        !get_bool("characterDataOldValue", &character_data_old_value)) {
-        return;  // a getter threw; keep the pending exception
-    }
-    v8::Maybe<bool> maybe_has =
-        options->Has(context, v8_string(isolate, "attributeFilter"));
-    if (maybe_has.IsNothing()) {
-        return;
-    }
-    const bool has_filter = maybe_has.FromJust();
-    if (!child_list && !attributes && !character_data) {
-        throw_mo_type_error(isolate,
-                            "observe: at least one of childList, attributes "
-                            "or characterData must be true");
-        return;
-    }
-    if (attribute_old_value && !attributes) {
-        throw_mo_type_error(isolate,
-                            "observe: attributeOldValue requires attributes");
-        return;
-    }
-    if (has_filter && !attributes) {
-        throw_mo_type_error(isolate,
-                            "observe: attributeFilter requires attributes");
-        return;
-    }
-    if (character_data_old_value && !character_data) {
-        throw_mo_type_error(
-            isolate,
-            "observe: characterDataOldValue requires characterData");
-        return;
-    }
-    std::vector<std::string> filter;
-    if (has_filter) {
-        v8::Local<v8::Value> filter_value;
-        if (!options->Get(context, v8_string(isolate, "attributeFilter"))
-                 .ToLocal(&filter_value)) {
-            return;
-        }
-        if (!filter_value->IsArray()) {
-            throw_mo_type_error(isolate,
-                                "observe: attributeFilter must be an array");
-            return;
-        }
-        v8::Local<v8::Array> filter_array = filter_value.As<v8::Array>();
-        const std::uint32_t length = filter_array->Length();
-        for (std::uint32_t i = 0; i < length; ++i) {
-            v8::Local<v8::Value> item;
-            if (!filter_array->Get(context, i).ToLocal(&item)) {
-                return;
-            }
-            v8::Local<v8::String> item_string;
-            if (!item->ToString(context).ToLocal(&item_string)) {
-                return;
-            }
-            v8::String::Utf8Value utf8(isolate, item_string);
-            if (*utf8 != nullptr) {
-                filter.push_back(ascii_lower(std::string(
-                    *utf8, static_cast<std::size_t>(utf8.length()))));
-            }
-        }
-    }
-    MutationObserverRegistration registration;
-    registration.target = target_node;
-    registration.target_is_document = target_is_document;
-    registration.child_list = child_list;
-    registration.attributes = attributes;
-    registration.subtree = subtree;
-    registration.attribute_old_value = attribute_old_value;
-    registration.character_data = character_data;
-    registration.character_data_old_value = character_data_old_value;
-    registration.has_attribute_filter = has_filter;
-    registration.attribute_filter = std::move(filter);
-    bool replaced = false;
-    for (MutationObserverRegistration& existing : state->registrations) {
-        if (existing.target == target_node &&
-            existing.target_is_document == target_is_document) {
-            existing = std::move(registration);
-            replaced = true;
-            break;
-        }
-    }
-    if (!replaced) {
-        state->registrations.push_back(std::move(registration));
-    }
-    info.GetReturnValue().SetUndefined();
-}
 
-void mo_disconnect(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    MutationObserverState* state = mo_state_from_this(info);
-    if (state == nullptr) {
-        throw_mo_type_error(info.GetIsolate(), "Illegal invocation");
-        return;
-    }
-    state->registrations.clear();
-    state->pending.clear();
-    info.GetReturnValue().SetUndefined();
-}
 
-void mo_take_records(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    MutationObserverState* state = mo_state_from_this(info);
-    if (state == nullptr) {
-        throw_mo_type_error(isolate, "Illegal invocation");
-        return;
-    }
-    std::vector<MutationRecordData> records;
-    records.swap(state->pending);
-    info.GetReturnValue().Set(
-        state->owner->build_records_array(isolate, context, records)
-            .As<v8::Value>());
-}
+
+
+
+
+
+
+
 
 // --- M11-10 classList / toggleAttribute -------------------------------------
 // A classList object is a fresh plain object per access; its methods and
 // length/value accessors carry an External to a generation-owned binding.
 
-constexpr v8::ExternalPointerTypeTag kClassListTag =
-    v8::kExternalPointerTypeTagDefault;
 
-ClassListBinding* class_list_binding_from(v8::Local<v8::Value> data) {
-    if (!data->IsExternal()) {
-        return nullptr;
-    }
-    return static_cast<ClassListBinding*>(
-        data.As<v8::External>()->Value(kClassListTag));
-}
 
-void throw_class_list_error(v8::Isolate* isolate, const char* message) {
-    isolate->ThrowException(v8::Exception::TypeError(
-        v8::String::NewFromUtf8(isolate, message).ToLocalChecked()));
-}
 
-bool class_list_token(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                      v8::Local<v8::Value> value, std::string* out) {
-    v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
-        return false;
-    }
-    v8::String::Utf8Value utf8(isolate, str);
-    *out = (*utf8 != nullptr)
-               ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
-               : std::string();
-    if (out->empty()) {
-        throw_class_list_error(isolate, "classList token must not be empty");
-        return false;
-    }
-    for (char c : *out) {
-        if (std::isspace(static_cast<unsigned char>(c))) {
-            throw_class_list_error(
-                isolate, "classList token must not contain whitespace");
-            return false;
-        }
-    }
-    return true;
-}
 
-void class_list_commit(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                       ClassListBinding* binding, const std::string& old_name,
-                       bool old_has_class) {
-    DomNode* node = binding->node;
-    std::string joined;
-    for (std::size_t i = 0; i < node->classes.size(); i++) {
-        if (i > 0) {
-            joined += ' ';
-        }
-        joined += node->classes[i];
-    }
-    node->class_name = joined;
-    node->has_class = !node->classes.empty();
-    if (node->class_name != old_name || node->has_class != old_has_class) {
-        binding->document->queue_attribute(isolate, context, node, "class",
-                                           old_has_class, old_name);
-    }
-}
 
-void class_list_contains(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        return;
-    }
-    std::string token;
-    if (!class_list_token(isolate, context, info[0], &token)) {
-        return;
-    }
-    info.GetReturnValue().Set(v8::Boolean::New(
-        isolate,
-        std::find(binding->node->classes.begin(), binding->node->classes.end(),
-                  token) != binding->node->classes.end()));
-}
 
-void class_list_add(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        return;
-    }
-    const std::string old_name = binding->node->class_name;
-    const bool old_has_class = binding->node->has_class;
-    std::vector<std::string> tokens;
-    tokens.reserve(static_cast<std::size_t>(info.Length()));
-    for (int i = 0; i < info.Length(); i++) {
-        std::string token;
-        if (!class_list_token(isolate, context, info[i], &token)) {
-            return;  // validate every token before mutating the node
-        }
-        tokens.push_back(std::move(token));
-    }
-    bool changed = false;
-    std::vector<std::string>& classes = binding->node->classes;
-    for (const std::string& token : tokens) {
-        if (std::find(classes.begin(), classes.end(), token) == classes.end()) {
-            classes.push_back(token);
-            changed = true;
-        }
-    }
-    if (changed) {
-        class_list_commit(isolate, context, binding, old_name, old_has_class);
-    }
-}
 
-void class_list_remove(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        return;
-    }
-    const std::string old_name = binding->node->class_name;
-    const bool old_has_class = binding->node->has_class;
-    std::vector<std::string> tokens;
-    tokens.reserve(static_cast<std::size_t>(info.Length()));
-    for (int i = 0; i < info.Length(); i++) {
-        std::string token;
-        if (!class_list_token(isolate, context, info[i], &token)) {
-            return;  // validate every token before mutating the node
-        }
-        tokens.push_back(std::move(token));
-    }
-    bool changed = false;
-    std::vector<std::string>& classes = binding->node->classes;
-    for (const std::string& token : tokens) {
-        const auto it = std::find(classes.begin(), classes.end(), token);
-        if (it != classes.end()) {
-            classes.erase(it);
-            changed = true;
-        }
-    }
-    if (changed) {
-        class_list_commit(isolate, context, binding, old_name, old_has_class);
-    }
-}
 
-void class_list_toggle(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        return;
-    }
-    std::string token;
-    if (!class_list_token(isolate, context, info[0], &token)) {
-        return;
-    }
-    std::vector<std::string>& classes = binding->node->classes;
-    const auto it = std::find(classes.begin(), classes.end(), token);
-    const bool present = it != classes.end();
-    const bool force_specified =
-        info.Length() > 1 && !info[1]->IsUndefined();
-    const bool force = force_specified ? info[1]->BooleanValue(isolate) : false;
-    const bool should_exist = force_specified ? force : !present;
-    if (should_exist != present) {
-        const std::string old_name = binding->node->class_name;
-        const bool old_has_class = binding->node->has_class;
-        if (should_exist) {
-            classes.push_back(token);
-        } else {
-            classes.erase(it);
-        }
-        class_list_commit(isolate, context, binding, old_name, old_has_class);
-    }
-    info.GetReturnValue().Set(v8::Boolean::New(isolate, should_exist));
-}
 
-void class_list_replace(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        return;
-    }
-    std::string old_token;
-    std::string new_token;
-    if (!class_list_token(isolate, context, info[0], &old_token) ||
-        !class_list_token(isolate, context, info[1], &new_token)) {
-        return;
-    }
-    std::vector<std::string>& classes = binding->node->classes;
-    const auto old_it = std::find(classes.begin(), classes.end(), old_token);
-    if (old_it == classes.end()) {
-        info.GetReturnValue().Set(v8::False(isolate));
-        return;
-    }
-    if (old_token != new_token) {
-        const std::string old_name = binding->node->class_name;
-        const bool old_has_class = binding->node->has_class;
-        const auto new_it = std::find(classes.begin(), classes.end(), new_token);
-        if (new_it == classes.end()) {
-            *old_it = new_token;
-        } else {
-            classes.erase(old_it);  // the replacement already exists: dedupe
-        }
-        class_list_commit(isolate, context, binding, old_name, old_has_class);
-    }
-    info.GetReturnValue().Set(v8::True(isolate));
-}
 
-void class_list_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        return;
-    }
-    v8::Local<v8::Uint32> index_value;
-    if (!info[0]->ToUint32(context).ToLocal(&index_value)) {
-        return;
-    }
-    const std::uint32_t index = index_value->Value();
-    if (index >= binding->node->classes.size()) {
-        info.GetReturnValue().Set(v8::Null(isolate));
-        return;
-    }
-    info.GetReturnValue().Set(
-        v8_string(isolate, binding->node->classes[index]));
-}
 
-void class_list_length_getter(v8::Local<v8::Name> property,
-                              const v8::PropertyCallbackInfo<v8::Value>& info) {
-    (void)property;
-    v8::Isolate* isolate = info.GetIsolate();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        return;
-    }
-    info.GetReturnValue().Set(v8::Integer::NewFromUnsigned(
-        isolate, static_cast<unsigned>(binding->node->classes.size())));
-}
 
-void class_list_value_getter(v8::Local<v8::Name> property,
-                             const v8::PropertyCallbackInfo<v8::Value>& info) {
-    (void)property;
-    v8::Isolate* isolate = info.GetIsolate();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        return;
-    }
-    info.GetReturnValue().Set(v8_string(isolate, binding->node->class_name));
-}
 
-void class_list_value_setter(v8::Local<v8::Name> property,
-                             v8::Local<v8::Value> value,
-                             const v8::PropertyCallbackInfo<v8::Boolean>& info) {
-    (void)property;
-    v8::Isolate* isolate = info.GetIsolate();
-    v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    ClassListBinding* binding = class_list_binding_from(info.Data());
-    if (binding == nullptr) {
-        info.GetReturnValue().Set(false);
-        return;
-    }
-    v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
-        info.GetReturnValue().Set(false);
-        return;
-    }
-    v8::String::Utf8Value utf8(isolate, str);
-    const std::string text =
-        (*utf8 != nullptr)
-            ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
-            : std::string();
-    DomNode* node = binding->node;
-    const std::string old_name = node->class_name;
-    const bool old_has_class = node->has_class;
-    node->class_name = text;
-    node->has_class = true;
-    node->classes = split_class_tokens(text);
-    if (node->class_name != old_name || node->has_class != old_has_class) {
-        binding->document->queue_attribute(isolate, context, node, "class",
-                                           old_has_class, old_name);
-    }
-    info.GetReturnValue().Set(true);
-}
 
-v8::Local<v8::Value> make_class_list(v8::Isolate* isolate,
-                                     v8::Local<v8::Context> context,
-                                     DocumentHost* document, DomNode* node) {
-    ClassListBinding* binding = document->create_class_list_binding(node);
-    v8::Local<v8::Value> data =
-        v8::External::New(isolate, binding, kClassListTag);
-    v8::Local<v8::Object> list = v8::Object::New(isolate);
-    const auto add_method = [&](const char* name, v8::FunctionCallback callback) {
-        v8::Local<v8::Function> fn =
-            v8::FunctionTemplate::New(isolate, callback, data)
-                ->GetFunction(context)
-                .ToLocalChecked();
-        (void)list->Set(context, v8_string(isolate, name), fn);
-    };
-    add_method("contains", &class_list_contains);
-    add_method("add", &class_list_add);
-    add_method("remove", &class_list_remove);
-    add_method("toggle", &class_list_toggle);
-    add_method("replace", &class_list_replace);
-    add_method("item", &class_list_item);
-    (void)list->SetNativeDataProperty(
-        context, v8::String::NewFromUtf8Literal(isolate, "length"),
-        &class_list_length_getter, nullptr, data, v8::ReadOnly);
-    (void)list->SetNativeDataProperty(
-        context, v8::String::NewFromUtf8Literal(isolate, "value"),
-        &class_list_value_getter, &class_list_value_setter, data, v8::None);
-    return list;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // --- M11-49 HTML fragment / variadic tree helpers ---------------------------
 
