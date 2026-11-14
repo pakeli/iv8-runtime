@@ -59,6 +59,16 @@ if(IV8_LINK_V8)
       src/core/base64.cpp
       src/core/html_entities.cpp
       src/core/page_state.cpp
+      src/core/browser/bom/web_storage.cpp
+      src/core/browser/bom/navigator_parts.cpp
+      src/core/browser/bom/media_query.cpp
+      src/core/browser/web/performance.cpp
+      src/core/browser/web/structured_clone.cpp
+      src/core/browser/web/capabilities.cpp
+      src/core/browser/web/event_constructors.cpp
+      src/core/browser/web/url.cpp
+      src/core/browser/bootstrap/bootstrap_scripts.cpp
+      src/core/browser/internal/event_support.cpp
       src/core/browser/internal/common.cpp
       src/core/browser/internal/trace_hooks.cpp
       src/core/browser/web/crypto.cpp

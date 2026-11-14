@@ -106,3 +106,18 @@ plan's issue list. The source move preserves their original definitions.
 
 Stage 1.2 extracts URL and structured-clone code. The complete stage 1 platform
 matrix follows the remaining leaf slices, under the approved per-stage policy.
+
+## Complete stage 1 implementation
+
+The remaining URL/structured clone, performance, console/probe/storage,
+navigator/media query/BOM, event/capability and bootstrap modules are extracted.
+Small host classes retain their inline definitions in private headers. Shared
+non-DOM event helpers live in `internal/event_support`. Performance and media
+query stores retain their `iv8` types and Page ownership. Bootstrap arrays have
+explicit declarations preserving the installer's existing sizeof expressions.
+
+`page_state.cpp` is 10,065 lines. Local syntax/link checks passed; focused tests
+reported 136 passed and 1 xfailed, the complete suite reported 2090 passed,
+2 skipped and 1 xfailed, and all 56 audit tests passed. The audit matched
+403 definitions with zero differences. Reflection matched 17 root objects and
+their prototype-chain descriptors. Stage release verification is pending.
