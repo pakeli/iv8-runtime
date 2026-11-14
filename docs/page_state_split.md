@@ -104,10 +104,10 @@ existing `btoa` signed/unsigned comparison and `WatchHit` partial aggregate
 initializers. Those existing warnings are recorded for later cleanup in the
 plan's issue list. The source move preserves their original definitions.
 
-Stage 1.2 extracts URL and structured-clone code. The complete stage 1 platform
-matrix follows the remaining leaf slices, under the approved per-stage policy.
+The remaining stage 1 slices were grouped in PR #17 under the user-confirmed
+per-stage policy on `2026-11-14`.
 
-## Complete stage 1 implementation
+## Complete stage 1 verification (`2026-11-14`)
 
 The remaining URL/structured clone, performance, console/probe/storage,
 navigator/media query/BOM, event/capability and bootstrap modules are extracted.
@@ -120,4 +120,23 @@ explicit declarations preserving the installer's existing sizeof expressions.
 reported 136 passed and 1 xfailed, the complete suite reported 2090 passed,
 2 skipped and 1 xfailed, and all 56 audit tests passed. The audit matched
 403 definitions with zero differences. Reflection matched 17 root objects and
-their prototype-chain descriptors. Stage release verification is pending.
+their prototype-chain descriptors.
+
+
+Verified source `f5dbea5082c49b49419d6ef290f0a4ac665b1b50`, tree
+`f2cf965a2cc6037fb0933aeba03afe634f11e478`. PR #17 includes all slices 1.2–1.8.
+The initial Windows build exposed a missing `<cmath>` include in the event
+constructor module; the verified source includes that explicit dependency.
+
+| Platform (Python 3.11–3.14) | Run | Artifact IDs | Per-lane result |
+|---|---|---|---|
+| linux | `43551493341` | `linux-manylinux2_28-wheels`: `14096643267` | 2090 passed, 2 skipped, 1 xfailed |
+| windows | `43551496515` | `windows-wheel-cp3.11`: `14096945839`, `windows-wheel-cp3.12`: `14095804822`, `windows-wheel-cp3.13`: `14096856659`, `windows-wheel-cp3.14`: `14096163119` | 2090 passed, 2 skipped, 1 xfailed |
+| macos | `43551709339` | `macos-arm64-wheel-cp3.11`: `14096367947`, `macos-arm64-wheel-cp3.12`: `14096946075`, `macos-arm64-wheel-cp3.13`: `14096441720`, `macos-arm64-wheel-cp3.14`: `14096612623` | 2090 passed, 2 skipped, 1 xfailed |
+
+All 12 lanes passed in hosted CI against pinned V8 15.0.245.19. The macOS
+helper pinned both source checkouts to the verified source; restore commit
+`c508577074b56a150bd0b9f1516a0c79d704e10a` restored workflow blob
+`eb730d3e77a17d4d527e67646475385cebb2428c`. Required V8 checks
+`43551491659` and `43551496150` passed. The complete receipt and local logs
+are under ignored `data/page-split-stage1/`. Stage 2 follows this acceptance.

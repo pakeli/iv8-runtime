@@ -1174,7 +1174,7 @@ Hosted macOS jobs exhausted runner capacity. The local fallback used four clean
 wheel installations on macOS 26.5 and recorded source trees, Python versions and
 wheel digests. The temporary macOS helper workflow was restored with a SHA guard.
 `docs/page_state_split.md` records the verification routes and artifact evidence.
-Stage 1.1 starts with crypto, Base64 globals and UTF-8 encoding callbacks.
+Stage 1.1 extracted crypto, Base64 globals and UTF-8 encoding callbacks.
 
 ### 59. Extract leaf callbacks with shared internal dependencies
 
@@ -1188,8 +1188,20 @@ The audit matched 431 definitions with zero differences. Eight affected function
 reflection profiles and all 258 global keys matched the baseline. Local real-V8
 and required Linux CI reported `2090 passed, 2 skipped, 1 xfailed`, with 56 audit
 checks. Existing signed comparison and aggregate initializer warnings were
-recorded for later cleanup. Stage 1.2 follows, with full platform verification
-at the end of the complete leaf-module stage under decision 58.
+recorded for later cleanup. Full stage 1 verification is recorded in decision 60.
+
+### 60. Complete the leaf-module stage before extracting DOM data
+
+Confirmed and verified `2026-11-14`. The user requested one PR for the remaining
+stage 1 slices and one for stage 2: syntax/audit/tests precede PR submission,
+then V8-linked platform builds. Stop after stage 2 for user confirmation.
+
+Stage 1 source `f5dbea5` preserves inline host class definitions, Page-owned
+stores, shared event helpers, bootstrap sizes and single-owner constants while
+moving them into private leaf modules. The audit reports 403 identical definitions
+and zero differences, and 17 reflected object graphs match. All 12 hosted
+Linux/Windows/macOS Python 3.11–3.14 lanes passed `2090 passed, 2 skipped,
+1 xfailed`; artifacts and restoration evidence are in `docs/page_state_split.md`.
 
 ## Pending Decisions
 
