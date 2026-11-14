@@ -152,6 +152,11 @@ ability to run this collector into the test transport. It does not prove
 History's contribution to server scoring, nor that all business requests are
 rejected. No flight-search or account operation was performed.
 
+Read-only client inspection also confirms a controlled-profile inconsistency:
+`curl_cffi 0.16.3` resolves its chrome alias to Chrome150, while the configured
+HTTP/JS UA reports Chrome156. This is a measured configuration difference, not
+a proven cause of the Cookie state; no extra requests were made to inspect it.
+
 Remaining conditions are material: the JS XHR test adapter is non-native and may
 affect fingerprint collection; minimal HTML omits another current B3Co2H script
 and other upstream state; time/randomness are not frozen; curl TLS/profile and
