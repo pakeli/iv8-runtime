@@ -285,3 +285,18 @@ standalone host headers/sources and **83 audit tests** passed. Focused tree/HTML
 observer tests passed **137 tests**; the full real-V8 suite passed **2090 tests,
 2 skipped, 1 xfailed**. All **27 root object graphs** matched.
 `page_state.cpp` is **5,299 lines**. Required V8 CI gates this slice.
+
+## Stage 3.6 — node implementations (`2026-11-14`)
+
+Fourteen unchanged definitions move into `element_properties`, `element_methods`,
+`character_data_host` and `document_fragment_host`. The attribute reflection helper
+lives with its two element-property callers; NodeHost dispatch lives with the
+element methods and retains its DocumentHost delegation. The declaration headers
+and all property/method tables remain intact. `page_state.cpp` is **3,953 lines**.
+
+The audit matched **172 definitions, 0 differences**. Native syntax/link,
+independent host headers/sources without PCH and **83 audit tests** passed.
+Focused tests: **235 passed, 1 xfailed**; complete real-V8 suite: **2090 passed,
+2 skipped, 1 xfailed**. All **27 root object graphs** matched. Required V8 CI
+gates this slice; only the Window/BOM/web slice remains before stage release
+acceptance.

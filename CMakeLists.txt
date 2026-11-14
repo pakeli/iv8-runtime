@@ -61,6 +61,10 @@ if(IV8_LINK_V8)
       src/core/page_state.cpp
       src/core/browser/host/document_host.cpp
       src/core/browser/host/document_tree_mutation.cpp
+      src/core/browser/host/element_properties.cpp
+      src/core/browser/host/element_methods.cpp
+      src/core/browser/host/character_data_host.cpp
+      src/core/browser/host/document_fragment_host.cpp
       src/core/browser/host/live_collection.cpp
       src/core/browser/host/mutation_observer.cpp
       src/core/browser/host/class_list.cpp
