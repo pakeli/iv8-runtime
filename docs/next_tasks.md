@@ -1,6 +1,6 @@
 # Next Tasks
 
-**Page split stage 3 active (`2026-11-14`).** The user authorized the host-object stage. Steps 3.1–3.4 extract event/node declarations, DocumentHost, collections and observers. Step 3.5 extracts the unchanged document-tree mutation implementations. The member-aware move audit and full real-V8 suite continue to gate each slice. Syntax/build, local tests and reflection precede PR submission; the protected V8 check gates each slice. Full platform release acceptance follows the complete stage. Progress: `docs/page_state_split.md`.
+**Page split stage 3 active (`2026-11-14`).** The user authorized the host-object stage. Steps 3.1–3.5 extract event/node declarations, DocumentHost, collections/observers and tree mutations. Step 3.6 extracts unchanged element properties/methods, CharacterData and DocumentFragment implementations. The member-aware move audit and full real-V8 suite gate each slice. Syntax/build, local tests and reflection precede PR submission; the protected V8 check gates each slice. Full platform release acceptance follows the complete stage. Progress: `docs/page_state_split.md`.
 
 **Page split stage 2 verified (`2026-11-14`).** Source `be5bdb4` (tree `cda6b32a807e3243a4ecb2b578e97d81eda92ded`) completes the pure C++ DOM data layer. `page_state.cpp` is **8,774 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Seven pure translation units passed independent strict compilation; the move audit matched **317 definitions with 0 differences**, 20,000 DOM differential cases passed under UBSan, 56 audit checks passed, and 17 reflected object graphs matched. Stage 3 was authorized on `2026-11-14`. Evidence: `docs/page_state_split.md`.
 
@@ -56,8 +56,8 @@ task queue for Claude after chat-history loss.
 ## Current execution order — Page runtime source split (`2026-11-14`)
 
 Stages 1 and 2 are verified; the user authorized stage 3 on `2026-11-14`.
-Continue with tree mutation (3.5), node implementations (3.6), then
-Window/BOM/web callbacks (3.7), preserving per-slice gates. The numbered Window feature queue resumes after the source split.
+Continue with node implementations (3.6), then Window/BOM/web callbacks (3.7).
+Complete all release lanes before claiming the whole stage verified. The numbered Window feature queue resumes after the source split.
 
 User-requested monitoring UX verified (`2026-11-04`): readable
 `read_access_trace(format="text")`, preserving default raw logs and aggregation.
