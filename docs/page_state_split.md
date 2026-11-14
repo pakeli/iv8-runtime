@@ -201,4 +201,23 @@ retired macOS runner labels; its obsolete queued jobs were cancelled only
 after all eight Linux/Windows jobs passed. Native macOS acceptance uses the
 successful four-version hosted release matrix above.
 
-**Stages 1 and 2 are complete. Stage 3 waits for user confirmation.**
+**Stages 1 and 2 are complete. The user authorized stage 3 on `2026-11-14`.**
+
+## Stage 3.1 — event targets (`2026-11-14`)
+
+The two unchanged event-target class definitions live in private
+`host/event_target.h`. Their inline member bodies, listener handles, dispatch
+and teardown remain intact. Non-DOM event support retains its stage 1 owner
+`internal/event_support` because web leaf modules also use it. No empty source
+file or wrapper layer is added. `page_state.cpp` is **8,436 lines**.
+
+The move audit matched **237 definitions, 0 differences**. The native syntax/link
+build passed. Reflection matched **27 root object graphs**, extending the stage 2
+snapshot to element/Text/Comment/Fragment/collections/classList/MutationObserver/
+FileReader/EventTarget. Focused events/Web IDL tests passed **170 tests, 1 xfailed**; the complete
+real-V8 suite passed **2090 tests, 2 skipped, 1 xfailed**. All **56 audit
+tests** passed. Independent header compilation without PCH passed under
+`-Wall -Wextra -Werror`, with the existing V8 unused-parameter and WatchHit
+aggregate warnings handled as recorded in the plan.
+The required V8 CI gate follows PR submission; the complete platform release
+matrix follows all seven stage 3 slices.

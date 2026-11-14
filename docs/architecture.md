@@ -450,4 +450,8 @@ pure translation units opt out of PCH and compile without V8/Python headers.
 
 Stage 2 source `be5bdb4` passed standalone strict compilation, 20,000 DOM
 differential cases under UBSan, reflection checks and all 12 hosted native
-release lanes. Stage 3 host-object extraction waits for user confirmation.
+release lanes. Stage 3 was authorized by the user on `2026-11-14`.
+
+Step 3.1 moves the unchanged event-target classes into private
+`browser/host/event_target.h`. Listener handle ownership and teardown remain
+unchanged; shared event helpers stay in `internal/event_support` for web callers.
