@@ -16,6 +16,7 @@ every lane `2050 passed, 2 skipped, 1 xfailed`.
 | 0.1 local real-V8 loop | pakeli/iv8-runtime#15 | `973ac99` | local macOS matrix passed | 13,052 | — |
 | 0.2 `iv8::browser`, `internal/common.h`, inline tokens, PCH | pakeli/iv8-runtime#14 | `ae4163b` (merge `c1d4e34`) | V8 CI `42466767787`, `42467387443`; release-windows `42466768875` | 13,052 | n/a (intentional changes; tool added in 0.3) |
 | 0.3 `tools/audit_move.py` and regression fixes | pakeli/iv8-runtime#15 | `973ac99` | V8 CI `43467102840`, `43467112845` passed | 13,052 | 56 audit cases passed in required CI |
+| 1.2–1.8 remaining leaf modules | pakeli/iv8-runtime#17 | `f5dbea5` | 12 hosted release lanes passed | 10,065 | 403 identical definitions, 0 differences |
 | 1.1 crypto, Base64 globals, encoding and shared helpers | pakeli/iv8-runtime#16 | `a3dcb20` | V8 CI `43477576437`, `43477909432` passed | 12,637 | 431 identical definitions, 0 differences |
 
 Stage 0 native matrix passed all 12 lanes. Linux/Windows used hosted CI and macOS arm64 used the local release matrix described below.
@@ -140,3 +141,36 @@ helper pinned both source checkouts to the verified source; restore commit
 `eb730d3e77a17d4d527e67646475385cebb2428c`. Required V8 checks
 `43551491659` and `43551496150` passed. The complete receipt and local logs
 are under ignored `data/page-split-stage1/`. Stage 2 follows this acceptance.
+
+## Stage 2 implementation (`2026-11-14`)
+
+The pure C++ data layer lives in `browser/dom`: nodes/detach/siblings, HTML
+parsing and serialization, queries and selector matching, form normalization,
+values and validity. Shared case conversion lives in `internal/text`. `NodeKind`
+retains its `iv8` type and numeric values in a V8-free public header included by
+the existing `host_object.h`; Page still owns node pools and host wrappers.
+CMake excludes all seven pure translation units from the V8/Python PCH.
+
+Pre-PR syntax/link checks passed. Each pure translation unit compiled separately
+with `-Wall -Wextra -Werror` and without V8/Python include paths; dependency scans
+confirmed no V8/Python headers. `collect_options` has an out-of-line definition
+so cross-file callers link correctly. `document_insertion_error` keeps its
+unchanged default argument and body inline in the node header. These placement
+changes preserve the public runtime behavior.
+
+The move audit matched **317 definitions, 0 differences**. All **56 audit tests**
+passed. Focused DOM/Web IDL tests reported **153 passed, 1 xfailed**; the complete
+real-V8 suite reported **2090 passed, 2 skipped, 1 xfailed**. Reflection matched
+all **17 root object graphs**, including prototype-chain descriptors.
+
+A standalone C++20 differential executable linked only the new pure modules and
+existing string-only selector/entity utilities. The baseline copied the old
+stage 1 definitions into a separate namespace. **20,000 deterministic cases**
+compared parsed trees, parent/child/sibling identities, script records,
+serialization, selector/query results, form values and validation messages,
+document insertion validation and detaching. UBSan ran with
+`-fno-sanitize-recover=undefined`; all cases matched. Commands, baseline,
+executable and logs are under ignored `data/page-split-stage2/`.
+
+`page_state.cpp` decreases from 10,065 to **8,774 lines**. Platform release
+verification follows PR submission. Stop after this stage for user confirmation.

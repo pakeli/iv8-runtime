@@ -1203,6 +1203,23 @@ and zero differences, and 17 reflected object graphs match. All 12 hosted
 Linux/Windows/macOS Python 3.11–3.14 lanes passed `2090 passed, 2 skipped,
 1 xfailed`; artifacts and restoration evidence are in `docs/page_state_split.md`.
 
+### 61. Extract the DOM data layer without engine dependencies
+
+Implemented `2026-11-14`; platform verification pending. Stage 2 groups all four
+approved data-layer slices into one PR after stage 1 PR #17 merged as `747667b`.
+Native definitions move unchanged into private `browser/dom` modules; shared
+case conversion moves into V8-free `internal/text`. `NodeKind` is relocated
+unchanged to a standalone header transitively included by `host_object.h`,
+allowing the data layer to avoid V8 while retaining the existing type/API.
+Page ownership and the runtime contracts are unchanged.
+
+Seven translation units passed standalone strict compilation without PCH or
+V8/Python headers. The move audit matched 317 definitions with zero differences;
+20,000 old/new DOM cases matched under UBSan. Local full tests passed
+`2090 passed, 2 skipped, 1 xfailed`, 56 audit checks passed, and 17 reflected
+object graphs matched. Release builds follow PR submission. After stage 2 is
+verified, wait for the user's confirmation before starting stage 3.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

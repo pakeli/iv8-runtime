@@ -13,6 +13,7 @@
 #include <string>
 
 #include "iv8/context_host.h"
+#include "text.h"
 
 namespace iv8::browser {
 
@@ -54,9 +55,6 @@ void verify_trace_token_identity(const TraceTokenAddresses& local);
         &::iv8::browser::kPerformanceTraceToken,                             \
         &::iv8::browser::kCryptoTraceToken,                                  \
         &::iv8::browser::kStorageTraceToken})
-
-// Shared string normalization defined once in common.cpp.
-extern std::string ascii_lower(std::string s);
 
 // --- Shared V8 helpers -------------------------------------------------------
 
