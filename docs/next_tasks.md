@@ -1,5 +1,7 @@
 # Next Tasks
 
+**JET-01 History native release verified; server test pending (`2026-11-14`).** Source `dd67e49` (tree `060be77ce4668b1e1f6ce5aab084b9d310d6b74e`) passes all **12 Linux/Windows/macOS Python 3.11–3.14 lanes**, each **2120 passed, 2 skipped, 1 xfailed**. Local History tests **30 passed**; audit regressions **83 passed**. The unchanged Jetstar collector now completes load; its next error is asynchronous XHR unavailability. Removing history in a separate same-build negative control restores the original pushState error. Server success remains unverified and live data sending awaits explicit user approval. Stage 4 remains held. Evidence: `docs/jetstar_environment_repair.md`.
+
 **Page split stage 3 verified (`2026-11-14`).** Source `2f02535` (tree `e0b9d47029c9ce78d37013d49ddcbd4368a7e817`) completes all seven host-object slices. `page_state.cpp` decreases from **8,774 to 2,852 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. The complete member-aware move audit matches **282 definitions, 0 differences**; **83 audit checks**, **29 object/prototype snapshots** and independent native compilation passed. Next is stage 4 monitoring extraction, outside this completed request. Evidence: `docs/page_state_split.md`.
 
 **Page split stage 2 verified (`2026-11-14`).** Source `be5bdb4` (tree `cda6b32a807e3243a4ecb2b578e97d81eda92ded`) completes the pure C++ DOM data layer. `page_state.cpp` is **8,774 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Seven pure translation units passed independent strict compilation; the move audit matched **317 definitions with 0 differences**, 20,000 DOM differential cases passed under UBSan, 56 audit checks passed, and 17 reflected object graphs matched. Stage 3 was authorized on `2026-11-14`. Evidence: `docs/page_state_split.md`.
@@ -53,12 +55,14 @@ Last reviewed: `2026-11-14`
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — Page runtime source split (`2026-11-14`)
+## Current execution order — Jetstar incremental repair (`2026-11-14`)
 
 Stages 1 and 2 are verified; the user authorized stage 3 on `2026-11-14`.
-Stage 3 is verified, including every release lane. Next is stage 4: extract
-DevToolsInspector and Reflect monitoring hooks. It is outside the completed
-stage 3 request; wait for the user to start it. The numbered Window feature queue resumes after the source split.
+Stage 3 is verified. The user explicitly held stage 4 and authorized incremental
+Jetstar compatibility work. Complete JET-01 History release checks and keep
+per-repair local execution/server verdicts separate before adding another factor.
+Navigator/profile and permission configuration form the small follow-up slice;
+iframe/Intl/graphics and product networking require their own approved boundaries.
 
 User-requested monitoring UX verified (`2026-11-04`): readable
 `read_access_trace(format="text")`, preserving default raw logs and aggregation.

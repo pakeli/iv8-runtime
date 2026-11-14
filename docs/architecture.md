@@ -476,3 +476,23 @@ Complete stage 3 source `2f02535` passed all 12 hosted native release lanes.
 The full member-aware audit, standalone compilation and 29 object graphs
 validate the unchanged ownership and binding contracts. Source/tree, run and
 artifact evidence is in `docs/page_state_split.md`. Stage 4 remains next.
+
+## 15. Incremental Jetstar compatibility — JET-01
+
+History is a generation-owned HostObject in `browser/window`, installed through
+the shared native Web IDL paths with a dedicated native Window getter. Serialized
+entry state and current state/wrapper handles belong to HistoryHost; handles
+are released by the existing Page teardown hook before isolate disposal.
+Successful push/replace commits update the existing LocationHost, active
+DocumentHost URL and Page bootstrap URL together. Traversal uses the existing
+offline navigation-intent model, so no HTTP or cross-document load is introduced.
+
+The V8 serializer Delegate subclass lives in a PCH-free source compiled without
+RTTI, matching the pinned SDK while keeping pybind11-bearing translation units
+unchanged. M1 execution/isolate/GIL/operation-guard ownership stays intact.
+Reference, bounded semantics and incremental integration criteria are in
+`docs/jetstar_environment_repair.md`; stage 4 monitoring extraction remains held.
+
+JET-01 source `dd67e49` passed all 12 native release lanes. Server verification
+is a separate approval-gated integration activity, not a product transport
+capability. Stage 4 remains held.

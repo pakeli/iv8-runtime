@@ -5,6 +5,7 @@
 namespace iv8 {
 
 int web_method_length(std::string_view receiver, std::string_view name) {
+    if (receiver == "history" && (name == "pushState" || name == "replaceState")) return 2;
     if (name == "add" && receiver == "host_probe") return 2;
     if (name == "replace" && receiver == "location") return 1;
     static const std::unordered_map<std::string_view, int> lengths = {

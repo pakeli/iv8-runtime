@@ -9,8 +9,9 @@ static read-only ``navigator`` and ``location``; and JS-visible timers
 (``setTimeout`` / ``clearTimeout`` / ``setInterval`` / ``clearInterval``) that run
 only via the manual pumps ``run_timers()`` / ``run_jobs()``. ``load()`` refreshes
 this page state from static HTML + base URL (``location`` then reflects the base
-URL). It is still NOT a full page object — no public document/DOM, navigation,
-history, or network. (The M2-1 framework probe ``hostProbe`` is also installed as
+URL). It is still NOT a full page object — no public document/DOM or cross-document navigation,
+or network. Bounded History supports same-document state/URL updates and records
+traversal intents. (The M2-1 framework probe ``hostProbe`` is also installed as
 internal infrastructure, not a stable API.)
 
 The public API shape is identical in both build modes: when V8 is linked,
@@ -31,7 +32,7 @@ __all__ = ["Page"]
 # sync with AccessTrace::supported_object_types().
 _ACCESS_TRACE_OBJECT_TYPES = (
     "comment", "connection", "console", "crypto", "document",
-    "document_fragment", "element", "host_object", "host_probe", "location",
+    "document_fragment", "element", "history", "host_object", "host_probe", "location",
     "media_query_list", "navigator", "orientation", "performance",
     "permission_status", "permissions", "screen", "storage", "storage_manager",
     "text", "visual_viewport", "window",
@@ -641,7 +642,8 @@ class Page:
         Replaces the current page state: the JS context is rebuilt (globals reset)
         and ``location`` is re-derived from ``base_url``. ``html`` is captured as
         internal document-bootstrap state. This is NOT a real navigation/loader —
-        no network, subresources, or history.
+        no network or automatic subresource loading. The fresh generation resets
+        its bounded same-document History to a single entry.
 
         M3-5 HTML script integration: the document's own scripts are executed
         first, in **HTML document order** (inline ``<script>...</script>`` and
