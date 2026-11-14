@@ -179,6 +179,8 @@ public:
     // recording never loads a document or contacts a server.
     void record_navigation(v8::Isolate* isolate, const std::string& operation,
                             const std::string& url);
+    // Internal same-document History commit; no HTTP or cross-document load.
+    void apply_history_url(const std::string& url);
     pybind11::dict read_navigation_requests(bool clear);
     void capture_async_errors(bool enabled);
     pybind11::dict read_async_errors(bool clear);

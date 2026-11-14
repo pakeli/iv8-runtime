@@ -67,6 +67,7 @@ public:
         const v8::FunctionCallbackInfo<v8::Value>& args) override;
 
     const std::string& base_url() const;
+    void set_current_url(const std::string& url) { url_ = url; }
 
     v8::Local<v8::Object> live_collection(v8::Isolate* isolate,
         v8::Local<v8::Context> context, DomNode* root, const std::string& kind,

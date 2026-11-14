@@ -59,6 +59,8 @@ if(IV8_LINK_V8)
       src/core/base64.cpp
       src/core/html_entities.cpp
       src/core/page_state.cpp
+      src/core/browser/window/history.cpp
+      src/core/browser/window/history_state.cpp
       src/core/browser/window/window_functions.cpp
       src/core/browser/window/window_event_handlers.cpp
       src/core/browser/window/post_message.cpp
@@ -110,6 +112,17 @@ set_source_files_properties(
     PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 
 pybind11_add_module(_core ${_iv8_sources})
+
+# V8's ValueSerializer Delegate has no exported RTTI in the pinned SDK.
+set_source_files_properties(src/core/browser/window/history_state.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+if(MSVC)
+  set_source_files_properties(src/core/browser/window/history_state.cpp
+      PROPERTIES COMPILE_OPTIONS "/GR-")
+else()
+  set_source_files_properties(src/core/browser/window/history_state.cpp
+      PROPERTIES COMPILE_OPTIONS "-fno-rtti")
+endif()
 
 target_include_directories(_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(_core PRIVATE cxx_std_20)

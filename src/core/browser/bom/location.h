@@ -29,6 +29,7 @@ namespace browser {
 class LocationHost : public HostObject {
 public:
     LocationHost(UrlParts parts, PageState* page) : parts_(std::move(parts)), page_(page) {}
+    void set_current_url(const std::string& url) { parts_ = decompose_url(url); }
 
     std::string global_name() const override { return "location"; }
     std::string prototype_key() const override { return "Location"; }

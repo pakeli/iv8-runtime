@@ -1,5 +1,7 @@
 # iv8-runtime Runtime Surface Index
 
+**JET-01 History implemented; release/server verification pending (`2026-11-14`).** The confirmed Jetstar first blocker is missing `window.history`. Native bounded same-document History now passes **30 focused tests**, **2120 full-suite tests, 2 skipped, 1 xfailed**, **83 audit regressions**, and independent compilation. The unchanged cached collector completes `Page.load`; its next observed failure is asynchronous `XMLHttpRequest` unavailability. This is execution progress, with no server-pass claim. Stage 4 remains on hold. Boundary and evidence: `docs/jetstar_environment_repair.md`.
+
 **Page split stage 3 verified (`2026-11-14`).** Source `2f02535` (tree `e0b9d47029c9ce78d37013d49ddcbd4368a7e817`) completes all seven host-object slices. `page_state.cpp` decreases from **8,774 to 2,852 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. The complete member-aware move audit matches **282 definitions, 0 differences**; **83 audit checks**, **29 object/prototype snapshots** and independent native compilation passed. Next is stage 4 monitoring extraction, outside this completed request. Evidence: `docs/page_state_split.md`.
 
 **Page split stage 2 verified (`2026-11-14`).** Source `be5bdb4` (tree `cda6b32a807e3243a4ecb2b578e97d81eda92ded`) completes the pure C++ DOM data layer. `page_state.cpp` is **8,774 lines**. Linux x64, Windows x64 and macOS arm64 passed all 12 Python 3.11–3.14 wheel/test lanes, each **2090 passed, 2 skipped, 1 xfailed**. Seven pure translation units passed independent strict compilation; the move audit matched **317 definitions with 0 differences**, 20,000 DOM differential cases passed under UBSan, 56 audit checks passed, and 17 reflected object graphs matched. Stage 3 was authorized on `2026-11-14`. Evidence: `docs/page_state_split.md`.
@@ -292,6 +294,14 @@ pause evidence (M9-3).
 ## 3. JS-side surface (reachable only through `Page.eval`)
 
 Installed per generation by `install_page`:
+
+- **JET-01 bounded History (implemented; platform verification pending)** — native
+  History object/prototype and methods; cloned state, same-document same-origin
+  HTTP(S) push/replace, length and scrollRestoration. Location and Document URL
+  reflect successful commits. Back/forward/go record offline traversal/reload
+  intents without execution. History resets per load; popstate/hashchange
+  traversal, opaque/file URL rewriting and full DOMException branding remain
+  profile gaps. See `docs/jetstar_environment_repair.md`.
 
 - **browser compatibility repair** (verified 2026-11-06) — reflected meta/script
   inputs, anchor/area URL components, shared IDL accessors with receiver checks,
@@ -619,7 +629,7 @@ the milestone summary before assuming any wider behavior.
 ## 4. Standing exclusions
 
 Execution exclusions include HTTP/WebSocket transport, automatic resource
-loading, committed navigation/history, JavaScript→Python callbacks, a Python-side
+loading, executed history traversal/cross-document navigation, JavaScript→Python callbacks, a Python-side
 DOM or event API (`Page.document`), CDATA/doctype nodes, layout and geometry.
 The Web IDL repair provides explicit offline fetch rejection and XHR/Worker
 constructor failure. The follow-up repair keeps Window opening unavailable. Live tag/class collections

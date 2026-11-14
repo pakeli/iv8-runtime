@@ -1242,6 +1242,24 @@ all 12 hosted Linux/Windows/macOS Python 3.11–3.14 release lanes, each
 `2090 passed, 2 skipped, 1 xfailed`. The release receipt and artifact IDs
 are in `docs/page_state_split.md`. Stage 4 remains outside this request.
 
+### 63. Fix one Jetstar runtime factor at a time
+
+Authorized `2026-11-14`. After version-separated evaluation, the user requested
+per-repair Jetstar testing. An original-source replay and a separate diagnostic
+copy prove that the first receiver is `window.history`, not a guessed parent.
+JET-01 adds bounded native same-document History without changing the M1 kernel
+or transport model. Each step records native/script hashes, first errors and
+server verdict separately. Completing load or receiving 201 alone is not proof
+of server success. The historical community runner cannot validate project Page.
+
+History surface/behavior uses an isolated Chrome157 reference, while old
+Chrome156 captures remain immutable. State serialization's Delegate has matching
+no-RTTI/PCH-free compilation; Page-owned V8 handle teardown remains unchanged.
+Local verification passes 30 focused / 2120 runtime / 83 audit tests (runtime:
+2 skipped, 1 xfailed). Platform release verification is pending. The unchanged
+collector passes load and next reaches unsupported XHR, so no final server
+root-cause or success claim is made. Stage 4 and larger subsystems remain held.
+
 ## Pending Decisions
 
 These require an explicit human or project-level choice before large work begins.

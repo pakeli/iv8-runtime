@@ -34,6 +34,7 @@
 #include "browser/bom/screen.h"
 #include "browser/window/window_event_target.h"
 #include "browser/window/window_functions.h"
+#include "browser/window/history.h"
 #include "browser/window/window_event_handlers.h"
 #include "browser/window/post_message.h"
 #include "browser/web/blob_file_reader.h"
@@ -1846,6 +1847,7 @@ void PageState::install_page(const std::string& base_url,
     host_objects_.push_back(std::make_unique<ScreenHost>(&environment_));  // M11-1
     host_objects_.push_back(  // M2-3 location, sourced from this page's base URL
         std::make_unique<LocationHost>(decompose_url(base_url), this));
+    host_objects_.push_back(std::make_unique<HistoryHost>(this, base_url));
     auto document = std::make_unique<DocumentHost>(html, base_url, this);  // M2-6
     document_host_ = document.get();  // M3-4 observing ptr for lifecycle dispatch
     host_objects_.push_back(std::move(document));
@@ -1872,7 +1874,11 @@ void PageState::install_page(const std::string& base_url,
             set_window_host(isolate, context, window_events_.get());
             install_host_interface(isolate, context, window_events_.get());
             for (const auto& host : host_objects_) {
-                install_host_object(isolate, context, host.get());
+                if (host->global_name() == "history") {
+                    static_cast<HistoryHost*>(host.get())->install(isolate, context);
+                } else {
+                    install_host_object(isolate, context, host.get());
+                }
             }
             v8::Local<v8::Object> global = context->Global();
             auto* document = static_cast<DocumentHost*>(document_host_);
@@ -2775,6 +2781,17 @@ void PageState::capture_async_errors(bool enabled) {
 }
 
 py::dict PageState::read_async_errors(bool clear) { return state_->read_async_errors(clear); }
+
+void PageState::apply_history_url(const std::string& url) {
+    bootstrap_.base_url = url;
+    for (const auto& host : host_objects_) {
+        if (host->global_name() == "location") {
+            static_cast<LocationHost*>(host.get())->set_current_url(url);
+            break;
+        }
+    }
+    static_cast<DocumentHost*>(document_host_)->set_current_url(url);
+}
 
 void PageState::record_navigation(v8::Isolate* isolate, const std::string& operation,
                                    const std::string& url) {

@@ -1,0 +1,206 @@
+{
+  "historyTag": "[object History]",
+  "instanceKeys": [],
+  "global": {
+    "enumerable": true,
+    "configurable": true,
+    "get": {
+      "name": "get history",
+      "length": 0,
+      "source": "function get history() { [native code] }",
+      "ownKeys": [
+        "length",
+        "name"
+      ],
+      "constructible": false
+    }
+  },
+  "constructor": {
+    "name": "History",
+    "length": 0,
+    "source": "function History() { [native code] }",
+    "ownKeys": [
+      "length",
+      "name",
+      "prototype"
+    ],
+    "constructible": true
+  },
+  "prototypeKeys": [
+    "length",
+    "scrollRestoration",
+    "state",
+    "back",
+    "forward",
+    "go",
+    "pushState",
+    "replaceState",
+    "constructor",
+    "Symbol(Symbol.toStringTag)"
+  ],
+  "prototype": {
+    "length": {
+      "enumerable": true,
+      "configurable": true,
+      "get": {
+        "name": "get length",
+        "length": 0,
+        "source": "function get length() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      }
+    },
+    "scrollRestoration": {
+      "enumerable": true,
+      "configurable": true,
+      "get": {
+        "name": "get scrollRestoration",
+        "length": 0,
+        "source": "function get scrollRestoration() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      },
+      "set": {
+        "name": "set scrollRestoration",
+        "length": 1,
+        "source": "function set scrollRestoration() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      }
+    },
+    "state": {
+      "enumerable": true,
+      "configurable": true,
+      "get": {
+        "name": "get state",
+        "length": 0,
+        "source": "function get state() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      }
+    },
+    "back": {
+      "enumerable": true,
+      "configurable": true,
+      "writable": true,
+      "type": "function",
+      "function": {
+        "name": "back",
+        "length": 0,
+        "source": "function back() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      }
+    },
+    "forward": {
+      "enumerable": true,
+      "configurable": true,
+      "writable": true,
+      "type": "function",
+      "function": {
+        "name": "forward",
+        "length": 0,
+        "source": "function forward() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      }
+    },
+    "go": {
+      "enumerable": true,
+      "configurable": true,
+      "writable": true,
+      "type": "function",
+      "function": {
+        "name": "go",
+        "length": 0,
+        "source": "function go() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      }
+    },
+    "pushState": {
+      "enumerable": true,
+      "configurable": true,
+      "writable": true,
+      "type": "function",
+      "function": {
+        "name": "pushState",
+        "length": 2,
+        "source": "function pushState() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      }
+    },
+    "replaceState": {
+      "enumerable": true,
+      "configurable": true,
+      "writable": true,
+      "type": "function",
+      "function": {
+        "name": "replaceState",
+        "length": 2,
+        "source": "function replaceState() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name"
+        ],
+        "constructible": false
+      }
+    },
+    "constructor": {
+      "enumerable": false,
+      "configurable": true,
+      "writable": true,
+      "type": "function",
+      "function": {
+        "name": "History",
+        "length": 0,
+        "source": "function History() { [native code] }",
+        "ownKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "constructible": true
+      }
+    },
+    "Symbol(Symbol.toStringTag)": {
+      "enumerable": false,
+      "configurable": true,
+      "writable": false,
+      "type": "string",
+      "value": "History"
+    }
+  },
+  "reference": {
+    "browser": "Google Chrome 157.0.8103.51",
+    "date": "2026-11-14",
+    "conditions": "isolated headless profile; loopback HTTP; main frame; no Jetstar traffic",
+    "scope": "History native surface, descriptors, function metadata and constructability",
+    "raw_capture": "ignored data/jetstar-native-2026-11-14/history-browser-reference.json"
+  }
+}
