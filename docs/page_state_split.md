@@ -221,3 +221,15 @@ tests** passed. Independent header compilation without PCH passed under
 aggregate warnings handled as recorded in the plan.
 The required V8 CI gate follows PR submission; the complete platform release
 matrix follows all seven stage 3 slices.
+
+## Stage 3.2 — node host declarations (`2026-11-14`)
+
+PR #19 merged as `ada54c3` after V8 checks `43558729900` and `43558735606` passed.
+Step 3.2 moves the four unchanged node-host class declarations (including existing
+inline members) into `host/node_hosts.h`. Out-of-line implementations remain in
+Page until step 3.6; the document back-pointer is forward-declared.
+`page_state.cpp` is **8,048 lines**. The move audit matched **235 definitions,
+0 differences**. Native syntax/link and standalone header compilation without
+PCH passed. Focused tests: **235 passed, 1 xfailed**; full real-V8 tests:
+**2090 passed, 2 skipped, 1 xfailed**. All **56 audit tests** passed, and **27
+reflected root object graphs** matched. The required V8 check gates this slice.
