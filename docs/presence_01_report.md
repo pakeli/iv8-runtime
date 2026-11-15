@@ -1,5 +1,7 @@
 # PRES-01 local acceptance report
 
+**Subsequent combined release verified (`2026-11-15`).** This code is included in source `40d1c1f`, which passes all 12 release lanes. See [combined release evidence](bom_release_report.md). The original local-stage measurements and artifact identities below are retained as historical evidence.
+
 Date: `2026-11-15`. Status: **implemented and locally accepted; release
 verification pending**. This is the first API-family batch under the user's
 presence-first strategy. The latest release/deployment-verified SDK remains

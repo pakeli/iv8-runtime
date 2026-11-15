@@ -7,6 +7,21 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Submit and verify the combined V8-linked build (`2026-11-15`)
+
+The user requests code submission and a V8 build after WIN-MON-01. Push the
+combined PRES-01/PRES-02/PRES-03/monitoring stack through PR #31 and verify all
+three platform release matrices. Source `40d1c1f` extends the release-focused
+gate to 257 tests without changing the pinned engine/build scripts. All 12
+Python 3.11–3.14 lanes pass: Linux/macOS 2547 passed/2 skipped, Windows 2545
+passed/4 skipped, each after 257 focused passes. Reuse matching V8 15.0.245.19
+caches and rebuild the extension/wheels; do not describe cache restoration as a
+new engine compilation. macOS uses a temporary source-pinned helper, restored
+by SHA guard after all five actual checkouts are verified. Existing branch
+protection is unchanged. Shared SDK installation and version-tag publication
+are outside this request. Source/run/artifact records:
+`docs/bom_release_report.md`.
+
 ### Close monitoring gaps before extending the BOM surface (`2026-11-15`)
 
 After a read-only audit demonstrated partial monitoring of PRES-03, the user

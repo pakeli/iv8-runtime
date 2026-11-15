@@ -1,5 +1,7 @@
 # Current Status
 
+**Latest release verified (`2026-11-15`): combined PRES-01/PRES-02/PRES-03 and WIN-MON-01.** Build source `40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff` (tree `b7d518ecc9ab46a30812622041bd48f3c28ab1aa`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Each lane passes the combined **257-test focused gate**; full Linux/macOS are **2547 passed, 2 skipped**, Windows **2545 passed, 4 skipped**. Runs: Linux `43704599952`, Windows `43704600017`, macOS `43704687043`. Fixed V8 15.0.245.19 caches are reused; the host extension/wheels are rebuilt. Required V8 checks pass, macOS source pins/restore are verified, and branch protection is unchanged. **Latest shared SDK deployment remains BIND-01**; no environment installation or version-tag publication was performed. Source/run/artifact evidence and limits: `docs/bom_release_report.md`.
+
 **Current development direction (`2026-11-15`): BOM first.** The user prioritizes
 Window, Location, Navigator and History, then related BOM objects. Further DOM
 node work and the proposed Web-data batch move behind this queue. Current local
@@ -7,7 +9,7 @@ counts, candidate batches and execution boundaries: `docs/bom_coverage_plan.md`.
 This planning update leaves the local acceptance and release/deployment records
 below unchanged.
 
-**Latest implemented/local acceptance (`2026-11-15`): WIN-MON-01; release pending.** The
+**Latest implemented, now release-verified in the combined build (`2026-11-15`): WIN-MON-01.** The
 PRES-03 monitoring extension maps all 49 added Window globals into structured
 native get/get_method tracing and their supported writes into set completion.
 All 22 callable globals enter both watch_apis and structured calls, including
@@ -16,8 +18,8 @@ shell methods enter both channels; shell/global and namespace accessors use
 structured property hooks. Native data callbacks preserve data descriptors,
 stored values and function identity. Local acceptance passes **550 focused** and
 full macOS arm64/Python 3.13 **2547 passed, 2 skipped**. A native-shell sweep
-records all **127 methods** in both channels. **Release acceptance is pending.**
-No shared SDK replacement is performed; BIND-01 remains release-verified/deployed.
+records all **127 methods** in both channels. **Combined release verification is recorded above.**
+No shared SDK replacement is performed; BIND-01 remains the verified shared deployment.
 Boundary/report: `docs/window_monitoring.md` / `docs/window_monitoring_report.md`.
 
 Descriptor queries may evaluate a native data getter and also record get.
@@ -38,7 +40,7 @@ reject a Promise. The user separately authorizes native `open` exposure for
 this candidate; creating a window is still unsupported. Local checks pass
 **526 focused tests**, **28 profile/trace guards**, and full macOS arm64/Python
 3.13 **2491 passed, 2 skipped**. Ordinary names are **128/128**, handlers
-**125/125**; the 821 interface entries remain excluded. **Release acceptance is pending.** BIND-01 remains the release-verified and
+**125/125**; the 821 interface entries remain excluded. **Combined release verification is recorded above.** BIND-01 remains the release-verified and
 deployed shared SDK, including its historical absent-open profile. Boundary:
 `docs/presence_03_window.md` / `docs/presence_03_report.md`.
 
@@ -53,8 +55,8 @@ routed to the current owner. DOMParser text/html creates an inert independent
 HTMLDocument with bounded html/head/body recovery. XML MIME types explicitly
 fail as unsupported; XMLSerializer remains outside this batch. Local acceptance:
 **489 focused passed, 1 xfailed**; full macOS arm64/Python 3.13:
-**2454 passed, 2 skipped, 1 xfailed**. **Release acceptance is pending.** No shared SDK update
-has been performed: BIND-01 remains the latest release/deployment verified
+**2454 passed, 2 skipped, 1 xfailed**. **Combined release verification is recorded above.** No shared SDK update
+has been performed: BIND-01 remains the latest verified shared deployment
 version below. Boundary, evidence and remaining limits:
 `docs/presence_02_dom.md` / `docs/presence_02_report.md`.
 
@@ -70,11 +72,11 @@ objects, handler state and transient dispatch state are generation-owned and
 cleaned before isolate disposal or after dispatch as appropriate. Local acceptance
 passes **447 focused tests, 1 xfailed** and the full macOS arm64/Python 3.13
 suite **2417 passed, 2 skipped, 1 xfailed**. The full release matrix has not run for this
-batch and the shared SDK has not been replaced. **Latest release/deployment
-verified remains BIND-01 below.** Scope and remaining differences:
+batch and the shared SDK has not been replaced. **Latest shared deployment
+remains BIND-01 below.** Scope and remaining differences:
 `docs/presence_01_bom_events.md` / `docs/presence_01_report.md`.
 
-**Latest release and deployment verified (`2026-11-15`): BIND-01.** Source `f015745` (tree `0914106d38d0c2c245b47e70daa7623b4ed04fc5`) restores 18 native operation installation paths and six Event constructor arities, preserving History/named access. All 12 lanes pass 87 focused tests: Linux `43675920281` / macOS `43675968125` each **2371 passed, 2 skipped, 1 xfailed**; Windows `43675928957` each **2369 passed, 4 skipped, 1 xfailed** after one retained startup-timeout retry. Backed-up shared iv8-test is installed with native `d2902411...` and passes 87 focused, full 2371/2/1 and cached EPUB offline. Mainline integration is PR #30. Known delegate/receiver/base-Event behavior gaps remain explicit; no live requests or server-pass claim. Boundary/source/run/artifact/deployment receipts: `docs/native_binding_restore_report.md`.
+**Latest shared deployment / previous release verified (`2026-11-15`): BIND-01.** Source `f015745` (tree `0914106d38d0c2c245b47e70daa7623b4ed04fc5`) restores 18 native operation installation paths and six Event constructor arities, preserving History/named access. All 12 lanes pass 87 focused tests: Linux `43675920281` / macOS `43675968125` each **2371 passed, 2 skipped, 1 xfailed**; Windows `43675928957` each **2369 passed, 4 skipped, 1 xfailed** after one retained startup-timeout retry. Backed-up shared iv8-test is installed with native `d2902411...` and passes 87 focused, full 2371/2/1 and cached EPUB offline. Mainline integration is PR #30. Known delegate/receiver/base-Event behavior gaps remain explicit; no live requests or server-pass claim. Boundary/source/run/artifact/deployment receipts: `docs/native_binding_restore_report.md`.
 
 **Previous release verified (`2026-11-15`): NAMED-01 Window/form named access restoration.** Source `374c81b` (tree `d16031ea344e5ff182c9d986d2a9ca634c6388e0`) restores the private candidate's named access in the split modules while retaining History. All 12 release lanes pass 56 focused tests first: Linux `43616130342` / macOS `43616952704` each **2340 passed, 2 skipped, 1 xfailed**; Windows `43616142584` each **2338 passed, 4 skipped, 1 xfailed** (two extra Unix-only skips). Original 18 named cases/fixture and eight new integration cases are release-gated. Mainline integration is PR #29; source/run/artifact receipts are in `docs/named_access_restore_report.md`. No shared SDK replacement or live server-pass claim. M11-53 remains next; stage 4 remains held.
 
@@ -551,7 +553,7 @@ Post-M11 monitoring extension (verified `2026-11-02`):
 
 WIN-MON-01 extends the implemented monitoring surface to the 49 mapped PRES-03
 Window globals, 22 callable globals and scoped shell calls/accessors. Local
-acceptance has passed; release acceptance is pending. Its boundaries and unchanged native
+acceptance has passed; combined release verification is recorded above. Its boundaries and unchanged native
 data descriptors/identities are specified in `docs/window_monitoring.md`.
 
 ### M11 compatibility line
@@ -933,7 +935,7 @@ The repository is executing its post-M10 direction:
   Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_52_window_messaging.md` and `docs/m11_52_report.md`;
 - the latest implemented batch is **WIN-MON-01 Window monitoring**, locally accepted;
-  release acceptance is pending. It adds structured get/set/call coverage for
+  combined release verification is recorded above. It adds structured get/set/call coverage for
   the mapped globals and call-only watches for native globals/shell methods;
   `docs/window_monitoring.md` records the native-entry and data-property limits.
   **PRES-03 Window ordinary-member presence** has previous local acceptance;
@@ -957,9 +959,9 @@ These are the questions a new coding session should resolve before major new wor
   release acceptance remains pending. The family priority is settled in
   `docs/bom_coverage_plan.md`.
   `M11-1` through `M11-52`
-  remain release-verified; BIND-01 is the latest verified release/deployed SDK.
+  remain release-verified; the combined build above is release-verified; BIND-01 is the deployed SDK.
   PRES-01/PRES-02 have prior local acceptance; PRES-03 now implements the 49
-  ordinary Window names, with local acceptance passed; release acceptance pending. The
+  ordinary Window names, with local acceptance passed; combined release verified above. The
   user excludes the 821 global interface entries. Document `write`, XML parsing/
   serialization and the selector follow-up remain separate work. Configured
   UAData presence does not complete browser device/profile behavior.
@@ -983,11 +985,11 @@ If you need a one-line answer:
 > hosted runtime, the M9–M10 monitoring extensions, and the verified M11
 > compatibility line through M11-52 (Document cookie/identity, node foundation,
 > HTML string APIs, Window scroll/focus/UI completion, Window event handler
-> attributes, and Window messaging). BIND-01 remains the latest release-verified
-> and deployed SDK. PRES-01/PRES-02 have previous local acceptance; PRES-03
+> attributes, and Window messaging). the combined build above is release-verified; BIND-01 remains
+> the deployed SDK. PRES-01/PRES-02 have previous local acceptance; PRES-03
 > exposes the user-selected 49 ordinary Window names with local acceptance passed;
-> release acceptance pending. WIN-MON-01 implements their scoped native monitoring
-> with local acceptance passed; release acceptance pending. Backend execution and the 821 global interface
+> combined release verified above. WIN-MON-01 implements their scoped native monitoring
+> with local acceptance passed; combined release verified above. Backend execution and the 821 global interface
 > entries remain outside that presence batch.
 > The project has also landed steps 1–4 plus the native-BOM-call,
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage

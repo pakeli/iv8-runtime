@@ -1,5 +1,7 @@
 # PRES-02 local acceptance report
 
+**Subsequent combined release verified (`2026-11-15`).** This code is included in source `40d1c1f`, which passes all 12 release lanes. See [combined release evidence](bom_release_report.md). The original local-stage measurements and artifact identities below are retained as historical evidence.
+
 Date: `2026-11-15`. **Implemented and locally accepted; release verification
 pending.** Scope: [presence_02_dom.md](presence_02_dom.md). The shared SDK and
 latest release/deployment-verified version remain BIND-01.

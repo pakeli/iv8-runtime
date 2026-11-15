@@ -1,11 +1,13 @@
 # iv8-runtime Runtime Surface Index
 
+**Latest release verified (`2026-11-15`): combined PRES-01/PRES-02/PRES-03 and WIN-MON-01.** Build source `40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff` (tree `b7d518ecc9ab46a30812622041bd48f3c28ab1aa`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Each lane passes the combined **257-test focused gate**; full Linux/macOS are **2547 passed, 2 skipped**, Windows **2545 passed, 4 skipped**. Runs: Linux `43704599952`, Windows `43704600017`, macOS `43704687043`. Fixed V8 15.0.245.19 caches are reused; the host extension/wheels are rebuilt. Required V8 checks pass, macOS source pins/restore are verified, and branch protection is unchanged. **Latest shared SDK deployment remains BIND-01**; no environment installation or version-tag publication was performed. Source/run/artifact evidence and limits: `docs/bom_release_report.md`.
+
 **Current queue (`2026-11-15`): BOM first.** Window/Location/Navigator/History
 coverage and related BOM objects take precedence over further DOM nodes and the
 proposed Web-data batch. This changes no runtime exposure. Counts and selected
 candidate families: `docs/bom_coverage_plan.md`.
 
-**Latest implemented/local acceptance (`2026-11-15`): WIN-MON-01; release pending.** The
+**Latest implemented, now release-verified in the combined build (`2026-11-15`): WIN-MON-01.** The
 mapped PRES-03 Window names now enter structured native get/get_method and
 supported set tracing. All 22 callable globals enter both watch_apis and
 structured calls with safe argument/return summaries and synchronous exception
@@ -13,8 +15,7 @@ completion. Shell methods enter both channels, and shell/global plus namespace
 accessors enter structured property tracing. Native data descriptors, stored
 values and function identities remain unchanged. Local checks pass **550 focused**
 and full macOS arm64/Python 3.13 **2547 passed, 2 skipped**; all **127 current
-native shell methods** emit both channels in the sweep. Release acceptance stays
-pending; BIND-01 remains release-verified/deployed. Boundary/report:
+native shell methods** emit both channels in the sweep. Combined release verification is recorded above; BIND-01 remains the verified shared deployment. Boundary/report:
 `docs/window_monitoring.md` / `docs/window_monitoring_report.md`.
 
 **Previous local acceptance (`2026-11-15`): PRES-03.** The 49 missing
@@ -25,7 +26,7 @@ operations explicitly fail synchronously or by rejected Promise. The user
 excludes the 821 missing global interface entries and authorizes native `open`
 presence without window creation. Local checks pass **526 focused tests**, **28
 profile/trace guards**, and full macOS arm64/Python 3.13 **2491 passed, 2 skipped**.
-Ordinary names are **128/128**, handlers **125/125**. **Release acceptance is pending.**
+Ordinary names are **128/128**, handlers **125/125**. **Combined release verification is recorded above.**
 The shared BIND-01 SDK and release/deployment status are unchanged. Boundary and
 evidence: `docs/presence_03_window.md` / `docs/presence_03_report.md`.
 
@@ -36,7 +37,7 @@ using the existing Node constants, same-context Document import/adopt, and inert
 are implemented. Canonical wrappers, listeners, handlers, views and observer
 records follow document ownership; generation teardown releases native handles.
 Local acceptance: **489 focused passed, 1 xfailed**; full macOS arm64/Python 3.13:
-**2454 passed, 2 skipped, 1 xfailed**. **Release acceptance is pending.** The shared SDK
+**2454 passed, 2 skipped, 1 xfailed**. **Combined release verification is recorded above.** The shared SDK
 is unchanged and BIND-01 remains release/deployment verified. Boundary:
 `docs/presence_02_dom.md` / `docs/presence_02_report.md`.
 
@@ -51,7 +52,7 @@ or shared SDK replacement has been performed for this batch. **Latest
 release/deployment verified remains BIND-01 below.** Boundary:
 `docs/presence_01_bom_events.md` / `docs/presence_01_report.md`.
 
-**Latest release/deployment verified (`2026-11-15`): BIND-01.** Existing Reflect/Object wrappers and Performance/Crypto operations expose captured native names/arities without construction/own prototype; six Event-family constructors expose length one while retaining construction/inheritance. Original callbacks/lifetimes, History and named access remain intact. Source `f015745` passes 12 lanes with 87 focused tests; full suites are Linux/macOS **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Shared SDK is backed up, upgraded and verified. Null-this, side-effecting key conversion and base Event without-new remain explicit behavior gaps; metadata parity is not full semantic transparency. Boundary/report: `docs/native_binding_restore.md` / `docs/native_binding_restore_report.md`.
+**Latest shared deployment / previous release verified (`2026-11-15`): BIND-01.** Existing Reflect/Object wrappers and Performance/Crypto operations expose captured native names/arities without construction/own prototype; six Event-family constructors expose length one while retaining construction/inheritance. Original callbacks/lifetimes, History and named access remain intact. Source `f015745` passes 12 lanes with 87 focused tests; full suites are Linux/macOS **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Shared SDK is backed up, upgraded and verified. Null-this, side-effecting key conversion and base Event without-new remain explicit behavior gaps; metadata parity is not full semantic transparency. Boundary/report: `docs/native_binding_restore.md` / `docs/native_binding_restore_report.md`.
 
 **Previous release verified (`2026-11-15`): NAMED-01.** Source `374c81b` restores native WindowProperties active-document ID/name resolution and form control name/id access, inherited-member masking and bounded past names, alongside History. All 12 release lanes pass 56 focused tests; Linux/macOS full suites report **2340 passed, 2 skipped, 1 xfailed**, Windows **2338 passed, 4 skipped, 1 xfailed**. Duplicate matches use live collections; RadioNodeList remains a gap. No new Python export. Boundary/report: `docs/named_access_restore.md` / `docs/named_access_restore_report.md`.
 
@@ -348,7 +349,7 @@ unchanged), and step-6d explicit `has`/`get_own_property_descriptor` events for
 HostObject targets. It returns events plus a coverage report. The implemented
 WIN-MON-01 extension adds the 49 mapped PRES-03 global reads/supported writes,
 22 callable globals and declared shell method/accessor paths, with local
-acceptance passed and release acceptance pending. watch_apis observes calls only. Native data
+acceptance passed and combined release verified above. watch_apis observes calls only. Native data
 descriptor queries can also evaluate their getter and record get without
 changing descriptor kind/value/flags. Read-only writes and construction attempts
 that V8 rejects before native entry do not create invented native events.
@@ -372,7 +373,7 @@ pause evidence (M9-3).
 
 Installed per generation by `install_page`:
 
-- **PRES-03 Window ordinary-member presence (implemented; locally accepted; release acceptance pending)** —
+- **PRES-03 Window ordinary-member presence (implemented; locally accepted; combined release verified above)** —
   the fixed 49-name ordinary inventory is exposed with captured JavaScript types
   and native function names/arities/source/constructability. GPU usage namespaces,
   NodeFilter constants, CSS and related BOM object shells use per-generation
@@ -395,7 +396,7 @@ Installed per generation by `install_page`:
   networking, device access and persistent storage are not implemented by these
   names. See `docs/presence_03_window.md` for the exact 49-name boundary.
 
-- **PRES-02 DOM logic/reflection (locally accepted; release acceptance pending)** —
+- **PRES-02 DOM logic/reflection (locally accepted; combined release verified above)** —
   stable `HTMLElement.dataset` uses DOMStringMap; stable `Element.attributes`
   uses a live NamedNodeMap with Attr identities. `Attr.prototype` inherits
   `Node.prototype`; names, values, namespace information and owner references
@@ -420,7 +421,7 @@ Installed per generation by `install_page`:
   NotSupportedError, invalid MIME types throw TypeError. XMLSerializer and full
   XML/HTML5 parsing remain outside this batch. See `docs/presence_02_dom.md`.
 
-- **PRES-01 BOM/event additions (previous local acceptance; release pending)** —
+- **PRES-01 BOM/event additions (previous local acceptance; combined release verified)** —
   Navigator `appVersion` / `deviceMemory` / `userAgentData` / `userActivation`;
   UAData values come from caller configuration or declared-UA derivation, with
   empty defaults for unconfigured high-entropy hints. `NavigatorUAData`,
@@ -843,10 +844,10 @@ clock.
 
 | Milestone | Theme | Authoritative doc |
 |---|---|---|
-| WIN-MON-01 | Scoped native get/set/call monitoring for 49 PRES-03 globals, both call channels for 22 callable globals/shell methods, and declared shell accessors; implemented, locally accepted; release acceptance pending | `docs/window_monitoring.md` |
-| PRES-03 | Typed presence for 49 ordinary Window names, private prototype shells, reused rAF and bounded event/reportError; implemented, local acceptance passed; release acceptance pending; 821 global interfaces excluded | `docs/presence_03_window.md` |
-| PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release acceptance pending | `docs/presence_02_dom.md` / report |
-| PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release acceptance pending | `docs/presence_01_bom_events.md` |
+| WIN-MON-01 | Scoped native get/set/call monitoring for 49 PRES-03 globals, both call channels for 22 callable globals/shell methods, and declared shell accessors; implemented, locally accepted; release verification in `docs/bom_release_report.md` | `docs/window_monitoring.md` |
+| PRES-03 | Typed presence for 49 ordinary Window names, private prototype shells, reused rAF and bounded event/reportError; implemented, local acceptance passed; release verification is in `docs/bom_release_report.md`; 821 global interfaces excluded | `docs/presence_03_window.md` |
+| PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release verification in `docs/bom_release_report.md` | `docs/presence_02_dom.md` / report |
+| PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release verification in `docs/bom_release_report.md` | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
 | M2 | `Page`, globals, timers, load model, minimal document/element, targeted mutation | `docs/m2_1_*` … `docs/m2_8_*` |
 | M3 | Scripts, lifecycle, events, ready-state, `currentScript`, attributes, script types | `docs/m3_summary.md` |

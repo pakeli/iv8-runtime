@@ -1,5 +1,7 @@
 # WIN-MON-01 local acceptance report
 
+**Subsequent combined release verified (`2026-11-15`).** This code is included in source `40d1c1f`, which passes all 12 release lanes. See [combined release evidence](bom_release_report.md). The original local-stage measurements and artifact identities below are retained as historical evidence.
+
 Date: `2026-11-15`. **Implemented and locally accepted; release verification
 pending.** User request: fill the monitoring gaps in PRES-03 before adding more
 APIs. Boundary: [window_monitoring.md](window_monitoring.md).
