@@ -7,6 +7,18 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Trace the reported window.history parent read (`2026-11-15`)
+
+The user's direct History read returned a JSValue but no log because the global
+native getter bypassed tracing, while History member getters/calls were already
+traced. Add the existing Window get/completion helpers to that getter and protect
+the exact stop/text flow, parent/child attribution, filter, brand and lifecycle
+behavior. The event uses object_type window; child accesses keep type history.
+This is a local follow-up to the combined release, without SDK replacement or
+an automatic full release matrix. It is scoped to the reported History entry;
+other unmapped old global bindings remain separate work. Evidence and status:
+`docs/history_entry_monitoring.md`.
+
 ### Submit and verify the combined V8-linked build (`2026-11-15`)
 
 The user requests code submission and a V8 build after WIN-MON-01. Push the

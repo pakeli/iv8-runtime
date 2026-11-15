@@ -4,16 +4,20 @@
 #include <utility>
 
 #include "iv8/dom_url.h"
+#include "iv8/access_summary.h"
 #include "iv8/page_state.h"
 #include "iv8/web_interface.h"
 #include "iv8/web_method.h"
 #include "../internal/common.h"
+#include "window_trace_support.h"
 
 namespace iv8::browser {
 namespace {
 
 void history_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto* isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "history", AccessOperation::kGet);
+    AccessFunctionPropertyCompletion completion(isolate, sequence, info, AccessOperation::kGet);
     auto context = isolate->GetCurrentContext();
     if (info.This() != context->Global()) {
         isolate->ThrowException(v8::Exception::TypeError(v8_string(isolate, "Illegal invocation").As<v8::String>()));
