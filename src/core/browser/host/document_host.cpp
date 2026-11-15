@@ -1,5 +1,7 @@
 #include "document_host.h"
 
+#include "attribute_hosts.h"
+
 #include <algorithm>
 #include <iterator>
 #include <unordered_set>
@@ -170,7 +172,10 @@ std::vector<std::string> DocumentHost::method_names() const {
                                           // M11-23 deterministic focus report.
                                           "hasFocus", "appendChild", "removeChild",
                                           "insertBefore", "replaceChild", "hasChildNodes", "contains",
-                                          "isSameNode", "isEqualNode", "cloneNode"};
+                                          "isSameNode", "isEqualNode", "cloneNode",
+                                          "getRootNode", "normalize", "compareDocumentPosition",
+                                          "importNode", "adoptNode", "createElementNS",
+                                          "createAttribute", "createAttributeNS", "getElementsByTagNameNS"};
         const std::vector<std::string>& events = event_method_names();
         names.insert(names.end(), events.begin(), events.end());
         return names;
@@ -178,6 +183,7 @@ std::vector<std::string> DocumentHost::method_names() const {
 
 void DocumentHost::release_v8_handles() noexcept {
         EventTargetHost::release_v8_handles();
+        if (attribute_registry_) attribute_registry_->release_v8_handles();
         document_object_.Reset();
         node_objects_.clear();
         all_collection_.Reset();
@@ -409,6 +415,12 @@ v8::Local<v8::Value> DocumentHost::call_method(v8::Isolate* isolate, v8::Local<v
         if (handle_event_method(isolate, context, name, args, event_result)) {
             return event_result;
         }
+        v8::Local<v8::Value> operation_result;
+        if (call_node_operation(isolate, context, node(), name, args, operation_result) ||
+            call_namespace_method(isolate, context, node(), name, args, operation_result) ||
+            handle_document_attribute_method(isolate, context, this, name, args, operation_result)) {
+            return operation_result;
+        }
         if (name == "appendChild" || name == "insertBefore" ||
             name == "removeChild" || name == "replaceChild") {
             const auto fail = [&](const char* error_name, const char* message) {
@@ -502,6 +514,8 @@ v8::Local<v8::Value> DocumentHost::call_method(v8::Isolate* isolate, v8::Local<v
         if (name == "createElement") {  // M4-A-2: detached element (not in the tree)
             auto node = std::make_unique<DomNode>();
             node->tag = html_document_ ? ascii_lower(arg) : arg;  // arg == String(tag); tagName is UPPER
+            node->local_name = node->tag;
+            if (!html_document_) node->namespace_uri.clear();
             DomNode* raw = node.get();
             detached_pool_.push_back(std::move(node));
             return wrap_node(isolate, context, raw);
@@ -555,6 +569,7 @@ DomNode* DocumentHost::clone_detached(DomNode* source, bool deep) {
         raw->initial_value = source->initial_value;
         raw->initial_selected = source->initial_selected;
         raw->initial_checked = source->initial_checked;
+        copy_attribute_metadata(source, raw);
         if (deep) {
             for (DomNode* child : source->children) {
                 DomNode* child_clone = clone_detached(child, true);
@@ -572,6 +587,27 @@ bool DocumentHost::nodes_equal(const DomNode* a, const DomNode* b) const {
         }
         if (a == nullptr || b == nullptr) {
             return false;
+        }
+        if (a->kind == NodeKind::Element && b->kind == NodeKind::Element) {
+            const auto& first_local = a->local_name.empty() ? a->tag : a->local_name;
+            const auto& second_local = b->local_name.empty() ? b->tag : b->local_name;
+            if (a->namespace_uri != b->namespace_uri || a->prefix != b->prefix ||
+                first_local != second_local) return false;
+            const auto namespaced = [](const auto& attribute) {
+                return !attribute->namespace_uri.empty();
+            };
+            if (std::count_if(a->attribute_nodes.begin(), a->attribute_nodes.end(), namespaced) !=
+                std::count_if(b->attribute_nodes.begin(), b->attribute_nodes.end(), namespaced)) return false;
+            for (const auto& attribute : a->attribute_nodes) {
+                if (!namespaced(attribute)) continue;
+                const auto other = std::find_if(b->attribute_nodes.begin(), b->attribute_nodes.end(),
+                    [&](const auto& candidate) {
+                        return candidate->namespace_uri == attribute->namespace_uri &&
+                            candidate->local_name == attribute->local_name &&
+                            candidate->value == attribute->value;
+                    });
+                if (other == b->attribute_nodes.end()) return false;
+            }
         }
         if (a->kind != b->kind || a->data != b->data || a->tag != b->tag ||
             a->id != b->id || a->has_id != b->has_id ||
@@ -600,6 +636,10 @@ bool DocumentHost::nodes_equal(const DomNode* a, const DomNode* b) const {
     }
 
 NodeHost* DocumentHost::ensure_node_host(DomNode* node) {
+        if (auto* owner = forwarded_node_owner(node); owner != nullptr && owner != this) {
+            remember_node_owner(node, owner);
+            return owner->ensure_node_host(node);
+        }
         if (node == &document_node_) return this;
         const auto it = wrappers_.find(node);
         if (it != wrappers_.end()) {
@@ -632,6 +672,10 @@ ElementHost* DocumentHost::ensure_element_host(DomNode* node) {
 
 v8::Local<v8::Value> DocumentHost::wrap_node(v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* node) {
         if (node == nullptr) return v8::Null(isolate);
+        if (auto* owner = forwarded_node_owner(node); owner != nullptr && owner != this) {
+            remember_node_owner(node, owner);
+            return owner->wrap_node(isolate, context, node);
+        }
         if (node == &document_node_) return document_global(isolate, context);
         auto& wrapper = node_objects_[node];
         if (wrapper.IsEmpty()) {
@@ -686,7 +730,9 @@ void DocumentHost::set_text_content(v8::Isolate* isolate, v8::Local<v8::Context>
         }
     }
 
-bool DocumentHost::has_mutation_observers() const { return !observers_.empty(); }
+bool DocumentHost::has_mutation_observers() const {
+    return !observers_.empty() || !borrowed_observers_.empty();
+}
 
 bool DocumentHost::is_in_tree(const DomNode* node) const {
         const DomNode* top = node;

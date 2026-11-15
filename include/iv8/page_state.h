@@ -133,6 +133,8 @@ public:
     // Internal Web IDL factories. Called under the context operation guard.
     v8::Local<v8::Value> create_document(v8::Isolate* isolate,
         v8::Local<v8::Context> context, bool html_document = false);
+    v8::Local<v8::Value> parse_html_document(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, const std::string& source);
     v8::Local<v8::Value> create_web_interface(v8::Isolate* isolate,
         v8::Local<v8::Context> context, const std::string& name,
         v8::Local<v8::Array> arguments);

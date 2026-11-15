@@ -1,6 +1,22 @@
 # CLAUDE.md
 
-**Latest implemented local candidate (`2026-11-15`): PRES-01.** Read
+**Latest implemented local candidate (`2026-11-15`): PRES-02.** Read
+`docs/presence_02_dom.md` before extending the DOM logic/reflection batch.
+Native dataset/DOMStringMap, attributes/NamedNodeMap and Attr share live backing
+attribute state. Attr inherits Node; namespace-aware creation/attribute methods,
+live namespace tag collections and root/normalize/position helpers
+use defining native prototypes. Same-context import/adopt preserve the correct
+owner and, for adoption, canonical wrappers, listeners, handlers, live views and
+observer-record routing. DOMParser text/html returns an inert independent
+HTMLDocument using the bounded parser; XML MIME types explicitly fail as
+unsupported and XMLSerializer remains later work. Local acceptance:
+**489 focused passed, 1 xfailed**; full macOS arm64/Python 3.13:
+**2454 passed, 2 skipped, 1 xfailed**. **Release acceptance is pending.**
+Read `docs/presence_02_report.md` for candidate identity and limits.
+No new shared SDK installation has occurred;
+BIND-01 remains the latest release/deployment verified version below.
+
+**Previous local acceptance (`2026-11-15`): PRES-01.** Read
 `docs/presence_01_bom_events.md` before extending this presence-first offline
 BOM/event batch. It adds configured Navigator identity/UAData, inactive
 UserActivation, empty Location ancestorOrigins, UIEvent/Event fields and paths,
@@ -13,7 +29,8 @@ state reset per generation, V8 handles release before isolate disposal, and
 transient event dispatch state is cleared after delivery. Local acceptance is
 **447 focused, 1 xfailed**; full macOS arm64/Python 3.13 is
 **2417 passed, 2 skipped, 1 xfailed**. Read `docs/presence_01_report.md` for
-candidate identity, evidence and limits. Next coverage batch: DOM logic/reflection.
+candidate identity, evidence and limits. PRES-02 above now implements the next
+DOM logic/reflection batch, with local acceptance passed and release acceptance pending.
 No complete release matrix or shared SDK update
 has been performed for PRES-01; **latest release/deployment verified remains
 BIND-01 below**. Do not turn configured UAData, inactive activation or synthetic
@@ -294,7 +311,13 @@ Answer roughly as follows:
 - M1 contract still exists and matters for `JSContext`.
 - Real implementation has progressed through M2–M11.
 - Current `HEAD` includes:
-  - PRES-01 as an implemented local candidate: configured Navigator identity,
+  - PRES-02 as the latest implemented local candidate: native dataset/DOMStringMap,
+    attributes/NamedNodeMap, Attr → Node inheritance, namespace-aware DOM
+    operations, Node root/normalize/position helpers and constants, same-context
+    import/adopt with canonical wrapper/listener/view/observer ownership, and
+    inert HTML DOMParser. Local acceptance has passed; release acceptance is pending; the
+    shared BIND-01 SDK is unchanged;
+  - PRES-01 with previous local acceptance: configured Navigator identity,
     native UAData/UserActivation/DOMStringList prototypes, UIEvent inheritance,
     shared IDL handlers and the bounded Event/Console/Screen additions. Local
     acceptance passes (see report); it has not run a full release
@@ -325,7 +348,7 @@ Answer roughly as follows:
     latest verification `2026-11-03`;
   - latest verified numbered compatibility milestone: M11-52 (Window messaging);
     latest release/deployment verified: BIND-01. Latest implemented local batch:
-    PRES-01, with release acceptance pending;
+    PRES-02, with local acceptance passed; release acceptance pending;
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

@@ -7,6 +7,29 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Build live DOM reflection on shared state and document ownership (`2026-11-15`)
+
+The user approved the DOM logic/reflection batch after PRES-01. PRES-02 keeps
+existing null-namespace id/class/raw attribute storage canonical, with live
+DOMStringMap/NamedNodeMap/Attr views and separate canonical records for namespaced
+attributes. Native defining prototypes remain shared; Attr inherits Node without
+being miscast as the native NodeHost storage type. Namespace metadata participates
+in cloning, equality, attribute observation and serialization.
+
+Within one context, adoption transfers native node ownership and existing JS
+wrappers, handlers/listeners and cached live views to the receiving Document.
+Owner forwarding and borrowed observer registrations preserve pending-record
+identity and observations across repeated moves. Imports create independent
+clones without copied listeners. The existing bounded HTML parser supplies inert
+DOMParser text/html documents; XML MIME types explicitly fail as unsupported and
+XMLSerializer remains later work. These additions do not add networking, script
+execution during parsing or a new context/engine.
+
+Local acceptance passes 489 focused/1 xfailed and full 2454 passed/2 skipped/
+1 xfailed on macOS arm64/Python 3.13. Keep release verification pending and the
+shared BIND-01 SDK unchanged. Boundary/report: `docs/presence_02_dom.md` /
+`docs/presence_02_report.md`. Next coverage candidates are offline Web data objects.
+
 ### Fill the first BOM/event batch with shared prototypes (`2026-11-15`)
 
 The user approved filling the measured API gaps while reserving the prototype

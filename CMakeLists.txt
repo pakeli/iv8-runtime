@@ -68,6 +68,10 @@ if(IV8_LINK_V8)
       src/core/browser/window/window_metadata.cpp
       src/core/browser/window/window_named_properties.cpp
       src/core/browser/host/document_host.cpp
+      src/core/browser/host/document_parsing.cpp
+      src/core/browser/host/document_namespaces.cpp
+      src/core/browser/host/node_operations.cpp
+      src/core/browser/host/attribute_hosts.cpp
       src/core/browser/host/document_tree_mutation.cpp
       src/core/browser/host/element_properties.cpp
       src/core/browser/host/element_methods.cpp
@@ -92,6 +96,7 @@ if(IV8_LINK_V8)
       src/core/browser/bom/media_query.cpp
       src/core/browser/web/performance.cpp
       src/core/browser/web/structured_clone.cpp
+      src/core/browser/web/dom_parser.cpp
       src/core/browser/web/capabilities.cpp
       src/core/browser/web/event_constructors.cpp
       src/core/browser/web/url.cpp

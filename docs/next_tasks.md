@@ -1,6 +1,8 @@
 # Next Tasks
 
-**Latest implemented — PRES-01 (`2026-11-15`), local candidate; release verification pending.** The first BOM/event coverage batch now implements Navigator identity/activation, Location ancestorOrigins, Event/UIEvent, reference on* attributes, eight Console operations and Screen isExtended/onchange. Shared native interface prototypes, Event/UIEvent constructor inheritance and generation cleanup are in place. Boundary: `docs/presence_01_bom_events.md`; acceptance and remaining limits: `docs/presence_01_report.md`; presence delta: `docs/presence_01_api_delta.json`. Use focused checks and one local full suite during development, then group release verification later. Shared SDK remains BIND-01. Next coverage work is the DOM logic/reflection batch (dataset, Attr/NamedNodeMap, root/normalization/document-position, import/adopt and parsing), with explicit ownership/prototype boundaries before implementation.
+**Latest implemented — PRES-02 (`2026-11-15`), locally accepted; release verification pending.** DOM logic/reflection now covers live dataset/attributes, Attr/NamedNodeMap, namespace creation/attributes/live tag collections, root/normalize/position helpers, import/adopt and inert HTML DOMParser. Shared native prototypes and cross-document wrapper/listener/view/observer ownership are covered by 37 new cases. macOS arm64/Python 3.13 passes **489 focused, 1 xfailed** and full **2454 passed, 2 skipped, 1 xfailed**. Boundary/report/delta: `docs/presence_02_dom.md`, `docs/presence_02_report.md`, `docs/presence_02_api_delta.json`. Shared SDK remains BIND-01; no full release matrix or deployment was performed. Next coverage candidate is Web data objects (DOMException, AbortController/Signal, Headers/Request/Response, FormData) with offline behavior and explicit execution boundaries. XML parsing/serialization and broader DOM fidelity remain recorded gaps.
+
+**Previous local acceptance — PRES-01 (`2026-11-15`); release verification pending.** The first BOM/event coverage batch implements Navigator identity/activation, Location ancestorOrigins, Event/UIEvent, reference on* attributes, eight Console operations and Screen isExtended/onchange. Shared native interface prototypes, Event/UIEvent constructor inheritance and generation cleanup are in place. Boundary: `docs/presence_01_bom_events.md`; acceptance and remaining limits: `docs/presence_01_report.md`; presence delta: `docs/presence_01_api_delta.json`. Use focused checks and one local full suite during development, then group release verification later. The following DOM batch is PRES-02 above; shared SDK remains BIND-01.
 
 **Direction update — API breadth first (`2026-11-15`).** The user now prioritizes missing browser API families before further shape/metadata polishing. The measured Chrome157 versus BIND-01 SDK baseline is `docs/dom_bom_gaps.md`, with all missing names and counts in `docs/browser_api_inventory.json`. Select functional API-family batches from that inventory; name presence, explicit unsupported/no-op behavior and partial implementation remain separate statuses. Existing History/named/binding regressions stay protected. PRES-01 closes the base Event without-new gap in the local candidate; the other known BIND behavior limitations remain recorded rather than automatically becoming the next priority.
 
@@ -67,11 +69,11 @@ Last reviewed: `2026-11-15`
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — after PRES-01 implementation (`2026-11-15`)
+## Current execution order — after PRES-02 local acceptance (`2026-11-15`)
 
-The user's newer presence-first direction and PRES-01 above take precedence over
-the older per-slice queue below. Continue with DOM logic, then Web-data API
-batches. M11-53 remains a numbered candidate rather than an
+The user's newer presence-first direction and PRES-01/PRES-02 above take precedence
+over the older per-slice queue below. DOM foundations are locally accepted;
+continue with Web-data API batches. M11-53 remains a numbered candidate rather than an
 automatic next task; detailed function/prototype conformance follows basic API
 coverage. Network/rendering/device subsystems still need explicit boundaries.
 

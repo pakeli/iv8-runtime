@@ -23,6 +23,7 @@ public:
     NodeKind node_kind() const override { return node_->kind; }
     DomNode* node() const { return node_; }
     DocumentHost* document() const { return document_; }
+    void set_document_owner(DocumentHost* document) { document_ = document; }
 
     // Recover the backing DomNode* from any node-host argument, or nullptr.
     static DomNode* node_of_arg(v8::Local<v8::Value> value) {
@@ -49,13 +50,14 @@ class ElementHost : public NodeHost {
 public:
     ElementHost(DomNode* node, DocumentHost* document, bool html_document = true)
         : NodeHost(node, document), html_document_(html_document) {}
+    void set_html_document_mode(bool html_document) { html_document_ = html_document; }
 
     std::string global_name() const override { return std::string(); }  // never global
     std::string trace_object_type() const override { return "element"; }
     std::string trace_label() const override { return node_->tag; }
-    std::string prototype_key() const override { return html_document_ ? html_element_interface(node_->tag) : "Element"; }
+    std::string prototype_key() const override { return is_html_element() ? html_element_interface(node_->local_name.empty() ? node_->tag : node_->local_name) : "Element"; }
     bool has_named_properties() const override {
-        return html_document_ && node_->tag == "form";
+        return is_html_element() && node_->tag == "form";
     }
     std::vector<std::string> named_property_names() const override;
     v8::MaybeLocal<v8::Value> named_property(
@@ -66,7 +68,7 @@ public:
 
     std::vector<std::string> property_names() const override {
         std::vector<std::string> names = {
-            "baseURI", "tagName",     "nodeName",   "nodeType",   "nodeValue", "id",
+            "baseURI", "namespaceURI", "prefix", "localName", "attributes", "tagName",     "nodeName",   "nodeType",   "nodeValue", "id",
             "className",   "textContent", "innerHTML",  "outerHTML",
             "parentNode",  "childNodes",  "children",
             // M4-A-6 connectivity / element-sibling navigation.
@@ -79,8 +81,9 @@ public:
             "firstChild", "lastChild", "previousSibling", "nextSibling",
             // M11-10 classList (fresh plain object per access).
             "classList"};
-        if (!html_document_) return names;
+        if (!is_html_element()) return names;
         names.push_back("innerText");
+        names.push_back("dataset");
         names.push_back("style");
         const auto& handlers = event_handler_names(EventHandlerTarget::kHTMLElement);
         names.insert(names.end(), handlers.begin(), handlers.end());
@@ -186,17 +189,20 @@ public:
         // M2-7 read + M2-8/M4-A-4 attribute writes + M4-A-3 tree editing +
         // M4-A-5 subtree queries + M3-3 event methods.
         std::vector<std::string> names = {
-            "getAttribute",     "hasAttribute",    "setAttribute",
+            "getAttribute", "getAttributeNS", "hasAttribute", "hasAttributeNS", "setAttribute", "setAttributeNS",
+            "removeAttributeNS", "getAttributeNode", "getAttributeNodeNS",
+            "setAttributeNode", "setAttributeNodeNS", "removeAttributeNode",
             "removeAttribute",  "hasAttributes",   "getAttributeNames",
             "appendChild",      "removeChild",     "insertBefore",
             "replaceChild",     "remove",          "hasChildNodes",
             "cloneNode",        "isSameNode",      "isEqualNode",
+            "getRootNode",      "normalize",       "compareDocumentPosition",
             // M11-49 variadic tree methods / adjacent insertion.
             "append",           "prepend",         "replaceChildren",
             "before",           "after",           "replaceWith",
             "insertAdjacentHTML", "insertAdjacentElement",
             "insertAdjacentText",
-            "querySelector",    "querySelectorAll", "getElementsByTagName",
+            "querySelector", "querySelectorAll", "getElementsByTagName", "getElementsByTagNameNS",
             // M11-19 descendant class query.
             "getElementsByClassName",
             // M4-B-2 minimal ancestor/containment check.
@@ -207,9 +213,9 @@ public:
             "closest",
             // M11-10 boolean attribute toggle.
             "toggleAttribute"};
-        if (html_document_ && node_->tag == "canvas") names.push_back("getContext");
+        if (is_html_element() && node_->tag == "canvas") names.push_back("getContext");
         // M6-1: reset() is exposed only on <form>; M7-1: submit(); M7-2: requestSubmit().
-        if (html_document_ && node_->tag == "form") {
+        if (is_html_element() && node_->tag == "form") {
             names.push_back("reset");
             names.push_back("submit");
             names.push_back("requestSubmit");
@@ -217,13 +223,13 @@ public:
             names.push_back("checkValidity");
             names.push_back("reportValidity");
         }
-        if (html_document_ && is_form_control(node_)) {
+        if (is_html_element() && is_form_control(node_)) {
             // M11-32: control-level constraint-validation entry points.
             names.push_back("checkValidity");
             names.push_back("reportValidity");
             names.push_back("setCustomValidity");
         }
-        if (html_document_ && node_->tag == "select") {
+        if (is_html_element() && node_->tag == "select") {
             // M11-22: option lookup helpers (the options collection stays an Array).
             names.push_back("item");
             names.push_back("namedItem");
@@ -237,7 +243,7 @@ public:
     std::vector<std::string> writable_property_names() const override {
         std::vector<std::string> names = {"textContent", "innerHTML",
                                           "outerHTML", "id", "className"};
-        if (!html_document_) return names;
+        if (!is_html_element()) return names;
         names.push_back("innerText");
         names.push_back("style");
         const auto& handlers = event_handler_names(EventHandlerTarget::kHTMLElement);
@@ -330,6 +336,7 @@ public:
 
 
 private:
+    bool is_html_element() const { return node_->namespace_uri == "http://www.w3.org/1999/xhtml"; }
     // Successful single-control lookups remember names in access order. Backing
     // nodes remain owned by the DocumentHost for this complete Page generation.
     std::vector<std::pair<std::string, DomNode*>> past_named_controls_;
@@ -368,6 +375,7 @@ public:
     }
     std::vector<std::string> method_names() const override {
         return {"remove",     "cloneNode", "isSameNode", "isEqualNode",
+                "getRootNode", "normalize", "compareDocumentPosition",
                 "contains",   "hasChildNodes", "before", "after",
                 "replaceWith"};
     }
@@ -409,6 +417,7 @@ public:
         return {"appendChild",      "removeChild",    "insertBefore",
                 "replaceChild",     "remove",         "hasChildNodes",
                 "cloneNode",        "isSameNode",     "isEqualNode",
+                "getRootNode",      "normalize",      "compareDocumentPosition",
                 "contains",         "append",         "prepend",
                 "replaceChildren",  "querySelector",  "querySelectorAll",
                 "getElementById"};

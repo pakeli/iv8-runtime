@@ -499,6 +499,7 @@ bool DocumentHost::call_node_method(
     v8::Isolate* isolate, v8::Local<v8::Context> context, DomNode* target,
     const std::string& name, const v8::FunctionCallbackInfo<v8::Value>& args,
     v8::Local<v8::Value>& out) {
+    if (call_node_operation(isolate, context, target, name, args, out)) return true;
     const auto type_error = [&](const char* message) {
         isolate->ThrowException(v8::Exception::TypeError(
             v8_string(isolate, message).As<v8::String>()));

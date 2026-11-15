@@ -98,7 +98,7 @@ def test_frozen_items_absent():
         assert page.eval("typeof document.getElementsByClassName('x').item") == "function"
         assert page.eval("document.all === undefined") is False
         # Unapproved collections and document-writing APIs remain absent.
-        for member in ("plugins", "createElementNS", "write"):
+        for member in ("plugins", "write"):
             assert page.eval(f"typeof document.{member}") == "undefined"
         for member in ("createTextNode", "createComment",
                        "createDocumentFragment"):
@@ -123,7 +123,7 @@ def test_frozen_items_absent():
                 f"typeof document.getElementById('f').{member}") != "undefined"
         for member in ("compareDocumentPosition", "getRootNode"):
             assert page.eval(
-                f"typeof document.getElementById('f').{member}") == "undefined"
+                f"typeof document.getElementById('f').{member}") == "function"
 
 
 # --- (4) mixed-page cooperation over a live tree --------------------------------

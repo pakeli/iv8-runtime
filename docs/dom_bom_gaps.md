@@ -4,7 +4,7 @@ Last reviewed: `2026-11-15` · Source: `7be41ab5b107aff2aa411b7b139b350e6b70f43d
 
 本轮按用户要求改为 **先覆盖 API，再完善浏览器一致性**。以下是实际浏览器与当前 SDK 的存在性差分，不是沿用历史缺口表。
 
-此表保留 **BIND-01 共享 SDK 基线**，便于追溯。后续第一批 PRES-01 已在本地候选中实现；新增名称、剩余缺口和本地验收见 [presence_01_report.md](presence_01_report.md) / [presence_01_api_delta.json](presence_01_api_delta.json)。共享 SDK 仍是上述基线。
+此表保留 **BIND-01 共享 SDK 基线**，便于追溯。后续 PRES-01 和 DOM 逻辑/反射 PRES-02 均已在本地候选中实现并验收；两批增量见 [presence_01_report.md](presence_01_report.md) / [presence_01_api_delta.json](presence_01_api_delta.json)、[presence_02_report.md](presence_02_report.md) / [presence_02_api_delta.json](presence_02_api_delta.json)。共享 SDK 仍是上述基线。
 
 ## 1. 统计口径
 

@@ -236,8 +236,8 @@ def test_no_out_of_scope_relation_surface():
     html = "<html><body><div id='d'></div></body></html>"
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
-        # Document inherits contains through Node. Other relation APIs stay absent.
+        # Document inherits contains and PRES-02 relation helpers through Node.
         assert page.eval("document.contains(document.body)") is True
         el = "document.getElementById('d')"
         for member in ("compareDocumentPosition", "getRootNode"):
-            assert page.eval(f"typeof {el}.{member}") == "undefined"
+            assert page.eval(f"typeof {el}.{member}") == "function"

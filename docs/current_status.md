@@ -1,6 +1,22 @@
 # Current Status
 
-**Latest implemented local candidate (`2026-11-15`): PRES-01.** The first
+**Latest implemented local candidate (`2026-11-15`): PRES-02.** The DOM
+logic/reflection batch adds live dataset/DOMStringMap and attributes/NamedNodeMap,
+Attr nodes, namespace-aware creation and attribute operations, namespace-aware
+live tag collections and Node root/normalization/position helpers,
+and same-context Document import/adopt. Attr uses the Node prototype chain;
+dataset and attribute views use their native defining interfaces. Adoption keeps
+canonical wrappers, listeners, handlers and live views, with observer records
+routed to the current owner. DOMParser text/html creates an inert independent
+HTMLDocument with bounded html/head/body recovery. XML MIME types explicitly
+fail as unsupported; XMLSerializer remains outside this batch. Local acceptance:
+**489 focused passed, 1 xfailed**; full macOS arm64/Python 3.13:
+**2454 passed, 2 skipped, 1 xfailed**. **Release acceptance is pending.** No shared SDK update
+has been performed: BIND-01 remains the latest release/deployment verified
+version below. Boundary, evidence and remaining limits:
+`docs/presence_02_dom.md` / `docs/presence_02_report.md`.
+
+**Previous local acceptance (`2026-11-15`): PRES-01.** The first
 presence-first BOM/event batch adds configured Navigator identity and UAData,
 inactive UserActivation, empty Location ancestorOrigins, UIEvent/Event fields
 and dispatch paths, shared IDL handlers, Console additions and Screen metadata.
@@ -869,24 +885,27 @@ The repository is executing its post-M10 direction:
 - M11-52 (Window messaging) is **landed and verified on real V8 (Linux +
   Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_52_window_messaging.md` and `docs/m11_52_report.md`;
-- the active development batch is **PRES-01 presence-first**, with shared
-  prototype/inheritance design included in each new slice. Its configured
-  `navigator.userAgentData` is implemented in the local candidate; complete
-  device/profile fidelity is not implied. The next coverage batch is DOM
-  logic/reflection; M11-53 focus/visibility remains a numbered candidate.
+- the active implemented batch is **PRES-02 DOM logic/reflection**, with final
+  local acceptance and release acceptance pending. Live attribute interfaces,
+  namespace operations, root/tree helpers, import/adopt and inert HTML DOMParser
+  build on the previous locally accepted PRES-01 BOM/events. Shared native
+  prototype and generation ownership remain required. BIND-01 remains the
+  release-verified and deployed SDK; M11-53 focus/visibility is still a numbered
+  candidate. Configured UAData does not imply complete device/profile fidelity.
   Remaining gaps are inventoried in `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which bounded DOM logic/reflection APIs should form the next coverage batch
-  before returning to numbered M11-53 focus/visibility work? `M11-1` through `M11-52`
-  remain release-verified; BIND-01 is the latest verified release and PRES-01 is
-  locally accepted candidate. Dataset/attributes, root/tree helpers and
-  import/adopt are the next candidates; Document `write` and the unassigned
-  selector follow-up remain separate work. Configured UAData presence does not complete
-  browser device/profile behavior; candidates come from `docs/dom_bom_gaps.md`.
+- Following PRES-02 local acceptance, which API family should follow before
+  returning to numbered M11-53 focus/visibility work? `M11-1` through `M11-52`
+  remain release-verified; BIND-01 is the latest verified release/deployed SDK.
+  PRES-01 has prior local acceptance; PRES-02 now implements dataset/attributes,
+  namespace APIs, root/tree helpers, import/adopt and HTML DOMParser, with final
+  local acceptance passed; release acceptance pending. Document `write`, XML parsing/
+  serialization and the selector follow-up remain separate work. Configured
+  UAData presence does not complete browser device/profile behavior.
 - Should the `in` operator, non-HostObject query targets, or wrapper-cached
   references ever be covered through a Proxy/AST design, or remain explicit
   out-of-scope blind spots? (Steps 6a–6h cover the explicit has/descriptor APIs
@@ -907,7 +926,9 @@ If you need a one-line answer:
 > hosted runtime, the M9–M10 monitoring extensions, and the verified M11
 > compatibility line through M11-52 (Document cookie/identity, node foundation,
 > HTML string APIs, Window scroll/focus/UI completion, Window event handler
-> attributes, and Window messaging). Window is now prioritized above Document.
+> attributes, and Window messaging). BIND-01 remains the latest release-verified
+> and deployed SDK. PRES-01 has previous local acceptance; PRES-02 DOM
+> logic/reflection is implemented with local acceptance passed; release acceptance pending.
 > The project has also landed steps 1–4 plus the native-BOM-call,
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage
 > manager, navigator-permissions, matchMedia-result, legacy-navigator, and

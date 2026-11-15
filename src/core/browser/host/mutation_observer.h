@@ -20,6 +20,7 @@ struct MutationRecordData {
     DomNode* previous_sibling = nullptr;
     DomNode* next_sibling = nullptr;
     std::string attribute_name;
+    std::string attribute_namespace;
     bool has_old_value = false;
     std::string old_value;
 };

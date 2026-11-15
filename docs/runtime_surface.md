@@ -1,6 +1,17 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest implemented local candidate (`2026-11-15`): PRES-01.** Configured
+**Latest implemented local candidate (`2026-11-15`): PRES-02.** Live native
+DOMStringMap/NamedNodeMap/Attr interfaces, namespace-aware creation and attribute
+operations, live namespace tag collections, Node root/normalize/position helpers
+using the existing Node constants, same-context Document import/adopt, and inert text/html DOMParser
+are implemented. Canonical wrappers, listeners, handlers, views and observer
+records follow document ownership; generation teardown releases native handles.
+Local acceptance: **489 focused passed, 1 xfailed**; full macOS arm64/Python 3.13:
+**2454 passed, 2 skipped, 1 xfailed**. **Release acceptance is pending.** The shared SDK
+is unchanged and BIND-01 remains release/deployment verified. Boundary:
+`docs/presence_02_dom.md` / `docs/presence_02_report.md`.
+
+**Previous local acceptance (`2026-11-15`): PRES-01.** Configured
 Navigator identity/UAData, inactive UserActivation, empty ancestorOrigins,
 UIEvent/Event additions, shared IDL handlers, Console additions and Screen
 metadata are implemented for the approved offline slice. New interface members
@@ -320,7 +331,32 @@ pause evidence (M9-3).
 
 Installed per generation by `install_page`:
 
-- **PRES-01 BOM/event additions (implemented local candidate; release pending)** —
+- **PRES-02 DOM logic/reflection (locally accepted; release acceptance pending)** —
+  stable `HTMLElement.dataset` uses DOMStringMap; stable `Element.attributes`
+  uses a live NamedNodeMap with Attr identities. `Attr.prototype` inherits
+  `Node.prototype`; names, values, namespace information and owner references
+  reflect the same backing state as the existing attribute APIs. NamedNodeMap
+  supports indexed/item and named lookup, set/remove and their namespace forms;
+  attribute writes feed the existing observer channels.
+  `createElementNS` / `createAttribute` / `createAttributeNS`, attribute-node
+  operations, `getAttributeNS` / `setAttributeNS` / `hasAttributeNS` /
+  `removeAttributeNS`, and live `getElementsByTagNameNS` use namespace/localName/
+  prefix metadata with the correct Element/HTMLElement/Attr interface kind.
+  Namespace metadata does not supply SVG rendering or a full SVG interface set.
+  Node supplies constants, `getRootNode` (without Shadow DOM), `normalize` and
+  `compareDocumentPosition`. Normalization preserves the first non-empty Text
+  identity and delivers characterData/childList records in mutation order.
+  `Document.importNode` clones into its receiver; `adoptNode` detaches and moves
+  within the same Page context while retaining wrappers, listeners, handlers,
+  live attribute/collection views and canonical observer-record targets.
+  Document-node inputs and cross-Page/isolate moves remain unsupported.
+  `new DOMParser().parseFromString(source, "text/html")` returns an independent
+  inert HTMLDocument using the bounded parser and html/head/body recovery;
+  scripts and resources do not execute/load. Other valid XML MIME types throw
+  NotSupportedError, invalid MIME types throw TypeError. XMLSerializer and full
+  XML/HTML5 parsing remain outside this batch. See `docs/presence_02_dom.md`.
+
+- **PRES-01 BOM/event additions (previous local acceptance; release pending)** —
   Navigator `appVersion` / `deviceMemory` / `userAgentData` / `userActivation`;
   UAData values come from caller configuration or declared-UA derivation, with
   empty defaults for unconfigured high-entropy hints. `NavigatorUAData`,
@@ -516,7 +552,9 @@ Installed per generation by `install_page`:
 - **attribute API** (M11-12) — writable `id` / `className` property setters
   (they update the dedicated fields and queue attribute records like
   `setAttribute`), `hasAttributes()`, and `getAttributeNames()` (id/class first,
-  then the remaining raw names ASCII-sorted);
+  then the remaining raw names ASCII-sorted). The implemented PRES-02 extension
+  adds live DOMStringMap/NamedNodeMap/Attr views and namespace-aware operations
+  as described above; this does not claim full reflection for every HTML interface;
 - **tree editing + node navigation** (M11-13, extended M11-48/M11-49) —
   `replaceChild()`, `remove()`, `hasChildNodes()`, and raw `firstChild` /
   `lastChild` / `previousSibling` / `nextSibling` aliases. M11-48 makes the raw
@@ -625,7 +663,11 @@ Installed per generation by `install_page`:
   V8-undetectable live document.all;
   `document.children` stays element-only. The Web IDL repair adds Document's
   Node identity, childNodes and Node operations, with the document as the parent
-  of its root nodes. Release verification is recorded above.
+  of its root nodes. PRES-02 adds `createElementNS` / `createAttribute` /
+  `createAttributeNS` / `getElementsByTagNameNS` / `importNode` / `adoptNode` and
+  inherited root/normalization/position helpers in its local candidate. Earlier
+  release verification is recorded above; PRES-02 local acceptance is recorded
+  above and release acceptance remains pending.
 - **elements** — the minimal node surface (`tagName` / `nodeName` / `nodeType` /
   `nodeValue` (null) / `id` / `className` / live `textContent` / `parentNode` /
   `childNodes` / `children`), connectivity and structural navigation
@@ -638,7 +680,9 @@ Installed per generation by `install_page`:
   M11-12), tree editing (`appendChild` / `removeChild` / `insertBefore`, plus
   `replaceChild` / `remove` since M11-13), `cloneNode` / `isSameNode` /
   `isEqualNode` since M11-14, subtree queries, and `contains` / `matches` /
-  `closest`;
+  `closest`. PRES-02 adds live `dataset` / `attributes`, Attr/namespace metadata
+  and operations, `getElementsByTagNameNS`, and the shared Node
+  `getRootNode` / `normalize` / `compareDocumentPosition` methods;
 - **form surface**, exposed only on the relevant tags — `<form>`: `elements` /
   `reset()` / `submit()` / `requestSubmit()` / `method` / `action` / `enctype` /
   `encoding` (M11-18 alias) / `target` / `noValidate`; controls: `form`,
@@ -674,8 +718,10 @@ Tag/class queries are live HTMLCollection objects. Other historical
 collections retain their Array contracts. Native node wrappers have stable
 identity per generation. Selectors match elements only and support the M11-34
 subset (lists, compound selectors, combinators, attribute selectors, `*`) but not
-pseudo-classes/elements, escapes, namespaces, or `i`/`s` flags, there are no
-full attribute-reflection semantics. HTML interface prototypes now provide tag
+pseudo-classes/elements, escapes, namespace-qualified selectors, or `i`/`s` flags.
+PRES-02 provides live attribute views and namespace-aware DOM methods; complete
+HTML-interface attribute reflection is still outside the bounded surface.
+HTML interface prototypes now provide tag
 identity and the implemented form-control and meta/script/anchor attributes.
 A `<script>` inserted into the tree stays **inert**.
 `form.submit()` / `requestSubmit()` are callable no-ops. Form validation is the
@@ -692,6 +738,10 @@ The Web IDL repair provides explicit offline fetch rejection and XHR/Worker
 constructor failure. The follow-up repair keeps Window opening unavailable. Live tag/class collections
 and offline navigation intents are available. `iv8` also exports no browser symbol at module level —
 `test/test_scope_exclusions.py` guards this.
+
+PRES-02 adds inert HTML DOMParser and same-context document moves in its local
+candidate; it does not add XML parsing, XMLSerializer, cross-isolate adoption,
+resource execution, navigation or rendering.
 
 Nuance since M11-1: the page reports configurable `screen` / `window` **dimension
 values**, but there is still no layout engine and nothing consumes those numbers
@@ -727,7 +777,8 @@ clock.
 
 | Milestone | Theme | Authoritative doc |
 |---|---|---|
-| PRES-01 | Presence-first offline BOM/events with unified native prototypes; implemented local candidate, release acceptance pending | `docs/presence_01_bom_events.md` |
+| PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release acceptance pending | `docs/presence_02_dom.md` / report |
+| PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release acceptance pending | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
 | M2 | `Page`, globals, timers, load model, minimal document/element, targeted mutation | `docs/m2_1_*` … `docs/m2_8_*` |
 | M3 | Scripts, lifecycle, events, ready-state, `currentScript`, attributes, script types | `docs/m3_summary.md` |

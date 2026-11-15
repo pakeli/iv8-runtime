@@ -62,6 +62,8 @@
 #include "browser/bom/location.h"
 #include "browser/web/performance.h"
 #include "browser/web/structured_clone.h"
+#include "browser/web/dom_parser.h"
+#include "browser/host/attribute_hosts.h"
 #include "browser/web/capabilities.h"
 #include "browser/web/event_constructors.h"
 #include "browser/web/url.h"
@@ -1760,6 +1762,17 @@ v8::Local<v8::Value> PageState::create_document(v8::Isolate* isolate,
     return object;
 }
 
+v8::Local<v8::Value> PageState::parse_html_document(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const std::string& source) {
+    const auto* active = static_cast<DocumentHost*>(document_host_);
+    auto document = std::make_unique<DocumentHost>(source, active->base_url(), this, false, true);
+    document->ensure_html_structure();
+    auto object = make_host_object(isolate, context, document.get());
+    document->set_wrapper(isolate, object);
+    host_objects_.push_back(std::move(document));
+    return object;
+}
+
 v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Array> arguments) {
     if (name == "XMLHttpRequest" || name == "Worker") {
@@ -1767,6 +1780,12 @@ v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
         return v8::Undefined(isolate);
     }
     if (name == "Document") return create_document(isolate, context);
+    if (name == "DOMParser") {
+        auto parser = std::make_unique<DOMParserHost>(this);
+        auto object = make_host_object(isolate, context, parser.get());
+        host_objects_.push_back(std::move(parser));
+        return object;
+    }
     if (name == "EventTarget") {
         auto target = std::make_unique<StandaloneEventTarget>();
         auto object = make_host_object(isolate, context, target.get());
@@ -1875,6 +1894,8 @@ void PageState::install_page(const std::string& base_url,
             install_web_interfaces(isolate, context, &web_interface_factory,
                 v8::External::New(isolate, this, v8::kExternalPointerTypeTagDefault));
             install_navigator_identity_interfaces(isolate, context, &environment_);
+            install_dom_parser_interface(isolate, context, this);
+            install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());
             install_host_interface(isolate, context, window_events_.get());
             for (const auto& host : host_objects_) {

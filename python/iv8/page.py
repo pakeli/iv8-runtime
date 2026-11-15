@@ -34,9 +34,9 @@ __all__ = ["Page"]
 # Host access trace: the native object types that can emit events. Keep this in
 # sync with AccessTrace::supported_object_types().
 _ACCESS_TRACE_OBJECT_TYPES = (
-    "comment", "connection", "console", "crypto", "document",
-    "document_fragment", "dom_string_list", "element", "history", "host_object", "host_probe", "location",
-    "media_query_list", "navigator", "navigator_ua_data", "orientation", "performance",
+    "attr", "comment", "connection", "console", "crypto", "document",
+    "document_fragment", "dom_parser", "dom_string_list", "dom_string_map", "element", "history", "host_object", "host_probe", "location",
+    "media_query_list", "named_node_map", "navigator", "navigator_ua_data", "orientation", "performance",
     "permission_status", "permissions", "screen", "storage", "storage_manager",
     "text", "user_activation", "visual_viewport", "window",
 )

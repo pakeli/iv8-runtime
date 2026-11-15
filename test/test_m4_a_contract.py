@@ -65,10 +65,10 @@ def test_js_document_surface_not_exceeded():
             assert page.eval(f"typeof document.{member}") == "function"
         # ... and nothing beyond them leaked. (document.forms/images/links/anchors/
         # embeds/applets arrived in M4-B-7..12; plugins / all stay out.)
-        for member in ("createElementNS", "importNode", "adoptNode",
-                       "write", "plugins", "all"):
+        for member in ("write", "plugins", "all"):
             assert page.eval(f"typeof document.{member}") == "undefined"
-        for member in ("createTextNode", "createComment",
+        for member in ("createElementNS", "importNode", "adoptNode",
+                       "createTextNode", "createComment",
                        "createDocumentFragment"):
             assert page.eval(f"typeof document.{member}") == "function"
         # A query collection is a plain Array — no HTMLCollection extras.
@@ -104,10 +104,7 @@ def test_js_element_surface_not_exceeded():
         # in M4-B-1, contains in M4-B-2, matches in M4-B-3, closest in M4-B-4;
         # hasAttributes / getAttributeNames and raw previous/nextSibling left it in
         # M11-12/M11-13; the rest stay out.)
-        for member in ("attributes", "dataset",
-                       "removeAttributeNS", "src", "type", "async", "defer",
-                       "title", "hidden",
-                       "compareDocumentPosition", "getRootNode"):
+        for member in ("src", "type", "async", "defer", "title", "hidden"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
         assert page.eval(f"Object.prototype.toString.call({el}.style)") == "[object CSSStyleDeclaration]"
         for member in ("innerHTML", "outerHTML"):

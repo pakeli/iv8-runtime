@@ -23,7 +23,7 @@ std::string_view parent_interface(std::string_view name) {
     static const std::unordered_map<std::string_view, std::string_view> parents = {
         {"Window", "WindowProperties"}, {"WindowProperties", "EventTarget"},
         {"HTMLDocument", "Document"}, {"XMLDocument", "Document"},
-        {"Document", "Node"}, {"Element", "Node"}, {"HTMLElement", "Element"},
+        {"Document", "Node"}, {"Attr", "Node"}, {"Element", "Node"}, {"HTMLElement", "Element"},
         {"HTMLAudioElement", "HTMLMediaElement"}, {"HTMLVideoElement", "HTMLMediaElement"},
         {"HTMLMediaElement", "HTMLElement"},
         {"Node", "EventTarget"}, {"CharacterData", "Node"},
@@ -52,7 +52,7 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     const std::string name(*text != nullptr ? *text : "");
     const bool constructible = name == "Document" || name == "EventTarget" ||
         name == "Text" || name == "Comment" || name == "DocumentFragment" ||
-        name == "XMLHttpRequest" || name == "Worker";
+        name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser";
     if (!info.IsConstructCall()) {
         const auto message = constructible
             ? "Failed to construct '" + name + "': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
@@ -161,7 +161,8 @@ std::string web_member_interface(const std::string& name,
         return "EventTarget";
     if (web_interface_inherits(name, "Node")) {
         if ((method && member_in(member, {"appendChild", "removeChild", "insertBefore",
-                "replaceChild", "cloneNode", "isEqualNode", "isSameNode", "contains", "hasChildNodes"})) ||
+                "replaceChild", "cloneNode", "isEqualNode", "isSameNode", "contains", "hasChildNodes",
+                "getRootNode", "normalize", "compareDocumentPosition"})) ||
             (!method && member_in(member, {"nodeName", "nodeType", "nodeValue", "textContent",
                 "parentNode", "parentElement", "childNodes", "ownerDocument", "isConnected",
                 "firstChild", "lastChild", "previousSibling", "nextSibling", "baseURI"})))
@@ -179,11 +180,15 @@ std::string web_member_interface(const std::string& name,
                 "removeAttribute", "toggleAttribute", "hasAttributes", "getAttributeNames", "getElementsByTagName", "getElementsByClassName",
                 "querySelector", "querySelectorAll", "matches", "closest", "remove", "append",
                 "prepend", "replaceChildren", "before", "after", "replaceWith", "insertAdjacentElement",
-                "insertAdjacentHTML", "insertAdjacentText"})) ||
+                "insertAdjacentHTML", "insertAdjacentText", "getElementsByTagNameNS",
+                "getAttributeNS", "hasAttributeNS", "setAttributeNS", "removeAttributeNS",
+                "getAttributeNode", "getAttributeNodeNS", "setAttributeNode", "setAttributeNodeNS",
+                "removeAttributeNode"})) ||
             (!method && member_in(member, {"id", "className", "tagName", "innerHTML", "outerHTML",
                 "children", "previousElementSibling", "nextElementSibling", "firstElementChild",
-                "lastElementChild", "childElementCount", "classList"}))) return "Element";
-        if (!method && member_in(member, {"innerText", "style"})) return "HTMLElement";
+                "lastElementChild", "childElementCount", "classList", "attributes",
+                "namespaceURI", "localName", "prefix"}))) return "Element";
+        if (!method && member_in(member, {"innerText", "style", "dataset"})) return "HTMLElement";
     }
     return name;
 }
@@ -286,7 +291,8 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "Navigator", "Screen", "Location", "EventTarget", "Node", "Element",
             "HTMLElement", "HTMLDivElement", "HTMLFormElement", "HTMLScriptElement",
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
-            "XMLHttpRequest", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList"}) {
+            "XMLHttpRequest", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
+            "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }
     for (const auto& [tag, name] : html_interfaces()) {

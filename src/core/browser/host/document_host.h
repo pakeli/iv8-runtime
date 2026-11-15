@@ -13,6 +13,7 @@
 #include "file_reader_state.h"
 #include "live_collection.h"
 #include "mutation_observer.h"
+#include "attribute_hosts.h"
 
 namespace iv8::browser {
 
@@ -28,6 +29,11 @@ public:
         v8::Local<v8::Context> context, std::unique_ptr<DomNode> node);
     void set_wrapper(v8::Isolate* isolate, v8::Local<v8::Object> object);
     std::string prototype_key() const override;
+    // Inert DOMParser documents need html/head/body even for fragment input.
+    void ensure_html_structure();
+    bool call_namespace_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
+        DomNode* target, const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args, v8::Local<v8::Value>& out);
 
     // M3-5: the scripts found in the HTML, in document order (inline + external).
     const std::vector<ScriptRecord>& scripts() const;
@@ -67,6 +73,8 @@ public:
         const v8::FunctionCallbackInfo<v8::Value>& args) override;
 
     const std::string& base_url() const;
+    bool is_html_document() const { return html_document_; }
+    AttributeRegistry& attribute_registry();
     void set_current_url(const std::string& url) { url_ = url; }
     PageState* page_state() const { return page_; }
 
@@ -79,7 +87,7 @@ public:
 
     v8::Local<v8::Object> live_collection(v8::Isolate* isolate,
         v8::Local<v8::Context> context, DomNode* root, const std::string& kind,
-        const std::string& query, bool all = false);
+        const std::string& query, bool all = false, const std::string& namespace_uri = {});
     std::vector<DomNode*> collection_nodes(const LiveCollectionBinding& binding) const;
     std::vector<DomNode*> named_collection_nodes(
         const LiveCollectionBinding& binding) const;
@@ -87,6 +95,26 @@ public:
     // M11-14: deep/shallow detached clone. The clone is inserted into the
     // detached pool (never into roots_), so document queries ignore it.
     DomNode* clone_detached(DomNode* source, bool deep);
+
+    // Same-context DOM operations; adoption migrates ownership and canonical
+    // wrappers without changing listeners or script-visible node identities.
+    bool call_node_operation(v8::Isolate* isolate, v8::Local<v8::Context> context,
+        DomNode* target, const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& args,
+        v8::Local<v8::Value>& out);
+    bool normalize_node(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                        DomNode* node);
+    v8::MaybeLocal<v8::Value> adopt_node(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, NodeHost* source);
+    void remember_node_owner(DomNode* node, DocumentHost* owner);
+    DocumentHost* forwarded_node_owner(DomNode* node) const;
+
+    // Observer states keep their original owning document and microtask queue.
+    // Other same-generation documents borrow registrations for adopted nodes.
+    void borrow_mutation_observer(MutationObserverState* observer);
+    std::vector<MutationObserverState*> mutation_observer_states() const;
+    void remember_record_owners(MutationObserverState* observer,
+                                const MutationRecordData& record);
 
     // M11-14: structural equality used by Element.isEqualNode.
     bool nodes_equal(const DomNode* a, const DomNode* b) const;
@@ -136,7 +164,8 @@ public:
                           DomNode* previous_sibling, DomNode* next_sibling);
     void queue_attribute(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          DomNode* target, const std::string& name,
-                         bool has_old_value, const std::string& old_value);
+                         bool has_old_value, const std::string& old_value,
+                         const std::string& namespace_uri = "");
     void queue_character_data(v8::Isolate* isolate,
                               v8::Local<v8::Context> context, DomNode* target,
                               const std::string& old_value);
@@ -277,17 +306,20 @@ private:
     std::vector<std::unique_ptr<NodeHost>> node_hosts_;
     std::unordered_map<DomNode*, NodeHost*> wrappers_;
     std::unordered_map<DomNode*, v8::Global<v8::Object>> node_objects_;
+    std::unordered_map<DomNode*, DocumentHost*> forwarded_node_owners_;
     v8::Global<v8::Object> all_collection_;
     std::vector<std::unique_ptr<LiveCollectionBinding>> collections_;
     // M11-5: per-generation MutationObserver state (Globals released through the
     // isolate-alive teardown hook in release_v8_handles()).
     std::vector<std::unique_ptr<MutationObserverState>> observers_;
+    std::vector<MutationObserverState*> borrowed_observers_;
     // M11-8: per-generation FileReader states and the Blob constructor backing
     // slice(). Both are released in release_v8_handles().
     std::vector<std::unique_ptr<FileReaderState>> file_readers_;
     v8::Global<v8::Function> blob_constructor_;
     // M11-10: classList bindings owned for the generation.
     std::vector<std::unique_ptr<ClassListBinding>> class_list_bindings_;
+    std::unique_ptr<AttributeRegistry> attribute_registry_;
     // M4-A-7: window's event target (final bubbling hop). Observed, not owned;
     // set at install time. Null before install / in the both-modes shell.
     EventTargetHost* window_target_ = nullptr;
