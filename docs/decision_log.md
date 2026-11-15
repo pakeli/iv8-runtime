@@ -7,6 +7,26 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Close monitoring gaps before extending the BOM surface (`2026-11-15`)
+
+After a read-only audit demonstrated partial monitoring of PRES-03, the user
+explicitly requests closing those gaps first. WIN-MON-01 observes all 49 mapped
+global reads and currently supported writes, all 22 callable global entries in
+both watch and structured channels, and scoped native shell methods/accessors.
+Use pinned-V8 native data properties to retain data descriptors and exact stored
+function values instead of JS wrappers/Proxy or changed function kinds. Property
+and call completion summaries preserve values, coercions and original errors.
+Keep watch_apis call-only and distinguish returned Promises from settlement.
+Record native-entry limits rather than claiming arbitrary JS object interception.
+
+The 14 pinned-V8 data-semantics checks, 56 new actual-log tests, 550 focused
+checks and full local macOS arm64/Python 3.13 suite pass (2547 passed/2 skipped).
+All 127 current native shell methods emit watch hits and completed call events in
+a bounded sweep. API membership is unchanged from PRES-03. Release verification
+stays pending; the shared BIND-01 SDK remains unchanged. Boundary/report/ledger:
+`docs/window_monitoring.md` / `docs/window_monitoring_report.md` /
+`docs/window_monitoring_coverage.json`.
+
 ### Complete ordinary Window presence before backend fidelity (`2026-11-15`)
 
 The user requests simple Window API completion and explicitly confirms the 49

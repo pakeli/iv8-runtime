@@ -11,6 +11,11 @@ Counts use the fixed Chrome 157 inventory plus the PRES-01/PRES-02/PRES-03
 deltas for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
 evidence and the name/behavior distinction: `docs/presence_03_report.md`.
 
+The subsequent WIN-MON-01 closes scoped monitoring gaps for these entries:
+49 global reads, all 22 callable globals and 127 current native shell methods
+are checked against actual logs. See `docs/window_monitoring_report.md`. This
+does not add API names or backend execution, and release verification is pending.
+
 | Target | Reference names | Present | Missing |
 |---|---:|---:|---:|
 | Window ordinary properties/methods | 128 | 128 | 0 |

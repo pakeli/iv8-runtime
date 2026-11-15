@@ -7,7 +7,26 @@ counts, candidate batches and execution boundaries: `docs/bom_coverage_plan.md`.
 This planning update leaves the local acceptance and release/deployment records
 below unchanged.
 
-**Latest implemented local candidate (`2026-11-15`): PRES-03.** The user-approved
+**Latest implemented/local acceptance (`2026-11-15`): WIN-MON-01; release pending.** The
+PRES-03 monitoring extension maps all 49 added Window globals into structured
+native get/get_method tracing and their supported writes into set completion.
+All 22 callable globals enter both watch_apis and structured calls, including
+safe argument/return summaries and synchronous exception completion. Native
+shell methods enter both channels; shell/global and namespace accessors use
+structured property hooks. Native data callbacks preserve data descriptors,
+stored values and function identity. Local acceptance passes **550 focused** and
+full macOS arm64/Python 3.13 **2547 passed, 2 skipped**. A native-shell sweep
+records all **127 methods** in both channels. **Release acceptance is pending.**
+No shared SDK replacement is performed; BIND-01 remains release-verified/deployed.
+Boundary/report: `docs/window_monitoring.md` / `docs/window_monitoring_report.md`.
+
+Descriptor queries may evaluate a native data getter and also record get.
+Read-only writes or construction rejected before native callback entry do not
+invent events; replacement with a user JS accessor ends that native data path.
+Arbitrary nested data reads remain outside scope, and Promise calls record the
+returned Promise without settlement tracing. watch_apis remains call-only.
+
+**Previous local acceptance (`2026-11-15`): PRES-03.** The user-approved
 Window presence batch exposes the 49 ordinary names from the fixed Chrome
 inventory with observed native-function/object/constant/flag kinds. The separate
 821 global interface entries are explicitly excluded. Native global methods use
@@ -530,6 +549,11 @@ Post-M11 monitoring extension (verified `2026-11-02`):
   coverage boundaries, capacity/filter/stopped warnings, and caller-supplied
   event-loop progress. See `docs/host_access_trace_workflow.md`.
 
+WIN-MON-01 extends the implemented monitoring surface to the 49 mapped PRES-03
+Window globals, 22 callable globals and scoped shell calls/accessors. Local
+acceptance has passed; release acceptance is pending. Its boundaries and unchanged native
+data descriptors/identities are specified in `docs/window_monitoring.md`.
+
 ### M11 compatibility line
 
 Implemented and present at `HEAD`:
@@ -908,8 +932,12 @@ The repository is executing its post-M10 direction:
 - M11-52 (Window messaging) is **landed and verified on real V8 (Linux +
   Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_52_window_messaging.md` and `docs/m11_52_report.md`;
-- the latest implemented batch is **PRES-03 Window ordinary-member presence**,
-  with local acceptance passed; release acceptance pending. Its 49 names include native
+- the latest implemented batch is **WIN-MON-01 Window monitoring**, locally accepted;
+  release acceptance is pending. It adds structured get/set/call coverage for
+  the mapped globals and call-only watches for native globals/shell methods;
+  `docs/window_monitoring.md` records the native-entry and data-property limits.
+  **PRES-03 Window ordinary-member presence** has previous local acceptance;
+  release acceptance remains pending. Its 49 names include native
   globals, deterministic flags/constants, private-prototype object shells,
   prefixed rAF and bounded event/reportError integration. The 821 missing global
   interface entries remain excluded. PRES-01/PRES-02 retain previous local
@@ -924,8 +952,10 @@ The repository is executing its post-M10 direction:
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which bounded BOM family should follow local acceptance of the PRES-03 Window
-  ordinary-name batch? The family priority is settled in `docs/bom_coverage_plan.md`.
+- Which bounded Navigator/BOM subobject slice should follow WIN-MON-01 local
+  acceptance? Its event/watch-hit regressions and full local suite have passed;
+  release acceptance remains pending. The family priority is settled in
+  `docs/bom_coverage_plan.md`.
   `M11-1` through `M11-52`
   remain release-verified; BIND-01 is the latest verified release/deployed SDK.
   PRES-01/PRES-02 have prior local acceptance; PRES-03 now implements the 49
@@ -956,7 +986,8 @@ If you need a one-line answer:
 > attributes, and Window messaging). BIND-01 remains the latest release-verified
 > and deployed SDK. PRES-01/PRES-02 have previous local acceptance; PRES-03
 > exposes the user-selected 49 ordinary Window names with local acceptance passed;
-> release acceptance pending. Backend execution and the 821 global interface
+> release acceptance pending. WIN-MON-01 implements their scoped native monitoring
+> with local acceptance passed; release acceptance pending. Backend execution and the 821 global interface
 > entries remain outside that presence batch.
 > The project has also landed steps 1–4 plus the native-BOM-call,
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage

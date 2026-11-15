@@ -1100,6 +1100,13 @@ class Page:
         and writable/configurable no-op methods; the storage/permissions
         managers and PermissionStatus objects keep their plain-object shapes.
 
+        WIN-MON-01 covers the 49 PRES-03 Window entries, their native property
+        accessors/data reads and supported writes, all 22 callable globals, and
+        shell native methods/accessors. Shell methods also enter ``watch_apis``.
+        Native data descriptors and exact stored function identities remain
+        intact; descriptor queries may additionally invoke the native getter.
+        Explicit replacement with a JS accessor ends that native property path.
+
         Step 6a adds optional completion fields to generic HostObject
         ``get``/``set``/``call`` events: ``outcome`` (``returned``/``threw``),
         ``value_summary`` for get/set, ``argument_count`` plus up to eight
@@ -1122,7 +1129,7 @@ class Page:
         ``getOwnPropertyDescriptor`` APIs; HostObject targets record ``has`` /
         ``get_own_property_descriptor``. The ``in`` operator, non-HostObject
         query targets, wrappers cached before tracing, asynchronous exception
-        metadata, onchange, array elements, global binding reads, and general
+        metadata, onchange, array elements, unmapped global binding reads, and general
         call-site locations/timing remain out of scope.
 
         ``max_events`` is the retained-event capacity (earliest N retained; later

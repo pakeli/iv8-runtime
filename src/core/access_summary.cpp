@@ -378,4 +378,45 @@ AccessPropertySetCompletion::~AccessPropertySetCompletion() noexcept {
     }
 }
 
+AccessFunctionPropertyCompletion::AccessFunctionPropertyCompletion(
+    v8::Isolate* isolate, std::uint64_t seq,
+    const v8::FunctionCallbackInfo<v8::Value>& info, AccessOperation operation)
+    : isolate_(isolate), seq_(seq), info_(&info), operation_(operation) {
+    if (seq_ == 0) return;
+    try {
+        try_catch_.emplace(isolate);
+        if (operation_ == AccessOperation::kSet) {
+            completion_.value_summary = access_value_summary(isolate,
+                info.Length() > 0 ? info[0] : v8::Local<v8::Value>(v8::Undefined(isolate)));
+        }
+    } catch (...) {
+        try_catch_.reset();
+    }
+}
+
+AccessFunctionPropertyCompletion::~AccessFunctionPropertyCompletion() noexcept {
+    if (seq_ == 0) return;
+    bool caught = false;
+    try {
+        caught = try_catch_ && try_catch_->HasCaught();
+        if (caught) {
+            completion_.outcome = "threw";
+            access_capture_exception(isolate_, isolate_->GetCurrentContext(), *try_catch_, completion_);
+        } else {
+            completion_.outcome = "returned";
+            if (operation_ == AccessOperation::kGet) {
+                completion_.value_summary = access_value_summary(isolate_, info_->GetReturnValue().Get());
+            }
+        }
+        if (auto* trace = access_trace_from_isolate(isolate_)) {
+            trace->complete(seq_, std::move(completion_));
+        }
+    } catch (...) {
+        // Recording must never alter the observed property operation.
+    }
+    if (caught && try_catch_) {
+        try { (void)try_catch_->ReThrow(); } catch (...) {}
+    }
+}
+
 }  // namespace iv8

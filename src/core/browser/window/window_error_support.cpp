@@ -1,6 +1,9 @@
 #include "window_error_support.h"
+#include "window_trace_support.h"
 
 #include "iv8/web_method.h"
+#include "iv8/access_summary.h"
+#include "../internal/trace_hooks.h"
 #include "../host/event_target.h"
 #include "../web/event_constructors.h"
 
@@ -48,6 +51,8 @@ WindowEventScope::~WindowEventScope() noexcept {
 }
 
 void window_event_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "event", AccessOperation::kGet);
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(), sequence, info, AccessOperation::kGet);
     if (!window_receiver(info)) return;
     auto context = info.GetIsolate()->GetCurrentContext();
     v8::Local<v8::Value> event;
@@ -56,18 +61,22 @@ void window_event_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
 }
 
 void window_event_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "event", AccessOperation::kSet);
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(), sequence, info, AccessOperation::kSet);
     if (!window_receiver(info)) return;
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
     auto value = info.Length() > 0 ? info[0] : v8::Local<v8::Value>(v8::Undefined(isolate));
     // Chrome's replaceable setter creates an ordinary own data property. Event
     // scopes continue to update the hidden value, leaving that user shadow intact.
-    if (!context->Global()->DefineOwnProperty(context,
-            v8::String::NewFromUtf8Literal(isolate, "event"), value).FromMaybe(false)) return;
+    if (!install_traced_window_data_property(isolate, context, context->Global(), "event", value)) return;
 }
 
 void window_report_error_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "reportError", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "reportError");
     auto context = isolate->GetCurrentContext();
     if (info.Length() < 1) {
         isolate->ThrowException(v8::Exception::TypeError(
@@ -109,8 +118,7 @@ bool install_window_error_support(v8::Isolate* isolate,
     descriptor.set_configurable(true);
     return context->Global()->DefineProperty(context,
         v8::String::NewFromUtf8Literal(isolate, "event"), descriptor).FromMaybe(false) &&
-        context->Global()->DefineOwnProperty(context,
-            v8::String::NewFromUtf8Literal(isolate, "reportError"), report).FromMaybe(false);
+        install_traced_window_data_property(isolate, context, context->Global(), "reportError", report);
 }
 
 }  // namespace iv8::browser

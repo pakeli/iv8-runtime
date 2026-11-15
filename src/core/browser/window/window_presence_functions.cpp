@@ -1,10 +1,12 @@
 #include "window_presence_functions.h"
+#include "window_trace_support.h"
 
 #include <cstdint>
 #include <string>
 
 #include "iv8/web_interface.h"
 #include "iv8/web_method.h"
+#include "iv8/access_summary.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
 #include "../web/capabilities.h"
@@ -19,6 +21,8 @@ std::string operation_name(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void unsupported_operation(const v8::FunctionCallbackInfo<v8::Value>& info) {
     const auto name = operation_name(info);
+    const auto sequence = window_trace_record(info.GetIsolate(), name.c_str(), AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", name);
     info.GetIsolate()->ThrowException(unsupported_capability(info.GetIsolate(), name));
 }
@@ -27,6 +31,8 @@ void rejected_operation(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto* isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
     const auto name = operation_name(info);
+    const auto sequence = window_trace_record(isolate, name.c_str(), AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
     watch_record(isolate, "window", name);
     v8::Local<v8::Promise::Resolver> resolver;
     if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||
@@ -35,13 +41,18 @@ void rejected_operation(const v8::FunctionCallbackInfo<v8::Value>& info) {
 }
 
 void profile_noop(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    watch_record(info.GetIsolate(), "window", operation_name(info));
+    const auto name = operation_name(info);
+    const auto sequence = window_trace_record(info.GetIsolate(), name.c_str(), AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
+    watch_record(info.GetIsolate(), "window", name);
 }
 
 void prefixed_animation_frame(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto* isolate = info.GetIsolate();
     auto* state = state_from_isolate(isolate);
     const auto name = operation_name(info);
+    const auto sequence = window_trace_record(isolate, name.c_str(), AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
     watch_record(isolate, "window", name);
     if (state == nullptr || info.Length() == 0) return;
     if (name == "webkitRequestAnimationFrame") {
@@ -62,23 +73,36 @@ bool window_receiver(const v8::FunctionCallbackInfo<v8::Value>& info) {
 }
 
 void profile_flag_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    if (window_receiver(info)) info.GetReturnValue().Set(info.Data());
+    auto context = info.GetIsolate()->GetCurrentContext();
+    auto data = info.Data().As<v8::Array>();
+    v8::Local<v8::Value> name;
+    v8::Local<v8::Value> value;
+    if (!data->Get(context, 0).ToLocal(&name) || !data->Get(context, 1).ToLocal(&value)) return;
+    v8::String::Utf8Value member(info.GetIsolate(), name);
+    const auto sequence = *member == nullptr ? 0 : window_trace_record(info.GetIsolate(), *member, AccessOperation::kGet);
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(), sequence, info, AccessOperation::kGet);
+    if (window_receiver(info)) info.GetReturnValue().Set(value);
 }
 
 void replaceable_flag_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto name = operation_name(info);
+    const auto sequence = window_trace_record(info.GetIsolate(), name.c_str(), AccessOperation::kSet);
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(), sequence, info, AccessOperation::kSet);
     if (!window_receiver(info)) return;
     auto value = info.Length() > 0 ? info[0] : v8::Local<v8::Value>(v8::Undefined(info.GetIsolate()));
-    (void)info.This()->DefineOwnProperty(info.GetIsolate()->GetCurrentContext(),
-        info.Data().As<v8::String>(), value);
+    (void)install_traced_window_data_property(info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), info.This(), name, value);
 }
 
 bool install_flag(v8::Isolate* isolate, v8::Local<v8::Context> context,
     const char* name, bool value, bool replaceable = false, bool enumerable = true) {
     v8::Local<v8::String> key;
     v8::Local<v8::Function> getter;
-    if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&key) ||
+    if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&key)) return false;
+    auto data = v8::Array::New(isolate, 2);
+    if (!data->CreateDataProperty(context, 0, key).FromMaybe(false) ||
+        !data->CreateDataProperty(context, 1, v8::Boolean::New(isolate, value)).FromMaybe(false) ||
         !make_web_method(isolate, context, std::string("get ") + name, 0,
-            &profile_flag_getter, v8::Boolean::New(isolate, value)).ToLocal(&getter)) return false;
+            &profile_flag_getter, data).ToLocal(&getter)) return false;
     v8::Local<v8::Value> setter = v8::Undefined(isolate);
     if (replaceable) {
         v8::Local<v8::Function> function;
@@ -98,7 +122,7 @@ bool install_operation(v8::Isolate* isolate, v8::Local<v8::Context> context,
     v8::Local<v8::Function> function;
     return v8::String::NewFromUtf8(isolate, name).ToLocal(&key) &&
         make_web_method(isolate, context, name, length, callback, key).ToLocal(&function) &&
-        context->Global()->DefineOwnProperty(context, key, function).FromMaybe(false);
+        install_traced_window_data_property(isolate, context, context->Global(), name, function);
 }
 
 }  // namespace
@@ -128,12 +152,10 @@ bool install_window_presence_functions(v8::Isolate* isolate,
         !install_flag(isolate, context, "originAgentCluster", true) ||
         !install_flag(isolate, context, "offscreenBuffering", true, true, false)) return false;
     auto prototype = web_interface_prototype(isolate, context, "Window");
-    return !prototype.IsEmpty() && prototype->DefineOwnProperty(context,
-        v8::String::NewFromUtf8Literal(isolate, "PERSISTENT"), v8::Integer::New(isolate, 1),
-        static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete)).FromMaybe(false) &&
-        prototype->DefineOwnProperty(context, v8::String::NewFromUtf8Literal(isolate, "TEMPORARY"),
-            v8::Integer::New(isolate, 0),
-            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete)).FromMaybe(false);
+    return !prototype.IsEmpty() && install_traced_window_data_property(isolate, context, prototype,
+        "PERSISTENT", v8::Integer::New(isolate, 1), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete)) &&
+        install_traced_window_data_property(isolate, context, prototype,
+            "TEMPORARY", v8::Integer::New(isolate, 0), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
 }
 
 }  // namespace iv8::browser

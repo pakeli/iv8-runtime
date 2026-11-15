@@ -5,7 +5,19 @@ coverage and related BOM objects take precedence over further DOM nodes and the
 proposed Web-data batch. This changes no runtime exposure. Counts and selected
 candidate families: `docs/bom_coverage_plan.md`.
 
-**Latest implemented local candidate (`2026-11-15`): PRES-03.** The 49 missing
+**Latest implemented/local acceptance (`2026-11-15`): WIN-MON-01; release pending.** The
+mapped PRES-03 Window names now enter structured native get/get_method and
+supported set tracing. All 22 callable globals enter both watch_apis and
+structured calls with safe argument/return summaries and synchronous exception
+completion. Shell methods enter both channels, and shell/global plus namespace
+accessors enter structured property tracing. Native data descriptors, stored
+values and function identities remain unchanged. Local checks pass **550 focused**
+and full macOS arm64/Python 3.13 **2547 passed, 2 skipped**; all **127 current
+native shell methods** emit both channels in the sweep. Release acceptance stays
+pending; BIND-01 remains release-verified/deployed. Boundary/report:
+`docs/window_monitoring.md` / `docs/window_monitoring_report.md`.
+
+**Previous local acceptance (`2026-11-15`): PRES-03.** The 49 missing
 ordinary Window names have typed native-function/object/constant/flag exposure,
 private canonical prototype shells, stable generation-owned identities,
 prefixed rAF reuse and bounded window.event/reportError delivery. Backend
@@ -333,9 +345,21 @@ name/message/location/stack), `get_method` references (adjacent calls fold into
 `call`), step-6c `delete`/`own_keys`/`define_property` request events
 (enumeration events have an empty member; results and descriptors are
 unchanged), and step-6d explicit `has`/`get_own_property_descriptor` events for
-HostObject targets. It returns events plus a coverage report. It does not cover
-MediaQueryList/PermissionStatus `onchange`/missing probes, array elements,
-global binding reads, other plain BOM property reads, returned plain values,
+HostObject targets. It returns events plus a coverage report. The implemented
+WIN-MON-01 extension adds the 49 mapped PRES-03 global reads/supported writes,
+22 callable globals and declared shell method/accessor paths, with local
+acceptance passed and release acceptance pending. watch_apis observes calls only. Native data
+descriptor queries can also evaluate their getter and record get without
+changing descriptor kind/value/flags. Read-only writes and construction attempts
+that V8 rejects before native entry do not create invented native events.
+Replacing a mapped data property with a user JS accessor
+ends that native data path. Promise call completion summarizes the returned
+Promise and does not observe settlement. See `docs/window_monitoring.md`.
+
+Tracing still does not cover MediaQueryList/PermissionStatus
+`onchange`/missing probes, array elements,
+unmapped global binding reads, arbitrary nested data/other plain BOM property
+reads, returned plain values,
 user-created objects, the `in` operator, non-HostObject query targets, query
 wrappers cached before tracing, asynchronous exception metadata, or missing
 probes on non-HostObject objects in this slice. See
@@ -819,6 +843,7 @@ clock.
 
 | Milestone | Theme | Authoritative doc |
 |---|---|---|
+| WIN-MON-01 | Scoped native get/set/call monitoring for 49 PRES-03 globals, both call channels for 22 callable globals/shell methods, and declared shell accessors; implemented, locally accepted; release acceptance pending | `docs/window_monitoring.md` |
 | PRES-03 | Typed presence for 49 ordinary Window names, private prototype shells, reused rAF and bounded event/reportError; implemented, local acceptance passed; release acceptance pending; 821 global interfaces excluded | `docs/presence_03_window.md` |
 | PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release acceptance pending | `docs/presence_02_dom.md` / report |
 | PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release acceptance pending | `docs/presence_01_bom_events.md` |

@@ -9,7 +9,23 @@ next-Web-data recommendations. Retain shared native prototypes, configuration
 consistency and meaningful local regressions. This priority change alone adds no
 runtime API or release/deployment verification.
 
-**Latest implemented local candidate (`2026-11-15`): PRES-03.** Read
+**Latest implemented/local acceptance (`2026-11-15`): WIN-MON-01; release pending.** Read
+`docs/window_monitoring.md` before changing the PRES-03 monitoring extension.
+All 49 mapped globals have structured native get/get_method and supported set
+completion; all 22 callable globals have watch_apis and structured call entries
+with safe summaries and synchronous exceptions. Shell methods enter both
+channels; shell/global and namespace accessors use structured property hooks.
+Native data callbacks retain data descriptors, exact values and function
+identity. Actual events/hits pass **550 focused** checks; full macOS arm64/Python
+3.13 is **2547 passed, 2 skipped**. All **127 current native shell methods** emit
+both channels in a sweep. Release acceptance remains pending; the shared BIND-01
+SDK is unchanged. Evidence: `docs/window_monitoring_report.md`.
+Descriptor evaluation may record an extra get; read-only writes or
+construction blocked before native entry have no invented event. User JS
+accessor replacement, arbitrary nested data reads and Promise settlement remain
+outside the native path. watch_apis stays call-only.
+
+**Previous local acceptance (`2026-11-15`): PRES-03.** Read
 `docs/presence_03_window.md` for the user-approved 49 ordinary Window names.
 The separate 821 missing global interface entries are excluded. Preserve native
 global kinds and metadata, canonical private shell prototypes, generation-owned
@@ -334,7 +350,12 @@ Answer roughly as follows:
 - M1 contract still exists and matters for `JSContext`.
 - Real implementation has progressed through M2–M11.
 - Current `HEAD` includes:
-  - PRES-03 as the latest implemented local candidate: the user-selected 49
+  - WIN-MON-01 as the latest implemented monitoring batch, locally accepted with
+    release acceptance pending: mapped Window native get/set/call, call-only watches
+    for 22 globals and shell methods, and scoped shell accessor tracing.
+    Preserve native data descriptors/identity and the observation boundaries
+    in `docs/window_monitoring.md`; the shared BIND-01 SDK remains unchanged;
+  - PRES-03 with previous local acceptance: the user-selected 49
     ordinary Window names with native function/type exposure, canonical private
     shell prototypes, reused rAF and bounded event/reportError integration.
     Backend execution explicitly fails; the 821 global interface entries remain
@@ -377,8 +398,9 @@ Answer roughly as follows:
     messaging surface — verified on real V8 Linux + Windows + macOS arm64;
     latest verification `2026-11-03`;
   - latest verified numbered compatibility milestone: M11-52 (Window messaging);
-    latest release/deployment verified: BIND-01. Latest implemented local batch:
-    PRES-03, with local acceptance passed; release acceptance pending;
+    latest release/deployment verified: BIND-01. Latest implemented batch:
+    WIN-MON-01, locally accepted with release acceptance pending; PRES-03 retains its
+    previous local acceptance and pending release acceptance;
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

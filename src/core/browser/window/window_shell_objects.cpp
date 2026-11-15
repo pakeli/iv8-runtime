@@ -11,6 +11,8 @@
 
 #include "iv8/web_interface.h"
 #include "iv8/web_method.h"
+#include "iv8/access_summary.h"
+#include "window_trace_support.h"
 #include "../host/event_target.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
@@ -140,6 +142,11 @@ public:
         v8::Local<v8::Context> context, const std::string& name,
         const v8::FunctionCallbackInfo<v8::Value>& arguments) override {
         v8::Local<v8::Value> value;
+        // Shared EventTarget.prototype callbacks use the generic HostObject
+        // call tracer, so only add the independent watch hit on this route.
+        if (specification_.event_target && (name == "addEventListener" ||
+                name == "removeEventListener" || name == "dispatchEvent"))
+            watch_record(isolate, specification_.name, name);
         if (specification_.event_target && handle_event_method(isolate, context, name, arguments, value)) return value;
         if (specification_.name == "CSS" && name == "escape") return css_escape(isolate, context, arguments);
         if (specification_.name == "trustedTypes" && (name == "isHTML" || name == "isScript" || name == "isScriptURL"))
@@ -168,17 +175,23 @@ WindowShellHost* external_host(v8::Local<v8::Value> value) {
 }
 
 void global_shell_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto* host = external_host(info.Data());
+    const auto sequence = window_trace_record(info.GetIsolate(), host->specification().name.c_str(), AccessOperation::kGet);
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(), sequence, info, AccessOperation::kGet);
     if (info.This() != info.GetIsolate()->GetCurrentContext()->Global()) {
         info.GetIsolate()->ThrowException(v8::Exception::TypeError(v8_string(info.GetIsolate(), "Illegal invocation").As<v8::String>())); return;
     }
-    info.GetReturnValue().Set(external_host(info.Data())->global_value(info.GetIsolate()));
+    info.GetReturnValue().Set(host->global_value(info.GetIsolate()));
 }
 
 void global_shell_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto* host = external_host(info.Data());
+    const auto sequence = window_trace_record(info.GetIsolate(), host->specification().name.c_str(), AccessOperation::kSet);
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(), sequence, info, AccessOperation::kSet);
     if (info.This() != info.GetIsolate()->GetCurrentContext()->Global()) {
         info.GetIsolate()->ThrowException(v8::Exception::TypeError(v8_string(info.GetIsolate(), "Illegal invocation").As<v8::String>())); return;
     }
-    external_host(info.Data())->set_global_value(info.GetIsolate(), info.Length() ? info[0] : v8::Local<v8::Value>(v8::Undefined(info.GetIsolate())));
+    host->set_global_value(info.GetIsolate(), info.Length() ? info[0] : v8::Local<v8::Value>(v8::Undefined(info.GetIsolate())));
 }
 
 void shell_method(const v8::FunctionCallbackInfo<v8::Value>& info) {
@@ -189,18 +202,21 @@ void shell_method(const v8::FunctionCallbackInfo<v8::Value>& info) {
         !data->Get(context, 2).ToLocal(&bound_host)) return;
     v8::String::Utf8Value interface_name(isolate, interface_value), member(isolate, member_value);
     if (*interface_name == nullptr || *member == nullptr) return;
-    WindowShellHost* host = nullptr;
-    if (interface_name.length() == 0) host = external_host(bound_host);
-    else {
+    auto* owner = external_host(bound_host);
+    WindowShellHost* host = owner;
+    bool compatible = true;
+    if (interface_name.length() != 0) {
         auto* candidate = host_object_backing(info.This());
-        if (candidate == nullptr || candidate->trace_object_type() != "window_shell" ||
-            !web_interface_inherits(candidate->prototype_key(), *interface_name)) {
-            isolate->ThrowException(v8::Exception::TypeError(v8_string(isolate, "Illegal invocation").As<v8::String>())); return;
-        }
-        host = static_cast<WindowShellHost*>(candidate);
+        compatible = candidate != nullptr && candidate->trace_object_type() == "window_shell" &&
+            web_interface_inherits(candidate->prototype_key(), *interface_name);
+        if (compatible) host = static_cast<WindowShellHost*>(candidate);
     }
+    watch_record(isolate, owner->specification().name, *member);
     const auto sequence = access_trace_record(isolate, host, "window_shell", host->global_name().c_str(), *member, AccessOperation::kCall);
     AccessCallCompletion completion(isolate, sequence, info);
+    if (!compatible) {
+        isolate->ThrowException(v8::Exception::TypeError(v8_string(isolate, "Illegal invocation").As<v8::String>())); return;
+    }
     info.GetReturnValue().Set(host->call_method(isolate, context, *member, info));
 }
 
@@ -210,7 +226,12 @@ void namespace_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> owner, member;
     if (!data->Get(context, 0).ToLocal(&owner) || !data->Get(context, 1).ToLocal(&member)) return;
     v8::String::Utf8Value name(info.GetIsolate(), member);
-    if (*name != nullptr) info.GetReturnValue().Set(external_host(owner)->get_property(info.GetIsolate(), context, *name));
+    if (*name != nullptr) {
+        auto* host = external_host(owner);
+        const auto sequence = access_trace_record(info.GetIsolate(), host, "window_shell", host->global_name().c_str(), *name, AccessOperation::kGet);
+        AccessFunctionPropertyCompletion completion(info.GetIsolate(), sequence, info, AccessOperation::kGet);
+        info.GetReturnValue().Set(host->get_property(info.GetIsolate(), context, *name));
+    }
 }
 
 bool install_methods(v8::Isolate* isolate, v8::Local<v8::Context> context,
@@ -259,8 +280,8 @@ bool install_shell(v8::Isolate* isolate, v8::Local<v8::Context> context,
     }
     if (!install_methods(isolate, context, host, spec.namespace_object ? object : prototype)) return false;
     host->set_global_value(isolate, spec.name == "fence" ? v8::Local<v8::Value>(v8::Null(isolate)) : v8::Local<v8::Value>(object));
-    if (spec.namespace_object) return context->Global()->DefineOwnProperty(context, v8_string(isolate, spec.name).As<v8::String>(), object,
-        spec.enumerable_global ? v8::None : v8::DontEnum).FromMaybe(false);
+    if (spec.namespace_object) return install_traced_window_data_property(isolate, context,
+        context->Global(), spec.name, object, spec.enumerable_global ? v8::None : v8::DontEnum);
     auto data = v8::External::New(isolate, host, v8::kExternalPointerTypeTagDefault);
     v8::Local<v8::Function> getter, setter;
     if (!make_web_method(isolate, context, "get " + spec.name, 0, &global_shell_getter, data).ToLocal(&getter)) return false;
@@ -279,6 +300,9 @@ bool constants(v8::Isolate* isolate, v8::Local<v8::Context> context,
 }
 
 void node_filter_call(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    watch_record(info.GetIsolate(), "window", "NodeFilter");
+    const auto sequence = window_trace_record(info.GetIsolate(), "NodeFilter", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     info.GetIsolate()->ThrowException(v8::Exception::TypeError(v8_string(info.GetIsolate(), "Illegal constructor").As<v8::String>()));
 }
 
@@ -310,7 +334,7 @@ bool install_window_shell_objects(v8::Isolate* isolate, v8::Local<v8::Context> c
             {"SHOW_ELEMENT",1},{"SHOW_ATTRIBUTE",2},{"SHOW_TEXT",4},{"SHOW_CDATA_SECTION",8},{"SHOW_ENTITY_REFERENCE",16},{"SHOW_ENTITY",32},
             {"SHOW_PROCESSING_INSTRUCTION",64},{"SHOW_COMMENT",128},{"SHOW_DOCUMENT",256},{"SHOW_DOCUMENT_TYPE",512},
             {"SHOW_DOCUMENT_FRAGMENT",1024},{"SHOW_NOTATION",2048}}) ||
-        !context->Global()->DefineOwnProperty(context, v8_string(isolate, "NodeFilter").As<v8::String>(), node_filter, v8::DontEnum).FromMaybe(false)) return false;
+        !install_traced_window_data_property(isolate, context, context->Global(), "NodeFilter", node_filter, v8::DontEnum)) return false;
     const std::vector<ShellSpec> specifications = {
         {"chrome","",{{"csi",0},{"loadTimes",0}},{},{},false,true},
         {"external","External",{{"AddSearchProvider",0},{"IsSearchProviderInstalled",0}}},
