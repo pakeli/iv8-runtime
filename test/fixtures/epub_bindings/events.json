@@ -1,0 +1,38 @@
+{
+  "Event": {
+    "name": "Event",
+    "length": 1,
+    "source": "function Event() { [native code] }",
+    "prototype": true
+  },
+  "CustomEvent": {
+    "name": "CustomEvent",
+    "length": 1,
+    "source": "function CustomEvent() { [native code] }",
+    "prototype": true
+  },
+  "MouseEvent": {
+    "name": "MouseEvent",
+    "length": 1,
+    "source": "function MouseEvent() { [native code] }",
+    "prototype": true
+  },
+  "KeyboardEvent": {
+    "name": "KeyboardEvent",
+    "length": 1,
+    "source": "function KeyboardEvent() { [native code] }",
+    "prototype": true
+  },
+  "FocusEvent": {
+    "name": "FocusEvent",
+    "length": 1,
+    "source": "function FocusEvent() { [native code] }",
+    "prototype": true
+  },
+  "MessageEvent": {
+    "name": "MessageEvent",
+    "length": 1,
+    "source": "function MessageEvent() { [native code] }",
+    "prototype": true
+  }
+}
