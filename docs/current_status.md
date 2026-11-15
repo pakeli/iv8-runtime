@@ -7,7 +7,23 @@ counts, candidate batches and execution boundaries: `docs/bom_coverage_plan.md`.
 This planning update leaves the local acceptance and release/deployment records
 below unchanged.
 
-**Latest implemented local candidate (`2026-11-15`): PRES-02.** The DOM
+**Latest implemented local candidate (`2026-11-15`): PRES-03.** The user-approved
+Window presence batch exposes the 49 ordinary names from the fixed Chrome
+inventory with observed native-function/object/constant/flag kinds. The separate
+821 global interface entries are explicitly excluded. Native global methods use
+browser-derived metadata; namespace shells retain canonical private prototypes
+and stable generation-owned identities. Prefixed rAF operations reuse the
+existing scheduler; window.event/reportError use bounded synthetic event
+delivery. Missing backend operations explicitly throw NotSupportedError or
+reject a Promise. The user separately authorizes native `open` exposure for
+this candidate; creating a window is still unsupported. Local checks pass
+**526 focused tests**, **28 profile/trace guards**, and full macOS arm64/Python
+3.13 **2491 passed, 2 skipped**. Ordinary names are **128/128**, handlers
+**125/125**; the 821 interface entries remain excluded. **Release acceptance is pending.** BIND-01 remains the release-verified and
+deployed shared SDK, including its historical absent-open profile. Boundary:
+`docs/presence_03_window.md` / `docs/presence_03_report.md`.
+
+**Previous local acceptance (`2026-11-15`): PRES-02.** The DOM
 logic/reflection batch adds live dataset/DOMStringMap and attributes/NamedNodeMap,
 Attr nodes, namespace-aware creation and attribute operations, namespace-aware
 live tag collections and Node root/normalization/position helpers,
@@ -892,13 +908,14 @@ The repository is executing its post-M10 direction:
 - M11-52 (Window messaging) is **landed and verified on real V8 (Linux +
   Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_52_window_messaging.md` and `docs/m11_52_report.md`;
-- the latest implemented batch is **PRES-02 DOM logic/reflection**, locally
-  accepted with release acceptance pending. Live attribute interfaces,
-  namespace operations, root/tree helpers, import/adopt and inert HTML DOMParser
-  build on the previous locally accepted PRES-01 BOM/events. Shared native
-  prototype and generation ownership remain required. BIND-01 remains the
-  release-verified and deployed SDK; M11-53 focus/visibility is still a numbered
-  candidate. Configured UAData does not imply complete device/profile fidelity.
+- the latest implemented batch is **PRES-03 Window ordinary-member presence**,
+  with local acceptance passed; release acceptance pending. Its 49 names include native
+  globals, deterministic flags/constants, private-prototype object shells,
+  prefixed rAF and bounded event/reportError integration. The 821 missing global
+  interface entries remain excluded. PRES-01/PRES-02 retain previous local
+  acceptance; BIND-01 remains the release-verified and deployed SDK. M11-53
+  focus/visibility remains a numbered candidate. Presence does not establish
+  subsystem execution or business acceptance.
   Subsequent development is BOM-first: Window/Location/Navigator/History and
   related objects, with further node/Web-data work deferred. Current queue:
   `docs/bom_coverage_plan.md`; gaps: `docs/dom_bom_gaps.md`.
@@ -907,13 +924,13 @@ The repository is executing its post-M10 direction:
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which bounded Window/Navigator members should form the first BOM continuation
-  batch? The object-family priority is settled in `docs/bom_coverage_plan.md`.
+- Which bounded BOM family should follow local acceptance of the PRES-03 Window
+  ordinary-name batch? The family priority is settled in `docs/bom_coverage_plan.md`.
   `M11-1` through `M11-52`
   remain release-verified; BIND-01 is the latest verified release/deployed SDK.
-  PRES-01 has prior local acceptance; PRES-02 now implements dataset/attributes,
-  namespace APIs, root/tree helpers, import/adopt and HTML DOMParser, with final
-  local acceptance passed; release acceptance pending. Document `write`, XML parsing/
+  PRES-01/PRES-02 have prior local acceptance; PRES-03 now implements the 49
+  ordinary Window names, with local acceptance passed; release acceptance pending. The
+  user excludes the 821 global interface entries. Document `write`, XML parsing/
   serialization and the selector follow-up remain separate work. Configured
   UAData presence does not complete browser device/profile behavior.
 - Should the `in` operator, non-HostObject query targets, or wrapper-cached
@@ -937,8 +954,10 @@ If you need a one-line answer:
 > compatibility line through M11-52 (Document cookie/identity, node foundation,
 > HTML string APIs, Window scroll/focus/UI completion, Window event handler
 > attributes, and Window messaging). BIND-01 remains the latest release-verified
-> and deployed SDK. PRES-01 has previous local acceptance; PRES-02 DOM
-> logic/reflection is implemented with local acceptance passed; release acceptance pending.
+> and deployed SDK. PRES-01/PRES-02 have previous local acceptance; PRES-03
+> exposes the user-selected 49 ordinary Window names with local acceptance passed;
+> release acceptance pending. Backend execution and the 821 global interface
+> entries remain outside that presence batch.
 > The project has also landed steps 1–4 plus the native-BOM-call,
 > window-metadata, nested-metadata, static-visualViewport, navigator-storage
 > manager, navigator-permissions, matchMedia-result, legacy-navigator, and

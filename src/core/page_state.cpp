@@ -36,6 +36,9 @@
 #include "browser/bom/navigator_identity.h"
 #include "browser/window/window_event_target.h"
 #include "browser/window/window_functions.h"
+#include "browser/window/window_presence_functions.h"
+#include "browser/window/window_shell_objects.h"
+#include "browser/window/window_error_support.h"
 #include "browser/window/history.h"
 #include "browser/window/window_event_handlers.h"
 #include "browser/window/window_named_properties.h"
@@ -2652,6 +2655,9 @@ void PageState::install_page(const std::string& base_url,
                                     &atob_callback);
 
             install_browser_compatibility(isolate, context, base_url);
+            if (!install_window_presence_functions(isolate, context) ||
+                !install_window_error_support(isolate, context) ||
+                !install_window_shell_objects(isolate, context, host_objects_)) return;
 
             // M9-1: if DevTools was enabled on a prior generation, give this fresh
             // generation its own Inspector + registered context (the WS URL stays

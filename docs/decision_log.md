@@ -7,6 +7,30 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Complete ordinary Window presence before backend fidelity (`2026-11-15`)
+
+The user requests simple Window API completion and explicitly confirms the 49
+missing ordinary members, excluding 821 missing global interface entries.
+PRES-03 exposes the observed types, native names/arities/function kinds, flags
+and constants, and reserves canonical private interface prototypes for object
+shells. Namespace objects use their reference Object.prototype relationship.
+Reused rAF scheduling, current window.event and bounded reportError delivery
+work; missing subsystems fail explicitly or retain declared profile no-ops.
+This authorizes re-exposing Window.open as a named non-constructable native
+operation with NotSupportedError, superseding the old absence expectation for
+this local candidate. It does not recreate the earlier anonymous/constructable
+callback or implement a browsing context.
+
+All 49 names are added without removing prior names or publishing any of the
+821 excluded interface entries. Local checks pass 526 focused and 28 profile/
+trace guards; full macOS arm64/Python 3.13 is 2491 passed/2 skipped. Old absent
+chrome/trustedTypes/open guards are updated to the newly approved surface; the
+open metadata comparison now passes instead of xfail. Lifecycle tracing uses
+normal capacity, retaining internal installation records and separate bounded-
+buffer tests. Keep release verification pending and shared BIND-01 unchanged.
+Boundary/report/ledger: `docs/presence_03_window.md` /
+`docs/presence_03_report.md` / `docs/presence_03_api_delta.json`.
+
 ### Prioritize BOM objects before further DOM/Web-data work (`2026-11-15`)
 
 The user explicitly selected Window, Location, Navigator and History as the

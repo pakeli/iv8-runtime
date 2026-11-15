@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "browser": "Google Chrome 157.0.8103.51",
+  "captured_at": "2026-11-15T16:35:27.370680+08:00",
+  "probe_sha256": "4721dd4ae5d72d41b7fc1f71c574149d6029665d1a1c8be868333bc2f726deeb",
+  "conditions": {
+    "mode": "headless=new",
+    "platform": "macOS arm64",
+    "fresh_profile": true,
+    "origin": "http://127.0.0.1:51177/window-presence",
+    "network": "loopback fixture only; background networking disabled; non-loopback DNS blocked",
+    "target_invocation": "Only CSS.escape pure string conversion; no system/network backend or Cookie access",
+    "profile_removed_after_capture": true
+  },
+  "cases": [
+    {
+      "id": "case-0",
+      "input_json": "\"0a\"",
+      "output_json": "\"\\\\30 a\""
+    },
+    {
+      "id": "case-1",
+      "input_json": "\"-\"",
+      "output_json": "\"\\\\-\""
+    },
+    {
+      "id": "case-2",
+      "input_json": "\"\\u0000\"",
+      "output_json": "\"\ufffd\""
+    },
+    {
+      "id": "case-3",
+      "input_json": "\"a b\"",
+      "output_json": "\"a\\\\ b\""
+    },
+    {
+      "id": "case-4",
+      "input_json": "\"-1x\"",
+      "output_json": "\"-\\\\31 x\""
+    },
+    {
+      "id": "case-5",
+      "input_json": "\"\u007f\"",
+      "output_json": "\"\\\\7f \""
+    },
+    {
+      "id": "case-6",
+      "input_json": "\"\u00e9\"",
+      "output_json": "\"\u00e9\""
+    },
+    {
+      "id": "case-7",
+      "input_json": "\"\ud83d\ude00\"",
+      "output_json": "\"\ud83d\ude00\""
+    },
+    {
+      "id": "case-8",
+      "input_json": "\"\\ud800\"",
+      "output_json": "\"\\ud800\""
+    }
+  ],
+  "probe_file": "probe.js"
+}

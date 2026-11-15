@@ -157,8 +157,9 @@ def test_element_object_id_tracks_native_backing_not_js_wrapper():
 def test_generation_and_load_lifecycle():
     with iv8.Page() as page:
         _load(page)
-        # Leave capacity for internal installation records as API coverage grows.
-        page.start_access_trace(max_events=64)
+        # Use normal capacity: this checks lifecycle, including installation
+        # records; separate bounded-buffer tests exercise dropped-event behavior.
+        page.start_access_trace()
         page.eval("navigator.userAgent;", name="probe.js")
         first = _events(page, source_kind="eval", member="userAgent")[0]
 
@@ -171,6 +172,7 @@ def test_generation_and_load_lifecycle():
         assert events[0]["object_id"] != events[1]["object_id"]
         assert events[0]["seq"] < events[1]["seq"]
         assert first["generation"] == 2
+        assert page.read_access_trace(clear=False)["dropped_events"] == 0
 
 
 @on_only

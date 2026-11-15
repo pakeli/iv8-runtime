@@ -7,12 +7,13 @@ accepted PRES-01/PRES-02 implementation and its regressions.
 
 ## Current measured baseline
 
-Counts use the fixed Chrome 157 inventory plus the PRES-01/PRES-02 deltas, for
-the local candidate based on source `4ae7250`, not the shared BIND-01 SDK.
+Counts use the fixed Chrome 157 inventory plus the PRES-01/PRES-02/PRES-03
+deltas for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
+evidence and the name/behavior distinction: `docs/presence_03_report.md`.
 
 | Target | Reference names | Present | Missing |
 |---|---:|---:|---:|
-| Window ordinary properties/methods | 128 | 79 | 49 |
+| Window ordinary properties/methods | 128 | 128 | 0 |
 | Window on* handlers | 125 | 125 | 0 |
 | Location | 15 | 15 | 0 |
 | Navigator | 70 | 30 | 40 |
@@ -21,25 +22,21 @@ the local candidate based on source `4ae7250`, not the shared BIND-01 SDK.
 Window's global interface-entry category is separate: 106 present and 821
 missing out of 927. Those entries include DOM, graphics, device and other Web
 interfaces; exposing a constructor on Window does not make that API a BOM
-priority. The 49 ordinary missing names also need dependency classification.
+priority. The user explicitly approved all 49 ordinary missing names in PRES-03;
+their presence is complete, with backend/fidelity limits recorded separately.
 Presence is separate from functioning behavior: Location navigation and History
 traversal currently record offline intents; only the approved same-document
 History state/URL updates execute.
 
 ## Execution order
 
-1. **Window common foundations.** Start with missing operations that can reuse
-   current scheduling, event and error ownership: animation-frame aliases,
-   reportError and legacy captureEvents/releaseEvents, after browser comparison.
-   Review remaining Window flags/metadata against a real browser. Implement a
-   usable bounded contract for each selected member, with native methods on the
-   browser-observed defining owner: retain Window own globals and shared
-   prototypes for the applicable interfaces. reportError needs observable Window
-   error/handler/cancellation behavior; the opt-in async-error diagnostic buffer
-   alone is insufficient. Window close/open and new browsing contexts need
-   their own behavior boundary; do not restore the previously withdrawn open
-   stub just to reduce a name count.
-2. **Navigator and existing BOM subobjects.** Select low-dependency capability
+1. **Window ordinary presence — locally accepted.** PRES-03 adds all 49 names
+   with native/type/prototype foundations. Prefixed frames reuse scheduling;
+   event/reportError have bounded observable delivery; absent backends fail
+   explicitly. The user approves native open presence with unsupported window
+   creation. Additional execution/fidelity follows concrete needs rather than
+   being claimed by the presence count. The 821 interface entries remain excluded.
+2. **Next: Navigator and existing BOM subobjects.** Select low-dependency capability
    inspection first, then connection/orientation/viewport event surfaces and
    configuration-backed metadata. Candidate families include getGamepads and
    scheduling; choose the concrete API set after checking real-browser profile
@@ -69,5 +66,5 @@ Keep coverage-first delivery and native prototype ownership together. Capture
 browser version/conditions, test meaningful read/call/state behavior, protect
 existing History/named/DOM/PRES regressions and run one local full suite per
 development batch. Group release verification and SDK replacement later. This
-queue update changes priorities only; it implements no additional APIs and
-does not change the latest local acceptance or release/deployment status.
+original queue update changed priorities only; the subsequent PRES-03 implements
+ordinary Window presence as recorded above. Release/deployment status is unchanged.

@@ -29,6 +29,8 @@ std::string_view parent_interface(std::string_view name) {
         {"Node", "EventTarget"}, {"CharacterData", "Node"},
         {"Text", "CharacterData"}, {"Comment", "CharacterData"},
         {"DocumentFragment", "Node"}, {"Screen", "EventTarget"},
+        {"CookieStore", "EventTarget"}, {"Navigation", "EventTarget"},
+        {"DocumentPictureInPicture", "EventTarget"}, {"SpeechSynthesis", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
         {"UIEvent", "Event"}, {"CustomEvent", "Event"}, {"MessageEvent", "Event"},
@@ -194,7 +196,8 @@ std::string web_member_interface(const std::string& name,
 }
 
 v8::Local<v8::Object> web_interface_prototype(
-    v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name) {
+    v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
+    bool expose_global) {
     auto slot = registry_key(isolate, "prototype." + name);
     v8::Local<v8::Value> cached;
     if (!context->Global()->GetPrivate(context, slot).ToLocal(&cached)) return {};
@@ -203,14 +206,14 @@ v8::Local<v8::Object> web_interface_prototype(
     if (!context->Global()->SetPrivate(context, slot, prototype).FromMaybe(false)) return {};
     const auto parent = parent_interface(name);
     if (!parent.empty()) {
-        auto parent_prototype = web_interface_prototype(isolate, context, std::string(parent));
+        auto parent_prototype = web_interface_prototype(isolate, context, std::string(parent), expose_global);
         if (parent_prototype.IsEmpty() ||
             !prototype->SetPrototype(context, parent_prototype).FromMaybe(false)) return {};
     }
     if (!prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
             string(isolate, name), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))
             .FromMaybe(false)) return {};
-    if (name == "WindowProperties") return prototype;
+    if (name == "WindowProperties" || name == "StyleMedia") return prototype;
     v8::Local<v8::Function> constructor;
     const int length = name == "Worker" ? 1 : 0;
     if (!v8::Function::New(context, &interface_constructor, string(isolate, name), length)
@@ -221,9 +224,9 @@ v8::Local<v8::Object> web_interface_prototype(
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum | v8::DontDelete))
             .FromMaybe(false) ||
         !prototype->DefineOwnProperty(context, string(isolate, "constructor"), constructor,
-            v8::DontEnum).FromMaybe(false) ||
-        !context->Global()->DefineOwnProperty(context, string(isolate, name), constructor,
             v8::DontEnum).FromMaybe(false)) return {};
+    if (expose_global && !context->Global()->DefineOwnProperty(context, string(isolate, name),
+            constructor, v8::DontEnum).FromMaybe(false)) return {};
     if (name == "Node") {
         static const std::pair<const char*, int> constants[] = {
             {"ELEMENT_NODE", 1}, {"ATTRIBUTE_NODE", 2}, {"TEXT_NODE", 3},

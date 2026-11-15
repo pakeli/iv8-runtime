@@ -5,7 +5,19 @@ coverage and related BOM objects take precedence over further DOM nodes and the
 proposed Web-data batch. This changes no runtime exposure. Counts and selected
 candidate families: `docs/bom_coverage_plan.md`.
 
-**Latest implemented local candidate (`2026-11-15`): PRES-02.** Live native
+**Latest implemented local candidate (`2026-11-15`): PRES-03.** The 49 missing
+ordinary Window names have typed native-function/object/constant/flag exposure,
+private canonical prototype shells, stable generation-owned identities,
+prefixed rAF reuse and bounded window.event/reportError delivery. Backend
+operations explicitly fail synchronously or by rejected Promise. The user
+excludes the 821 missing global interface entries and authorizes native `open`
+presence without window creation. Local checks pass **526 focused tests**, **28
+profile/trace guards**, and full macOS arm64/Python 3.13 **2491 passed, 2 skipped**.
+Ordinary names are **128/128**, handlers **125/125**. **Release acceptance is pending.**
+The shared BIND-01 SDK and release/deployment status are unchanged. Boundary and
+evidence: `docs/presence_03_window.md` / `docs/presence_03_report.md`.
+
+**Previous local acceptance (`2026-11-15`): PRES-02.** Live native
 DOMStringMap/NamedNodeMap/Attr interfaces, namespace-aware creation and attribute
 operations, live namespace tag collections, Node root/normalize/position helpers
 using the existing Node constants, same-context Document import/adopt, and inert text/html DOMParser
@@ -335,6 +347,29 @@ pause evidence (M9-3).
 ## 3. JS-side surface (reachable only through `Page.eval`)
 
 Installed per generation by `install_page`:
+
+- **PRES-03 Window ordinary-member presence (implemented; locally accepted; release acceptance pending)** —
+  the fixed 49-name ordinary inventory is exposed with captured JavaScript types
+  and native function names/arities/source/constructability. GPU usage namespaces,
+  NodeFilter constants, CSS and related BOM object shells use per-generation
+  canonical private prototypes and stable identities; this does not bulk expose
+  the separate 821 missing global interface entries or implement their
+  backends. Namespace methods are typed entry points with explicit unsupported
+  execution where the subsystem is absent.
+  `webkitRequestAnimationFrame` / `webkitCancelAnimationFrame` reuse the existing
+  callback scheduler. `window.event` tracks the current synthetic callback,
+  restores prior state after nested delivery and supports the bounded replaceable
+  property model. `reportError` delivers error/message through the existing
+  synthetic event path; the earlier single-Event/false-cancellation onerror model
+  is retained. Chrome's five-argument legacy semantics remain a profile gap.
+  `open`, `getComputedStyle`, `getSelection`, `find`, `fetchLater`, `when` and
+  legacy filesystem operations throw NotSupportedError. Image/device/font/picker
+  operations return explicitly rejected Promises. `close`, capture/releaseEvents
+  and requestResize are bounded no-ops; deterministic flags/constants report
+  only this offline profile. User-authorized native `open` exposure supersedes
+  the old absence expectation for this candidate only; window creation, layout,
+  networking, device access and persistent storage are not implemented by these
+  names. See `docs/presence_03_window.md` for the exact 49-name boundary.
 
 - **PRES-02 DOM logic/reflection (locally accepted; release acceptance pending)** —
   stable `HTMLElement.dataset` uses DOMStringMap; stable `Element.attributes`
@@ -740,7 +775,9 @@ Execution exclusions include HTTP/WebSocket transport, automatic resource
 loading, executed history traversal/cross-document navigation, JavaScript→Python callbacks, a Python-side
 DOM or event API (`Page.document`), CDATA/doctype nodes, layout and geometry.
 The Web IDL repair provides explicit offline fetch rejection and XHR/Worker
-constructor failure. The follow-up repair keeps Window opening unavailable. Live tag/class collections
+constructor failure. BIND-01's shared release SDK retains the historical withdrawn
+`open` profile. The user-authorized PRES-03 candidate exposes native `open` with
+explicit NotSupportedError; actual Window opening remains unavailable. Live tag/class collections
 and offline navigation intents are available. `iv8` also exports no browser symbol at module level —
 `test/test_scope_exclusions.py` guards this.
 
@@ -782,6 +819,7 @@ clock.
 
 | Milestone | Theme | Authoritative doc |
 |---|---|---|
+| PRES-03 | Typed presence for 49 ordinary Window names, private prototype shells, reused rAF and bounded event/reportError; implemented, local acceptance passed; release acceptance pending; 821 global interfaces excluded | `docs/presence_03_window.md` |
 | PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release acceptance pending | `docs/presence_02_dom.md` / report |
 | PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release acceptance pending | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |

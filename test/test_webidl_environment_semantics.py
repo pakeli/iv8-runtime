@@ -103,8 +103,6 @@ def chrome_probe():
 ])
 def test_chrome_environment_probe(chrome_probe, key):
     expected, actual = chrome_probe
-    if key == "global.open":
-        pytest.xfail("Window opening is unavailable in the offline Page profile")
     assert actual[key] == expected[key]
 
 
@@ -213,7 +211,7 @@ def test_unavailable_execution_is_explicit():
           return [typeof XMLHttpRequest, typeof Worker, typeof fetch, typeof open,
             fetch.name, fetch.length, failures,
             Object.getPrototypeOf(Worker.prototype) === EventTarget.prototype];
-        })()""") == ["function", "function", "function", "undefined", "fetch", 1,
+        })()""") == ["function", "function", "function", "function", "fetch", 1,
             [["NotSupportedError", True], ["NotSupportedError", True]], True]
         page.run_jobs()
         assert evaluate(page, "fetchResults") == ["NotSupportedError", "TypeError"]
@@ -355,8 +353,11 @@ def test_document_node_mutations_reach_existing_observers():
         assert evaluate(page, "rootRecords") == [[True, 1, 0], [True, 0, 1]]
 
 
-def test_unavailable_window_open_is_absent_from_the_profile():
+def test_window_open_is_exposed_with_explicit_unsupported_execution():
     with iv8.Page() as page:
-        assert evaluate(page, "[typeof open, typeof window.open, Object.hasOwn(window, 'open'), 'open' in window]") == ["undefined", "undefined", False, False]
+        assert evaluate(page, "[typeof open, typeof window.open, Object.hasOwn(window, 'open'), 'open' in window]") == ["function", "function", True, True]
+        with pytest.raises(iv8.JSError) as caught:
+            page.eval("window.open('https://offline.test/')")
+        assert caught.value.name == "NotSupportedError"
         page.load("<html><body></body></html>", "https://idl.test/")
-        assert page.eval("typeof open") == "undefined"
+        assert page.eval("typeof open") == "function"

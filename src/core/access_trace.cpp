@@ -252,7 +252,7 @@ const std::vector<std::string>& AccessTrace::supported_object_types() {
         "document_fragment", "dom_parser", "dom_string_list", "dom_string_map", "element", "history", "host_object", "host_probe",
         "location", "media_query_list", "named_node_map", "navigator", "navigator_ua_data", "orientation",
         "performance", "permission_status", "permissions", "screen",
-        "storage", "storage_manager", "text", "user_activation", "visual_viewport", "window",
+        "storage", "storage_manager", "text", "user_activation", "visual_viewport", "window", "window_shell",
     };
     return types;
 }

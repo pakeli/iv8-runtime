@@ -213,9 +213,12 @@ def test_no_second_layer_surface():
         page.load(html="<html><body></body></html>", base_url=BASE)
         # Watch/debugger globals and additional messaging runtimes stay absent.
         for g in ("SharedWorker", "MessageChannel",
-                  "TrustedTypes", "trustedTypes", "chrome", "cdp",
+                  "TrustedTypes", "cdp",
                   "__cdp__", "DevTools", "Profiler"):
             assert page.eval(f"typeof globalThis.{g}") == "undefined"
+        # PRES-03 explicitly approves these ordinary Window namespace entries.
+        assert page.eval("typeof trustedTypes") == "object"
+        assert page.eval("typeof chrome") == "object"
         # no watch/monitoring hooks on the M8 objects or the document
         for expr in ("typeof globalThis.watch_apis",
                      "typeof document.createElement('iframe').contentWindow",

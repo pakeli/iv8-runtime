@@ -121,7 +121,9 @@ Window 三组共 **1180 个浏览器相关名称：195 已暴露、985 缺失**�
 
 ## 7. 建议的覆盖顺序
 
-**最新优先级（2026-11-15）**：用户要求优先 Window、Location、Navigator、History 等 BOM 环境，后续节点操作和 Web 数据对象置后。PRES-01/PRES-02 已完成的本地成果保留；以下表格为此前合批建议，当前执行顺序以 [bom_coverage_plan.md](bom_coverage_plan.md) 为准。Window 普通成员仍缺 49 项，Navigator 缺 40 项；Location/History 在固定参考中的名称已齐，继续保护已有功能。
+**最新优先级（2026-11-15）**：用户要求优先 Window、Location、Navigator、History 等 BOM 环境，后续节点操作和 Web 数据对象置后。PRES-01/PRES-02 已完成的本地成果保留；以下表格为此前合批建议，当前执行顺序以 [bom_coverage_plan.md](bom_coverage_plan.md) 为准。调整优先级时 Window 普通成员缺 49 项，Navigator 缺 40 项；Location/History 在固定参考中的名称已齐，继续保护已有功能。
+
+**后续 PRES-03 已本地验收**：用户确认本轮只补 49 个 Window 普通成员，现已全部暴露，普通成员达到 **128/128**；821 个全局接口入口未纳入。名称存在与后端实现分开记录，详见 [presence_03_report.md](presence_03_report.md) / [presence_03_api_delta.json](presence_03_api_delta.json)。上文主表保留 BIND-01 SDK 基线。
 
 | 批次 | 优先补齐的 API 族 | 基础交付目标 |
 |---|---|---|

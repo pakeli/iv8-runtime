@@ -11,6 +11,7 @@
 #include "event_handlers.h"
 #include "../internal/common.h"
 #include "../internal/event_support.h"
+#include "../window/window_error_support.h"
 #include "../web/event_constructors.h"
 
 namespace iv8::browser {
@@ -354,6 +355,7 @@ private:
                 // preventDefault; restore the outer state afterwards.
                 set_event_in_passive_listener(isolate, context, event,
                                               listener.passive);
+                WindowEventScope current_event(isolate, context, event);
                 v8::TryCatch try_catch(isolate);
                 (void)listener.callback->Call(context, receiver, 1, &event_arg);
                 if (try_catch.HasCaught()) {
@@ -368,6 +370,7 @@ private:
             }
         }
         if (!event_is_immediately_stopped(isolate, context, event)) {
+            WindowEventScope current_event(isolate, context, event);
             invoke_event_handler(isolate, context, event, receiver, phase, type);
         }
     }

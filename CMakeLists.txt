@@ -62,6 +62,9 @@ if(IV8_LINK_V8)
       src/core/browser/window/history.cpp
       src/core/browser/window/history_state.cpp
       src/core/browser/window/window_functions.cpp
+      src/core/browser/window/window_presence_functions.cpp
+      src/core/browser/window/window_shell_objects.cpp
+      src/core/browser/window/window_error_support.cpp
       src/core/browser/window/window_event_handlers.cpp
       src/core/browser/window/post_message.cpp
       src/core/browser/web/blob_file_reader.cpp

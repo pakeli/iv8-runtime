@@ -9,9 +9,11 @@ namespace iv8 {
 
 // The context's private registry owns prototypes, constructors and native
 // function identities. It has no process-wide or cross-isolate handles.
+// expose_global controls initial constructor publication; cached interfaces
+// retain their identity and do not recreate deleted or hidden global entries.
 v8::Local<v8::Object> web_interface_prototype(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
-    const std::string& interface_name);
+    const std::string& interface_name, bool expose_global = true);
 // Register this generation's native WindowProperties resolver. The caller owns
 // its native state and must stop installation if a V8 operation fails.
 bool replace_window_properties_prototype(v8::Isolate* isolate,

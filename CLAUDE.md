@@ -9,7 +9,21 @@ next-Web-data recommendations. Retain shared native prototypes, configuration
 consistency and meaningful local regressions. This priority change alone adds no
 runtime API or release/deployment verification.
 
-**Latest implemented local candidate (`2026-11-15`): PRES-02.** Read
+**Latest implemented local candidate (`2026-11-15`): PRES-03.** Read
+`docs/presence_03_window.md` for the user-approved 49 ordinary Window names.
+The separate 821 missing global interface entries are excluded. Preserve native
+global kinds and metadata, canonical private shell prototypes, generation-owned
+identity, prefixed rAF reuse and the bounded window.event/reportError model.
+Backend operations explicitly throw NotSupportedError or reject a Promise;
+typed presence is not subsystem execution. The user authorizes re-exposing
+native `open` for this candidate while real window creation stays unsupported.
+Keep the old absent-open regression as release history. Local checks pass
+**526 focused tests**, **28 profile/trace guards**, and full macOS arm64/Python
+3.13 **2491 passed, 2 skipped**. Ordinary names are **128/128**, handlers
+**125/125**. **Release acceptance is pending**; shared BIND-01 SDK deployment is
+unchanged. Evidence and limits: `docs/presence_03_report.md`.
+
+**Previous local acceptance (`2026-11-15`): PRES-02.** Read
 `docs/presence_02_dom.md` before extending the DOM logic/reflection batch.
 Native dataset/DOMStringMap, attributes/NamedNodeMap and Attr share live backing
 attribute state. Attr inherits Node; namespace-aware creation/attribute methods,
@@ -320,7 +334,14 @@ Answer roughly as follows:
 - M1 contract still exists and matters for `JSContext`.
 - Real implementation has progressed through M2–M11.
 - Current `HEAD` includes:
-  - PRES-02 as the latest implemented local candidate: native dataset/DOMStringMap,
+  - PRES-03 as the latest implemented local candidate: the user-selected 49
+    ordinary Window names with native function/type exposure, canonical private
+    shell prototypes, reused rAF and bounded event/reportError integration.
+    Backend execution explicitly fails; the 821 global interface entries remain
+    excluded. Native open presence is user-authorized but window creation stays
+    unsupported. Local acceptance has passed; release acceptance is pending; the shared
+    BIND-01 SDK is unchanged;
+  - PRES-02 with previous local acceptance: native dataset/DOMStringMap,
     attributes/NamedNodeMap, Attr → Node inheritance, namespace-aware DOM
     operations, Node root/normalize/position helpers and constants, same-context
     import/adopt with canonical wrapper/listener/view/observer ownership, and
@@ -357,7 +378,7 @@ Answer roughly as follows:
     latest verification `2026-11-03`;
   - latest verified numbered compatibility milestone: M11-52 (Window messaging);
     latest release/deployment verified: BIND-01. Latest implemented local batch:
-    PRES-02, with local acceptance passed; release acceptance pending;
+    PRES-03, with local acceptance passed; release acceptance pending;
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,
