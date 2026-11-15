@@ -29,6 +29,8 @@ jobs:
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -64,6 +66,8 @@ jobs:
         python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: 40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff
       - name: Restore V8 monolith cache (with retries)
         id: v8cache
         uses: ./.github/actions/restore-v8-cache
@@ -88,7 +92,8 @@ jobs:
           whl="$(ls dist/*.whl | head -1)"
           python -m pip install "$whl"
           cd "$RUNNER_TEMP"
-          python -c "import iv8; assert iv8._v8_linked, 'V8 not linked'; print('macos-arm64', iv8._v8_runtime_version)"
+          python -c "import iv8; assert 'site-packages' in iv8.__file__, iv8.__file__; assert iv8._v8_linked, 'V8 not linked'; print('macos-arm64', iv8._v8_runtime_version)"
+          python -m pytest "$GITHUB_WORKSPACE/test/test_history.py" "$GITHUB_WORKSPACE/test/test_epub_named_properties.py" "$GITHUB_WORKSPACE/test/test_epub_binding_metadata.py" "$GITHUB_WORKSPACE/test/test_presence_01_bom_events.py" "$GITHUB_WORKSPACE/test/test_presence_02_dom.py" "$GITHUB_WORKSPACE/test/test_presence_02_attributes.py" "$GITHUB_WORKSPACE/test/test_presence_02_node_lifecycle.py" "$GITHUB_WORKSPACE/test/test_presence_03_window.py" "$GITHUB_WORKSPACE/test/test_presence_03_window_errors.py" "$GITHUB_WORKSPACE/test/test_presence_03_window_shells.py" "$GITHUB_WORKSPACE/test/test_presence_03_window_monitoring.py" "$GITHUB_WORKSPACE/test/test_window_native_data_monitoring.py" -q
           python -m pytest "$GITHUB_WORKSPACE/test"
       - uses: actions/upload-artifact@v4
         with:
