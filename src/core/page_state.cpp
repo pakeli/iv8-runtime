@@ -1307,7 +1307,7 @@ void PageState::install_reflect_get_hook(v8::Isolate* isolate,
     }
     // Carry the ORIGINAL Reflect.get as the wrapper's Data so it can delegate.
     v8::Local<v8::Function> wrapper;
-    if (v8::Function::New(context, &reflect_get_wrapper, get_value)
+    if (make_web_method(isolate, context, "get", 2, &reflect_get_wrapper, get_value)
             .ToLocal(&wrapper)) {
         (void)reflect->Set(context, v8_string(isolate, "get"), wrapper);
         reflect_hook_installed_ = true;
@@ -1366,7 +1366,7 @@ void PageState::install_reflect_has_hook(v8::Isolate* isolate,
         return;
     }
     v8::Local<v8::Function> wrapper;
-    if (v8::Function::New(context, &reflect_has_wrapper, has_value)
+    if (make_web_method(isolate, context, "has", 2, &reflect_has_wrapper, has_value)
             .ToLocal(&wrapper)) {
         (void)reflect->Set(context, v8_string(isolate, "has"), wrapper);
         reflect_has_hook_installed_ = true;
@@ -1420,7 +1420,7 @@ void PageState::install_reflect_ownkeys_hook(v8::Isolate* isolate,
         return;
     }
     v8::Local<v8::Function> wrapper;
-    if (v8::Function::New(context, &reflect_ownkeys_wrapper, ownkeys_value)
+    if (make_web_method(isolate, context, "ownKeys", 1, &reflect_ownkeys_wrapper, ownkeys_value)
             .ToLocal(&wrapper)) {
         (void)reflect->Set(context, v8_string(isolate, "ownKeys"), wrapper);
         reflect_ownkeys_hook_installed_ = true;
@@ -1473,7 +1473,7 @@ void PageState::install_object_keys_hook(v8::Isolate* isolate,
         return;
     }
     v8::Local<v8::Function> wrapper;
-    if (v8::Function::New(context, &object_keys_wrapper, keys_value)
+    if (make_web_method(isolate, context, "keys", 1, &object_keys_wrapper, keys_value)
             .ToLocal(&wrapper)) {
         (void)object_ctor->Set(context, v8_string(isolate, "keys"), wrapper);
         object_keys_hook_installed_ = true;
@@ -1490,7 +1490,7 @@ void PageState::install_access_trace_query_hooks(
         install_reflect_has_hook(isolate, context);
     }
     const auto install_wrapper = [&](v8::Local<v8::Object> holder,
-                                     const char* name,
+                                     const char* name, int length,
                                      v8::FunctionCallback callback) {
         v8::Local<v8::Value> original;
         if (!holder->Get(context, v8_string(isolate, name)).ToLocal(&original) ||
@@ -1498,7 +1498,7 @@ void PageState::install_access_trace_query_hooks(
             return;
         }
         v8::Local<v8::Function> wrapper;
-        if (v8::Function::New(context, callback, original).ToLocal(&wrapper)) {
+        if (make_web_method(isolate, context, name, length, callback, original).ToLocal(&wrapper)) {
             (void)holder->Set(context, v8_string(isolate, name), wrapper);
         }
     };
@@ -1508,14 +1508,14 @@ void PageState::install_access_trace_query_hooks(
             .ToLocal(&object_value) &&
         object_value->IsObject()) {
         v8::Local<v8::Object> object_ctor = object_value.As<v8::Object>();
-        install_wrapper(object_ctor, "getOwnPropertyDescriptor",
+        install_wrapper(object_ctor, "getOwnPropertyDescriptor", 2,
                         &object_get_own_property_descriptor_wrapper);
-        install_wrapper(object_ctor, "hasOwn", &object_has_own_wrapper);
+        install_wrapper(object_ctor, "hasOwn", 2, &object_has_own_wrapper);
         v8::Local<v8::Value> prototype_value;
         if (object_ctor->Get(context, v8_string(isolate, "prototype"))
                 .ToLocal(&prototype_value) &&
             prototype_value->IsObject()) {
-            install_wrapper(prototype_value.As<v8::Object>(), "hasOwnProperty",
+            install_wrapper(prototype_value.As<v8::Object>(), "hasOwnProperty", 1,
                             &has_own_property_wrapper);
         }
     }
@@ -1525,7 +1525,7 @@ void PageState::install_access_trace_query_hooks(
             .ToLocal(&reflect_value) &&
         reflect_value->IsObject()) {
         install_wrapper(reflect_value.As<v8::Object>(),
-                        "getOwnPropertyDescriptor",
+                        "getOwnPropertyDescriptor", 2,
                         &reflect_get_own_property_descriptor_wrapper);
     }
     access_trace_query_hooks_installed_ = true;
@@ -2011,19 +2011,16 @@ void PageState::install_page(const std::string& base_url,
                 v8::Local<v8::Object> performance = v8::Object::New(isolate);
                 const auto define_performance_readonly =
                     [&](const char* name, v8::Local<v8::Value> value) {
-                        (void)performance->DefineOwnProperty(
-                            context,
-                            v8::String::NewFromUtf8(isolate, name)
-                                .ToLocalChecked(),
-                            value,
+                        v8::Local<v8::String> property;
+                        if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&property)) return false;
+                        return performance->DefineOwnProperty(
+                            context, property, value,
                             static_cast<v8::PropertyAttribute>(
-                                v8::ReadOnly | v8::DontDelete));
+                                v8::ReadOnly | v8::DontDelete)).FromMaybe(false);
                     };
-                v8::Local<v8::Function> now_fn =
-                    v8::FunctionTemplate::New(isolate, &performance_now_callback)
-                        ->GetFunction(context)
-                        .ToLocalChecked();
-                define_performance_readonly("now", now_fn);
+                v8::Local<v8::Function> now_fn;
+                if (!make_web_method(isolate, context, "now", 0, &performance_now_callback)
+                         .ToLocal(&now_fn) || !define_performance_readonly("now", now_fn)) return;
                 (void)performance->SetNativeDataProperty(
                     context,
                     v8::String::NewFromUtf8Literal(isolate, "timeOrigin"),
@@ -2036,27 +2033,19 @@ void PageState::install_page(const std::string& base_url,
                                       kPerformanceTag);
                 const auto add_performance_method =
                     [&](const char* name, v8::FunctionCallback callback) {
-                        v8::Local<v8::Function> fn =
-                            v8::FunctionTemplate::New(isolate, callback,
-                                                      performance_data)
-                                ->GetFunction(context)
-                                .ToLocalChecked();
-                        define_performance_readonly(name, fn);
+                        v8::Local<v8::Function> function;
+                        if (!make_web_method(isolate, context, name,
+                                web_method_length("performance", name), callback,
+                                performance_data).ToLocal(&function)) return false;
+                        return define_performance_readonly(name, function);
                     };
-                add_performance_method("mark", &performance_mark_callback);
-                add_performance_method("measure", &performance_measure_callback);
-                add_performance_method("getEntries",
-                                       &performance_get_entries_callback);
-                add_performance_method(
-                    "getEntriesByName",
-                    &performance_get_entries_by_name_callback);
-                add_performance_method(
-                    "getEntriesByType",
-                    &performance_get_entries_by_type_callback);
-                add_performance_method("clearMarks",
-                                       &performance_clear_marks_callback);
-                add_performance_method("clearMeasures",
-                                       &performance_clear_measures_callback);
+                if (!add_performance_method("mark", &performance_mark_callback) ||
+                    !add_performance_method("measure", &performance_measure_callback) ||
+                    !add_performance_method("getEntries", &performance_get_entries_callback) ||
+                    !add_performance_method("getEntriesByName", &performance_get_entries_by_name_callback) ||
+                    !add_performance_method("getEntriesByType", &performance_get_entries_by_type_callback) ||
+                    !add_performance_method("clearMarks", &performance_clear_marks_callback) ||
+                    !add_performance_method("clearMeasures", &performance_clear_measures_callback)) return;
                 (void)global->DefineOwnProperty(
                     context, v8::String::NewFromUtf8Literal(isolate, "performance"),
                     performance,
@@ -2069,20 +2058,18 @@ void PageState::install_page(const std::string& base_url,
                 v8::Local<v8::Object> crypto = v8::Object::New(isolate);
                 const auto add_crypto_method = [&](const char* name,
                                                    v8::FunctionCallback callback) {
-                    v8::Local<v8::Function> fn =
-                        v8::FunctionTemplate::New(isolate, callback)
-                            ->GetFunction(context)
-                            .ToLocalChecked();
-                    (void)crypto->DefineOwnProperty(
-                        context,
-                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
-                        fn,
+                    v8::Local<v8::Function> function;
+                    v8::Local<v8::String> property;
+                    if (!make_web_method(isolate, context, name,
+                            web_method_length("crypto", name), callback).ToLocal(&function) ||
+                        !v8::String::NewFromUtf8(isolate, name).ToLocal(&property)) return false;
+                    return crypto->DefineOwnProperty(
+                        context, property, function,
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                           v8::DontDelete));
+                                                           v8::DontDelete)).FromMaybe(false);
                 };
-                add_crypto_method("getRandomValues",
-                                  &crypto_get_random_values_callback);
-                add_crypto_method("randomUUID", &crypto_random_uuid_callback);
+                if (!add_crypto_method("getRandomValues", &crypto_get_random_values_callback) ||
+                    !add_crypto_method("randomUUID", &crypto_random_uuid_callback)) return;
                 (void)global->DefineOwnProperty(
                     context, v8::String::NewFromUtf8Literal(isolate, "crypto"),
                     crypto,
@@ -2332,7 +2319,7 @@ void PageState::install_page(const std::string& base_url,
             // expose addEventListener/removeEventListener/dispatchEvent via their
             // host-object methods; this is the event value they dispatch.
             v8::Local<v8::FunctionTemplate> event_template =
-                v8::FunctionTemplate::New(isolate, &event_constructor);
+                v8::FunctionTemplate::New(isolate, &event_constructor, {}, {}, 1);
             // SetClassName requires a Local<String> (v8_string yields
             // Local<Value>), so build the name string directly.
             event_template->SetClassName(
@@ -2344,7 +2331,7 @@ void PageState::install_page(const std::string& base_url,
             auto make_event_subclass = [&](const char* name,
                                            v8::FunctionCallback callback) {
                 v8::Local<v8::FunctionTemplate> tpl =
-                    v8::FunctionTemplate::New(isolate, callback);
+                    v8::FunctionTemplate::New(isolate, callback, {}, {}, 1);
                 tpl->SetClassName(
                     v8::String::NewFromUtf8(isolate, name).ToLocalChecked());
                 tpl->Inherit(event_template);

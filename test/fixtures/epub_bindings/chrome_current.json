@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "browser": "Google Chrome 157.0.8103.51",
+  "capture": {
+    "captured_at": "2026-11-15T12:04:04.305623+08:00",
+    "operating_system": "Darwin",
+    "architecture": "arm64",
+    "mode": "headless=new",
+    "origin": "HTTP loopback 127.0.0.1 with an ephemeral port",
+    "profile": "fresh temporary profile under ignored repository data; no user profile",
+    "secure_context": true,
+    "probe_sha256": "f9e6899025adbd17e1476fc88f0c1061b120cc17b5ecb78ddeef71b4b4642ac5",
+    "target_invocation": "No target called; Reflect.construct(String, [], fn) tests newTarget only",
+    "network_conditions": "Loopback HTML only; background networking disabled and non-loopback DNS blocked"
+  },
+  "functions": {
+    "performance.now": {
+      "name": "now",
+      "length": 0,
+      "source": "function now() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "performance.mark": {
+      "name": "mark",
+      "length": 1,
+      "source": "function mark() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "performance.measure": {
+      "name": "measure",
+      "length": 1,
+      "source": "function measure() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "performance.getEntries": {
+      "name": "getEntries",
+      "length": 0,
+      "source": "function getEntries() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "performance.getEntriesByName": {
+      "name": "getEntriesByName",
+      "length": 1,
+      "source": "function getEntriesByName() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "performance.getEntriesByType": {
+      "name": "getEntriesByType",
+      "length": 1,
+      "source": "function getEntriesByType() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "performance.clearMarks": {
+      "name": "clearMarks",
+      "length": 0,
+      "source": "function clearMarks() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "performance.clearMeasures": {
+      "name": "clearMeasures",
+      "length": 0,
+      "source": "function clearMeasures() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "crypto.getRandomValues": {
+      "name": "getRandomValues",
+      "length": 1,
+      "source": "function getRandomValues() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "crypto.randomUUID": {
+      "name": "randomUUID",
+      "length": 0,
+      "source": "function randomUUID() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Object.getOwnPropertyDescriptor": {
+      "name": "getOwnPropertyDescriptor",
+      "length": 2,
+      "source": "function getOwnPropertyDescriptor() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Object.hasOwn": {
+      "name": "hasOwn",
+      "length": 2,
+      "source": "function hasOwn() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Object.prototype.hasOwnProperty": {
+      "name": "hasOwnProperty",
+      "length": 1,
+      "source": "function hasOwnProperty() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Object.keys": {
+      "name": "keys",
+      "length": 1,
+      "source": "function keys() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Reflect.get": {
+      "name": "get",
+      "length": 2,
+      "source": "function get() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Reflect.has": {
+      "name": "has",
+      "length": 2,
+      "source": "function has() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Reflect.ownKeys": {
+      "name": "ownKeys",
+      "length": 1,
+      "source": "function ownKeys() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Reflect.getOwnPropertyDescriptor": {
+      "name": "getOwnPropertyDescriptor",
+      "length": 2,
+      "source": "function getOwnPropertyDescriptor() { [native code] }",
+      "prototype": false,
+      "constructable": false
+    },
+    "Event": {
+      "name": "Event",
+      "length": 1,
+      "source": "function Event() { [native code] }",
+      "prototype": true,
+      "constructable": true
+    },
+    "CustomEvent": {
+      "name": "CustomEvent",
+      "length": 1,
+      "source": "function CustomEvent() { [native code] }",
+      "prototype": true,
+      "constructable": true
+    },
+    "MouseEvent": {
+      "name": "MouseEvent",
+      "length": 1,
+      "source": "function MouseEvent() { [native code] }",
+      "prototype": true,
+      "constructable": true
+    },
+    "KeyboardEvent": {
+      "name": "KeyboardEvent",
+      "length": 1,
+      "source": "function KeyboardEvent() { [native code] }",
+      "prototype": true,
+      "constructable": true
+    },
+    "FocusEvent": {
+      "name": "FocusEvent",
+      "length": 1,
+      "source": "function FocusEvent() { [native code] }",
+      "prototype": true,
+      "constructable": true
+    },
+    "MessageEvent": {
+      "name": "MessageEvent",
+      "length": 1,
+      "source": "function MessageEvent() { [native code] }",
+      "prototype": true,
+      "constructable": true
+    }
+  }
+}

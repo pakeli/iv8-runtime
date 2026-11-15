@@ -7,6 +7,18 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Complete candidate metadata and verify shared deployment (`2026-11-15`)
+
+The user authorized the remaining candidate binding audit/port, preserving the
+combined History/named gates, followed by a backed-up shared SDK update and
+offline EPUB acceptance. Confirm each remaining path with immutable old and
+fresh browser metadata; reuse the native method factory and retain Event
+constructors. Do not turn metadata parity into a claim of receiver/coercion or
+full browser equivalence. Existing delegate limitations remain explicit gaps.
+Verify 12 release lanes before installing and record actual old/new native,
+wheel/package metadata and rollback identity. Boundary and receipts:
+`docs/native_binding_restore.md` / `docs/native_binding_restore_report.md`.
+
 ### Restore named access before further runtime work (`2026-11-15`)
 
 The user prioritized porting the existing Epub Window/form named-access patch
