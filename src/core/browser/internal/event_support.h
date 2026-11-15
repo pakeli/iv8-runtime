@@ -46,5 +46,30 @@ extern void prevent_default_callback(const v8::FunctionCallbackInfo<v8::Value>& 
 
 extern bool event_default_prevented(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> event);
 
+// New Event/UIEvent state is kept in V8 private slots, owned by the generation.
+// Existing public own fields remain on the historical dispatch path.
+bool initialize_event_state(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                            v8::Local<v8::Object> event, bool composed);
+bool initialize_ui_event_state(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                               v8::Local<v8::Object> event,
+                               v8::Local<v8::Value> view, double detail);
+bool set_ui_event_which(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                        v8::Local<v8::Object> event, double which);
+bool begin_event_dispatch(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                          v8::Local<v8::Object> event,
+                          const std::vector<v8::Local<v8::Value>>& path);
+void end_event_dispatch(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                        v8::Local<v8::Object> event);
+
+void event_extra_getter(const v8::FunctionCallbackInfo<v8::Value>& info);
+void event_extra_setter(const v8::FunctionCallbackInfo<v8::Value>& info);
+void event_init_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
+void event_composed_path_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
+void ui_event_extra_getter(const v8::FunctionCallbackInfo<v8::Value>& info);
+void ui_event_init_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
+bool define_event_trusted_accessor(v8::Isolate* isolate,
+                                   v8::Local<v8::Context> context,
+                                   v8::Local<v8::Object> event);
+
 }  // namespace browser
 }  // namespace iv8

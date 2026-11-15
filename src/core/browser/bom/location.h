@@ -17,6 +17,7 @@
 #include "iv8/browser_compatibility.h"
 #include "iv8/dom_url.h"
 #include "iv8/url_parser.h"
+#include "navigator_identity.h"
 
 namespace iv8 {
 
@@ -37,8 +38,10 @@ public:
 
     std::vector<std::string> property_names() const override {
         return {"href",     "origin",   "protocol", "host",
-                "hostname", "port", "pathname", "search",   "hash"};
+                "hostname", "port", "pathname", "search", "hash", "ancestorOrigins"};
     }
+
+    void release_v8_handles() noexcept override { ancestor_origins_object_.Reset(); }
 
     std::vector<std::string> method_names() const override { return {"toString", "assign", "replace", "reload"}; }
 
@@ -65,8 +68,14 @@ public:
         page_->record_navigation(isolate, "assign", resolved.href);
     }
 
-    v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+    v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
                                       const std::string& name) override {
+        if (name == "ancestorOrigins") {
+            if (ancestor_origins_object_.IsEmpty()) {
+                ancestor_origins_object_.Reset(isolate, make_host_object(isolate, context, &ancestor_origins_));
+            }
+            return ancestor_origins_object_.Get(isolate);
+        }
         if (name == "port") return v8_string(isolate, resolve_dom_url(parts_.href, "").port);
         const std::string* value = component(name);
         if (value != nullptr) {
@@ -116,6 +125,8 @@ private:
 
     UrlParts parts_;
     PageState* page_;
+    DOMStringListHost ancestor_origins_;
+    v8::Global<v8::Object> ancestor_origins_object_;
 };
 
 }  // namespace browser

@@ -60,9 +60,11 @@ def test_js_document_surface_not_exceeded():
         # M4-A-2 added document.createElement; these remain out of scope.)
         # (document.forms/images/links/anchors/embeds/applets arrived in
         # M4-B-7..12, getElementsByClassName in M4-B-13 — see their test files.)
-        for member in ("createElementNS", "write", "onreadystatechange",
+        for member in ("write",
                        "plugins", "all"):
             assert page.eval(f"typeof document.{member}") == "undefined"
+        # PRES-01 provides a real Document.prototype handler attribute.
+        assert page.eval("document.onreadystatechange") is None
         for member in ("createTextNode", "createComment",
                        "createDocumentFragment"):
             assert page.eval(f"typeof document.{member}") == "function"
@@ -80,7 +82,7 @@ def test_js_element_surface_not_exceeded():
         # (M4-A-4 added element.removeAttribute; M11-12 adds hasAttributes /
         # getAttributeNames. The rest stay out of scope here.)
         el = "document.getElementById('d')"
-        for member in ("attributes", "dataset", "src", "type",
+        for member in ("src", "type",
                        "async", "defer"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
         assert page.eval(f"Object.prototype.toString.call({el}.style)") == "[object CSSStyleDeclaration]"

@@ -7,6 +7,136 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Submit and verify the combined V8-linked build (`2026-11-15`)
+
+The user requests code submission and a V8 build after WIN-MON-01. Push the
+combined PRES-01/PRES-02/PRES-03/monitoring stack through PR #31 and verify all
+three platform release matrices. Source `40d1c1f` extends the release-focused
+gate to 257 tests without changing the pinned engine/build scripts. All 12
+Python 3.11–3.14 lanes pass: Linux/macOS 2547 passed/2 skipped, Windows 2545
+passed/4 skipped, each after 257 focused passes. Reuse matching V8 15.0.245.19
+caches and rebuild the extension/wheels; do not describe cache restoration as a
+new engine compilation. macOS uses a temporary source-pinned helper, restored
+by SHA guard after all five actual checkouts are verified. Existing branch
+protection is unchanged. Shared SDK installation and version-tag publication
+are outside this request. Source/run/artifact records:
+`docs/bom_release_report.md`.
+
+### Close monitoring gaps before extending the BOM surface (`2026-11-15`)
+
+After a read-only audit demonstrated partial monitoring of PRES-03, the user
+explicitly requests closing those gaps first. WIN-MON-01 observes all 49 mapped
+global reads and currently supported writes, all 22 callable global entries in
+both watch and structured channels, and scoped native shell methods/accessors.
+Use pinned-V8 native data properties to retain data descriptors and exact stored
+function values instead of JS wrappers/Proxy or changed function kinds. Property
+and call completion summaries preserve values, coercions and original errors.
+Keep watch_apis call-only and distinguish returned Promises from settlement.
+Record native-entry limits rather than claiming arbitrary JS object interception.
+
+The 14 pinned-V8 data-semantics checks, 56 new actual-log tests, 550 focused
+checks and full local macOS arm64/Python 3.13 suite pass (2547 passed/2 skipped).
+All 127 current native shell methods emit watch hits and completed call events in
+a bounded sweep. API membership is unchanged from PRES-03. Release verification
+stays pending; the shared BIND-01 SDK remains unchanged. Boundary/report/ledger:
+`docs/window_monitoring.md` / `docs/window_monitoring_report.md` /
+`docs/window_monitoring_coverage.json`.
+
+### Complete ordinary Window presence before backend fidelity (`2026-11-15`)
+
+The user requests simple Window API completion and explicitly confirms the 49
+missing ordinary members, excluding 821 missing global interface entries.
+PRES-03 exposes the observed types, native names/arities/function kinds, flags
+and constants, and reserves canonical private interface prototypes for object
+shells. Namespace objects use their reference Object.prototype relationship.
+Reused rAF scheduling, current window.event and bounded reportError delivery
+work; missing subsystems fail explicitly or retain declared profile no-ops.
+This authorizes re-exposing Window.open as a named non-constructable native
+operation with NotSupportedError, superseding the old absence expectation for
+this local candidate. It does not recreate the earlier anonymous/constructable
+callback or implement a browsing context.
+
+All 49 names are added without removing prior names or publishing any of the
+821 excluded interface entries. Local checks pass 526 focused and 28 profile/
+trace guards; full macOS arm64/Python 3.13 is 2491 passed/2 skipped. Old absent
+chrome/trustedTypes/open guards are updated to the newly approved surface; the
+open metadata comparison now passes instead of xfail. Lifecycle tracing uses
+normal capacity, retaining internal installation records and separate bounded-
+buffer tests. Keep release verification pending and shared BIND-01 unchanged.
+Boundary/report/ledger: `docs/presence_03_window.md` /
+`docs/presence_03_report.md` / `docs/presence_03_api_delta.json`.
+
+### Prioritize BOM objects before further DOM/Web-data work (`2026-11-15`)
+
+The user explicitly selected Window, Location, Navigator and History as the
+priority and deferred further node operations. This supersedes the post-PRES-02
+recommendation to start the Web-data batch. Preserve completed DOM work, but
+select subsequent batches from missing ordinary Window APIs, low-dependency
+Navigator capabilities and related BOM objects. Location/History names are
+already complete in the fixed inventory; keep their existing state/URL behavior
+and named-access regressions protected. Window-global constructor exposure is
+not itself a BOM classification. Retain browser-derived native prototypes,
+configuration consistency, bounded behavior and the lean local-acceptance cadence.
+This is a queue change, not approval for arbitrary networking/device/real
+navigation subsystems. Current counts and execution order:
+`docs/bom_coverage_plan.md`.
+
+### Build live DOM reflection on shared state and document ownership (`2026-11-15`)
+
+The user approved the DOM logic/reflection batch after PRES-01. PRES-02 keeps
+existing null-namespace id/class/raw attribute storage canonical, with live
+DOMStringMap/NamedNodeMap/Attr views and separate canonical records for namespaced
+attributes. Native defining prototypes remain shared; Attr inherits Node without
+being miscast as the native NodeHost storage type. Namespace metadata participates
+in cloning, equality, attribute observation and serialization.
+
+Within one context, adoption transfers native node ownership and existing JS
+wrappers, handlers/listeners and cached live views to the receiving Document.
+Owner forwarding and borrowed observer registrations preserve pending-record
+identity and observations across repeated moves. Imports create independent
+clones without copied listeners. The existing bounded HTML parser supplies inert
+DOMParser text/html documents; XML MIME types explicitly fail as unsupported and
+XMLSerializer remains later work. These additions do not add networking, script
+execution during parsing or a new context/engine.
+
+Local acceptance passes 489 focused/1 xfailed and full 2454 passed/2 skipped/
+1 xfailed on macOS arm64/Python 3.13. Keep release verification pending and the
+shared BIND-01 SDK unchanged. Boundary/report: `docs/presence_02_dom.md` /
+`docs/presence_02_report.md`. Next coverage candidates are offline Web data objects.
+
+### Fill the first BOM/event batch with shared prototypes (`2026-11-15`)
+
+The user approved filling the measured API gaps while reserving the prototype
+chain implementation. PRES-01 uses the existing per-context interface registry,
+native shared prototype members and per-generation HostObject ownership for
+NavigatorUAData, UserActivation and DOMStringList. Bind the actual Event/UIEvent
+constructors into that same registry and establish Event → UIEvent →
+Mouse/Keyboard/Focus inheritance now. Reference handler names use shared stores
+and their defining interface prototypes. Avoid per-instance placeholder methods
+that would require rebuilding the object model later. UserActivation stays
+inactive without trusted input; ancestorOrigins is empty in the current
+top-level model. UI/profiler Console operations have no backend and remain
+explicit no-ops.
+
+Use focused tests plus one full local real-V8 suite for a development batch.
+Keep PRES-01 locally accepted/release-pending separate from the latest verified
+BIND-01 release; do not automatically run all release lanes or replace the
+shared SDK. Boundary/report: `docs/presence_01_bom_events.md` /
+`docs/presence_01_report.md`. Next coverage batch is DOM logic/reflection.
+
+### Prioritize API coverage before detailed browser likeness (`2026-11-15`)
+
+The user requested a measured missing-API inventory for Window, Location,
+Document, Navigator and related objects, and set presence/coverage ahead of
+further likeness work. Inventory existing exposure against a versioned real
+browser; distinguish missing names, exposed unsupported/no-op paths and bounded
+working implementations. Choose functional API-family batches before spending
+another slice on name/length/prototype polishing. Preserve established working
+capabilities and record fidelity gaps for a later pass. Measurements and proposed
+batches are in `docs/dom_bom_gaps.md` / `docs/browser_api_inventory.json`.
+This is an inventory/direction change, not authorization to create arbitrary
+success stubs or expand network/rendering/device execution contracts.
+
 ### Complete candidate metadata and verify shared deployment (`2026-11-15`)
 
 The user authorized the remaining candidate binding audit/port, preserving the

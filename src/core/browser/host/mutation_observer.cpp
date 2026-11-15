@@ -52,10 +52,10 @@ void DocumentHost::queue_child_list(
     const std::vector<DomNode*>& added, const std::vector<DomNode*>& removed,
     DomNode* previous_sibling, DomNode* next_sibling) {
     prune_past_named_controls();
-    if (observers_.empty()) {
+    if (!has_mutation_observers()) {
         return;
     }
-    for (const std::unique_ptr<MutationObserverState>& observer : observers_) {
+    for (MutationObserverState* observer : mutation_observer_states()) {
         if (!observer->alive) {
             continue;
         }
@@ -67,8 +67,9 @@ void DocumentHost::queue_child_list(
             }
             bool target_matches = false;
             if (registration.target_is_document) {
-                target_matches = parent == &document_node_ ||
-                    (registration.subtree && is_in_tree(parent));
+                target_matches = observer->owner == this &&
+                    (parent == &document_node_ ||
+                     (registration.subtree && is_in_tree(parent)));
             } else {
                 target_matches =
                     registration.target == parent ||
@@ -85,12 +86,13 @@ void DocumentHost::queue_child_list(
             record.removed = removed;
             record.previous_sibling = previous_sibling;
             record.next_sibling = next_sibling;
+            remember_record_owners(observer, record);
             observer->pending.push_back(std::move(record));
             matched = true;
             break;
         }
         if (matched) {
-            schedule_mutation_delivery(isolate, context, observer.get());
+            schedule_mutation_delivery(isolate, context, observer);
         }
     }
 }
@@ -99,11 +101,13 @@ void DocumentHost::queue_attribute(v8::Isolate* isolate,
                                    v8::Local<v8::Context> context,
                                    DomNode* target, const std::string& name,
                                    bool has_old_value,
-                                   const std::string& old_value) {
-    if (observers_.empty()) {
+                                   const std::string& old_value,
+                                   const std::string& namespace_uri) {
+    if (namespace_uri.empty()) notify_attribute_mutation(target, name, has_old_value, old_value);
+    if (!has_mutation_observers()) {
         return;
     }
-    for (const std::unique_ptr<MutationObserverState>& observer : observers_) {
+    for (MutationObserverState* observer : mutation_observer_states()) {
         if (!observer->alive) {
             continue;
         }
@@ -115,7 +119,7 @@ void DocumentHost::queue_attribute(v8::Isolate* isolate,
             }
             bool target_matches = false;
             if (registration.target_is_document) {
-                target_matches = registration.subtree && is_in_tree(target);
+                target_matches = observer->owner == this && registration.subtree && is_in_tree(target);
             } else {
                 target_matches =
                     registration.target == target ||
@@ -125,27 +129,29 @@ void DocumentHost::queue_attribute(v8::Isolate* isolate,
             if (!target_matches) {
                 continue;
             }
-            if (registration.has_attribute_filter &&
+            if (registration.has_attribute_filter && (!namespace_uri.empty() ||
                 std::find(registration.attribute_filter.begin(),
                           registration.attribute_filter.end(),
-                          name) == registration.attribute_filter.end()) {
+                          name) == registration.attribute_filter.end())) {
                 continue;
             }
             MutationRecordData record;
             record.type = MutationRecordData::Type::Attributes;
             record.target = target;
             record.attribute_name = name;
+            record.attribute_namespace = namespace_uri;
             record.has_old_value =
                 registration.attribute_old_value && has_old_value;
             if (record.has_old_value) {
                 record.old_value = old_value;
             }
+            remember_record_owners(observer, record);
             observer->pending.push_back(std::move(record));
             matched = true;
             break;
         }
         if (matched) {
-            schedule_mutation_delivery(isolate, context, observer.get());
+            schedule_mutation_delivery(isolate, context, observer);
         }
     }
 }
@@ -154,10 +160,10 @@ void DocumentHost::queue_character_data(v8::Isolate* isolate,
                                         v8::Local<v8::Context> context,
                                         DomNode* target,
                                         const std::string& old_value) {
-    if (observers_.empty()) {
+    if (!has_mutation_observers()) {
         return;
     }
-    for (const std::unique_ptr<MutationObserverState>& observer : observers_) {
+    for (MutationObserverState* observer : mutation_observer_states()) {
         if (!observer->alive) {
             continue;
         }
@@ -169,7 +175,7 @@ void DocumentHost::queue_character_data(v8::Isolate* isolate,
             }
             bool target_matches = false;
             if (registration.target_is_document) {
-                target_matches = registration.subtree && is_in_tree(target);
+                target_matches = observer->owner == this && registration.subtree && is_in_tree(target);
             } else {
                 target_matches =
                     registration.target == target ||
@@ -186,12 +192,13 @@ void DocumentHost::queue_character_data(v8::Isolate* isolate,
             if (record.has_old_value) {
                 record.old_value = old_value;
             }
+            remember_record_owners(observer, record);
             observer->pending.push_back(std::move(record));
             matched = true;
             break;
         }
         if (matched) {
-            schedule_mutation_delivery(isolate, context, observer.get());
+            schedule_mutation_delivery(isolate, context, observer);
         }
     }
 }
@@ -233,7 +240,8 @@ v8::Local<v8::Array> DocumentHost::build_records_array(
                               v8::Null(isolate));
         }
         (void)object->Set(context, v8_string(isolate, "attributeNamespace"),
-                          v8::Null(isolate));
+                          attributes && !record.attribute_namespace.empty()
+                              ? v8_string(isolate, record.attribute_namespace) : v8::Local<v8::Value>(v8::Null(isolate)));
         if (record.has_old_value) {
             (void)object->Set(context, v8_string(isolate, "oldValue"),
                               v8_string(isolate, record.old_value));
@@ -364,7 +372,8 @@ void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
         target_is_document = true;
     } else if (host->is_node()) {
         NodeHost* node_host = static_cast<NodeHost*>(host);
-        if (node_host->document() != state->owner) {
+        if (state->owner == nullptr ||
+            node_host->document()->page_state() != state->owner->page_state()) {
             throw_mo_type_error(isolate, "observe: target is from another document");
             return;
         }
@@ -481,6 +490,11 @@ void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     if (!replaced) {
         state->registrations.push_back(std::move(registration));
+    }
+    if (host->is_node()) {
+        auto* target_document = static_cast<NodeHost*>(host)->document();
+        target_document->borrow_mutation_observer(state);
+        state->owner->remember_node_owner(static_cast<NodeHost*>(host)->node(), target_document);
     }
     info.GetReturnValue().SetUndefined();
 }

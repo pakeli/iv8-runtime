@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "iv8/web_method.h"
+#include "browser/host/event_handler_names.h"
 
 namespace iv8 {
 namespace {
@@ -22,14 +23,18 @@ std::string_view parent_interface(std::string_view name) {
     static const std::unordered_map<std::string_view, std::string_view> parents = {
         {"Window", "WindowProperties"}, {"WindowProperties", "EventTarget"},
         {"HTMLDocument", "Document"}, {"XMLDocument", "Document"},
-        {"Document", "Node"}, {"Element", "Node"}, {"HTMLElement", "Element"},
+        {"Document", "Node"}, {"Attr", "Node"}, {"Element", "Node"}, {"HTMLElement", "Element"},
         {"HTMLAudioElement", "HTMLMediaElement"}, {"HTMLVideoElement", "HTMLMediaElement"},
         {"HTMLMediaElement", "HTMLElement"},
         {"Node", "EventTarget"}, {"CharacterData", "Node"},
         {"Text", "CharacterData"}, {"Comment", "CharacterData"},
         {"DocumentFragment", "Node"}, {"Screen", "EventTarget"},
+        {"CookieStore", "EventTarget"}, {"Navigation", "EventTarget"},
+        {"DocumentPictureInPicture", "EventTarget"}, {"SpeechSynthesis", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
+        {"UIEvent", "Event"}, {"CustomEvent", "Event"}, {"MessageEvent", "Event"},
+        {"MouseEvent", "UIEvent"}, {"KeyboardEvent", "UIEvent"}, {"FocusEvent", "UIEvent"},
     };
     const auto found = parents.find(name);
     if (found != parents.end()) return found->second;
@@ -49,7 +54,7 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     const std::string name(*text != nullptr ? *text : "");
     const bool constructible = name == "Document" || name == "EventTarget" ||
         name == "Text" || name == "Comment" || name == "DocumentFragment" ||
-        name == "XMLHttpRequest" || name == "Worker";
+        name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser";
     if (!info.IsConstructCall()) {
         const auto message = constructible
             ? "Failed to construct '" + name + "': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
@@ -158,7 +163,8 @@ std::string web_member_interface(const std::string& name,
         return "EventTarget";
     if (web_interface_inherits(name, "Node")) {
         if ((method && member_in(member, {"appendChild", "removeChild", "insertBefore",
-                "replaceChild", "cloneNode", "isEqualNode", "isSameNode", "contains", "hasChildNodes"})) ||
+                "replaceChild", "cloneNode", "isEqualNode", "isSameNode", "contains", "hasChildNodes",
+                "getRootNode", "normalize", "compareDocumentPosition"})) ||
             (!method && member_in(member, {"nodeName", "nodeType", "nodeValue", "textContent",
                 "parentNode", "parentElement", "childNodes", "ownerDocument", "isConnected",
                 "firstChild", "lastChild", "previousSibling", "nextSibling", "baseURI"})))
@@ -167,21 +173,31 @@ std::string web_member_interface(const std::string& name,
     if (web_interface_inherits(name, "Document")) return "Document";
     if (web_interface_inherits(name, "CharacterData")) return "CharacterData";
     if (web_interface_inherits(name, "Element")) {
+        if (!method && web_interface_inherits(name, "HTMLElement")) {
+            const auto owner = browser::event_handler_interface(
+                browser::EventHandlerTarget::kHTMLElement, std::string(member));
+            if (owner[0] != '\0') return owner;
+        }
         if ((method && member_in(member, {"getAttribute", "hasAttribute", "setAttribute",
                 "removeAttribute", "toggleAttribute", "hasAttributes", "getAttributeNames", "getElementsByTagName", "getElementsByClassName",
                 "querySelector", "querySelectorAll", "matches", "closest", "remove", "append",
                 "prepend", "replaceChildren", "before", "after", "replaceWith", "insertAdjacentElement",
-                "insertAdjacentHTML", "insertAdjacentText"})) ||
+                "insertAdjacentHTML", "insertAdjacentText", "getElementsByTagNameNS",
+                "getAttributeNS", "hasAttributeNS", "setAttributeNS", "removeAttributeNS",
+                "getAttributeNode", "getAttributeNodeNS", "setAttributeNode", "setAttributeNodeNS",
+                "removeAttributeNode"})) ||
             (!method && member_in(member, {"id", "className", "tagName", "innerHTML", "outerHTML",
                 "children", "previousElementSibling", "nextElementSibling", "firstElementChild",
-                "lastElementChild", "childElementCount", "classList"}))) return "Element";
-        if (!method && member_in(member, {"innerText", "style"})) return "HTMLElement";
+                "lastElementChild", "childElementCount", "classList", "attributes",
+                "namespaceURI", "localName", "prefix"}))) return "Element";
+        if (!method && member_in(member, {"innerText", "style", "dataset"})) return "HTMLElement";
     }
     return name;
 }
 
 v8::Local<v8::Object> web_interface_prototype(
-    v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name) {
+    v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
+    bool expose_global) {
     auto slot = registry_key(isolate, "prototype." + name);
     v8::Local<v8::Value> cached;
     if (!context->Global()->GetPrivate(context, slot).ToLocal(&cached)) return {};
@@ -190,14 +206,14 @@ v8::Local<v8::Object> web_interface_prototype(
     if (!context->Global()->SetPrivate(context, slot, prototype).FromMaybe(false)) return {};
     const auto parent = parent_interface(name);
     if (!parent.empty()) {
-        auto parent_prototype = web_interface_prototype(isolate, context, std::string(parent));
+        auto parent_prototype = web_interface_prototype(isolate, context, std::string(parent), expose_global);
         if (parent_prototype.IsEmpty() ||
             !prototype->SetPrototype(context, parent_prototype).FromMaybe(false)) return {};
     }
     if (!prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
             string(isolate, name), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))
             .FromMaybe(false)) return {};
-    if (name == "WindowProperties") return prototype;
+    if (name == "WindowProperties" || name == "StyleMedia") return prototype;
     v8::Local<v8::Function> constructor;
     const int length = name == "Worker" ? 1 : 0;
     if (!v8::Function::New(context, &interface_constructor, string(isolate, name), length)
@@ -208,9 +224,9 @@ v8::Local<v8::Object> web_interface_prototype(
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum | v8::DontDelete))
             .FromMaybe(false) ||
         !prototype->DefineOwnProperty(context, string(isolate, "constructor"), constructor,
-            v8::DontEnum).FromMaybe(false) ||
-        !context->Global()->DefineOwnProperty(context, string(isolate, name), constructor,
             v8::DontEnum).FromMaybe(false)) return {};
+    if (expose_global && !context->Global()->DefineOwnProperty(context, string(isolate, name),
+            constructor, v8::DontEnum).FromMaybe(false)) return {};
     if (name == "Node") {
         static const std::pair<const char*, int> constants[] = {
             {"ELEMENT_NODE", 1}, {"ATTRIBUTE_NODE", 2}, {"TEXT_NODE", 3},
@@ -258,6 +274,16 @@ bool replace_window_properties_prototype(v8::Isolate* isolate,
         context->Global()->SetPrivate(context, registry_slot, prototype).FromMaybe(false);
 }
 
+bool register_existing_web_interface(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const std::string& name,
+    v8::Local<v8::Function> constructor, v8::Local<v8::Object> prototype) {
+    if (constructor.IsEmpty() || prototype.IsEmpty()) return false;
+    return prototype->SetPrivate(context, registry_key(isolate, "constructor"), constructor)
+               .FromMaybe(false) &&
+        context->Global()->SetPrivate(context, registry_key(isolate, "prototype." + name), prototype)
+               .FromMaybe(false);
+}
+
 void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context,
                              v8::FunctionCallback factory, v8::Local<v8::Value> data) {
     v8::Local<v8::Function> function;
@@ -268,7 +294,8 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "Navigator", "Screen", "Location", "EventTarget", "Node", "Element",
             "HTMLElement", "HTMLDivElement", "HTMLFormElement", "HTMLScriptElement",
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
-            "XMLHttpRequest", "Worker"}) {
+            "XMLHttpRequest", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
+            "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }
     for (const auto& [tag, name] : html_interfaces()) {

@@ -1,0 +1,103 @@
+{
+  "browser": "Google Chrome 157.0.8103.51",
+  "conditions": {
+    "origin": {
+      "scheme": "http",
+      "hostname": "127.0.0.1",
+      "path": "/window-error-reference"
+    },
+    "profile": "fresh temporary headless; removed after capture",
+    "network": "loopback only; background disabled and non-loopback DNS blocked",
+    "os": "macOS arm64"
+  },
+  "probe_sha256": "9bbd8b5db21ff019bd85f9ce89fc41cc57e35f2e31ffdf691efd791d58175ac2",
+  "result": {
+    "initial": {
+      "type": "undefined",
+      "descriptor": {
+        "get": "get event",
+        "set": "set event",
+        "data": false,
+        "configurable": true,
+        "enumerable": true
+      }
+    },
+    "stages": [
+      {
+        "stage": "outer",
+        "isOuter": false
+      },
+      {
+        "stage": "assigned-inside",
+        "value": "assigned-inside"
+      },
+      {
+        "stage": "inner",
+        "isInner": false,
+        "value": "string"
+      },
+      {
+        "stage": "after-inner",
+        "value": "assigned-inside",
+        "isOuter": false
+      }
+    ],
+    "assigned": {
+      "value": 42,
+      "descriptor": {
+        "data": true,
+        "configurable": true,
+        "enumerable": true
+      }
+    },
+    "after": {
+      "value": "assigned-inside",
+      "descriptor": {
+        "data": true,
+        "configurable": true,
+        "enumerable": true
+      }
+    },
+    "scoped": [
+      {
+        "stage": "outer",
+        "current": true
+      },
+      {
+        "stage": "inner",
+        "current": true
+      },
+      {
+        "stage": "restored-outer",
+        "current": true
+      }
+    ],
+    "scopedAfter": "undefined",
+    "invalidReceiver": "TypeError",
+    "report": {
+      "isEvent": true,
+      "type": "error",
+      "message": "Uncaught Error: synthetic-report",
+      "errorIdentity": true,
+      "bubbles": false,
+      "cancelable": true,
+      "composed": false,
+      "current": true
+    },
+    "onerror": {
+      "count": 5,
+      "message": "Uncaught Error: synthetic-report",
+      "errorIdentity": true,
+      "current": true
+    },
+    "reportReturn": "undefined",
+    "reportAfter": {
+      "type": "undefined"
+    },
+    "missingArgument": "TypeError"
+  },
+  "schema_version": 1,
+  "probe_file": "probe.js",
+  "source_capture_sha256": "a618cd7ac058b27a712ee87cf36c15ddc897d139b257baaf070b4a6f7d628cad",
+  "normalization": "Only the ephemeral loopback port is omitted; measured results are unchanged."
+}

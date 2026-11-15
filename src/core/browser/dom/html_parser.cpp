@@ -1,5 +1,6 @@
 #include "html_parser.h"
 
+#include <algorithm>
 #include <cctype>
 #include <utility>
 #include "iv8/html_entities.h"
@@ -75,6 +76,15 @@ void parse_attributes(const std::string& attrs, DomNode& node) {
         // M11-49: decode character references in attribute values (raw name
         // syntax is unchanged).
         value = decode_html_entities(value);
+        const auto attribute = std::find_if(node.attribute_nodes.begin(), node.attribute_nodes.end(),
+            [&name](const auto& item) { return item->namespace_uri.empty() && item->qualified_name == name; });
+        if (attribute == node.attribute_nodes.end()) {
+            auto metadata = std::make_shared<DomAttribute>();
+            metadata->qualified_name = name;
+            metadata->local_name = name;
+            metadata->owner_element = &node;
+            node.attribute_nodes.push_back(std::move(metadata));
+        }
         if (name == "id") {
             node.id = value;
             node.has_id = true;
@@ -271,6 +281,7 @@ void parse_html(const std::string& html,
 
         auto node = std::make_unique<DomNode>();
         node->tag = tag;
+        node->local_name = tag;
         parse_attributes(body, *node);
         // M5-3 / M5-6: seed <input>/<button>.value once from the parsed `value`
         // attribute (absent -> ""). Thereafter the runtime .value slot is decoupled

@@ -1,0 +1,292 @@
+{
+  "date": "2026-11-15",
+  "status": "implemented_local_acceptance_passed_release_pending",
+  "baseline_source": "abe1bacd1ca42ea697cfa2ad209dcbdffeb36c2d",
+  "native_sha256": "fe7f2476263e88951b09b5e498ca19ce43538341251943bcb748ecb1a97e225d",
+  "probe_sha256": "e25097de56865629168f2d48fc55fb48f881f62f540198ab7ad1bd83fdba3060",
+  "counting": "Same Chrome157 reference names; inherited DOM paths overlap; presence is distinct from full implementation. Before is PRES-01 local candidate; shared SDK remains BIND-01.",
+  "objects": {
+    "window": {
+      "before_exposed": 306,
+      "after_exposed": 310,
+      "before_missing": 874,
+      "after_missing": 870,
+      "newly_exposed": [
+        "Attr",
+        "DOMParser",
+        "DOMStringMap",
+        "NamedNodeMap"
+      ],
+      "removed": []
+    },
+    "location": {
+      "before_exposed": 15,
+      "after_exposed": 15,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "document": {
+      "before_exposed": 203,
+      "after_exposed": 212,
+      "before_missing": 98,
+      "after_missing": 89,
+      "newly_exposed": [
+        "adoptNode",
+        "compareDocumentPosition",
+        "createAttribute",
+        "createAttributeNS",
+        "createElementNS",
+        "getElementsByTagNameNS",
+        "getRootNode",
+        "importNode",
+        "normalize"
+      ],
+      "removed": []
+    },
+    "navigator": {
+      "before_exposed": 30,
+      "after_exposed": 30,
+      "before_missing": 40,
+      "after_missing": 40,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "screen": {
+      "before_exposed": 14,
+      "after_exposed": 14,
+      "before_missing": 1,
+      "after_missing": 1,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "history": {
+      "before_exposed": 8,
+      "after_exposed": 8,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "performance": {
+      "before_exposed": 9,
+      "after_exposed": 9,
+      "before_missing": 13,
+      "after_missing": 13,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "crypto": {
+      "before_exposed": 2,
+      "after_exposed": 2,
+      "before_missing": 1,
+      "after_missing": 1,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "console": {
+      "before_exposed": 22,
+      "after_exposed": 22,
+      "before_missing": 3,
+      "after_missing": 3,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "localStorage": {
+      "before_exposed": 6,
+      "after_exposed": 6,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "sessionStorage": {
+      "before_exposed": 6,
+      "after_exposed": 6,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "visualViewport": {
+      "before_exposed": 12,
+      "after_exposed": 12,
+      "before_missing": 2,
+      "after_missing": 2,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "screen.orientation": {
+      "before_exposed": 2,
+      "after_exposed": 2,
+      "before_missing": 7,
+      "after_missing": 7,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "navigator.connection": {
+      "before_exposed": 4,
+      "after_exposed": 4,
+      "before_missing": 5,
+      "after_missing": 5,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "navigator.permissions": {
+      "before_exposed": 1,
+      "after_exposed": 1,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "navigator.storage": {
+      "before_exposed": 3,
+      "after_exposed": 3,
+      "before_missing": 1,
+      "after_missing": 1,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "scheduler": {
+      "before_exposed": 1,
+      "after_exposed": 1,
+      "before_missing": 1,
+      "after_missing": 1,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "element": {
+      "before_exposed": 191,
+      "after_exposed": 209,
+      "before_missing": 178,
+      "after_missing": 160,
+      "newly_exposed": [
+        "attributes",
+        "compareDocumentPosition",
+        "dataset",
+        "getAttributeNS",
+        "getAttributeNode",
+        "getAttributeNodeNS",
+        "getElementsByTagNameNS",
+        "getRootNode",
+        "hasAttributeNS",
+        "localName",
+        "namespaceURI",
+        "normalize",
+        "prefix",
+        "removeAttributeNS",
+        "removeAttributeNode",
+        "setAttributeNS",
+        "setAttributeNode",
+        "setAttributeNodeNS"
+      ],
+      "removed": []
+    },
+    "form": {
+      "before_exposed": 203,
+      "after_exposed": 221,
+      "before_missing": 183,
+      "after_missing": 165,
+      "newly_exposed": [
+        "attributes",
+        "compareDocumentPosition",
+        "dataset",
+        "getAttributeNS",
+        "getAttributeNode",
+        "getAttributeNodeNS",
+        "getElementsByTagNameNS",
+        "getRootNode",
+        "hasAttributeNS",
+        "localName",
+        "namespaceURI",
+        "normalize",
+        "prefix",
+        "removeAttributeNS",
+        "removeAttributeNode",
+        "setAttributeNS",
+        "setAttributeNode",
+        "setAttributeNodeNS"
+      ],
+      "removed": []
+    },
+    "input": {
+      "before_exposed": 208,
+      "after_exposed": 226,
+      "before_missing": 220,
+      "after_missing": 202,
+      "newly_exposed": [
+        "attributes",
+        "compareDocumentPosition",
+        "dataset",
+        "getAttributeNS",
+        "getAttributeNode",
+        "getAttributeNodeNS",
+        "getElementsByTagNameNS",
+        "getRootNode",
+        "hasAttributeNS",
+        "localName",
+        "namespaceURI",
+        "normalize",
+        "prefix",
+        "removeAttributeNS",
+        "removeAttributeNode",
+        "setAttributeNS",
+        "setAttributeNode",
+        "setAttributeNodeNS"
+      ],
+      "removed": []
+    },
+    "canvas": {
+      "before_exposed": 194,
+      "after_exposed": 212,
+      "before_missing": 190,
+      "after_missing": 172,
+      "newly_exposed": [
+        "attributes",
+        "compareDocumentPosition",
+        "dataset",
+        "getAttributeNS",
+        "getAttributeNode",
+        "getAttributeNodeNS",
+        "getElementsByTagNameNS",
+        "getRootNode",
+        "hasAttributeNS",
+        "localName",
+        "namespaceURI",
+        "normalize",
+        "prefix",
+        "removeAttributeNS",
+        "removeAttributeNode",
+        "setAttributeNS",
+        "setAttributeNode",
+        "setAttributeNodeNS"
+      ],
+      "removed": []
+    },
+    "event": {
+      "before_exposed": 22,
+      "after_exposed": 22,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    }
+  },
+  "local_validation": {
+    "platform": "macOS arm64",
+    "python": "3.13",
+    "focused": {
+      "passed": 489,
+      "xfailed": 1
+    },
+    "full": {
+      "passed": 2454,
+      "skipped": 2,
+      "xfailed": 1
+    },
+    "release_matrix": "not_run",
+    "shared_sdk": "unchanged_BIND-01"
+  }
+}

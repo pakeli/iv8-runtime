@@ -25,7 +25,9 @@ namespace iv8::browser {
 void ElementHost::fire_invalid_event(v8::Isolate* isolate,
                                      v8::Local<v8::Context> context,
                                      v8::Local<v8::Object> receiver) {
-    v8::Local<v8::Object> event = v8::Object::New(isolate);
+    v8::Local<v8::Object> event;
+    if (!create_runtime_event(isolate, context, "invalid", false, true).ToLocal(&event)) return;
+    if (!begin_event_dispatch(isolate, context, event, {receiver})) return;
     (void)event->Set(context, v8_string(isolate, "type"),
                      v8_string(isolate, "invalid"));
     (void)event->Set(context, v8_string(isolate, "bubbles"),
@@ -81,6 +83,8 @@ v8::Local<v8::Value> ElementHost::call_method(
     // M9-2: record the "<tag>.<method>" call before dispatch (covers event methods
     // handled just below too, e.g. "script.getAttribute").
     watch_record(isolate, node_->tag, name);
+    v8::Local<v8::Value> attribute_result;
+    if (handle_element_attribute_method(isolate, context, document_, node_, name, args, attribute_result)) return attribute_result;
     // M3-3: addEventListener / removeEventListener / dispatchEvent first.
     v8::Local<v8::Value> event_result;
     if (handle_event_method(isolate, context, name, args, event_result)) {
@@ -94,6 +98,10 @@ v8::Local<v8::Value> ElementHost::call_method(
         return node_result;
     }
     // M11-49: variadic tree methods and Element.insertAdjacent*.
+    v8::Local<v8::Value> namespace_result;
+    if (document_->call_namespace_method(isolate, context, node_, name, args, namespace_result)) {
+        return namespace_result;
+    }
     if (name == "append" || name == "prepend" || name == "replaceChildren" ||
         name == "before" || name == "after" || name == "replaceWith") {
         return document_->call_mutation_method(isolate, context, node_, name,

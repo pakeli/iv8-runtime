@@ -206,9 +206,8 @@ def test_no_attribute_surface_leak_in_page_eval():
     html = "<html><body><div id='d' data-x='v'></div></body></html>"
     with iv8.Page() as page:
         page.load(html=html, base_url=BASE)
-        # No attributes collection / dataset / attribute reflection was added.
-        # M4-A-4 added removeAttribute; M11-10 added toggleAttribute.
+        # PRES-02 adds live attribute/dataset views to the existing setters.
         el = "document.getElementById('d')"
-        assert page.eval(f"typeof {el}.attributes") == "undefined"
-        assert page.eval(f"typeof {el}.dataset") == "undefined"
+        assert page.eval(f"Object.prototype.toString.call({el}.attributes)") == "[object NamedNodeMap]"
+        assert page.eval(f"{el}.dataset.x") == "v"
         assert page.eval(f"typeof {el}.toggleAttribute") == "function"

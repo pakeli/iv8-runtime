@@ -62,16 +62,26 @@ if(IV8_LINK_V8)
       src/core/browser/window/history.cpp
       src/core/browser/window/history_state.cpp
       src/core/browser/window/window_functions.cpp
+      src/core/browser/window/window_presence_functions.cpp
+      src/core/browser/window/window_trace_support.cpp
+      src/core/browser/window/window_shell_objects.cpp
+      src/core/browser/window/window_error_support.cpp
       src/core/browser/window/window_event_handlers.cpp
       src/core/browser/window/post_message.cpp
       src/core/browser/web/blob_file_reader.cpp
       src/core/browser/window/window_metadata.cpp
       src/core/browser/window/window_named_properties.cpp
       src/core/browser/host/document_host.cpp
+      src/core/browser/host/document_parsing.cpp
+      src/core/browser/host/document_namespaces.cpp
+      src/core/browser/host/node_operations.cpp
+      src/core/browser/host/attribute_hosts.cpp
       src/core/browser/host/document_tree_mutation.cpp
       src/core/browser/host/element_properties.cpp
       src/core/browser/host/element_methods.cpp
       src/core/browser/host/named_properties.cpp
+      src/core/browser/host/event_handler_names.cpp
+      src/core/browser/host/event_handlers.cpp
       src/core/browser/host/character_data_host.cpp
       src/core/browser/host/document_fragment_host.cpp
       src/core/browser/host/live_collection.cpp
@@ -86,9 +96,11 @@ if(IV8_LINK_V8)
       src/core/browser/dom/form_controls.cpp
       src/core/browser/bom/web_storage.cpp
       src/core/browser/bom/navigator_parts.cpp
+      src/core/browser/bom/navigator_identity.cpp
       src/core/browser/bom/media_query.cpp
       src/core/browser/web/performance.cpp
       src/core/browser/web/structured_clone.cpp
+      src/core/browser/web/dom_parser.cpp
       src/core/browser/web/capabilities.cpp
       src/core/browser/web/event_constructors.cpp
       src/core/browser/web/url.cpp

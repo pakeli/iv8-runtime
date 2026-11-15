@@ -85,4 +85,24 @@ private:
     AccessCompletion completion_;
 };
 
+// Web IDL accessors created as native Functions use FunctionCallbackInfo while
+// still reporting get/set values rather than a method-call return summary.
+class AccessFunctionPropertyCompletion {
+public:
+    AccessFunctionPropertyCompletion(v8::Isolate* isolate, std::uint64_t seq,
+        const v8::FunctionCallbackInfo<v8::Value>& info, AccessOperation operation);
+    ~AccessFunctionPropertyCompletion() noexcept;
+
+    AccessFunctionPropertyCompletion(const AccessFunctionPropertyCompletion&) = delete;
+    AccessFunctionPropertyCompletion& operator=(const AccessFunctionPropertyCompletion&) = delete;
+
+private:
+    v8::Isolate* isolate_;
+    std::uint64_t seq_;
+    const v8::FunctionCallbackInfo<v8::Value>* info_;
+    AccessOperation operation_;
+    std::optional<v8::TryCatch> try_catch_;
+    AccessCompletion completion_;
+};
+
 }  // namespace iv8

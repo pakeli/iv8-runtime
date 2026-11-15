@@ -16,6 +16,7 @@ struct LiveCollectionBinding {
     DomNode* root;
     std::string kind;
     std::string query;
+    std::string namespace_uri;
 };
 
 }  // namespace iv8::browser

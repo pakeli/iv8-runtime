@@ -6,14 +6,18 @@ original eleven keys map onto navigator.userAgent / platform / language / webdri
 screen.width / height / availWidth / availHeight, and window.devicePixelRatio /
 innerWidth / innerHeight. M11-24..M11-27 add navigator metadata/identity fields,
 screen color/pixel depth, and outer window geometry. M11-35 adds navigator
-touch/PDF/DNT/connection metadata and screen avail offsets (36 flat keys total).
+touch/PDF/DNT/connection metadata and screen avail offsets. PRESENCE-01 adds
+appVersion/deviceMemory/userAgentData (39 flat keys total).
 
 Every value is a fixed constant (never OS/display/locale-derived), the whole surface
 is read-only from JS, values stay identical across repeated `load()` generations, and
 validation is strict and happens in the Python facade before any page exists — so a
 bad environment never leaves a partially-installed page. M11-1 adds no network,
-animation-frame, UA-CH, or canvas/webgl surface.
+animation-frame or canvas/webgl surface. The UA-CH additions are configured
+metadata; no device information is collected.
 """
+
+from copy import deepcopy
 
 import pytest
 
@@ -27,6 +31,9 @@ BASE = "https://environment.test/"
 # The full key set Page(environment=...) accepts, with each key's required type.
 EXPECTED_KEYS = {
     "userAgent": str,
+    "appVersion": str,
+    "deviceMemory": float,
+    "userAgentData": dict,
     "platform": str,
     "language": str,
     "webdriver": bool,
@@ -68,6 +75,13 @@ EXPECTED_KEYS = {
 # so an unconfigured page is behaviourally unchanged by M11-1.
 EXPECTED_DEFAULTS = {
     "userAgent": "Mozilla/5.0 (compatible; iv8)",
+    "appVersion": "5.0 (compatible; iv8)",
+    "deviceMemory": 8.0,
+    "userAgentData": {
+        "brands": [], "mobile": False, "platform": "", "architecture": "",
+        "bitness": "", "model": "", "platformVersion": "", "uaFullVersion": "",
+        "fullVersionList": [], "wow64": False,
+    },
     "platform": "iv8",
     "language": "en-US",
     "webdriver": False,
@@ -108,6 +122,9 @@ EXPECTED_DEFAULTS = {
 # The JS expression that reads each environment key, for value round-tripping.
 JS_READER = {
     "userAgent": "navigator.userAgent",
+    "appVersion": "navigator.appVersion",
+    "deviceMemory": "navigator.deviceMemory",
+    "userAgentData": "navigator.userAgentData",
     "platform": "navigator.platform",
     "language": "navigator.language",
     "webdriver": "navigator.webdriver",
@@ -147,6 +164,14 @@ JS_READER = {
 
 
 def _read_env(page, key):
+    if key == "userAgentData":
+        page.eval("""globalThis.__iv8_environment_result = undefined;
+            navigator.userAgentData.getHighEntropyValues([
+                'architecture', 'bitness', 'model', 'platformVersion',
+                'uaFullVersion', 'fullVersionList', 'wow64'
+            ]).then(value => { globalThis.__iv8_environment_result = value; });""")
+        page.run_jobs()
+        return page.eval("__iv8_environment_result", to_py=True)
     # to_py=True is needed for the languages array; scalars are unchanged.
     return page.eval(JS_READER[key], to_py=True)
 
@@ -154,6 +179,15 @@ def _read_env(page, key):
 # always visible as a failure.
 OVERRIDE = {
     "userAgent": "Mozilla/5.0 (X11; Linux x86_64) custom/1.0",
+    "appVersion": "configured-app-version",
+    "deviceMemory": 4.0,
+    "userAgentData": {
+        "brands": [{"brand": "ConfiguredBrowser", "version": "3"}],
+        "mobile": True, "platform": "Linux", "architecture": "x86", "bitness": "64",
+        "model": "configured-model", "platformVersion": "1.2.3", "uaFullVersion": "3.4.5.6",
+        "fullVersionList": [{"brand": "ConfiguredBrowser", "version": "3.4.5.6"}],
+        "wow64": True,
+    },
     "platform": "Linux x86_64",
     "language": "zh-CN",
     "webdriver": True,
@@ -234,6 +268,9 @@ def test_default_environment_returns_a_fresh_copy():
     first["userAgent"] = "mutated"
     first["screenWidth"] = -1
     first["languages"].append("mutated")
+    first["userAgentData"]["platform"] = "mutated"
+    first["userAgentData"]["brands"].append({"brand": "mutated", "version": "0"})
+    first["userAgentData"]["fullVersionList"].append({"brand": "mutated", "version": "0.0"})
     del first["language"]
     # A later call is unaffected by mutating an earlier result.
     assert iv8.Page.get_default_environment() == EXPECTED_DEFAULTS
@@ -291,9 +328,15 @@ def test_full_override_visible_in_js():
 @on_only
 @pytest.mark.parametrize("key", sorted(EXPECTED_KEYS))
 def test_single_key_override_leaves_the_rest_at_default(key):
+    expected_environment = deepcopy(EXPECTED_DEFAULTS)
+    expected_environment[key] = deepcopy(OVERRIDE[key])
+    if key == "userAgent":
+        expected_environment["appVersion"] = "5.0 (X11; Linux x86_64) custom/1.0"
+        expected_environment["userAgentData"]["platform"] = "Linux"
+    elif key == "platform":
+        expected_environment["userAgentData"]["platform"] = "Linux"
     with iv8.Page(environment={key: OVERRIDE[key]}) as page:
-        for other, default in EXPECTED_DEFAULTS.items():
-            expected = OVERRIDE[key] if other == key else default
+        for other, expected in expected_environment.items():
             assert _read_env(page, other) == expected, other
 
 
@@ -332,13 +375,16 @@ def test_avail_dimensions_are_independent_of_screen_dimensions():
 
 @on_only
 def test_environment_mapping_is_copied_not_aliased():
-    env = dict(OVERRIDE)
+    env = deepcopy(OVERRIDE)
     with iv8.Page(environment=env) as page:
         env["userAgent"] = "mutated-after-construction"
         env["screenWidth"] = -1
+        env["userAgentData"]["brands"][0]["brand"] = "mutated-after-construction"
+        env["userAgentData"]["fullVersionList"][0]["version"] = "mutated-after-construction"
         # The page keeps the values it was constructed with.
         assert page.eval("navigator.userAgent") == OVERRIDE["userAgent"]
         assert page.eval("screen.width") == OVERRIDE["screenWidth"]
+        assert _read_env(page, "userAgentData") == OVERRIDE["userAgentData"]
 
 
 @on_only
@@ -361,6 +407,10 @@ def test_environment_surface_is_read_only():
         assert page.eval("navigator.userAgent = 'x'; navigator.userAgent") \
             == OVERRIDE["userAgent"]
         assert page.eval("navigator.webdriver = false; navigator.webdriver") is True
+        assert page.eval("navigator.appVersion = 'x'; navigator.appVersion") == OVERRIDE["appVersion"]
+        assert page.eval("navigator.deviceMemory = 1; navigator.deviceMemory") == OVERRIDE["deviceMemory"]
+        page.eval("navigator.userAgentData = {}; navigator.userAgentData.brands = [];")
+        assert _read_env(page, "userAgentData") == OVERRIDE["userAgentData"]
         assert page.eval("screen.width = 1; screen.width") \
             == OVERRIDE["screenWidth"]
         assert page.eval("screen.availHeight = 1; screen.availHeight") \
@@ -447,7 +497,7 @@ def test_non_mapping_environment_raises_type_error():
 
 
 def test_unknown_key_raises_type_error():
-    for bad_key in ("userAgentData", "colorDepth", "pixelDepth", "", "useragent",
+    for bad_key in ("userAgentDataExtra", "colorDepth", "pixelDepth", "", "useragent",
                     "UserAgent"):
         with pytest.raises(TypeError, match="unknown environment key"):
             iv8.Page(environment={bad_key: 1})
@@ -458,7 +508,7 @@ def test_unknown_key_rejected_even_beside_valid_keys():
         iv8.Page(environment={"userAgent": "ok", "colorDepth": 24})
 
 
-@pytest.mark.parametrize("key", ["userAgent", "platform", "language",
+@pytest.mark.parametrize("key", ["userAgent", "appVersion", "platform", "language",
                                  "appName", "appCodeName", "product", "vendor",
                                  "vendorSub", "productSub", "doNotTrack",
                                  "connectionEffectiveType"])
@@ -515,7 +565,7 @@ def test_languages_override_applied():
         assert page.eval("navigator.languages.join(',')") == "ja-JP"
 
 
-@pytest.mark.parametrize("key", ["devicePixelRatio", "connectionDownlink"])
+@pytest.mark.parametrize("key", ["devicePixelRatio", "connectionDownlink", "deviceMemory"])
 def test_float_keys_reject_non_numbers(key):
     for bad in ("2.0", None, [], {}, True, False):
         with pytest.raises(TypeError, match="must be a real number"):

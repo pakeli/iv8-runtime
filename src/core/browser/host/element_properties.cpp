@@ -35,6 +35,16 @@ std::string reflected_element_attribute(const DomNode* node, const std::string& 
 v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
                                                v8::Local<v8::Context> context,
                                                const std::string& name) {
+    if (is_html_element() && is_event_handler_name(EventHandlerTarget::kHTMLElement, name)) {
+        return get_event_handler(isolate, name);
+    }
+    if (name == "attributes" || name == "dataset")
+        return element_attributes(isolate, context, document_, node_, name == "dataset");
+    if (name == "namespaceURI" || name == "prefix") {
+        const auto& value = name == "prefix" ? node_->prefix : node_->namespace_uri;
+        return value.empty() ? v8::Local<v8::Value>(v8::Null(isolate)) : v8::Local<v8::Value>(v8_string(isolate, value));
+    }
+    if (name == "localName") return v8_string(isolate, node_->local_name.empty() ? node_->tag : node_->local_name);
     if (name == "baseURI") return document_->get_property(isolate, context, "baseURI");
     if (node_->tag == "canvas" && (name == "width" || name == "height")) {
         const auto found = node_->attributes.find(name);
@@ -83,7 +93,9 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
     }
 
     if (name == "tagName" || name == "nodeName") {
-        return v8_string(isolate, html_document_ ? ascii_upper(node_->tag) : node_->tag);
+        const auto local = node_->local_name.empty() ? node_->tag : node_->local_name;
+        const auto qualified = node_->prefix.empty() ? local : node_->prefix + ":" + local;
+        return v8_string(isolate, document_->is_html_document() && is_html_element() ? ascii_upper(qualified) : qualified);
     }
     if (name == "nodeType") {
         return v8::Integer::New(isolate, 1);  // ELEMENT_NODE
@@ -442,6 +454,10 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
 
 void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
                                const std::string& name, v8::Local<v8::Value> value) {
+    if (is_html_element() && is_event_handler_name(EventHandlerTarget::kHTMLElement, name)) {
+        set_event_handler(isolate, name, value);
+        return;
+    }
     if (name == "nodeValue") return;
     // M11-16: select.selectedIndex = i — single-select model; -1 clears all,
     // out-of-range values are ignored.

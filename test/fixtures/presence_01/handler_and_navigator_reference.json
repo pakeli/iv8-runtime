@@ -1,0 +1,215 @@
+{
+  "browser": "Google Chrome 157.0.8103.51",
+  "captured_at": "2026-11-15T13:38:28.909407+08:00",
+  "probe_sha256": "acba9c5850e23d1650825836329c352595f6036336d4764009531f0fbc806834",
+  "served_requests": [
+    "/handler-reference",
+    "/favicon.ico"
+  ],
+  "conditions": "Fresh isolated headless Chrome; loopback HTTP only, no business requests; synthetic dispatch only",
+  "result": {
+    "handlers": {
+      "window": {
+        "initialNull": true,
+        "assignedIdentity": true,
+        "dispatched": false,
+        "canceled": true,
+        "clearedByNumber": true,
+        "clearedByObject": false,
+        "descriptorDepth": 0,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "get": {
+            "name": "get onclick",
+            "length": 0,
+            "source": "function get onclick() { [native code] }"
+          },
+          "set": {
+            "name": "set onclick",
+            "length": 1,
+            "source": "function set onclick() { [native code] }"
+          }
+        }
+      },
+      "document": {
+        "initialNull": true,
+        "assignedIdentity": true,
+        "dispatched": false,
+        "canceled": true,
+        "clearedByNumber": true,
+        "clearedByObject": false,
+        "descriptorDepth": 2,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "get": {
+            "name": "get onclick",
+            "length": 0,
+            "source": "function get onclick() { [native code] }"
+          },
+          "set": {
+            "name": "set onclick",
+            "length": 1,
+            "source": "function set onclick() { [native code] }"
+          }
+        }
+      },
+      "element": {
+        "initialNull": true,
+        "assignedIdentity": true,
+        "dispatched": false,
+        "canceled": true,
+        "clearedByNumber": true,
+        "clearedByObject": false,
+        "descriptorDepth": 2,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "get": {
+            "name": "get onclick",
+            "length": 0,
+            "source": "function get onclick() { [native code] }"
+          },
+          "set": {
+            "name": "set onclick",
+            "length": 1,
+            "source": "function set onclick() { [native code] }"
+          }
+        }
+      }
+    },
+    "navigator": {
+      "brandsIdentity": false,
+      "brandsFrozen": true,
+      "brandElementsFrozen": [
+        false,
+        false,
+        false
+      ],
+      "userActivationIdentity": true,
+      "ancestorOriginsIdentity": true,
+      "entropyArguments": {
+        "undefined": {
+          "channel": "promise_rejection",
+          "name": "TypeError",
+          "message": "Failed to execute 'getHighEntropyValues' on 'NavigatorUAData': The provided value cannot be converted to a sequence."
+        },
+        "array": {
+          "channel": "fulfilled",
+          "keys": [
+            "brands",
+            "mobile",
+            "platform"
+          ]
+        },
+        "set": {
+          "channel": "fulfilled",
+          "keys": [
+            "architecture",
+            "brands",
+            "mobile",
+            "platform"
+          ]
+        },
+        "string": {
+          "channel": "promise_rejection",
+          "name": "TypeError",
+          "message": "Failed to execute 'getHighEntropyValues' on 'NavigatorUAData': The provided value cannot be converted to a sequence."
+        }
+      }
+    },
+    "console": {
+      "task": {
+        "tag": "[object Object]",
+        "ownKeys": [
+          "run"
+        ],
+        "prototypeTag": "[object Object]",
+        "prototypeKeys": [
+          "constructor"
+        ],
+        "callbackReturned": true,
+        "run": {
+          "name": "run",
+          "length": 0,
+          "source": "function run() { [native code] }",
+          "prototype": true
+        }
+      },
+      "context": {
+        "tag": "[object Object]",
+        "ownKeys": [
+          "dir",
+          "dirxml",
+          "table",
+          "groupEnd",
+          "clear",
+          "count",
+          "countReset",
+          "profile",
+          "profileEnd",
+          "debug",
+          "error",
+          "info",
+          "log",
+          "warn",
+          "trace",
+          "group",
+          "groupCollapsed",
+          "time",
+          "timeLog",
+          "timeEnd",
+          "timeStamp",
+          "assert"
+        ],
+        "prototypeTag": "[object Object]",
+        "prototypeKeys": []
+      },
+      "memoryKeys": [
+        "jsHeapSizeLimit",
+        "totalJSHeapSize",
+        "usedJSHeapSize"
+      ]
+    }
+  },
+  "profile_removed_after_capture": true,
+  "schema_version": 1,
+  "probe_file": "handler_and_navigator_probe.js",
+  "capture_flags": [
+    "--headless=new",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--disable-features=OptimizationHints,MediaRouter",
+    "--no-pings",
+    "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+    "--dump-dom",
+    "--virtual-time-budget=2000"
+  ],
+  "origin": {
+    "scheme": "http",
+    "hostname": "127.0.0.1",
+    "path": "/handler-reference"
+  },
+  "source_capture": {
+    "path": "data/browser-api-batch01-2026-11-15/handler-and-navigator-reference.json",
+    "sha256": "11c667d6ade0e23ee2d9336a8be80c7418307e689a609e7a7055cf5763053c68"
+  },
+  "probe_source": {
+    "path": "data/browser-api-batch01-2026-11-15/handler-reference.stdout.html",
+    "sha256": "c246c7408443a2cb3ff209ab69716fbb022b911a698718908c2cb4641e0e299e",
+    "extraction": "First script text in the retained browser DOM dump; exact hash matches the captured probe_sha256.",
+    "current_same_named_probe_matches_capture": false
+  },
+  "normalization": {
+    "removed": [
+      "browser executable absolute path",
+      "temporary user-data directory argument",
+      "ephemeral loopback port"
+    ],
+    "result": "unchanged from source capture"
+  }
+}

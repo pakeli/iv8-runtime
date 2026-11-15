@@ -59,4 +59,55 @@ void window_event_handler_setter(
                               value);
 }
 
+namespace {
+
+bool function_handler_data(const v8::FunctionCallbackInfo<v8::Value>& info,
+                            WindowEventTarget** target, std::string* name) {
+    v8::Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Context> context = isolate->GetCurrentContext();
+    if (!info.Data()->IsArray()) {
+        return false;
+    }
+    auto data = info.Data().As<v8::Array>();
+    v8::Local<v8::Value> external;
+    v8::Local<v8::Value> handler_name;
+    if (!data->Get(context, 0).ToLocal(&external) ||
+        !data->Get(context, 1).ToLocal(&handler_name) ||
+        !external->IsExternal() || !handler_name->IsString()) {
+        return false;
+    }
+    *target = static_cast<WindowEventTarget*>(
+        external.As<v8::External>()->Value(kWindowEventsTag));
+    v8::String::Utf8Value utf8(isolate, handler_name);
+    if (*target == nullptr || *utf8 == nullptr) {
+        return false;
+    }
+    name->assign(*utf8, static_cast<std::size_t>(utf8.length()));
+    return true;
+}
+
+}  // namespace
+
+void window_event_handler_function_getter(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    WindowEventTarget* target = nullptr;
+    std::string name;
+    if (!function_handler_data(info, &target, &name)) {
+        return;
+    }
+    info.GetReturnValue().Set(target->get_event_handler(info.GetIsolate(), name));
+}
+
+void window_event_handler_function_setter(
+    const v8::FunctionCallbackInfo<v8::Value>& info) {
+    WindowEventTarget* target = nullptr;
+    std::string name;
+    if (!function_handler_data(info, &target, &name)) {
+        return;
+    }
+    v8::Local<v8::Value> value = info.Length() > 0
+        ? info[0] : v8::Local<v8::Value>(v8::Undefined(info.GetIsolate()));
+    target->set_event_handler(info.GetIsolate(), name, value);
+}
+
 }  // namespace iv8::browser

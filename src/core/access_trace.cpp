@@ -248,11 +248,11 @@ AccessTrace::SourceScope::~SourceScope() noexcept {
 
 const std::vector<std::string>& AccessTrace::supported_object_types() {
     static const std::vector<std::string> types = {
-        "comment", "connection", "console", "crypto", "document",
-        "document_fragment", "element", "history", "host_object", "host_probe",
-        "location", "media_query_list", "navigator", "orientation",
+        "attr", "comment", "connection", "console", "crypto", "document",
+        "document_fragment", "dom_parser", "dom_string_list", "dom_string_map", "element", "history", "host_object", "host_probe",
+        "location", "media_query_list", "named_node_map", "navigator", "navigator_ua_data", "orientation",
         "performance", "permission_status", "permissions", "screen",
-        "storage", "storage_manager", "text", "visual_viewport", "window",
+        "storage", "storage_manager", "text", "user_activation", "visual_viewport", "window", "window_shell",
     };
     return types;
 }
@@ -260,7 +260,7 @@ const std::vector<std::string>& AccessTrace::supported_object_types() {
 const std::vector<std::string>& AccessTrace::not_covered() {
     static const std::vector<std::string> gaps = {
         "remaining performance/crypto/Storage property reads (their native method calls and performance.timeOrigin are covered)",
-        "other window/global data properties",
+        "unmapped window/global data properties (the 49 PRES-03 Window entries are traced)",
         "permission-status missing probes/onchange and MediaQueryList onchange/missing probes",
         "arrays and plain values returned by host APIs",
         "user-created plain JS objects",

@@ -265,9 +265,10 @@ def test_no_out_of_scope_attribute_surface():
         el = "document.getElementById('d')"
         # M11-10 brings toggleAttribute / classList into scope; M11-12 adds the
         # attribute-presence/name surface.
-        for member in ("attributes", "dataset", "src", "type", "title", "hidden",
-                       "setAttributeNS", "removeAttributeNS"):
+        for member in ("src", "type", "title", "hidden"):
             assert page.eval(f"typeof {el}.{member}") == "undefined"
+        for member in ("setAttributeNS", "removeAttributeNS"):
+            assert page.eval(f"typeof {el}.{member}") == "function"
         assert page.eval(f"typeof {el}.toggleAttribute") == "function"
         assert page.eval(f"typeof {el}.classList") == "object"
         assert page.eval(f"typeof {el}.hasAttributes") == "function"

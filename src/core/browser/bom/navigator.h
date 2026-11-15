@@ -16,6 +16,7 @@
 #include "iv8/web_interface.h"
 #include "iv8/browser_compatibility.h"
 #include "navigator_parts.h"
+#include "navigator_identity.h"
 
 namespace iv8 {
 
@@ -30,14 +31,15 @@ namespace browser {
 class NavigatorHost : public HostObject {
 public:
     explicit NavigatorHost(const HostEnvironment* environment)
-        : environment_(environment), connection_(environment) {}
+        : environment_(environment), connection_(environment), user_agent_data_(environment) {}
 
     std::string global_name() const override { return "navigator"; }
     std::string prototype_key() const override { return "Navigator"; }
     std::string trace_object_type() const override { return "navigator"; }
 
     std::vector<std::string> property_names() const override {
-        return {"userAgent",       "platform",          "language",
+        return {"userAgent", "appVersion", "deviceMemory", "userAgentData", "userActivation",
+                "platform",          "language",
                 "webdriver",       "languages",         "onLine",
                 "cookieEnabled",   "hardwareConcurrency", "appName",
                 "appCodeName",     "product",           "vendor",
@@ -54,6 +56,8 @@ public:
         permissions_object_.Reset();
         plugins_object_.Reset();
         mime_types_object_.Reset();
+        user_agent_data_object_.Reset();
+        user_activation_object_.Reset();
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -61,6 +65,18 @@ public:
                                       const std::string& name) override {
         if (name == "userAgent") {
             return v8_string(isolate, environment_->user_agent);
+        }
+        if (name == "appVersion") return v8_string(isolate, environment_->app_version);
+        if (name == "deviceMemory") return v8::Number::New(isolate, environment_->device_memory);
+        if (name == "userAgentData" || name == "userActivation") {
+            auto& cached = name == "userAgentData" ? user_agent_data_object_ : user_activation_object_;
+            if (cached.IsEmpty()) {
+                HostObject* host = name == "userAgentData"
+                    ? static_cast<HostObject*>(&user_agent_data_)
+                    : static_cast<HostObject*>(&user_activation_);
+                cached.Reset(isolate, make_host_object(isolate, context, host));
+            }
+            return cached.Get(isolate);
         }
         if (name == "platform") {
             return v8_string(isolate, environment_->platform);
@@ -172,6 +188,10 @@ private:
     // valid for as long as this host object is installed.
     const HostEnvironment* environment_;
     ConnectionHost connection_;
+    NavigatorUADataHost user_agent_data_;
+    UserActivationHost user_activation_;
+    v8::Global<v8::Object> user_agent_data_object_;
+    v8::Global<v8::Object> user_activation_object_;
     // Step 5e/5f: per-generation cached plain navigator.storage and
     // navigator.permissions objects.
     v8::Global<v8::Object> storage_object_;

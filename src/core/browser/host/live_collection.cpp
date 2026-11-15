@@ -18,6 +18,17 @@ std::vector<DomNode*> DocumentHost::collection_nodes(const LiveCollectionBinding
     if (binding.kind == "window-name" || binding.kind == "form-name") {
         return named_collection_nodes(binding);
     }
+    if (binding.kind == "tag-ns") {
+        const auto predicate = [&binding](const DomNode* node) {
+            return node->kind == NodeKind::Element &&
+                (binding.namespace_uri == "*" || binding.namespace_uri == node->namespace_uri) &&
+                (binding.query == "*" || binding.query == (node->local_name.empty() ? node->tag : node->local_name));
+        };
+        if (binding.root == nullptr) return collect(predicate);
+        std::vector<DomNode*> nodes;
+        for (auto* child : binding.root->children) collect_matching(child, predicate, nodes);
+        return nodes;
+    }
     const auto tokens = split_class_tokens(binding.query);
     const auto predicate = binding.kind == "tag" ? tag_predicate(binding.query) :
         std::function<bool(const DomNode*)>([tokens](const DomNode* node) {
@@ -139,8 +150,8 @@ void all_collection_call(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
     v8::Local<v8::Context> context, DomNode* root, const std::string& kind,
-    const std::string& query, bool all) {
-    auto binding = std::make_unique<LiveCollectionBinding>(LiveCollectionBinding{this, root, kind, query});
+    const std::string& query, bool all, const std::string& namespace_uri) {
+    auto binding = std::make_unique<LiveCollectionBinding>(LiveCollectionBinding{this, root, kind, query, namespace_uri});
     auto raw = binding.get();
     collections_.push_back(std::move(binding));
     auto object_template = v8::ObjectTemplate::New(isolate);

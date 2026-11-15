@@ -175,7 +175,7 @@ def test_stale_after_dispose():
 def test_no_out_of_scope_creation_or_tree_surface():
     with iv8.Page() as page:
         page.load(html="<html><body><div id='d'></div></body></html>", base_url=BASE)
-        assert page.eval("typeof document.createElementNS") == "undefined"
+        assert page.eval("typeof document.createElementNS") == "function"
         for member in ("createTextNode", "createComment",
                        "createDocumentFragment"):
             assert page.eval(f"typeof document.{member}") == "function"

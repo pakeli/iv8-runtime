@@ -1,6 +1,83 @@
 # CLAUDE.md
 
-**Latest release/deployment verified (`2026-11-15`): BIND-01.** Source `f015745`, tree `0914106d38d0c2c245b47e70daa7623b4ed04fc5`, passes all 12 lanes: 87 focused, Linux/macOS **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Shared iv8-test is backed up and upgraded from NAMED native `4b2f871d...` to `d2902411...`; actual shared interpreter passes focused/full and cached EPUB offline. Mainline integration is PR #30. Read `docs/native_binding_restore.md` / report for identities, artifact IDs, Windows retry, helper restoration and rollback. History/named access remain preserved; null-this/key-coercion/base-Event behavior gaps are separate. No live requests or server-pass claim. M11-53 remains next; stage 4 stays held.
+**Latest release verified (`2026-11-15`): combined PRES-01/PRES-02/PRES-03 and WIN-MON-01.** Build source `40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff` (tree `b7d518ecc9ab46a30812622041bd48f3c28ab1aa`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Each lane passes the combined **257-test focused gate**; full Linux/macOS are **2547 passed, 2 skipped**, Windows **2545 passed, 4 skipped**. Runs: Linux `43704599952`, Windows `43704600017`, macOS `43704687043`. Fixed V8 15.0.245.19 caches are reused; the host extension/wheels are rebuilt. Required V8 checks pass, macOS source pins/restore are verified, and branch protection is unchanged. **Latest shared SDK deployment remains BIND-01**; no environment installation or version-tag publication was performed. Source/run/artifact evidence and limits: `docs/bom_release_report.md`.
+
+**Current user priority (`2026-11-15`): BOM first.** Prioritize Window, Location,
+Navigator and History, then related BOM objects; defer further DOM-node work and
+the proposed DOMException/Abort/Headers/Request/Response/FormData batch. Preserve
+the completed PRES-01/PRES-02 work. Read `docs/bom_coverage_plan.md` and the top
+of `docs/next_tasks.md` before choosing a task; these override older next-DOM or
+next-Web-data recommendations. Retain shared native prototypes, configuration
+consistency and meaningful local regressions. This priority change alone adds no
+runtime API or release/deployment verification.
+
+**Latest implemented, now release-verified in the combined build (`2026-11-15`): WIN-MON-01.** Read
+`docs/window_monitoring.md` before changing the PRES-03 monitoring extension.
+All 49 mapped globals have structured native get/get_method and supported set
+completion; all 22 callable globals have watch_apis and structured call entries
+with safe summaries and synchronous exceptions. Shell methods enter both
+channels; shell/global and namespace accessors use structured property hooks.
+Native data callbacks retain data descriptors, exact values and function
+identity. Actual events/hits pass **550 focused** checks; full macOS arm64/Python
+3.13 is **2547 passed, 2 skipped**. All **127 current native shell methods** emit
+both channels in a sweep. Combined release verification is recorded above; the shared BIND-01
+SDK is unchanged. Evidence: `docs/window_monitoring_report.md`.
+Descriptor evaluation may record an extra get; read-only writes or
+construction blocked before native entry have no invented event. User JS
+accessor replacement, arbitrary nested data reads and Promise settlement remain
+outside the native path. watch_apis stays call-only.
+
+**Previous local acceptance (`2026-11-15`): PRES-03.** Read
+`docs/presence_03_window.md` for the user-approved 49 ordinary Window names.
+The separate 821 missing global interface entries are excluded. Preserve native
+global kinds and metadata, canonical private shell prototypes, generation-owned
+identity, prefixed rAF reuse and the bounded window.event/reportError model.
+Backend operations explicitly throw NotSupportedError or reject a Promise;
+typed presence is not subsystem execution. The user authorizes re-exposing
+native `open` for this candidate while real window creation stays unsupported.
+Keep the old absent-open regression as release history. Local checks pass
+**526 focused tests**, **28 profile/trace guards**, and full macOS arm64/Python
+3.13 **2491 passed, 2 skipped**. Ordinary names are **128/128**, handlers
+**125/125**. **Release acceptance is pending**; shared BIND-01 SDK deployment is
+unchanged. Evidence and limits: `docs/presence_03_report.md`.
+
+**Previous local acceptance (`2026-11-15`): PRES-02.** Read
+`docs/presence_02_dom.md` before extending the DOM logic/reflection batch.
+Native dataset/DOMStringMap, attributes/NamedNodeMap and Attr share live backing
+attribute state. Attr inherits Node; namespace-aware creation/attribute methods,
+live namespace tag collections and root/normalize/position helpers
+use defining native prototypes. Same-context import/adopt preserve the correct
+owner and, for adoption, canonical wrappers, listeners, handlers, live views and
+observer-record routing. DOMParser text/html returns an inert independent
+HTMLDocument using the bounded parser; XML MIME types explicitly fail as
+unsupported and XMLSerializer remains later work. Local acceptance:
+**489 focused passed, 1 xfailed**; full macOS arm64/Python 3.13:
+**2454 passed, 2 skipped, 1 xfailed**. **Combined release verification is recorded above.**
+Read `docs/presence_02_report.md` for candidate identity and limits.
+No new shared SDK installation has occurred;
+BIND-01 remains the latest verified shared deployment below.
+
+**Previous local acceptance (`2026-11-15`): PRES-01.** Read
+`docs/presence_01_bom_events.md` before extending this presence-first offline
+BOM/event batch. It adds configured Navigator identity/UAData, inactive
+UserActivation, empty Location ancestorOrigins, UIEvent/Event fields and paths,
+shared IDL handlers, Console additions and Screen metadata. NavigatorUAData,
+UserActivation and DOMStringList use shared native defining prototypes with
+illegal public constructors; the actual Event/UIEvent constructors and
+prototypes are registered together, including Event → UIEvent →
+MouseEvent/KeyboardEvent/FocusEvent inheritance. Nested instances and handler
+state reset per generation, V8 handles release before isolate disposal, and
+transient event dispatch state is cleared after delivery. Local acceptance is
+**447 focused, 1 xfailed**; full macOS arm64/Python 3.13 is
+**2417 passed, 2 skipped, 1 xfailed**. Read `docs/presence_01_report.md` for
+candidate identity, evidence and limits. PRES-02 above now implements the next
+DOM logic/reflection batch, with local acceptance passed and combined release verified above.
+No complete release matrix or shared SDK update
+has been performed for PRES-01; **latest shared deployment remains
+BIND-01 below**. Do not turn configured UAData, inactive activation or synthetic
+events into claims of real device observation, trusted input or server acceptance.
+
+**Latest shared deployment / previous release verified (`2026-11-15`): BIND-01.** Source `f015745`, tree `0914106d38d0c2c245b47e70daa7623b4ed04fc5`, passes all 12 lanes: 87 focused, Linux/macOS **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Shared iv8-test is backed up and upgraded from NAMED native `4b2f871d...` to `d2902411...`; actual shared interpreter passes focused/full and cached EPUB offline. Mainline integration is PR #30. Read `docs/native_binding_restore.md` / report for identities, artifact IDs, Windows retry, helper restoration and rollback. History/named access remain preserved; null-this/key-coercion/base-Event behavior gaps are separate. No live requests or server-pass claim. M11-53 remains next; stage 4 stays held.
 
 **Previous release verified (`2026-11-15`): NAMED-01 named-access restoration.** Source `374c81b`, tree `d16031ea344e5ff182c9d986d2a9ca634c6388e0`, restores the private Epub named-access patch in the split tree while preserving History. All 12 release lanes pass 56 focused tests before the full suite: Linux/macOS **2340 passed, 2 skipped, 1 xfailed**, Windows **2338 passed, 4 skipped, 1 xfailed**. Mainline integration is PR #29. Read `docs/named_access_restore.md` and its report for source/run/artifact identity, helper restoration and delivery. This named-access slice originally excluded callback metadata; BIND-01 above restores it. Do not replace shared SDKs silently or claim live business acceptance. M11-53 remains next; stage 4 remains held.
 
@@ -275,6 +352,29 @@ Answer roughly as follows:
 - M1 contract still exists and matters for `JSContext`.
 - Real implementation has progressed through M2–M11.
 - Current `HEAD` includes:
+  - WIN-MON-01 as the latest implemented monitoring batch, locally accepted with
+    combined release verified above: mapped Window native get/set/call, call-only watches
+    for 22 globals and shell methods, and scoped shell accessor tracing.
+    Preserve native data descriptors/identity and the observation boundaries
+    in `docs/window_monitoring.md`; the shared BIND-01 SDK remains unchanged;
+  - PRES-03 with previous local acceptance: the user-selected 49
+    ordinary Window names with native function/type exposure, canonical private
+    shell prototypes, reused rAF and bounded event/reportError integration.
+    Backend execution explicitly fails; the 821 global interface entries remain
+    excluded. Native open presence is user-authorized but window creation stays
+    unsupported. Local acceptance has passed; release acceptance is pending; the shared
+    BIND-01 SDK is unchanged;
+  - PRES-02 with previous local acceptance: native dataset/DOMStringMap,
+    attributes/NamedNodeMap, Attr → Node inheritance, namespace-aware DOM
+    operations, Node root/normalize/position helpers and constants, same-context
+    import/adopt with canonical wrapper/listener/view/observer ownership, and
+    inert HTML DOMParser. Local acceptance has passed; release acceptance is pending; the
+    shared BIND-01 SDK is unchanged;
+  - PRES-01 with previous local acceptance: configured Navigator identity,
+    native UAData/UserActivation/DOMStringList prototypes, UIEvent inheritance,
+    shared IDL handlers and the bounded Event/Console/Screen additions. Local
+    acceptance passes (see report); it has not run a full release
+    matrix and has not replaced the shared BIND-01 SDK;
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
@@ -299,8 +399,10 @@ Answer roughly as follows:
     stubs, the M11-51 Window event handler attributes, and the M11-52 Window
     messaging surface — verified on real V8 Linux + Windows + macOS arm64;
     latest verification `2026-11-03`;
-  - latest implemented and verified compatibility feature: M11-52 (Window
-    messaging);
+  - latest verified numbered compatibility milestone: M11-52 (Window messaging);
+    latest release verified: the combined build above; latest shared deployment: BIND-01. Latest implemented batch:
+    WIN-MON-01, locally accepted with release verification is in `docs/bom_release_report.md`; PRES-03 retains its
+    previous local acceptance and pending release acceptance;
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

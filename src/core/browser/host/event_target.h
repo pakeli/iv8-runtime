@@ -8,8 +8,11 @@
 #include <vector>
 
 #include "iv8/host_object.h"
+#include "event_handlers.h"
 #include "../internal/common.h"
 #include "../internal/event_support.h"
+#include "../window/window_error_support.h"
+#include "../web/event_constructors.h"
 
 namespace iv8::browser {
 
@@ -24,6 +27,17 @@ public:
             }
         }
         listeners_.clear();
+        event_handlers_.release_v8_handles();
+    }
+
+    v8::Local<v8::Value> get_event_handler(v8::Isolate* isolate,
+                                           const std::string& name) {
+        return event_handlers_.get(isolate, name);
+    }
+
+    void set_event_handler(v8::Isolate* isolate, const std::string& name,
+                           v8::Local<v8::Value> value) {
+        event_handlers_.set(isolate, name, value);
     }
 
     // If `name` is an event-target method, handle it, write the JS result to
@@ -57,8 +71,21 @@ public:
             bool canceled = false;
             if (args.Length() >= 1 && args[0]->IsObject()) {
                 v8::Local<v8::Object> event = args[0].As<v8::Object>();
+                v8::TryCatch dispatch_error(isolate);
                 dispatch_event(isolate, context, event, args.This());
+                if (dispatch_error.HasCaught()) {
+                    // Do not enter a JS accessor with an exception pending:
+                    // doing so can consume a reentrant-dispatch failure.
+                    dispatch_error.ReThrow();
+                    out = v8::Undefined(isolate);
+                    return true;
+                }
                 canceled = event_default_prevented(isolate, context, event);
+                if (dispatch_error.HasCaught()) {
+                    dispatch_error.ReThrow();
+                    out = v8::Undefined(isolate);
+                    return true;
+                }
             }
             out = v8::Boolean::New(isolate, !canceled);
             return true;
@@ -75,8 +102,14 @@ public:
                                 v8::Local<v8::Context> context,
                                 v8::Local<v8::Object> event,
                                 v8::Local<v8::Object> receiver) {
+        if (!begin_event_dispatch(isolate, context, event, {receiver})) {
+            return;
+        }
         (void)event->Set(context, v8_string(isolate, "target"), receiver);
-        reset_event_stopped(isolate, context, event);
+        if (event_is_stopped(isolate, context, event)) {
+            finish_dispatch(isolate, context, event);
+            return;
+        }
         fire_target_at(isolate, context, event, receiver);
         finish_dispatch(isolate, context, event);
     }
@@ -104,13 +137,20 @@ public:
                          v8::Local<v8::Object> event) {
         (void)event->Set(context, v8_string(isolate, "eventPhase"),
                          v8::Integer::New(isolate, 0));
+        (void)event->Set(context, v8_string(isolate, "currentTarget"),
+                         v8::Null(isolate));
+        end_event_dispatch(isolate, context, event);
     }
 
     // M3-4 / M11-11: dispatch a synthetic lifecycle / FileReader event of `type`
     // from C++ (no JS caller). Single target, at-target phase, no bubbling.
     void dispatch_native(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          const std::string& type, v8::Local<v8::Object> receiver) {
-        v8::Local<v8::Object> event = v8::Object::New(isolate);
+        v8::Local<v8::Object> event;
+        if (!create_runtime_event(isolate, context, type).ToLocal(&event)) return;
+        if (!begin_event_dispatch(isolate, context, event, {receiver})) {
+            return;
+        }
         (void)event->Set(context, v8_string(isolate, "type"),
                          v8_string(isolate, type));
         (void)event->Set(context, v8_string(isolate, "target"), receiver);
@@ -127,13 +167,14 @@ protected:
         return names;
     }
 
-    // M11-51: Window-only hook for IDL event handler attributes (`onload`, ...).
-    // It runs after the ordinary listener snapshot for one target/phase, unless a
-    // listener called stopImmediatePropagation(). The base is a no-op, so
-    // document/element/FileReader dispatch behavior is unchanged.
+    // IDL handler attributes run after the ordinary listener snapshot for this
+    // target/phase unless stopImmediatePropagation() suppressed them.
     virtual void invoke_event_handler(
-        v8::Isolate*, v8::Local<v8::Context>, v8::Local<v8::Object>,
-        v8::Local<v8::Value>, int, const std::string&) {}
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        v8::Local<v8::Object> event, v8::Local<v8::Value> receiver,
+        int phase, const std::string& type) {
+        event_handlers_.invoke(isolate, context, event, receiver, phase, type);
+    }
 
 private:
     struct ListenerOptions {
@@ -314,6 +355,7 @@ private:
                 // preventDefault; restore the outer state afterwards.
                 set_event_in_passive_listener(isolate, context, event,
                                               listener.passive);
+                WindowEventScope current_event(isolate, context, event);
                 v8::TryCatch try_catch(isolate);
                 (void)listener.callback->Call(context, receiver, 1, &event_arg);
                 if (try_catch.HasCaught()) {
@@ -328,6 +370,7 @@ private:
             }
         }
         if (!event_is_immediately_stopped(isolate, context, event)) {
+            WindowEventScope current_event(isolate, context, event);
             invoke_event_handler(isolate, context, event, receiver, phase, type);
         }
     }
@@ -335,6 +378,7 @@ private:
     // Per-type listener lists (registration order). Global handles are released in
     // release_v8_handles() before isolate disposal.
     std::unordered_map<std::string, std::vector<Listener>> listeners_;
+    EventHandlerStore event_handlers_;
 };
 
 

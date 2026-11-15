@@ -39,9 +39,9 @@ def test_defaults():
         assert page.eval(
             "new Event('e').preventDefault()") is iv8.JSUndefined
         assert page.eval("new Event('e').defaultPrevented") is False
-        for member in ("composed", "timeStamp"):
-            assert page.eval(
-                f"typeof new Event('e').{member}") == "undefined"
+        # PRES-01 exposes the shared base Event fields.
+        assert page.eval("typeof new Event('e').composed") == "boolean"
+        assert page.eval("typeof new Event('e').timeStamp") == "number"
         assert page.eval("new Event('e').eventPhase") == 0
 
 

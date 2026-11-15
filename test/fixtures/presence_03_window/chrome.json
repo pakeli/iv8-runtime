@@ -1,0 +1,4386 @@
+{
+  "schema_version": 1,
+  "browser": "Google Chrome 157.0.8103.51",
+  "captured_at": "2026-11-15T16:22:20.807240+08:00",
+  "probe_sha256": "11e9caa7641fbb813de9685adf74c67f8f5f6501ce0bde76e2beaf273e5e6dfe",
+  "conditions": {
+    "mode": "headless=new",
+    "platform": "macOS arm64",
+    "fresh_profile": true,
+    "origin": "http://127.0.0.1:63245/window-presence",
+    "network": "loopback fixture only; background networking disabled; non-loopback DNS blocked",
+    "target_invocation": "No system/network method invoked; Reflect.construct(String,[],fn) checks newTarget only",
+    "secure_context": true,
+    "cross_origin_isolated": false,
+    "profile_removed_after_capture": true
+  },
+  "members": {
+    "CSS": {
+      "present": true,
+      "descriptor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "type": "object"
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object CSS]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": true,
+        "prototype_tag": "[object Object]",
+        "prototype_constructor": "Object",
+        "parent_is_object_prototype": false,
+        "parent_constructor": null,
+        "own_members": [
+          {
+            "name": "Hz",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "Hz",
+                "length": 1,
+                "source": "function Hz() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "Q",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "Q",
+                "length": 1,
+                "source": "function Q() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "cap",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cap",
+                "length": 1,
+                "source": "function cap() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "ch",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "ch",
+                "length": 1,
+                "source": "function ch() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "cm",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cm",
+                "length": 1,
+                "source": "function cm() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "cqb",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cqb",
+                "length": 1,
+                "source": "function cqb() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "cqh",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cqh",
+                "length": 1,
+                "source": "function cqh() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "cqi",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cqi",
+                "length": 1,
+                "source": "function cqi() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "cqmax",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cqmax",
+                "length": 1,
+                "source": "function cqmax() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "cqmin",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cqmin",
+                "length": 1,
+                "source": "function cqmin() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "cqw",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cqw",
+                "length": 1,
+                "source": "function cqw() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "deg",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "deg",
+                "length": 1,
+                "source": "function deg() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dpcm",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dpcm",
+                "length": 1,
+                "source": "function dpcm() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dpi",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dpi",
+                "length": 1,
+                "source": "function dpi() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dppx",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dppx",
+                "length": 1,
+                "source": "function dppx() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dvb",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dvb",
+                "length": 1,
+                "source": "function dvb() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dvh",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dvh",
+                "length": 1,
+                "source": "function dvh() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dvi",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dvi",
+                "length": 1,
+                "source": "function dvi() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dvmax",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dvmax",
+                "length": 1,
+                "source": "function dvmax() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dvmin",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dvmin",
+                "length": 1,
+                "source": "function dvmin() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "dvw",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "dvw",
+                "length": 1,
+                "source": "function dvw() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "em",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "em",
+                "length": 1,
+                "source": "function em() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "escape",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "escape",
+                "length": 1,
+                "source": "function escape() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "ex",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "ex",
+                "length": 1,
+                "source": "function ex() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "fr",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "fr",
+                "length": 1,
+                "source": "function fr() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "grad",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "grad",
+                "length": 1,
+                "source": "function grad() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "highlights",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get highlights",
+                "length": 0,
+                "source": "function get highlights() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "ic",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "ic",
+                "length": 1,
+                "source": "function ic() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "in",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "in",
+                "length": 1,
+                "source": "function in() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "kHz",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "kHz",
+                "length": 1,
+                "source": "function kHz() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "lh",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "lh",
+                "length": 1,
+                "source": "function lh() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "lvb",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "lvb",
+                "length": 1,
+                "source": "function lvb() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "lvh",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "lvh",
+                "length": 1,
+                "source": "function lvh() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "lvi",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "lvi",
+                "length": 1,
+                "source": "function lvi() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "lvmax",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "lvmax",
+                "length": 1,
+                "source": "function lvmax() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "lvmin",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "lvmin",
+                "length": 1,
+                "source": "function lvmin() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "lvw",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "lvw",
+                "length": 1,
+                "source": "function lvw() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "mm",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "mm",
+                "length": 1,
+                "source": "function mm() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "ms",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "ms",
+                "length": 1,
+                "source": "function ms() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "number",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "number",
+                "length": 1,
+                "source": "function number() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "paintWorklet",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get paintWorklet",
+                "length": 0,
+                "source": "function get paintWorklet() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "pc",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "pc",
+                "length": 1,
+                "source": "function pc() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "percent",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "percent",
+                "length": 1,
+                "source": "function percent() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "pt",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "pt",
+                "length": 1,
+                "source": "function pt() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "px",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "px",
+                "length": 1,
+                "source": "function px() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "rad",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "rad",
+                "length": 1,
+                "source": "function rad() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "rcap",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "rcap",
+                "length": 1,
+                "source": "function rcap() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "rch",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "rch",
+                "length": 1,
+                "source": "function rch() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "registerProperty",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "registerProperty",
+                "length": 1,
+                "source": "function registerProperty() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "rem",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "rem",
+                "length": 1,
+                "source": "function rem() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "rex",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "rex",
+                "length": 1,
+                "source": "function rex() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "ric",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "ric",
+                "length": 1,
+                "source": "function ric() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "rlh",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "rlh",
+                "length": 1,
+                "source": "function rlh() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "s",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "s",
+                "length": 1,
+                "source": "function s() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "supports",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "supports",
+                "length": 1,
+                "source": "function supports() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "svb",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "svb",
+                "length": 1,
+                "source": "function svb() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "svh",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "svh",
+                "length": 1,
+                "source": "function svh() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "svi",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "svi",
+                "length": 1,
+                "source": "function svi() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "svmax",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "svmax",
+                "length": 1,
+                "source": "function svmax() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "svmin",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "svmin",
+                "length": 1,
+                "source": "function svmin() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "svw",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "svw",
+                "length": 1,
+                "source": "function svw() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "turn",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "turn",
+                "length": 1,
+                "source": "function turn() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "vb",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "vb",
+                "length": 1,
+                "source": "function vb() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "vh",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "vh",
+                "length": 1,
+                "source": "function vh() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "vi",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "vi",
+                "length": 1,
+                "source": "function vi() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "vmax",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "vmax",
+                "length": 1,
+                "source": "function vmax() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "vmin",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "vmin",
+                "length": 1,
+                "source": "function vmin() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "vw",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "vw",
+                "length": 1,
+                "source": "function vw() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "x",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "x",
+                "length": 1,
+                "source": "function x() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ],
+        "prototype_members": []
+      }
+    },
+    "GPUBufferUsage": {
+      "present": true,
+      "descriptor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "type": "object"
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object GPUBufferUsage]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": true,
+        "prototype_tag": "[object Object]",
+        "prototype_constructor": "Object",
+        "parent_is_object_prototype": false,
+        "parent_constructor": null,
+        "own_members": [
+          {
+            "name": "COPY_DST",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 8
+            }
+          },
+          {
+            "name": "COPY_SRC",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 4
+            }
+          },
+          {
+            "name": "INDEX",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 16
+            }
+          },
+          {
+            "name": "INDIRECT",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 256
+            }
+          },
+          {
+            "name": "MAP_READ",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 1
+            }
+          },
+          {
+            "name": "MAP_WRITE",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 2
+            }
+          },
+          {
+            "name": "QUERY_RESOLVE",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 512
+            }
+          },
+          {
+            "name": "STORAGE",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 128
+            }
+          },
+          {
+            "name": "UNIFORM",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 64
+            }
+          },
+          {
+            "name": "VERTEX",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 32
+            }
+          }
+        ],
+        "prototype_members": []
+      }
+    },
+    "GPUColorWrite": {
+      "present": true,
+      "descriptor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "type": "object"
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object GPUColorWrite]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": true,
+        "prototype_tag": "[object Object]",
+        "prototype_constructor": "Object",
+        "parent_is_object_prototype": false,
+        "parent_constructor": null,
+        "own_members": [
+          {
+            "name": "ALL",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 15
+            }
+          },
+          {
+            "name": "ALPHA",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 8
+            }
+          },
+          {
+            "name": "BLUE",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 4
+            }
+          },
+          {
+            "name": "GREEN",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 2
+            }
+          },
+          {
+            "name": "RED",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 1
+            }
+          }
+        ],
+        "prototype_members": []
+      }
+    },
+    "GPUMapMode": {
+      "present": true,
+      "descriptor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "type": "object"
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object GPUMapMode]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": true,
+        "prototype_tag": "[object Object]",
+        "prototype_constructor": "Object",
+        "parent_is_object_prototype": false,
+        "parent_constructor": null,
+        "own_members": [
+          {
+            "name": "READ",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 1
+            }
+          },
+          {
+            "name": "WRITE",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 2
+            }
+          }
+        ],
+        "prototype_members": []
+      }
+    },
+    "GPUShaderStage": {
+      "present": true,
+      "descriptor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "type": "object"
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object GPUShaderStage]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": true,
+        "prototype_tag": "[object Object]",
+        "prototype_constructor": "Object",
+        "parent_is_object_prototype": false,
+        "parent_constructor": null,
+        "own_members": [
+          {
+            "name": "COMPUTE",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 4
+            }
+          },
+          {
+            "name": "FRAGMENT",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 2
+            }
+          },
+          {
+            "name": "VERTEX",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 1
+            }
+          }
+        ],
+        "prototype_members": []
+      }
+    },
+    "GPUTextureUsage": {
+      "present": true,
+      "descriptor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "type": "object"
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object GPUTextureUsage]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": true,
+        "prototype_tag": "[object Object]",
+        "prototype_constructor": "Object",
+        "parent_is_object_prototype": false,
+        "parent_constructor": null,
+        "own_members": [
+          {
+            "name": "COPY_DST",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 2
+            }
+          },
+          {
+            "name": "COPY_SRC",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 1
+            }
+          },
+          {
+            "name": "RENDER_ATTACHMENT",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 16
+            }
+          },
+          {
+            "name": "STORAGE_BINDING",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 8
+            }
+          },
+          {
+            "name": "TEXTURE_BINDING",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 4
+            }
+          },
+          {
+            "name": "TRANSIENT_ATTACHMENT",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "type": "number",
+              "value": 32
+            }
+          }
+        ],
+        "prototype_members": []
+      }
+    },
+    "NodeFilter": {
+      "present": true,
+      "descriptor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "NodeFilter",
+          "length": 0,
+          "source": "function NodeFilter() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "NodeFilter",
+        "length": 0,
+        "source": "function NodeFilter() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      },
+      "static_members": [
+        {
+          "name": "FILTER_ACCEPT",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 1
+          }
+        },
+        {
+          "name": "FILTER_REJECT",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 2
+          }
+        },
+        {
+          "name": "FILTER_SKIP",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 3
+          }
+        },
+        {
+          "name": "SHOW_ALL",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 4294967295
+          }
+        },
+        {
+          "name": "SHOW_ATTRIBUTE",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 2
+          }
+        },
+        {
+          "name": "SHOW_CDATA_SECTION",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 8
+          }
+        },
+        {
+          "name": "SHOW_COMMENT",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 128
+          }
+        },
+        {
+          "name": "SHOW_DOCUMENT",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 256
+          }
+        },
+        {
+          "name": "SHOW_DOCUMENT_FRAGMENT",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 1024
+          }
+        },
+        {
+          "name": "SHOW_DOCUMENT_TYPE",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 512
+          }
+        },
+        {
+          "name": "SHOW_ELEMENT",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 1
+          }
+        },
+        {
+          "name": "SHOW_ENTITY",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 32
+          }
+        },
+        {
+          "name": "SHOW_ENTITY_REFERENCE",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 16
+          }
+        },
+        {
+          "name": "SHOW_NOTATION",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 2048
+          }
+        },
+        {
+          "name": "SHOW_PROCESSING_INSTRUCTION",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 64
+          }
+        },
+        {
+          "name": "SHOW_TEXT",
+          "descriptor": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 4
+          }
+        },
+        {
+          "name": "length",
+          "descriptor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "type": "number",
+            "value": 0
+          }
+        },
+        {
+          "name": "name",
+          "descriptor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "type": "string",
+            "value": "NodeFilter"
+          }
+        }
+      ]
+    },
+    "PERSISTENT": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "type": "number",
+        "value": 1
+      },
+      "owner_depth": 1,
+      "type": "number",
+      "value": 1
+    },
+    "TEMPORARY": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "type": "number",
+        "value": 0
+      },
+      "owner_depth": 1,
+      "type": "number",
+      "value": 0
+    },
+    "caches": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get caches",
+          "length": 0,
+          "source": "function get caches() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object CacheStorage]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object CacheStorage]",
+        "prototype_constructor": "CacheStorage",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "CacheStorage",
+                "length": 0,
+                "source": "function CacheStorage() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "delete",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "delete",
+                "length": 1,
+                "source": "function delete() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "has",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "has",
+                "length": 1,
+                "source": "function has() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "keys",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "keys",
+                "length": 0,
+                "source": "function keys() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "match",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "match",
+                "length": 1,
+                "source": "function match() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "open",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "open",
+                "length": 1,
+                "source": "function open() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    "captureEvents": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "captureEvents",
+          "length": 0,
+          "source": "function captureEvents() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "captureEvents",
+        "length": 0,
+        "source": "function captureEvents() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "chrome": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "type": "object"
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object Object]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": true,
+        "prototype_tag": "[object Object]",
+        "prototype_constructor": "Object",
+        "parent_is_object_prototype": false,
+        "parent_constructor": null,
+        "own_members": [
+          {
+            "name": "app",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "type": "object"
+            }
+          },
+          {
+            "name": "csi",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "",
+                "length": 0,
+                "source": "function () { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "loadTimes",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "",
+                "length": 0,
+                "source": "function () { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          }
+        ],
+        "prototype_members": []
+      }
+    },
+    "close": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "close",
+          "length": 0,
+          "source": "function close() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "close",
+        "length": 0,
+        "source": "function close() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "cookieStore": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get cookieStore",
+          "length": 0,
+          "source": "function get cookieStore() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object CookieStore]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object CookieStore]",
+        "prototype_constructor": "CookieStore",
+        "parent_is_object_prototype": false,
+        "parent_constructor": "EventTarget",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "CookieStore",
+                "length": 0,
+                "source": "function CookieStore() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "delete",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "delete",
+                "length": 1,
+                "source": "function delete() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "get",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "get",
+                "length": 0,
+                "source": "function get() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "getAll",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "getAll",
+                "length": 0,
+                "source": "function getAll() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "onchange",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onchange",
+                "length": 0,
+                "source": "function get onchange() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": {
+                "name": "set onchange",
+                "length": 1,
+                "source": "function set onchange() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "set",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "set",
+                "length": 1,
+                "source": "function set() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    "crashReport": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get crashReport",
+          "length": 0,
+          "source": "function get crashReport() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object CrashReportContext]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object CrashReportContext]",
+        "prototype_constructor": "CrashReportContext",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "CrashReportContext",
+                "length": 0,
+                "source": "function CrashReportContext() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "delete",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "delete",
+                "length": 1,
+                "source": "function delete() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "initialize",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "initialize",
+                "length": 1,
+                "source": "function initialize() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "set",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "set",
+                "length": 2,
+                "source": "function set() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    "createImageBitmap": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "createImageBitmap",
+          "length": 1,
+          "source": "function createImageBitmap() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "createImageBitmap",
+        "length": 1,
+        "source": "function createImageBitmap() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "credentialless": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get credentialless",
+          "length": 0,
+          "source": "function get credentialless() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "boolean",
+      "value": false
+    },
+    "customElements": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get customElements",
+          "length": 0,
+          "source": "function get customElements() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object CustomElementRegistry]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object CustomElementRegistry]",
+        "prototype_constructor": "CustomElementRegistry",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "CustomElementRegistry",
+                "length": 0,
+                "source": "function CustomElementRegistry() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "define",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "define",
+                "length": 2,
+                "source": "function define() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "get",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "get",
+                "length": 1,
+                "source": "function get() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "getName",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "getName",
+                "length": 1,
+                "source": "function getName() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "initialize",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "initialize",
+                "length": 1,
+                "source": "function initialize() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "upgrade",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "upgrade",
+                "length": 1,
+                "source": "function upgrade() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "whenDefined",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "whenDefined",
+                "length": 1,
+                "source": "function whenDefined() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    "documentPictureInPicture": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get documentPictureInPicture",
+          "length": 0,
+          "source": "function get documentPictureInPicture() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object DocumentPictureInPicture]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object DocumentPictureInPicture]",
+        "prototype_constructor": "DocumentPictureInPicture",
+        "parent_is_object_prototype": false,
+        "parent_constructor": "EventTarget",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "DocumentPictureInPicture",
+                "length": 0,
+                "source": "function DocumentPictureInPicture() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "onenter",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onenter",
+                "length": 0,
+                "source": "function get onenter() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": {
+                "name": "set onenter",
+                "length": 1,
+                "source": "function set onenter() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "requestWindow",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "requestWindow",
+                "length": 0,
+                "source": "function requestWindow() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "window",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get window",
+                "length": 0,
+                "source": "function get window() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          }
+        ]
+      }
+    },
+    "event": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get event",
+          "length": 0,
+          "source": "function get event() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": {
+          "name": "set event",
+          "length": 1,
+          "source": "function set event() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "undefined"
+    },
+    "external": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get external",
+          "length": 0,
+          "source": "function get external() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": {
+          "name": "set external",
+          "length": 1,
+          "source": "function set external() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object External]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object External]",
+        "prototype_constructor": "External",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "AddSearchProvider",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "AddSearchProvider",
+                "length": 0,
+                "source": "function AddSearchProvider() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "IsSearchProviderInstalled",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "IsSearchProviderInstalled",
+                "length": 0,
+                "source": "function IsSearchProviderInstalled() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "External",
+                "length": 0,
+                "source": "function External() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          }
+        ]
+      }
+    },
+    "fence": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get fence",
+          "length": 0,
+          "source": "function get fence() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "value": null
+    },
+    "fetchLater": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "fetchLater",
+          "length": 1,
+          "source": "function fetchLater() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "fetchLater",
+        "length": 1,
+        "source": "function fetchLater() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "find": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "find",
+          "length": 0,
+          "source": "function find() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "find",
+        "length": 0,
+        "source": "function find() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "getComputedStyle": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "getComputedStyle",
+          "length": 1,
+          "source": "function getComputedStyle() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "getComputedStyle",
+        "length": 1,
+        "source": "function getComputedStyle() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "getScreenDetails": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "getScreenDetails",
+          "length": 0,
+          "source": "function getScreenDetails() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "getScreenDetails",
+        "length": 0,
+        "source": "function getScreenDetails() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "getSelection": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "getSelection",
+          "length": 0,
+          "source": "function getSelection() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "getSelection",
+        "length": 0,
+        "source": "function getSelection() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "indexedDB": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get indexedDB",
+          "length": 0,
+          "source": "function get indexedDB() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object IDBFactory]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object IDBFactory]",
+        "prototype_constructor": "IDBFactory",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "cmp",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cmp",
+                "length": 2,
+                "source": "function cmp() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "IDBFactory",
+                "length": 0,
+                "source": "function IDBFactory() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "databases",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "databases",
+                "length": 0,
+                "source": "function databases() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "deleteDatabase",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "deleteDatabase",
+                "length": 1,
+                "source": "function deleteDatabase() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "open",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "open",
+                "length": 1,
+                "source": "function open() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    "launchQueue": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get launchQueue",
+          "length": 0,
+          "source": "function get launchQueue() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object LaunchQueue]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object LaunchQueue]",
+        "prototype_constructor": "LaunchQueue",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "LaunchQueue",
+                "length": 0,
+                "source": "function LaunchQueue() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "setConsumer",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "setConsumer",
+                "length": 1,
+                "source": "function setConsumer() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    "navigation": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get navigation",
+          "length": 0,
+          "source": "function get navigation() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": {
+          "name": "set navigation",
+          "length": 1,
+          "source": "function set navigation() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object Navigation]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object Navigation]",
+        "prototype_constructor": "Navigation",
+        "parent_is_object_prototype": false,
+        "parent_constructor": "EventTarget",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "activation",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get activation",
+                "length": 0,
+                "source": "function get activation() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "back",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "back",
+                "length": 0,
+                "source": "function back() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "canGoBack",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get canGoBack",
+                "length": 0,
+                "source": "function get canGoBack() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "canGoForward",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get canGoForward",
+                "length": 0,
+                "source": "function get canGoForward() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "Navigation",
+                "length": 0,
+                "source": "function Navigation() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "currentEntry",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get currentEntry",
+                "length": 0,
+                "source": "function get currentEntry() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "entries",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "entries",
+                "length": 0,
+                "source": "function entries() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "forward",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "forward",
+                "length": 0,
+                "source": "function forward() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "navigate",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "navigate",
+                "length": 1,
+                "source": "function navigate() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "oncurrententrychange",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get oncurrententrychange",
+                "length": 0,
+                "source": "function get oncurrententrychange() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": {
+                "name": "set oncurrententrychange",
+                "length": 1,
+                "source": "function set oncurrententrychange() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "onnavigate",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onnavigate",
+                "length": 0,
+                "source": "function get onnavigate() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": {
+                "name": "set onnavigate",
+                "length": 1,
+                "source": "function set onnavigate() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "onnavigateerror",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onnavigateerror",
+                "length": 0,
+                "source": "function get onnavigateerror() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": {
+                "name": "set onnavigateerror",
+                "length": 1,
+                "source": "function set onnavigateerror() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "onnavigatesuccess",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onnavigatesuccess",
+                "length": 0,
+                "source": "function get onnavigatesuccess() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": {
+                "name": "set onnavigatesuccess",
+                "length": 1,
+                "source": "function set onnavigatesuccess() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "reload",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "reload",
+                "length": 0,
+                "source": "function reload() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "transition",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get transition",
+                "length": 0,
+                "source": "function get transition() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "traverseTo",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "traverseTo",
+                "length": 1,
+                "source": "function traverseTo() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "updateCurrentEntry",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "updateCurrentEntry",
+                "length": 1,
+                "source": "function updateCurrentEntry() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    "offscreenBuffering": {
+      "present": true,
+      "descriptor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get offscreenBuffering",
+          "length": 0,
+          "source": "function get offscreenBuffering() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": {
+          "name": "set offscreenBuffering",
+          "length": 1,
+          "source": "function set offscreenBuffering() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "boolean",
+      "value": true
+    },
+    "open": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "open",
+          "length": 0,
+          "source": "function open() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "open",
+        "length": 0,
+        "source": "function open() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "originAgentCluster": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get originAgentCluster",
+          "length": 0,
+          "source": "function get originAgentCluster() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "boolean",
+      "value": true
+    },
+    "queryLocalFonts": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "queryLocalFonts",
+          "length": 0,
+          "source": "function queryLocalFonts() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "queryLocalFonts",
+        "length": 0,
+        "source": "function queryLocalFonts() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "releaseEvents": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "releaseEvents",
+          "length": 0,
+          "source": "function releaseEvents() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "releaseEvents",
+        "length": 0,
+        "source": "function releaseEvents() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "reportError": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "reportError",
+          "length": 1,
+          "source": "function reportError() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "reportError",
+        "length": 1,
+        "source": "function reportError() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "requestResize": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "requestResize",
+          "length": 0,
+          "source": "function requestResize() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "requestResize",
+        "length": 0,
+        "source": "function requestResize() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "showDirectoryPicker": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "showDirectoryPicker",
+          "length": 0,
+          "source": "function showDirectoryPicker() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "showDirectoryPicker",
+        "length": 0,
+        "source": "function showDirectoryPicker() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "showOpenFilePicker": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "showOpenFilePicker",
+          "length": 0,
+          "source": "function showOpenFilePicker() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "showOpenFilePicker",
+        "length": 0,
+        "source": "function showOpenFilePicker() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "showSaveFilePicker": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "showSaveFilePicker",
+          "length": 0,
+          "source": "function showSaveFilePicker() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "showSaveFilePicker",
+        "length": 0,
+        "source": "function showSaveFilePicker() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "speechSynthesis": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get speechSynthesis",
+          "length": 0,
+          "source": "function get speechSynthesis() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object SpeechSynthesis]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object SpeechSynthesis]",
+        "prototype_constructor": "SpeechSynthesis",
+        "parent_is_object_prototype": false,
+        "parent_constructor": "EventTarget",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "cancel",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "cancel",
+                "length": 0,
+                "source": "function cancel() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "SpeechSynthesis",
+                "length": 0,
+                "source": "function SpeechSynthesis() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "getVoices",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "getVoices",
+                "length": 0,
+                "source": "function getVoices() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "onvoiceschanged",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onvoiceschanged",
+                "length": 0,
+                "source": "function get onvoiceschanged() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": {
+                "name": "set onvoiceschanged",
+                "length": 1,
+                "source": "function set onvoiceschanged() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "pause",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "pause",
+                "length": 0,
+                "source": "function pause() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "paused",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get paused",
+                "length": 0,
+                "source": "function get paused() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "pending",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get pending",
+                "length": 0,
+                "source": "function get pending() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "resume",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "resume",
+                "length": 0,
+                "source": "function resume() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "speak",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "speak",
+                "length": 1,
+                "source": "function speak() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "speaking",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get speaking",
+                "length": 0,
+                "source": "function get speaking() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          }
+        ]
+      }
+    },
+    "styleMedia": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get styleMedia",
+          "length": 0,
+          "source": "function get styleMedia() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object StyleMedia]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object StyleMedia]",
+        "prototype_constructor": "Object",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "matchMedium",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "matchMedium",
+                "length": 0,
+                "source": "function matchMedium() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "type",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get type",
+                "length": 0,
+                "source": "function get type() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          }
+        ]
+      }
+    },
+    "trustedTypes": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get trustedTypes",
+          "length": 0,
+          "source": "function get trustedTypes() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": null
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object TrustedTypePolicyFactory]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object TrustedTypePolicyFactory]",
+        "prototype_constructor": "TrustedTypePolicyFactory",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "TrustedTypePolicyFactory",
+                "length": 0,
+                "source": "function TrustedTypePolicyFactory() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "createPolicy",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "createPolicy",
+                "length": 1,
+                "source": "function createPolicy() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "defaultPolicy",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get defaultPolicy",
+                "length": 0,
+                "source": "function get defaultPolicy() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "emptyHTML",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get emptyHTML",
+                "length": 0,
+                "source": "function get emptyHTML() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "emptyScript",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get emptyScript",
+                "length": 0,
+                "source": "function get emptyScript() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          },
+          {
+            "name": "getAttributeType",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "getAttributeType",
+                "length": 2,
+                "source": "function getAttributeType() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "getPropertyType",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "getPropertyType",
+                "length": 2,
+                "source": "function getPropertyType() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "getTypeMapping",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "getTypeMapping",
+                "length": 0,
+                "source": "function getTypeMapping() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "isHTML",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "isHTML",
+                "length": 1,
+                "source": "function isHTML() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "isScript",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "isScript",
+                "length": 1,
+                "source": "function isScript() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          },
+          {
+            "name": "isScriptURL",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "isScriptURL",
+                "length": 1,
+                "source": "function isScriptURL() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    "viewport": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get viewport",
+          "length": 0,
+          "source": "function get viewport() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        },
+        "set": {
+          "name": "set viewport",
+          "length": 1,
+          "source": "function set viewport() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "object",
+      "namespace": {
+        "tag": "[object Viewport]",
+        "stable": true,
+        "prototype_null": false,
+        "prototype_is_object_prototype": false,
+        "prototype_tag": "[object Viewport]",
+        "prototype_constructor": "Viewport",
+        "parent_is_object_prototype": true,
+        "parent_constructor": "Object",
+        "own_members": [],
+        "prototype_members": [
+          {
+            "name": "constructor",
+            "descriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "function",
+              "writable": true,
+              "type": "function",
+              "function": {
+                "name": "Viewport",
+                "length": 0,
+                "source": "function Viewport() { [native code] }",
+                "prototype": true,
+                "constructable": true
+              }
+            }
+          },
+          {
+            "name": "segments",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get segments",
+                "length": 0,
+                "source": "function get segments() { [native code] }",
+                "prototype": false,
+                "constructable": false
+              },
+              "set": null
+            }
+          }
+        ]
+      }
+    },
+    "webkitCancelAnimationFrame": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "webkitCancelAnimationFrame",
+          "length": 1,
+          "source": "function webkitCancelAnimationFrame() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "webkitCancelAnimationFrame",
+        "length": 1,
+        "source": "function webkitCancelAnimationFrame() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "webkitRequestAnimationFrame": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "webkitRequestAnimationFrame",
+          "length": 1,
+          "source": "function webkitRequestAnimationFrame() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "webkitRequestAnimationFrame",
+        "length": 1,
+        "source": "function webkitRequestAnimationFrame() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "webkitRequestFileSystem": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "webkitRequestFileSystem",
+          "length": 3,
+          "source": "function webkitRequestFileSystem() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "webkitRequestFileSystem",
+        "length": 3,
+        "source": "function webkitRequestFileSystem() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "webkitResolveLocalFileSystemURL": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "webkitResolveLocalFileSystemURL",
+          "length": 2,
+          "source": "function webkitResolveLocalFileSystemURL() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 0,
+      "type": "function",
+      "function": {
+        "name": "webkitResolveLocalFileSystemURL",
+        "length": 2,
+        "source": "function webkitResolveLocalFileSystemURL() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    },
+    "when": {
+      "present": true,
+      "descriptor": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "function",
+        "writable": true,
+        "type": "function",
+        "function": {
+          "name": "when",
+          "length": 1,
+          "source": "function when() { [native code] }",
+          "prototype": false,
+          "constructable": false
+        }
+      },
+      "owner_depth": 3,
+      "type": "function",
+      "function": {
+        "name": "when",
+        "length": 1,
+        "source": "function when() { [native code] }",
+        "prototype": false,
+        "constructable": false
+      }
+    }
+  }
+}

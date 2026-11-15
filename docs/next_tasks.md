@@ -1,5 +1,19 @@
 # Next Tasks
 
+**Latest release verified (`2026-11-15`): combined PRES-01/PRES-02/PRES-03 and WIN-MON-01.** Build source `40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff` (tree `b7d518ecc9ab46a30812622041bd48f3c28ab1aa`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Each lane passes the combined **257-test focused gate**; full Linux/macOS are **2547 passed, 2 skipped**, Windows **2545 passed, 4 skipped**. Runs: Linux `43704599952`, Windows `43704600017`, macOS `43704687043`. Fixed V8 15.0.245.19 caches are reused; the host extension/wheels are rebuilt. Required V8 checks pass, macOS source pins/restore are verified, and branch protection is unchanged. **Latest shared SDK deployment remains BIND-01**; no environment installation or version-tag publication was performed. Source/run/artifact evidence and limits: `docs/bom_release_report.md`.
+
+**Included in the verified combined release — WIN-MON-01 (`2026-11-15`).** PRES-03 monitoring gaps are closed for 49 mapped global reads, supported writes and all 22 callable globals. Shell methods enter both watch and structured call channels; all 127 current methods pass a controlled sweep. Native data descriptors, stored values, function shapes/identities and existing API behavior are preserved. Actual-event regressions add 56 cases; 550 focused pass, full macOS arm64/Python 3.13 is **2547 passed, 2 skipped**. Boundaries/report/ledger: `docs/window_monitoring.md`, `docs/window_monitoring_report.md`, `docs/window_monitoring_coverage.json`. The combined release matrix is verified above; shared SDK deployment remains BIND-01. Next coverage remains Navigator/BOM subobjects; further DOM nodes remain deferred.
+
+**Previous local record — PRES-03 (`2026-11-15`); now included in the verified combined release.** At the user's explicit request, all 49 missing ordinary Window names now exist with reference types/native function shapes and prototype extension paths. Ordinary coverage is **128/128**, handlers **125/125**; the separate 821 interface entries are excluded. Backend shells explicitly fail where execution is absent; prefixed rAF reuses scheduling and event/reportError have bounded behavior. The user authorizes re-exposing named, non-constructable native open with unsupported execution. Local checks pass **526 focused**, **28 profile/trace guards**, full macOS arm64/Python 3.13 **2491 passed, 2 skipped**. Shared SDK remains BIND-01; the original report records local-only evidence; the later combined release is verified above and shared deployment is unchanged. Boundary/report/ledger: `docs/presence_03_window.md`, `docs/presence_03_report.md`, `docs/presence_03_api_delta.json`. Next BOM presence work is Navigator's 40 missing top-level names and related subobjects; further DOM nodes remain deferred.
+
+**Current priority — BOM first (`2026-11-15`, user direction).** Prioritize Window, Location, Navigator and History, then related BOM objects. PRES-03 completes ordinary Window name presence; continue Navigator/BOM subobjects while tracking Window shell behavior separately; further DOM node operations and the previously proposed Web-data batch are deferred. Location and History have no missing names in the current fixed inventory, so protect their existing state/URL/configuration behavior and repair evidenced gaps. Window's DOM/graphics/device constructor entries are not automatically BOM work. Concrete queue/counts/boundaries: `docs/bom_coverage_plan.md`. This overrides older “next DOM/Web-data” recommendations below; PRES-01/PRES-02 local acceptance and BIND-01 release/deployment status are unchanged.
+
+**Previous local record — PRES-02 (`2026-11-15`); now included in the verified combined release.** DOM logic/reflection now covers live dataset/attributes, Attr/NamedNodeMap, namespace creation/attributes/live tag collections, root/normalize/position helpers, import/adopt and inert HTML DOMParser. Shared native prototypes and cross-document wrapper/listener/view/observer ownership are covered by 37 new cases. macOS arm64/Python 3.13 passes **489 focused, 1 xfailed** and full **2454 passed, 2 skipped, 1 xfailed**. Boundary/report/delta: `docs/presence_02_dom.md`, `docs/presence_02_report.md`, `docs/presence_02_api_delta.json`. Shared SDK remains BIND-01; the later combined release is verified above; shared deployment is unchanged. The newer BOM-first direction above supersedes the earlier Web-data recommendation. Further DOM/Web-data coverage is deferred; existing limits remain recorded.
+
+**Previous local record — PRES-01 (`2026-11-15`); now included in the verified combined release.** The first BOM/event coverage batch implements Navigator identity/activation, Location ancestorOrigins, Event/UIEvent, reference on* attributes, eight Console operations and Screen isExtended/onchange. Shared native interface prototypes, Event/UIEvent constructor inheritance and generation cleanup are in place. Boundary: `docs/presence_01_bom_events.md`; acceptance and remaining limits: `docs/presence_01_report.md`; presence delta: `docs/presence_01_api_delta.json`. Use focused checks and one local full suite during development, then group release verification later. The following DOM batch is PRES-02 above; shared SDK remains BIND-01.
+
+**Direction update — API breadth first (`2026-11-15`).** The user now prioritizes missing browser API families before further shape/metadata polishing. The measured Chrome157 versus BIND-01 SDK baseline is `docs/dom_bom_gaps.md`, with all missing names and counts in `docs/browser_api_inventory.json`. Select functional API-family batches from that inventory; name presence, explicit unsupported/no-op behavior and partial implementation remain separate statuses. Existing History/named/binding regressions stay protected. PRES-01 closes the base Event without-new gap in the local candidate; the other known BIND behavior limitations remain recorded rather than automatically becoming the next priority.
+
 **BIND-01 release/deployment verified (`2026-11-15`).** Source `f015745` passes 12 lanes and the unified 87-test gate; Linux/macOS report **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Backed-up shared iv8-test is upgraded and verified with the full suite and original cached EPUB offline. Mainline integration is PR #30; receipts are in `docs/native_binding_restore_report.md`. The remaining concrete behavior gaps (null-this normalization, object-key double conversion, base Event without-new) require a separate slice, not another metadata port. M11-53 remains the next numbered feature; stage 4 stays held.
 
 **NAMED-01 release verified (`2026-11-15`).** Source `374c81b` restores Window/form named access and preserves History. All 12 release lanes pass 56 focused tests, then Linux/macOS **2340 passed, 2 skipped, 1 xfailed** or Windows **2338 passed, 4 skipped, 1 xfailed**. Mainline integration is PR #29; exact receipts are in `docs/named_access_restore_report.md`. Preserve this combined regression gate for future SDK replacement. M11-53 stays the next numbered feature; stage 4 remains held. The separate candidate callback-metadata diff was subsequently restored by BIND-01; its behavior limitations remain explicit.
@@ -63,14 +77,22 @@ Last reviewed: `2026-11-15`
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — after BIND-01 deployment (`2026-11-15`)
+## Current execution order — after combined release verification (`2026-11-15`)
+
+The user's latest BOM-first direction and `docs/bom_coverage_plan.md` take precedence
+over the older per-slice queue below. DOM foundations are locally accepted;
+continue Navigator/BOM subobject coverage, with completed Window exposure and Location/History regressions protected.
+Further DOM-node and Web-data batches are deferred. M11-53 remains a numbered candidate rather than an
+automatic next task; detailed function/prototype conformance follows basic API
+coverage. Network/rendering/device subsystems still need explicit boundaries.
 
 Offline diagnostics, caller configuration alignment, named access and remaining
 candidate binding metadata are implemented. The combined release passes all 12
 lanes and is installed with backup/identity/offline receipts. Keep all three
 feature groups in the focused gate before future SDK replacement. The observed
-receiver/key-coercion/base-Event behavior gaps need their own approved boundary. M11-53 focus/visibility remains the next
-numbered feature. Navigator/permissions repairs need observed API evidence;
+receiver/key-coercion behavior gaps stay recorded; PRES-01 repairs base Event
+construction in the local candidate. M11-53 focus/visibility remains a numbered
+candidate. Navigator/permissions repairs need observed API evidence;
 Page time-model changes, product networking, iframe/Worker and graphics remain
 separate proposals.
 

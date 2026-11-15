@@ -25,6 +25,14 @@ serialization_attributes(const DomNode* node) {
     std::sort(raw.begin(), raw.end(),
               [](const auto& a, const auto& b) { return a.first < b.first; });
     attributes.insert(attributes.end(), raw.begin(), raw.end());
+    // Null-namespace attributes keep the established id/class/map ordering and
+    // value source. Namespaced attributes have one canonical value in their
+    // metadata record, so they must also participate in serialization.
+    for (const auto& attribute : node->attribute_nodes) {
+        if (!attribute->namespace_uri.empty() && attribute->owner_element == node) {
+            attributes.emplace_back(attribute->qualified_name, attribute->value);
+        }
+    }
     return attributes;
 }
 

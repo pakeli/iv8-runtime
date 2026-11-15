@@ -244,8 +244,8 @@ def test_no_out_of_scope_navigation_surface():
         # NOTE: parentElement / firstElementChild / lastElementChild /
         # childElementCount were added in M4-B-1 (test_structure_navigation.py);
         # contains in M4-B-2 (test_contains.py); raw previousSibling / nextSibling
-        # in M11-13. They are intentionally no longer part of this frozen-out list.
+        # in M11-13. PRES-02 now supplies Node relation helpers too.
         for member in ("compareDocumentPosition", "getRootNode"):
-            assert page.eval(f"typeof {el}.{member}") == "undefined"
+            assert page.eval(f"typeof {el}.{member}") == "function"
         assert page.eval(f"{el}.previousSibling === null") is True
         assert page.eval(f"{el}.nextSibling === null") is True

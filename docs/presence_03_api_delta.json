@@ -1,0 +1,468 @@
+{
+  "date": "2026-11-15",
+  "status": "implemented_local_acceptance_passed_release_pending",
+  "baseline_source": "63282165d29e46c61b8057846dff24911caf7859",
+  "scope": "Only 49 ordinary Window members; separate 821 global interface entries excluded. Presence is not backend implementation.",
+  "native_sha256": "92f84ac03a7f13bab35c999b704645718a6f1349291c9f706c0fd449bc13a36f",
+  "probe_sha256": "e25097de56865629168f2d48fc55fb48f881f62f540198ab7ad1bd83fdba3060",
+  "objects": {
+    "window": {
+      "before_exposed": 310,
+      "after_exposed": 359,
+      "before_missing": 870,
+      "after_missing": 821,
+      "newly_exposed": [
+        "CSS",
+        "GPUBufferUsage",
+        "GPUColorWrite",
+        "GPUMapMode",
+        "GPUShaderStage",
+        "GPUTextureUsage",
+        "NodeFilter",
+        "PERSISTENT",
+        "TEMPORARY",
+        "caches",
+        "captureEvents",
+        "chrome",
+        "close",
+        "cookieStore",
+        "crashReport",
+        "createImageBitmap",
+        "credentialless",
+        "customElements",
+        "documentPictureInPicture",
+        "event",
+        "external",
+        "fence",
+        "fetchLater",
+        "find",
+        "getComputedStyle",
+        "getScreenDetails",
+        "getSelection",
+        "indexedDB",
+        "launchQueue",
+        "navigation",
+        "offscreenBuffering",
+        "open",
+        "originAgentCluster",
+        "queryLocalFonts",
+        "releaseEvents",
+        "reportError",
+        "requestResize",
+        "showDirectoryPicker",
+        "showOpenFilePicker",
+        "showSaveFilePicker",
+        "speechSynthesis",
+        "styleMedia",
+        "trustedTypes",
+        "viewport",
+        "webkitCancelAnimationFrame",
+        "webkitRequestAnimationFrame",
+        "webkitRequestFileSystem",
+        "webkitResolveLocalFileSystemURL",
+        "when"
+      ],
+      "removed": []
+    },
+    "location": {
+      "before_exposed": 15,
+      "after_exposed": 15,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "document": {
+      "before_exposed": 212,
+      "after_exposed": 212,
+      "before_missing": 89,
+      "after_missing": 89,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "navigator": {
+      "before_exposed": 30,
+      "after_exposed": 30,
+      "before_missing": 40,
+      "after_missing": 40,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "screen": {
+      "before_exposed": 14,
+      "after_exposed": 14,
+      "before_missing": 1,
+      "after_missing": 1,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "history": {
+      "before_exposed": 8,
+      "after_exposed": 8,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "performance": {
+      "before_exposed": 9,
+      "after_exposed": 9,
+      "before_missing": 13,
+      "after_missing": 13,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "crypto": {
+      "before_exposed": 2,
+      "after_exposed": 2,
+      "before_missing": 1,
+      "after_missing": 1,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "console": {
+      "before_exposed": 22,
+      "after_exposed": 22,
+      "before_missing": 3,
+      "after_missing": 3,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "localStorage": {
+      "before_exposed": 6,
+      "after_exposed": 6,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "sessionStorage": {
+      "before_exposed": 6,
+      "after_exposed": 6,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "visualViewport": {
+      "before_exposed": 12,
+      "after_exposed": 12,
+      "before_missing": 2,
+      "after_missing": 2,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "screen.orientation": {
+      "before_exposed": 2,
+      "after_exposed": 2,
+      "before_missing": 7,
+      "after_missing": 7,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "navigator.connection": {
+      "before_exposed": 4,
+      "after_exposed": 4,
+      "before_missing": 5,
+      "after_missing": 5,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "navigator.permissions": {
+      "before_exposed": 1,
+      "after_exposed": 1,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "navigator.storage": {
+      "before_exposed": 3,
+      "after_exposed": 3,
+      "before_missing": 1,
+      "after_missing": 1,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "scheduler": {
+      "before_exposed": 1,
+      "after_exposed": 1,
+      "before_missing": 1,
+      "after_missing": 1,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "element": {
+      "before_exposed": 209,
+      "after_exposed": 209,
+      "before_missing": 160,
+      "after_missing": 160,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "form": {
+      "before_exposed": 221,
+      "after_exposed": 221,
+      "before_missing": 165,
+      "after_missing": 165,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "input": {
+      "before_exposed": 226,
+      "after_exposed": 226,
+      "before_missing": 202,
+      "after_missing": 202,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "canvas": {
+      "before_exposed": 212,
+      "after_exposed": 212,
+      "before_missing": 172,
+      "after_missing": 172,
+      "newly_exposed": [],
+      "removed": []
+    },
+    "event": {
+      "before_exposed": 22,
+      "after_exposed": 22,
+      "before_missing": 0,
+      "after_missing": 0,
+      "newly_exposed": [],
+      "removed": []
+    }
+  },
+  "window_categories": {
+    "ordinary": {
+      "reference": 128,
+      "present": 128,
+      "missing": 0
+    },
+    "event_handlers": {
+      "reference": 125,
+      "present": 125,
+      "missing": 0
+    },
+    "interface_entries": {
+      "reference": 927,
+      "present": 106,
+      "missing": 821
+    }
+  },
+  "local_validation": {
+    "platform": "macOS arm64",
+    "python": "3.13",
+    "focused": {
+      "passed": 526
+    },
+    "profile_and_trace_guards": {
+      "passed": 28
+    },
+    "full": {
+      "passed": 2491,
+      "skipped": 2,
+      "xfailed": 0
+    },
+    "release_matrix": "not_run",
+    "shared_sdk": "unchanged_BIND-01"
+  },
+  "window_entry_status": {
+    "CSS": {
+      "state": "bounded_namespace",
+      "javascript_type": "object"
+    },
+    "GPUBufferUsage": {
+      "state": "constant_namespace",
+      "javascript_type": "object"
+    },
+    "GPUColorWrite": {
+      "state": "constant_namespace",
+      "javascript_type": "object"
+    },
+    "GPUMapMode": {
+      "state": "constant_namespace",
+      "javascript_type": "object"
+    },
+    "GPUShaderStage": {
+      "state": "constant_namespace",
+      "javascript_type": "object"
+    },
+    "GPUTextureUsage": {
+      "state": "constant_namespace",
+      "javascript_type": "object"
+    },
+    "NodeFilter": {
+      "state": "constant_namespace",
+      "javascript_type": "function"
+    },
+    "PERSISTENT": {
+      "state": "profile_value",
+      "javascript_type": "number"
+    },
+    "TEMPORARY": {
+      "state": "profile_value",
+      "javascript_type": "number"
+    },
+    "caches": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "captureEvents": {
+      "state": "profile_noop",
+      "javascript_type": "function"
+    },
+    "chrome": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "close": {
+      "state": "profile_noop",
+      "javascript_type": "function"
+    },
+    "cookieStore": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "crashReport": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "createImageBitmap": {
+      "state": "promise_unsupported",
+      "javascript_type": "function"
+    },
+    "credentialless": {
+      "state": "profile_value",
+      "javascript_type": "boolean"
+    },
+    "customElements": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "documentPictureInPicture": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "event": {
+      "state": "partial_events",
+      "javascript_type": "undefined"
+    },
+    "external": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "fence": {
+      "state": "profile_value",
+      "javascript_type": "object"
+    },
+    "fetchLater": {
+      "state": "sync_unsupported",
+      "javascript_type": "function"
+    },
+    "find": {
+      "state": "sync_unsupported",
+      "javascript_type": "function"
+    },
+    "getComputedStyle": {
+      "state": "sync_unsupported",
+      "javascript_type": "function"
+    },
+    "getScreenDetails": {
+      "state": "promise_unsupported",
+      "javascript_type": "function"
+    },
+    "getSelection": {
+      "state": "sync_unsupported",
+      "javascript_type": "function"
+    },
+    "indexedDB": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "launchQueue": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "navigation": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "offscreenBuffering": {
+      "state": "profile_value",
+      "javascript_type": "boolean"
+    },
+    "open": {
+      "state": "sync_unsupported",
+      "javascript_type": "function"
+    },
+    "originAgentCluster": {
+      "state": "profile_value",
+      "javascript_type": "boolean"
+    },
+    "queryLocalFonts": {
+      "state": "promise_unsupported",
+      "javascript_type": "function"
+    },
+    "releaseEvents": {
+      "state": "profile_noop",
+      "javascript_type": "function"
+    },
+    "reportError": {
+      "state": "partial_events",
+      "javascript_type": "function"
+    },
+    "requestResize": {
+      "state": "profile_noop",
+      "javascript_type": "function"
+    },
+    "showDirectoryPicker": {
+      "state": "promise_unsupported",
+      "javascript_type": "function"
+    },
+    "showOpenFilePicker": {
+      "state": "promise_unsupported",
+      "javascript_type": "function"
+    },
+    "showSaveFilePicker": {
+      "state": "promise_unsupported",
+      "javascript_type": "function"
+    },
+    "speechSynthesis": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "styleMedia": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "trustedTypes": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "viewport": {
+      "state": "object_shell",
+      "javascript_type": "object"
+    },
+    "webkitCancelAnimationFrame": {
+      "state": "existing_scheduler",
+      "javascript_type": "function"
+    },
+    "webkitRequestAnimationFrame": {
+      "state": "existing_scheduler",
+      "javascript_type": "function"
+    },
+    "webkitRequestFileSystem": {
+      "state": "sync_unsupported",
+      "javascript_type": "function"
+    },
+    "webkitResolveLocalFileSystemURL": {
+      "state": "sync_unsupported",
+      "javascript_type": "function"
+    },
+    "when": {
+      "state": "sync_unsupported",
+      "javascript_type": "function"
+    }
+  }
+}

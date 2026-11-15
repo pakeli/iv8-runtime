@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -9,12 +10,28 @@
 
 namespace iv8::browser {
 
+struct DomNode;
+
+struct DomAttribute {
+    std::string qualified_name;
+    std::string namespace_uri;
+    std::string prefix;
+    std::string local_name;
+    // Canonical only for namespaced or detached attributes. Attached null-NS
+    // attributes read the element's existing id/class/raw attribute storage.
+    std::string value;
+    DomNode* owner_element = nullptr;
+};
+
 // A minimal HTML node. Only what M2-6/M2-7 queries need — no full DOM.
 struct DomNode {
     // M11-48: node kind. Elements are the default; Text/Comment use `data` as
     // their character data; DocumentFragment is a detached container.
     NodeKind kind = NodeKind::Element;
     std::string tag;                   // lowercased tag name (element only)
+    std::string namespace_uri = "http://www.w3.org/1999/xhtml";
+    std::string prefix;
+    std::string local_name;
     std::string data;                  // M11-48 Text/Comment character data
     std::string id;                    // id attribute value, or ""
     bool has_id = false;               // whether an id attribute was present
@@ -28,6 +45,8 @@ struct DomNode {
     // id/class, which keep their dedicated fields (getAttribute routes those to
     // the fields, everything else to this table). Duplicate names: last wins.
     std::unordered_map<std::string, std::string> attributes;
+    // Ordered identity/namespace metadata; null-namespace values are not copied.
+    std::vector<std::shared_ptr<DomAttribute>> attribute_nodes;
     // M5-3/M5-4 <input>/<textarea>.value runtime slot. Initialized ONCE at
     // parse/create time (<input> from the `value` attribute, <textarea> from its
     // text content), then decoupled: value = ... writes here only. Only meaningful
