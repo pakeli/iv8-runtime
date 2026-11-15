@@ -20,6 +20,9 @@ The public API shape is identical in both build modes: when V8 is linked,
 """
 
 from collections.abc import Mapping
+from copy import deepcopy
+import math
+import re
 from urllib.parse import urljoin
 
 from . import _core
@@ -32,10 +35,10 @@ __all__ = ["Page"]
 # sync with AccessTrace::supported_object_types().
 _ACCESS_TRACE_OBJECT_TYPES = (
     "comment", "connection", "console", "crypto", "document",
-    "document_fragment", "element", "history", "host_object", "host_probe", "location",
-    "media_query_list", "navigator", "orientation", "performance",
+    "document_fragment", "dom_string_list", "element", "history", "host_object", "host_probe", "location",
+    "media_query_list", "navigator", "navigator_ua_data", "orientation", "performance",
     "permission_status", "permissions", "screen", "storage", "storage_manager",
-    "text", "visual_viewport", "window",
+    "text", "user_activation", "visual_viewport", "window",
 )
 
 # M11-1 host-environment baseline. This mapping is the SINGLE source of truth for
@@ -46,6 +49,9 @@ _ACCESS_TRACE_OBJECT_TYPES = (
 # the constants the M2-3 navigator shipped with, so the default page is unchanged.
 _DEFAULT_ENVIRONMENT = {
     "userAgent": "Mozilla/5.0 (compatible; iv8)",
+    "appVersion": "5.0 (compatible; iv8)",
+    "deviceMemory": 8.0,
+    "userAgentData": {},
     "platform": "iv8",
     "language": "en-US",
     "webdriver": False,
@@ -88,6 +94,7 @@ _DEFAULT_ENVIRONMENT = {
 # True and a stray boolean would otherwise pass as a dimension).
 _STR_KEYS = (
     "userAgent",
+    "appVersion",
     "platform",
     "language",
     "appName",
@@ -120,13 +127,16 @@ _INT_KEYS = (
     "screenX",
     "screenY",
 )
-_FLOAT_KEYS = ("devicePixelRatio", "connectionDownlink")
+_FLOAT_KEYS = ("devicePixelRatio", "connectionDownlink", "deviceMemory")
 _LIST_STR_KEYS = ("languages",)
 
 # M11-17: nested environment sections -> flat native keys.
 _NESTED_ENVIRONMENT = {
     "navigator": {
         "userAgent": "userAgent",
+        "appVersion": "appVersion",
+        "deviceMemory": "deviceMemory",
+        "userAgentData": "userAgentData",
         "platform": "platform",
         "language": "language",
         "webdriver": "webdriver",
@@ -170,6 +180,70 @@ _NESTED_ENVIRONMENT = {
 }
 
 
+def _normalize_user_agent_data(value, user_agent, platform):
+    """Resolve caller metadata only; never inspect the machine or invent a capture."""
+    if not isinstance(value, Mapping):
+        raise TypeError("environment['userAgentData'] must be a mapping")
+    string_keys = ("platform", "architecture", "bitness", "model",
+                   "platformVersion", "uaFullVersion")
+    allowed = set(string_keys) | {"brands", "mobile", "fullVersionList", "wow64"}
+    if any(key not in allowed for key in value):
+        raise TypeError("unknown userAgentData configuration key")
+    match = re.search(r"(?:^|[ ()])(?:Chrome|Chromium|CriOS)/([0-9]+(?:\.[0-9]+)*)", user_agent)
+    version = match.group(1) if match else ""
+    major = version.split(".")[0] if version else ""
+    brands = ([{"brand": "Chromium", "version": major},
+               {"brand": "Google Chrome", "version": major}] if major else [])
+    if re.search(r"\b(?:iPhone|iPad|iPod)\b", user_agent) or platform in {"iPhone", "iPad", "iPod"}:
+        ua_platform = "iOS"
+    elif "Android" in user_agent or platform == "Android":
+        ua_platform = "Android"
+    elif "Windows NT" in user_agent or platform.lower() in {"win32", "win64", "windows"}:
+        ua_platform = "Windows"
+    elif "Macintosh" in user_agent or "Mac OS X" in user_agent or platform in {"MacIntel", "MacPPC", "macOS"}:
+        ua_platform = "macOS"
+    elif "Linux" in user_agent or platform.startswith("Linux"):
+        ua_platform = "Linux"
+    else:
+        ua_platform = ""
+    resolved = {
+        "brands": brands,
+        "mobile": bool(re.search(r"\b(?:Mobile|iPhone|iPod)\b", user_agent)),
+        "platform": ua_platform,
+        "architecture": "", "bitness": "", "model": "", "platformVersion": "",
+        "uaFullVersion": version,
+        "fullVersionList": [{"brand": item["brand"], "version": version} for item in brands],
+        "wow64": False,
+    }
+    for key in string_keys:
+        if key in value:
+            if not isinstance(value[key], str):
+                raise TypeError("userAgentData string field has an invalid type")
+            resolved[key] = value[key]
+    for key in ("mobile", "wow64"):
+        if key in value:
+            if type(value[key]) is not bool:
+                raise TypeError("userAgentData boolean field has an invalid type")
+            resolved[key] = value[key]
+    for key in ("brands", "fullVersionList"):
+        if key in value:
+            items = value[key]
+            if not isinstance(items, list) or any(
+                not isinstance(item, Mapping) or set(item) != {"brand", "version"}
+                or not isinstance(item["brand"], str) or not isinstance(item["version"], str)
+                for item in items
+            ):
+                raise TypeError("userAgentData brands must be a list of brand/version string mappings")
+            resolved[key] = [{"brand": item["brand"], "version": item["version"]} for item in items]
+    if "brands" in value and "fullVersionList" not in value:
+        resolved["fullVersionList"] = deepcopy(resolved["brands"])
+    return resolved
+
+
+_DEFAULT_ENVIRONMENT["userAgentData"] = _normalize_user_agent_data(
+    {}, _DEFAULT_ENVIRONMENT["userAgent"], _DEFAULT_ENVIRONMENT["platform"])
+
+
 def _normalize_environment(environment):
     """Validate the M11-1 ``environment`` input and return a complete environment.
 
@@ -185,14 +259,15 @@ def _normalize_environment(environment):
     - an unknown key raises ``TypeError`` (the key set is closed);
     - a value of the wrong type for its key raises ``TypeError``.
 
-    ``devicePixelRatio`` accepts an ``int`` or a ``float`` and is stored as
-    ``float``; ``languages`` requires a non-empty list of non-empty strings.
-    Every other key requires its exact type.
+    Numeric ratio/downlink/device-memory fields accept ``int`` or ``float``;
+    ``languages`` requires a non-empty list of non-empty strings. Device memory
+    must be finite and positive. ``userAgentData`` is a closed metadata mapping,
+    derived from the configured UA/platform when omitted. No host measurements
+    or browser-capture values are inferred.
     """
-    resolved = dict(_DEFAULT_ENVIRONMENT)
-    resolved["languages"] = list(resolved["languages"])
+    resolved = deepcopy(_DEFAULT_ENVIRONMENT)
     if environment is None:
-        return resolved
+        environment = {}
     if not isinstance(environment, Mapping):
         raise TypeError("environment must be a mapping")
     # M11-17: accept the nested navigator/screen/window form (or the original
@@ -252,6 +327,12 @@ def _normalize_environment(environment):
                     f"environment[{key!r}] must be a non-empty list of str"
                 )
             resolved[key] = list(value)
+    if "appVersion" not in environment:
+        resolved["appVersion"] = resolved["userAgent"].removeprefix("Mozilla/")
+    if not math.isfinite(resolved["deviceMemory"]) or resolved["deviceMemory"] <= 0:
+        raise TypeError("environment['deviceMemory'] must be finite and positive")
+    resolved["userAgentData"] = _normalize_user_agent_data(
+        environment.get("userAgentData", {}), resolved["userAgent"], resolved["platform"])
     return resolved
 
 
@@ -320,14 +401,15 @@ class Page:
     in one mapping is rejected. M11-24..M11-27 extend both forms with navigator
     metadata/identity, screen depth, and outer window geometry; M11-35 adds
     navigator touch/PDF/DNT/connection metadata and screen avail offsets
-    (36 flat keys total).
+    (39 flat keys including the configured UA identity additions).
     """
 
     @staticmethod
     def get_defaults() -> dict:
         """M11-17: return the nested default environment template.
 
-        Sections: ``navigator`` (``userAgent`` / ``platform`` / ``language`` /
+        Sections: ``navigator`` (``userAgent`` / ``appVersion`` / ``deviceMemory`` /
+        ``userAgentData`` / ``platform`` / ``language`` /
         ``webdriver`` / ``languages`` / ``onLine`` / ``cookieEnabled`` /
         ``hardwareConcurrency`` / ``appName`` / ``appCodeName`` / ``product`` /
         ``vendor`` / ``vendorSub`` / ``productSub`` / ``maxTouchPoints`` /
@@ -343,6 +425,9 @@ class Page:
         return {
             "navigator": {
                 "userAgent": _DEFAULT_ENVIRONMENT["userAgent"],
+                "appVersion": _DEFAULT_ENVIRONMENT["appVersion"],
+                "deviceMemory": _DEFAULT_ENVIRONMENT["deviceMemory"],
+                "userAgentData": deepcopy(_DEFAULT_ENVIRONMENT["userAgentData"]),
                 "platform": _DEFAULT_ENVIRONMENT["platform"],
                 "language": _DEFAULT_ENVIRONMENT["language"],
                 "webdriver": _DEFAULT_ENVIRONMENT["webdriver"],
@@ -397,7 +482,7 @@ class Page:
         existing page, or a later ``Page()``. Its keys are exactly the keys
         ``Page(environment=...)`` accepts:
 
-        Navigator values: ``userAgent`` / ``platform`` / ``language`` /
+        Navigator values: ``userAgent`` / ``appVersion`` / ``platform`` / ``language`` /
         ``appName`` / ``appCodeName`` / ``product`` / ``vendor`` / ``vendorSub``
         / ``productSub`` (``str``), ``webdriver`` / ``onLine`` /
         ``cookieEnabled`` (``bool``), ``languages`` (non-empty ``list[str]``),
@@ -421,9 +506,7 @@ class Page:
         callable on the class (no page needed) and in a V8-free skeleton build, since
         it touches no native state.
         """
-        env = dict(_DEFAULT_ENVIRONMENT)
-        env["languages"] = list(env["languages"])
-        return env
+        return deepcopy(_DEFAULT_ENVIRONMENT)
 
     def __init__(self, environment=None) -> None:
         # M11-1: validate and resolve the environment BEFORE the V8-link check and

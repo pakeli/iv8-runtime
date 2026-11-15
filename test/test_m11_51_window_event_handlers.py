@@ -218,7 +218,7 @@ def test_handlers_reset_between_generations():
 
 
 @on_only
-def test_unlisted_onclick_stays_an_ordinary_property():
+def test_onclick_is_a_registered_handler_after_presence_batch():
     with iv8.Page() as page:
         page.load(EMPTY, BASE)
         assert page.eval(
@@ -230,4 +230,4 @@ def test_unlisted_onclick_stays_an_ordinary_property():
               return [typeof window.onclick, __hits].join('|');
             })();
             """
-        ) == "function|0"
+        ) == "function|1"

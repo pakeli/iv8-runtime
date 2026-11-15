@@ -128,12 +128,12 @@ def test_js_event_surface_not_exceeded():
     with iv8.Page() as page:
         page.load(html="<html><body></body></html>", base_url=BASE)
         # M4-A-7 added bubbles + stopPropagation; M11-6 adds event subclasses and
-        # M11-9 adds cancellation. Capture-phase/derived fields stay absent.
+        # M11-9 adds cancellation; PRES-01 adds composed and virtual timestamps.
         assert page.eval("typeof new Event('e').bubbles") == "boolean"
         assert page.eval("typeof new Event('e').stopPropagation") == "function"
         assert page.eval("typeof CustomEvent") == "function"
-        for member in ("composed", "timeStamp"):
-            assert page.eval(f"typeof new Event('e').{member}") == "undefined"
+        assert page.eval("typeof new Event('e').composed") == "boolean"
+        assert page.eval("typeof new Event('e').timeStamp") == "number"
         assert page.eval("new Event('e').eventPhase") == 0
 
 

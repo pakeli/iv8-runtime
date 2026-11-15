@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "iv8/web_method.h"
+#include "browser/host/event_handler_names.h"
 
 namespace iv8 {
 namespace {
@@ -30,6 +31,8 @@ std::string_view parent_interface(std::string_view name) {
         {"DocumentFragment", "Node"}, {"Screen", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
+        {"UIEvent", "Event"}, {"CustomEvent", "Event"}, {"MessageEvent", "Event"},
+        {"MouseEvent", "UIEvent"}, {"KeyboardEvent", "UIEvent"}, {"FocusEvent", "UIEvent"},
     };
     const auto found = parents.find(name);
     if (found != parents.end()) return found->second;
@@ -167,6 +170,11 @@ std::string web_member_interface(const std::string& name,
     if (web_interface_inherits(name, "Document")) return "Document";
     if (web_interface_inherits(name, "CharacterData")) return "CharacterData";
     if (web_interface_inherits(name, "Element")) {
+        if (!method && web_interface_inherits(name, "HTMLElement")) {
+            const auto owner = browser::event_handler_interface(
+                browser::EventHandlerTarget::kHTMLElement, std::string(member));
+            if (owner[0] != '\0') return owner;
+        }
         if ((method && member_in(member, {"getAttribute", "hasAttribute", "setAttribute",
                 "removeAttribute", "toggleAttribute", "hasAttributes", "getAttributeNames", "getElementsByTagName", "getElementsByClassName",
                 "querySelector", "querySelectorAll", "matches", "closest", "remove", "append",
@@ -258,6 +266,16 @@ bool replace_window_properties_prototype(v8::Isolate* isolate,
         context->Global()->SetPrivate(context, registry_slot, prototype).FromMaybe(false);
 }
 
+bool register_existing_web_interface(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const std::string& name,
+    v8::Local<v8::Function> constructor, v8::Local<v8::Object> prototype) {
+    if (constructor.IsEmpty() || prototype.IsEmpty()) return false;
+    return prototype->SetPrivate(context, registry_key(isolate, "constructor"), constructor)
+               .FromMaybe(false) &&
+        context->Global()->SetPrivate(context, registry_key(isolate, "prototype." + name), prototype)
+               .FromMaybe(false);
+}
+
 void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context,
                              v8::FunctionCallback factory, v8::Local<v8::Value> data) {
     v8::Local<v8::Function> function;
@@ -268,7 +286,7 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "Navigator", "Screen", "Location", "EventTarget", "Node", "Element",
             "HTMLElement", "HTMLDivElement", "HTMLFormElement", "HTMLScriptElement",
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
-            "XMLHttpRequest", "Worker"}) {
+            "XMLHttpRequest", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }
     for (const auto& [tag, name] : html_interfaces()) {

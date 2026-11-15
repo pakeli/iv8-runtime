@@ -72,6 +72,8 @@ if(IV8_LINK_V8)
       src/core/browser/host/element_properties.cpp
       src/core/browser/host/element_methods.cpp
       src/core/browser/host/named_properties.cpp
+      src/core/browser/host/event_handler_names.cpp
+      src/core/browser/host/event_handlers.cpp
       src/core/browser/host/character_data_host.cpp
       src/core/browser/host/document_fragment_host.cpp
       src/core/browser/host/live_collection.cpp
@@ -86,6 +88,7 @@ if(IV8_LINK_V8)
       src/core/browser/dom/form_controls.cpp
       src/core/browser/bom/web_storage.cpp
       src/core/browser/bom/navigator_parts.cpp
+      src/core/browser/bom/navigator_identity.cpp
       src/core/browser/bom/media_query.cpp
       src/core/browser/web/performance.cpp
       src/core/browser/web/structured_clone.cpp

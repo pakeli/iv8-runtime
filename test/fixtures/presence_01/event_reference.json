@@ -1,0 +1,330 @@
+{
+  "browser": "Google Chrome 157.0.8103.51",
+  "conditions": {
+    "origin": {
+      "scheme": "http",
+      "hostname": "127.0.0.1",
+      "path": "/event-reference"
+    },
+    "profile": "fresh temporary headless; removed after capture",
+    "network": "loopback only; background disabled and non-loopback DNS blocked",
+    "os": "macOS arm64"
+  },
+  "probe_sha256": "af4941779ce84115085a06a12baf5cd6f0a5ad481494133321d11f9318030c4d",
+  "result": {
+    "eventPrototype": {
+      "NONE": {
+        "enumerable": true,
+        "configurable": false,
+        "writable": false,
+        "value": 0
+      },
+      "CAPTURING_PHASE": {
+        "enumerable": true,
+        "configurable": false,
+        "writable": false,
+        "value": 1
+      },
+      "AT_TARGET": {
+        "enumerable": true,
+        "configurable": false,
+        "writable": false,
+        "value": 2
+      },
+      "BUBBLING_PHASE": {
+        "enumerable": true,
+        "configurable": false,
+        "writable": false,
+        "value": 3
+      },
+      "composed": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get composed",
+          "length": 0,
+          "source": "function get composed() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": null
+      },
+      "timeStamp": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get timeStamp",
+          "length": 0,
+          "source": "function get timeStamp() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": null
+      },
+      "srcElement": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get srcElement",
+          "length": 0,
+          "source": "function get srcElement() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": null
+      },
+      "cancelBubble": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get cancelBubble",
+          "length": 0,
+          "source": "function get cancelBubble() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": {
+          "name": "set cancelBubble",
+          "length": 1,
+          "source": "function set cancelBubble() { [native code] }",
+          "ownPrototype": false
+        }
+      },
+      "returnValue": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get returnValue",
+          "length": 0,
+          "source": "function get returnValue() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": {
+          "name": "set returnValue",
+          "length": 1,
+          "source": "function set returnValue() { [native code] }",
+          "ownPrototype": false
+        }
+      },
+      "initEvent": {
+        "enumerable": true,
+        "configurable": true,
+        "writable": true,
+        "value": {
+          "name": "initEvent",
+          "length": 1,
+          "source": "function initEvent() { [native code] }",
+          "ownPrototype": false
+        }
+      },
+      "composedPath": {
+        "enumerable": true,
+        "configurable": true,
+        "writable": true,
+        "value": {
+          "name": "composedPath",
+          "length": 0,
+          "source": "function composedPath() { [native code] }",
+          "ownPrototype": false
+        }
+      }
+    },
+    "constructor": {
+      "NONE": {
+        "enumerable": true,
+        "configurable": false,
+        "writable": false,
+        "value": 0
+      },
+      "CAPTURING_PHASE": {
+        "enumerable": true,
+        "configurable": false,
+        "writable": false,
+        "value": 1
+      },
+      "AT_TARGET": {
+        "enumerable": true,
+        "configurable": false,
+        "writable": false,
+        "value": 2
+      },
+      "BUBBLING_PHASE": {
+        "enumerable": true,
+        "configurable": false,
+        "writable": false,
+        "value": 3
+      }
+    },
+    "isTrusted": {
+      "enumerable": true,
+      "configurable": false,
+      "get": {
+        "name": "get isTrusted",
+        "length": 0,
+        "source": "function get isTrusted() { [native code] }",
+        "ownPrototype": false
+      },
+      "set": null
+    },
+    "uiPrototype": {
+      "view": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get view",
+          "length": 0,
+          "source": "function get view() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": null
+      },
+      "detail": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get detail",
+          "length": 0,
+          "source": "function get detail() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": null
+      },
+      "which": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get which",
+          "length": 0,
+          "source": "function get which() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": null
+      },
+      "sourceCapabilities": {
+        "enumerable": true,
+        "configurable": true,
+        "get": {
+          "name": "get sourceCapabilities",
+          "length": 0,
+          "source": "function get sourceCapabilities() { [native code] }",
+          "ownPrototype": false
+        },
+        "set": null
+      },
+      "initUIEvent": {
+        "enumerable": true,
+        "configurable": true,
+        "writable": true,
+        "value": {
+          "name": "initUIEvent",
+          "length": 1,
+          "source": "function initUIEvent() { [native code] }",
+          "ownPrototype": false
+        }
+      }
+    },
+    "ui": {
+      "constructor": {
+        "name": "UIEvent",
+        "length": 1,
+        "source": "function UIEvent() { [native code] }",
+        "ownPrototype": true
+      },
+      "prototypeParent": true,
+      "subclasses": [
+        {
+          "name": "MouseEvent",
+          "inherits": true
+        },
+        {
+          "name": "KeyboardEvent",
+          "inherits": true
+        },
+        {
+          "name": "FocusEvent",
+          "inherits": true
+        }
+      ],
+      "defaults": {
+        "view": null,
+        "detail": 0,
+        "which": 0,
+        "sourceCapabilities": null
+      },
+      "valueOf": {
+        "detail": 7,
+        "view": true
+      },
+      "toString": {
+        "detail": 7,
+        "view": true
+      },
+      "invalidViewAtomic": {
+        "error": "TypeError",
+        "type": "before",
+        "detail": 2
+      },
+      "specific": {
+        "mouse": 1,
+        "mouseButton2": 3,
+        "key": 0
+      }
+    },
+    "before": {
+      "composed": true,
+      "isTrusted": false,
+      "srcElement": null,
+      "path": [],
+      "returnValue": true,
+      "cancelBubble": false,
+      "stampNonnegative": true
+    },
+    "during": {
+      "path": [
+        "div",
+        "body",
+        "html",
+        "document",
+        "window"
+      ],
+      "srcElement": true,
+      "currentTarget": true,
+      "afterLegacy": {
+        "type": "synthetic",
+        "defaultPrevented": true,
+        "returnValue": false,
+        "cancelBubble": true
+      }
+    },
+    "dispatchResult": false,
+    "after": {
+      "path": [],
+      "srcElement": true,
+      "currentTarget": null,
+      "cancelBubble": false
+    },
+    "afterInit": {
+      "srcElementRetained": true,
+      "timeStampRetained": true,
+      "type": "reset",
+      "bubbles": false,
+      "cancelable": false,
+      "defaultPrevented": false,
+      "composed": true,
+      "srcElement": {},
+      "path": []
+    },
+    "preStopped": {
+      "ran": false,
+      "cancelBubble": false
+    }
+  },
+  "schema_version": 1,
+  "probe_file": "event_probe.js",
+  "source_capture": {
+    "path": "data/presence-01-2026-11-15/event-reference/chrome.json",
+    "sha256": "9bf169cb25c45bf272831cc6c9c9b328e48f302a4e9547536de4e1cb9db81736"
+  },
+  "normalization": {
+    "removed": [
+      "ephemeral loopback port"
+    ],
+    "result": "unchanged from source capture"
+  }
+}

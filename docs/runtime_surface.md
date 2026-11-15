@@ -1,5 +1,16 @@
 # iv8-runtime Runtime Surface Index
 
+**Latest implemented local candidate (`2026-11-15`): PRES-01.** Configured
+Navigator identity/UAData, inactive UserActivation, empty ancestorOrigins,
+UIEvent/Event additions, shared IDL handlers, Console additions and Screen
+metadata are implemented for the approved offline slice. New interface members
+use the unified native prototype registry, with per-generation ownership and
+cleanup. Local acceptance passes **447 focused, 1 xfailed** and the full
+macOS arm64/Python 3.13 suite **2417 passed, 2 skipped, 1 xfailed**; no complete release matrix
+or shared SDK replacement has been performed for this batch. **Latest
+release/deployment verified remains BIND-01 below.** Boundary:
+`docs/presence_01_bom_events.md` / `docs/presence_01_report.md`.
+
 **Latest release/deployment verified (`2026-11-15`): BIND-01.** Existing Reflect/Object wrappers and Performance/Crypto operations expose captured native names/arities without construction/own prototype; six Event-family constructors expose length one while retaining construction/inheritance. Original callbacks/lifetimes, History and named access remain intact. Source `f015745` passes 12 lanes with 87 focused tests; full suites are Linux/macOS **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Shared SDK is backed up, upgraded and verified. Null-this, side-effecting key conversion and base Event without-new remain explicit behavior gaps; metadata parity is not full semantic transparency. Boundary/report: `docs/native_binding_restore.md` / `docs/native_binding_restore_report.md`.
 
 **Previous release verified (`2026-11-15`): NAMED-01.** Source `374c81b` restores native WindowProperties active-document ID/name resolution and form control name/id access, inherited-member masking and bounded past names, alongside History. All 12 release lanes pass 56 focused tests; Linux/macOS full suites report **2340 passed, 2 skipped, 1 xfailed**, Windows **2338 passed, 4 skipped, 1 xfailed**. Duplicate matches use live collections; RadioNodeList remains a gap. No new Python export. Boundary/report: `docs/named_access_restore.md` / `docs/named_access_restore_report.md`.
@@ -206,7 +217,7 @@ milestone.
 | `event_loop_time_ms` | M11-29, M11-30 | read-only per-generation virtual clock advanced by timer/frame due times; reset by `load()` |
 | `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
-| `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27, M11-35 | optional read-only host-environment baseline; accepts the flat 36-key form or nested `navigator` / `screen` / `window` sections |
+| `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27, M11-35, PRES-01 local candidate | optional read-only host-environment baseline; accepts the flat 39-key form or nested `navigator` / `screen` / `window` sections |
 | `get_default_environment()` | M11-1 | static; returns a fresh flat `dict` copy of the default template |
 | `get_defaults()` | M11-17 | static; returns a fresh nested `{navigator, screen, window}` dict |
 | `read_navigation_requests(clear=True)` | browser compatibility repair, verified 2026-11-06 | bounded offline assign/replace/reload intents; requests/dropped_requests/max_requests; never loads a document |
@@ -216,13 +227,19 @@ milestone.
 (M11-1) is the next one. `Page` has no `document` / DOM / event API on the Python
 side — the DOM is JS-side only.
 
-The environment now accepts 36 flat keys. Navigator: `userAgent` / `platform` /
+The local PRES-01 environment accepts 39 flat keys (release BIND-01 has 36).
+Navigator: `userAgent` / `appVersion` / `platform` /
 `language` / `appName` / `appCodeName` / `product` / `vendor` / `vendorSub` /
 `productSub` / `doNotTrack` / `connectionEffectiveType` (`str`),
 `webdriver` / `onLine` / `cookieEnabled` / `pdfViewerEnabled` /
 `connectionSaveData` (`bool`), `languages` (non-empty `list[str]`), and
 `hardwareConcurrency` / `maxTouchPoints` / `connectionRtt` (`int`),
-`connectionDownlink` (`int` or `float`, stored `float`). Screen and window:
+`connectionDownlink` (`int` or `float`, stored `float`). PRES-01 adds
+`deviceMemory` (finite positive `int` or `float`, default 8) and a closed
+`userAgentData` mapping. Omitted `appVersion` derives from configured userAgent;
+omitted UAData metadata derives from configured userAgent/platform or explicit
+empty defaults. Brand records are copied; no host-device query occurs.
+Screen and window:
 `screenWidth` / `screenHeight` / `availWidth` / `availHeight` /
 `screenAvailLeft` / `screenAvailTop` / `screenColorDepth` / `screenPixelDepth` /
 `innerWidth` / `innerHeight` / `outerWidth` / `outerHeight` / `screenX` /
@@ -303,6 +320,30 @@ pause evidence (M9-3).
 
 Installed per generation by `install_page`:
 
+- **PRES-01 BOM/event additions (implemented local candidate; release pending)** —
+  Navigator `appVersion` / `deviceMemory` / `userAgentData` / `userActivation`;
+  UAData values come from caller configuration or declared-UA derivation, with
+  empty defaults for unconfigured high-entropy hints. `NavigatorUAData`,
+  `UserActivation` and `DOMStringList` are native HostObjects with shared
+  defining prototypes and illegal public constructors. UAData `brands` are
+  fresh frozen arrays; `getHighEntropyValues` and `toJSON` are prototype
+  methods. UserActivation stays false/false without trusted input, and
+  `location.ancestorOrigins` is a stable empty list in the single-context model.
+  Event adds phase constants, `composed` / virtual `timeStamp` / `isTrusted` /
+  `srcElement`, `cancelBubble` / `returnValue`, `initEvent` and `composedPath`.
+  Native inheritance is Event → UIEvent → MouseEvent/KeyboardEvent/FocusEvent;
+  the registry holds the actual constructor/prototype pairs, preventing a
+  second hierarchy on later lookup. Shared Event members belong to prototypes,
+  with the reference's own `isTrusted` accessor retained on instances.
+  IDL handlers use shared native storage: Window keeps its own accessors, while
+  Document/HTML elements use the reference-derived defining prototypes. Console
+  keeps its own namespace methods; Screen additions follow the same approved
+  boundary. Cached objects and handler state reset by
+  generation, V8 handles release before isolate disposal, and transient event
+  path/dispatch state clears after delivery. No trusted input, real device
+  probing, rendering, permissions or networking is added. See
+  `docs/presence_01_bom_events.md` for the complete name sets and limitations.
+
 - **JET-01 bounded History (native release verified; live target state not reached)** — native
   History object/prototype and methods; cloned state, same-document same-origin
   HTTP(S) push/replace, length and scrollRestoration. Location and Document URL
@@ -320,8 +361,10 @@ Installed per generation by `install_page`:
 - **global roots** — `window` / `globalThis` / `self` (all the same object);
 - `console` (`log` / `info` / `warn` / `error` plus M11-28 `debug` / `trace` /
   `table` / `dir` / `group` / `groupEnd` / `time` / `timeEnd` / `assert` /
-  `count` → Python `logging`, logger `iv8.console`; no clock, stack, formatting,
-  or nesting);
+  `count` → Python `logging`, logger `iv8.console`). PRES-01 adds `clear` /
+  `countReset` / `dirxml` / `groupCollapsed` / `profile` / `profileEnd` /
+  `timeLog` / `timeStamp`; `timeLog` uses the explicit Page clock, while UI
+  clearing and profiling remain no-ops without those backends;
 - `navigator` (`userAgent` / `platform` / `language` / `webdriver` plus M11-24
   `languages` / `onLine` / `cookieEnabled` / `hardwareConcurrency`, M11-27
   `appName` / `appCodeName` / `product` / `vendor` / `vendorSub` /
@@ -441,8 +484,9 @@ Installed per generation by `install_page`:
   global); observer state is per generation;
 - **event subclasses** (M11-6) — `CustomEvent` (`detail`), `MouseEvent`
   (`clientX` / `clientY` / `button` / `buttons`), `KeyboardEvent` (`key` /
-  `code` / `repeat`), and `FocusEvent` (`relatedTarget`), each inheriting
-  `Event.prototype` and using the existing dispatch/bubbling model;
+  `code` / `repeat`), and `FocusEvent` (`relatedTarget`), using the existing
+  dispatch/bubbling model. PRES-01 inserts `UIEvent.prototype` between Event
+  and the Mouse/Keyboard/Focus prototypes in the local candidate;
 - **event cancellation** (M11-9) — `cancelable` / `defaultPrevented`,
   `preventDefault()`, and `stopImmediatePropagation()`; `dispatchEvent` returns
   `false` for a canceled cancelable event;
@@ -450,8 +494,9 @@ Installed per generation by `install_page`:
   (window → document → ancestors), `eventPhase` (0/1/2/3), and
   `addEventListener` `capture` / `once` / `passive` options. Capture runs even
   for non-bubbling events; `once` removes before the call and `passive`
-  suppresses `preventDefault` for that invocation. Default actions, `on*`
-  handlers, and `signal` options are still absent;
+  suppresses `preventDefault` for that invocation. Default actions and `signal`
+  options remain absent; M11-51 and the PRES-01 local candidate supply the
+  approved IDL `on*` handler sets;
 - **Web Storage** (M11-7) — `localStorage` / `sessionStorage` as independent,
   insertion-ordered, per-Page in-memory stores (`getItem` / `setItem` /
   `removeItem` / `clear` / `key` / read-only `length`); entries survive
@@ -561,9 +606,13 @@ Installed per generation by `install_page`:
   (`window.onload` / `onerror` / `onmessage` / lifecycle and messaging `on*`
   names) with function-or-null accessors, post-listener invocation at target
   and in bubbling, `return false` cancellation, and per-generation reset.
-  `document.on*` / element `on*` attributes, automatic error/unhandled
-  rejection events, the legacy `onerror` signature, and unlisted `on*` names
-  remain absent;
+  PRES-01 expands native IDL handlers to the reference-inventoried Window,
+  Document and HTML element name sets, with per-generation storage, synthetic
+  dispatch and cancellation. Defining-prototype ownership is preserved;
+  inline HTML `on*` parsing, automatic device/error/unhandled-rejection events,
+  the special legacy `onerror` signature and default actions remain absent.
+  The earlier clear-to-null behavior for non-callable objects remains a declared
+  profile difference;
 - **`document`** — `URL` / `title` / `readyState` / `documentElement` / `head` /
   `body` / `currentScript` / `scripts` / `children` / `forms` / `images` / `links` /
   `anchors` / `embeds` / `applets`, the M11-23 metadata (`characterSet` /
@@ -650,7 +699,9 @@ values**, but there is still no layout engine and nothing consumes those numbers
 over those reported dimensions; it is not a CSS/media-query engine. M11-1 also makes the `navigator`
 identity values configurable, which is a *deterministic baseline* facility, not
 fingerprint simulation or randomization: a page reports exactly what the caller
-configured, and there is no UA-CH / canvas / webgl surface to spoof.
+configured. PRES-01 adds configured UAData and inactive UserActivation in its
+local candidate; it does not measure a real device or supply a browser capture.
+Canvas/WebGL rendering remains unavailable.
 
 Also still excluded: a real clock, background threads, and any automatic event loop.
 The M2–M11 queues remain available as explicit pumps — `run_timers()`,
@@ -676,6 +727,7 @@ clock.
 
 | Milestone | Theme | Authoritative doc |
 |---|---|---|
+| PRES-01 | Presence-first offline BOM/events with unified native prototypes; implemented local candidate, release acceptance pending | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
 | M2 | `Page`, globals, timers, load model, minimal document/element, targeted mutation | `docs/m2_1_*` … `docs/m2_8_*` |
 | M3 | Scripts, lifecycle, events, ready-state, `currentScript`, attributes, script types | `docs/m3_summary.md` |

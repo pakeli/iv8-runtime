@@ -7,6 +7,39 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Fill the first BOM/event batch with shared prototypes (`2026-11-15`)
+
+The user approved filling the measured API gaps while reserving the prototype
+chain implementation. PRES-01 uses the existing per-context interface registry,
+native shared prototype members and per-generation HostObject ownership for
+NavigatorUAData, UserActivation and DOMStringList. Bind the actual Event/UIEvent
+constructors into that same registry and establish Event → UIEvent →
+Mouse/Keyboard/Focus inheritance now. Reference handler names use shared stores
+and their defining interface prototypes. Avoid per-instance placeholder methods
+that would require rebuilding the object model later. UserActivation stays
+inactive without trusted input; ancestorOrigins is empty in the current
+top-level model. UI/profiler Console operations have no backend and remain
+explicit no-ops.
+
+Use focused tests plus one full local real-V8 suite for a development batch.
+Keep PRES-01 locally accepted/release-pending separate from the latest verified
+BIND-01 release; do not automatically run all release lanes or replace the
+shared SDK. Boundary/report: `docs/presence_01_bom_events.md` /
+`docs/presence_01_report.md`. Next coverage batch is DOM logic/reflection.
+
+### Prioritize API coverage before detailed browser likeness (`2026-11-15`)
+
+The user requested a measured missing-API inventory for Window, Location,
+Document, Navigator and related objects, and set presence/coverage ahead of
+further likeness work. Inventory existing exposure against a versioned real
+browser; distinguish missing names, exposed unsupported/no-op paths and bounded
+working implementations. Choose functional API-family batches before spending
+another slice on name/length/prototype polishing. Preserve established working
+capabilities and record fidelity gaps for a later pass. Measurements and proposed
+batches are in `docs/dom_bom_gaps.md` / `docs/browser_api_inventory.json`.
+This is an inventory/direction change, not authorization to create arbitrary
+success stubs or expand network/rendering/device execution contracts.
+
 ### Complete candidate metadata and verify shared deployment (`2026-11-15`)
 
 The user authorized the remaining candidate binding audit/port, preserving the

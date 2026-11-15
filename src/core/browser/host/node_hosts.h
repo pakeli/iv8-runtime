@@ -8,6 +8,7 @@
 #include "../dom/dom_node.h"
 #include "../dom/form_controls.h"
 #include "event_target.h"
+#include "event_handler_names.h"
 
 namespace iv8::browser {
 
@@ -81,6 +82,8 @@ public:
         if (!html_document_) return names;
         names.push_back("innerText");
         names.push_back("style");
+        const auto& handlers = event_handler_names(EventHandlerTarget::kHTMLElement);
+        names.insert(names.end(), handlers.begin(), handlers.end());
         if (node_->tag == "canvas") names.insert(names.end(), {"width", "height"});
         if (node_->tag == "meta") {
             names.insert(names.end(), {"content", "name", "httpEquiv", "scheme"});
@@ -237,6 +240,8 @@ public:
         if (!html_document_) return names;
         names.push_back("innerText");
         names.push_back("style");
+        const auto& handlers = event_handler_names(EventHandlerTarget::kHTMLElement);
+        names.insert(names.end(), handlers.begin(), handlers.end());
         if (node_->tag == "canvas") names.insert(names.end(), {"width", "height"});
         if (node_->tag == "meta") {
             names.insert(names.end(), {"content", "name", "httpEquiv", "scheme"});

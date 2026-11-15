@@ -1,6 +1,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>  // M9-2: list[str] <-> std::vector<std::string> for watch_apis
@@ -23,6 +24,28 @@ void register_page(py::module_& module) {
         .def(py::init([](const py::dict& environment) {
             iv8::HostEnvironment resolved;
             resolved.user_agent = environment["userAgent"].cast<std::string>();
+            resolved.app_version = environment["appVersion"].cast<std::string>();
+            resolved.device_memory = environment["deviceMemory"].cast<double>();
+            const auto user_agent_data = environment["userAgentData"].cast<py::dict>();
+            const auto unpack_brands = [](py::handle items) {
+                std::vector<iv8::UserAgentBrand> brands;
+                for (const auto item : items.cast<py::list>()) {
+                    const auto brand = py::reinterpret_borrow<py::dict>(item);
+                    brands.push_back({brand["brand"].cast<std::string>(),
+                                      brand["version"].cast<std::string>()});
+                }
+                return brands;
+            };
+            resolved.user_agent_data_brands = unpack_brands(user_agent_data["brands"]);
+            resolved.user_agent_data_mobile = user_agent_data["mobile"].cast<bool>();
+            resolved.user_agent_data_platform = user_agent_data["platform"].cast<std::string>();
+            resolved.user_agent_data_architecture = user_agent_data["architecture"].cast<std::string>();
+            resolved.user_agent_data_bitness = user_agent_data["bitness"].cast<std::string>();
+            resolved.user_agent_data_model = user_agent_data["model"].cast<std::string>();
+            resolved.user_agent_data_platform_version = user_agent_data["platformVersion"].cast<std::string>();
+            resolved.user_agent_data_full_version = user_agent_data["uaFullVersion"].cast<std::string>();
+            resolved.user_agent_data_full_version_list = unpack_brands(user_agent_data["fullVersionList"]);
+            resolved.user_agent_data_wow64 = user_agent_data["wow64"].cast<bool>();
             resolved.platform = environment["platform"].cast<std::string>();
             resolved.language = environment["language"].cast<std::string>();
             resolved.webdriver = environment["webdriver"].cast<bool>();

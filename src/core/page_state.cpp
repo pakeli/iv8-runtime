@@ -29,9 +29,11 @@
 
 #include "browser/internal/common.h"
 #include "browser/host/event_target.h"
+#include "browser/host/event_handler_names.h"
 #include "browser/host/node_hosts.h"
 #include "browser/host/document_host.h"
 #include "browser/bom/screen.h"
+#include "browser/bom/navigator_identity.h"
 #include "browser/window/window_event_target.h"
 #include "browser/window/window_functions.h"
 #include "browser/window/history.h"
@@ -1872,6 +1874,7 @@ void PageState::install_page(const std::string& base_url,
                               v8::Local<v8::Context> context) {
             install_web_interfaces(isolate, context, &web_interface_factory,
                 v8::External::New(isolate, this, v8::kExternalPointerTypeTagDefault));
+            install_navigator_identity_interfaces(isolate, context, &environment_);
             set_window_host(isolate, context, window_events_.get());
             install_host_interface(isolate, context, window_events_.get());
             for (const auto& host : host_objects_) {
@@ -2324,8 +2327,12 @@ void PageState::install_page(const std::string& base_url,
             // Local<Value>), so build the name string directly.
             event_template->SetClassName(
                 v8::String::NewFromUtf8Literal(isolate, "Event"));
-            // M11-6: the subclass templates inherit Event and must be created
-            // before either template is instantiated. Each subclass reuses
+            auto ui_event_template = v8::FunctionTemplate::New(
+                isolate, &ui_event_constructor, {}, {}, 1);
+            ui_event_template->SetClassName(v8::String::NewFromUtf8Literal(isolate, "UIEvent"));
+            ui_event_template->Inherit(event_template);
+            // Build both Event and UIEvent inheritance before instantiating
+            // any template. Each subclass reuses
             // event_constructor for type / bubbles / target / currentTarget /
             // stopPropagation.
             auto make_event_subclass = [&](const char* name,
@@ -2334,7 +2341,9 @@ void PageState::install_page(const std::string& base_url,
                     v8::FunctionTemplate::New(isolate, callback, {}, {}, 1);
                 tpl->SetClassName(
                     v8::String::NewFromUtf8(isolate, name).ToLocalChecked());
-                tpl->Inherit(event_template);
+                const std::string interface_name(name);
+                tpl->Inherit(interface_name == "MouseEvent" || interface_name == "KeyboardEvent" ||
+                    interface_name == "FocusEvent" ? ui_event_template : event_template);
                 return tpl;
             };
             const auto custom_event_template =
@@ -2347,21 +2356,43 @@ void PageState::install_page(const std::string& base_url,
                 make_event_subclass("FocusEvent", &focus_event_constructor);
             const auto message_event_template =
                 make_event_subclass("MessageEvent", &message_event_constructor);
-            (void)global->Set(
-                context, v8_string(isolate, "Event"),
-                event_template->GetFunction(context).ToLocalChecked());
+            v8::Local<v8::Function> event_function;
+            v8::Local<v8::Value> event_prototype;
+            if (!event_template->GetFunction(context).ToLocal(&event_function) ||
+                !event_function->Get(context, v8_string(isolate, "prototype")).ToLocal(&event_prototype) ||
+                !event_prototype->IsObject() ||
+                !global->Set(context, v8_string(isolate, "Event"), event_function).FromMaybe(false) ||
+                !install_event_prototype_members(isolate, context, event_function,
+                    event_prototype.As<v8::Object>()) ||
+                !register_existing_web_interface(isolate, context, "Event", event_function,
+                    event_prototype.As<v8::Object>())) return;
             const auto install_event_subclass =
                 [&](const char* name,
                     v8::Local<v8::FunctionTemplate> tpl) {
-                    (void)global->Set(
-                        context, v8_string(isolate, name),
-                        tpl->GetFunction(context).ToLocalChecked());
+                    v8::Local<v8::Function> function;
+                    v8::Local<v8::Value> prototype;
+                    if (!tpl->GetFunction(context).ToLocal(&function) ||
+                        !function->Get(context, v8_string(isolate, "prototype")).ToLocal(&prototype) ||
+                        !prototype->IsObject()) return false;
+                    v8::Local<v8::Value> parent;
+                    const std::string interface_name(name);
+                    const bool ui_child = interface_name == "MouseEvent" ||
+                        interface_name == "KeyboardEvent" || interface_name == "FocusEvent";
+                    if (!global->Get(context, v8_string(isolate, ui_child ? "UIEvent" : "Event"))
+                             .ToLocal(&parent) || !parent->IsObject() ||
+                        !function->SetPrototype(context, parent).FromMaybe(false) ||
+                        !global->Set(context, v8_string(isolate, name), function).FromMaybe(false) ||
+                        !register_existing_web_interface(isolate, context, name, function,
+                            prototype.As<v8::Object>())) return false;
+                    return interface_name != "UIEvent" || install_ui_event_prototype_members(
+                        isolate, context, prototype.As<v8::Object>());
                 };
-            install_event_subclass("CustomEvent", custom_event_template);
-            install_event_subclass("MouseEvent", mouse_event_template);
-            install_event_subclass("KeyboardEvent", keyboard_event_template);
-            install_event_subclass("FocusEvent", focus_event_template);
-            install_event_subclass("MessageEvent", message_event_template);
+            if (!install_event_subclass("UIEvent", ui_event_template) ||
+                !install_event_subclass("CustomEvent", custom_event_template) ||
+                !install_event_subclass("MouseEvent", mouse_event_template) ||
+                !install_event_subclass("KeyboardEvent", keyboard_event_template) ||
+                !install_event_subclass("FocusEvent", focus_event_template) ||
+                !install_event_subclass("MessageEvent", message_event_template)) return;
             // Window uses the shared EventTarget methods. Event handlers and
             // postMessage delivery still carry the native listener backing.
             v8::Local<v8::External> window_data = v8::External::New(
@@ -2376,14 +2407,21 @@ void PageState::install_page(const std::string& base_url,
             // M11-51: bounded Window event handler attributes. They share the
             // same WindowEventTarget backing as addEventListener, run after the
             // regular listeners at this target, and expose null when unset.
-            for (const char* handler_name : kWindowEventHandlerNames) {
-                (void)global->SetNativeDataProperty(
-                    context,
-                    v8::String::NewFromUtf8(isolate, handler_name)
-                        .ToLocalChecked(),
-                    &window_event_handler_getter,
-                    &window_event_handler_setter, window_data,
-                    v8::PropertyAttribute::None);
+            for (const std::string& handler_name : event_handler_names(EventHandlerTarget::kWindow)) {
+                auto binding = v8::Array::New(isolate, 2);
+                if (!binding->CreateDataProperty(context, 0, window_data).FromMaybe(false) ||
+                    !binding->CreateDataProperty(context, 1, v8_string(isolate, handler_name)).FromMaybe(false)) return;
+                v8::Local<v8::Function> getter;
+                v8::Local<v8::Function> setter;
+                if (!make_web_method(isolate, context, "get " + handler_name, 0,
+                        &window_event_handler_function_getter, binding).ToLocal(&getter) ||
+                    !make_web_method(isolate, context, "set " + handler_name, 1,
+                        &window_event_handler_function_setter, binding).ToLocal(&setter)) return;
+                v8::PropertyDescriptor descriptor(getter, setter);
+                descriptor.set_enumerable(true);
+                descriptor.set_configurable(true);
+                if (!global->DefineProperty(context, v8_string(isolate, handler_name).As<v8::String>(),
+                        descriptor).FromMaybe(false)) return;
             }
             // M11-52: hidden natives used by the postMessage bootstrap. The
             // wrapper captures and removes them, so page scripts only see the

@@ -25,7 +25,9 @@ namespace iv8::browser {
 void ElementHost::fire_invalid_event(v8::Isolate* isolate,
                                      v8::Local<v8::Context> context,
                                      v8::Local<v8::Object> receiver) {
-    v8::Local<v8::Object> event = v8::Object::New(isolate);
+    v8::Local<v8::Object> event;
+    if (!create_runtime_event(isolate, context, "invalid", false, true).ToLocal(&event)) return;
+    if (!begin_event_dispatch(isolate, context, event, {receiver})) return;
     (void)event->Set(context, v8_string(isolate, "type"),
                      v8_string(isolate, "invalid"));
     (void)event->Set(context, v8_string(isolate, "bubbles"),

@@ -175,7 +175,8 @@ def test_nested_environment_defaults_shape():
     defaults = iv8.Page.get_defaults()
     assert set(defaults) == {"navigator", "screen", "window"}
     assert set(defaults["navigator"]) == {
-        "userAgent", "platform", "language", "webdriver", "languages",
+        "userAgent", "appVersion", "deviceMemory", "userAgentData",
+        "platform", "language", "webdriver", "languages",
         "onLine", "cookieEnabled", "hardwareConcurrency", "appName",
         "appCodeName", "product", "vendor", "vendorSub", "productSub",
         "maxTouchPoints", "pdfViewerEnabled", "doNotTrack",
@@ -189,8 +190,19 @@ def test_nested_environment_defaults_shape():
         "outerHeight", "screenX", "screenY"}
     defaults["navigator"]["userAgent"] = "mutated"
     defaults["navigator"]["languages"].append("mutated")
+    defaults["navigator"]["userAgentData"]["platform"] = "mutated"
+    defaults["navigator"]["userAgentData"]["brands"].append({"brand": "mutated", "version": "0"})
+    defaults["navigator"]["userAgentData"]["fullVersionList"].append({"brand": "mutated", "version": "0.0"})
     assert iv8.Page.get_defaults()["navigator"]["userAgent"] != "mutated"
     assert "mutated" not in iv8.Page.get_defaults()["navigator"]["languages"]
+    navigator_defaults = iv8.Page.get_defaults()["navigator"]
+    assert navigator_defaults["appVersion"] == "5.0 (compatible; iv8)"
+    assert navigator_defaults["deviceMemory"] == 8.0
+    assert navigator_defaults["userAgentData"] == {
+        "brands": [], "mobile": False, "platform": "", "architecture": "",
+        "bitness": "", "model": "", "platformVersion": "", "uaFullVersion": "",
+        "fullVersionList": [], "wow64": False,
+    }
     assert "userAgent" in iv8.Page.get_default_environment()
 
 

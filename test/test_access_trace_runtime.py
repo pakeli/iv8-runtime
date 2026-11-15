@@ -157,7 +157,8 @@ def test_element_object_id_tracks_native_backing_not_js_wrapper():
 def test_generation_and_load_lifecycle():
     with iv8.Page() as page:
         _load(page)
-        page.start_access_trace(max_events=20)
+        # Leave capacity for internal installation records as API coverage grows.
+        page.start_access_trace(max_events=64)
         page.eval("navigator.userAgent;", name="probe.js")
         first = _events(page, source_kind="eval", member="userAgent")[0]
 

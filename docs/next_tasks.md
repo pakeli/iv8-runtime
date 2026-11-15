@@ -1,5 +1,9 @@
 # Next Tasks
 
+**Latest implemented — PRES-01 (`2026-11-15`), local candidate; release verification pending.** The first BOM/event coverage batch now implements Navigator identity/activation, Location ancestorOrigins, Event/UIEvent, reference on* attributes, eight Console operations and Screen isExtended/onchange. Shared native interface prototypes, Event/UIEvent constructor inheritance and generation cleanup are in place. Boundary: `docs/presence_01_bom_events.md`; acceptance and remaining limits: `docs/presence_01_report.md`; presence delta: `docs/presence_01_api_delta.json`. Use focused checks and one local full suite during development, then group release verification later. Shared SDK remains BIND-01. Next coverage work is the DOM logic/reflection batch (dataset, Attr/NamedNodeMap, root/normalization/document-position, import/adopt and parsing), with explicit ownership/prototype boundaries before implementation.
+
+**Direction update — API breadth first (`2026-11-15`).** The user now prioritizes missing browser API families before further shape/metadata polishing. The measured Chrome157 versus BIND-01 SDK baseline is `docs/dom_bom_gaps.md`, with all missing names and counts in `docs/browser_api_inventory.json`. Select functional API-family batches from that inventory; name presence, explicit unsupported/no-op behavior and partial implementation remain separate statuses. Existing History/named/binding regressions stay protected. PRES-01 closes the base Event without-new gap in the local candidate; the other known BIND behavior limitations remain recorded rather than automatically becoming the next priority.
+
 **BIND-01 release/deployment verified (`2026-11-15`).** Source `f015745` passes 12 lanes and the unified 87-test gate; Linux/macOS report **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Backed-up shared iv8-test is upgraded and verified with the full suite and original cached EPUB offline. Mainline integration is PR #30; receipts are in `docs/native_binding_restore_report.md`. The remaining concrete behavior gaps (null-this normalization, object-key double conversion, base Event without-new) require a separate slice, not another metadata port. M11-53 remains the next numbered feature; stage 4 stays held.
 
 **NAMED-01 release verified (`2026-11-15`).** Source `374c81b` restores Window/form named access and preserves History. All 12 release lanes pass 56 focused tests, then Linux/macOS **2340 passed, 2 skipped, 1 xfailed** or Windows **2338 passed, 4 skipped, 1 xfailed**. Mainline integration is PR #29; exact receipts are in `docs/named_access_restore_report.md`. Preserve this combined regression gate for future SDK replacement. M11-53 stays the next numbered feature; stage 4 remains held. The separate candidate callback-metadata diff was subsequently restored by BIND-01; its behavior limitations remain explicit.
@@ -63,14 +67,21 @@ Last reviewed: `2026-11-15`
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — after BIND-01 deployment (`2026-11-15`)
+## Current execution order — after PRES-01 implementation (`2026-11-15`)
+
+The user's newer presence-first direction and PRES-01 above take precedence over
+the older per-slice queue below. Continue with DOM logic, then Web-data API
+batches. M11-53 remains a numbered candidate rather than an
+automatic next task; detailed function/prototype conformance follows basic API
+coverage. Network/rendering/device subsystems still need explicit boundaries.
 
 Offline diagnostics, caller configuration alignment, named access and remaining
 candidate binding metadata are implemented. The combined release passes all 12
 lanes and is installed with backup/identity/offline receipts. Keep all three
 feature groups in the focused gate before future SDK replacement. The observed
-receiver/key-coercion/base-Event behavior gaps need their own approved boundary. M11-53 focus/visibility remains the next
-numbered feature. Navigator/permissions repairs need observed API evidence;
+receiver/key-coercion behavior gaps stay recorded; PRES-01 repairs base Event
+construction in the local candidate. M11-53 focus/visibility remains a numbered
+candidate. Navigator/permissions repairs need observed API evidence;
 Page time-model changes, product networking, iframe/Worker and graphics remain
 separate proposals.
 

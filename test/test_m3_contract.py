@@ -60,9 +60,11 @@ def test_js_document_surface_not_exceeded():
         # M4-A-2 added document.createElement; these remain out of scope.)
         # (document.forms/images/links/anchors/embeds/applets arrived in
         # M4-B-7..12, getElementsByClassName in M4-B-13 — see their test files.)
-        for member in ("createElementNS", "write", "onreadystatechange",
+        for member in ("createElementNS", "write",
                        "plugins", "all"):
             assert page.eval(f"typeof document.{member}") == "undefined"
+        # PRES-01 provides a real Document.prototype handler attribute.
+        assert page.eval("document.onreadystatechange") is None
         for member in ("createTextNode", "createComment",
                        "createDocumentFragment"):
             assert page.eval(f"typeof document.{member}") == "function"

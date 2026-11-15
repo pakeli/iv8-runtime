@@ -31,8 +31,25 @@ namespace iv8 {
 //
 // It is Page-level state: owned by PageState, it outlives each generation, so a
 // load() reinstalls the environment surface with the SAME values.
+struct UserAgentBrand {
+    std::string brand;
+    std::string version;
+};
+
 struct HostEnvironment {
     std::string user_agent;
+    std::string app_version;
+    double device_memory = 0.0;
+    std::vector<UserAgentBrand> user_agent_data_brands;
+    bool user_agent_data_mobile = false;
+    std::string user_agent_data_platform;
+    std::string user_agent_data_architecture;
+    std::string user_agent_data_bitness;
+    std::string user_agent_data_model;
+    std::string user_agent_data_platform_version;
+    std::string user_agent_data_full_version;
+    std::vector<UserAgentBrand> user_agent_data_full_version_list;
+    bool user_agent_data_wow64 = false;
     std::string platform;
     std::string language;
     bool webdriver = false;

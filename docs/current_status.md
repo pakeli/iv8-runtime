@@ -1,5 +1,21 @@
 # Current Status
 
+**Latest implemented local candidate (`2026-11-15`): PRES-01.** The first
+presence-first BOM/event batch adds configured Navigator identity and UAData,
+inactive UserActivation, empty Location ancestorOrigins, UIEvent/Event fields
+and dispatch paths, shared IDL handlers, Console additions and Screen metadata.
+NavigatorUAData, UserActivation and DOMStringList use shared native interface
+prototypes with illegal public constructors. The actual Event/UIEvent
+constructor/prototype pairs are registered together, including native
+Event → UIEvent → MouseEvent/KeyboardEvent/FocusEvent inheritance. Nested
+objects, handler state and transient dispatch state are generation-owned and
+cleaned before isolate disposal or after dispatch as appropriate. Local acceptance
+passes **447 focused tests, 1 xfailed** and the full macOS arm64/Python 3.13
+suite **2417 passed, 2 skipped, 1 xfailed**. The full release matrix has not run for this
+batch and the shared SDK has not been replaced. **Latest release/deployment
+verified remains BIND-01 below.** Scope and remaining differences:
+`docs/presence_01_bom_events.md` / `docs/presence_01_report.md`.
+
 **Latest release and deployment verified (`2026-11-15`): BIND-01.** Source `f015745` (tree `0914106d38d0c2c245b47e70daa7623b4ed04fc5`) restores 18 native operation installation paths and six Event constructor arities, preserving History/named access. All 12 lanes pass 87 focused tests: Linux `43675920281` / macOS `43675968125` each **2371 passed, 2 skipped, 1 xfailed**; Windows `43675928957` each **2369 passed, 4 skipped, 1 xfailed** after one retained startup-timeout retry. Backed-up shared iv8-test is installed with native `d2902411...` and passes 87 focused, full 2371/2/1 and cached EPUB offline. Mainline integration is PR #30. Known delegate/receiver/base-Event behavior gaps remain explicit; no live requests or server-pass claim. Boundary/source/run/artifact/deployment receipts: `docs/native_binding_restore_report.md`.
 
 **Previous release verified (`2026-11-15`): NAMED-01 Window/form named access restoration.** Source `374c81b` (tree `d16031ea344e5ff182c9d986d2a9ca634c6388e0`) restores the private candidate's named access in the split modules while retaining History. All 12 release lanes pass 56 focused tests first: Linux `43616130342` / macOS `43616952704` each **2340 passed, 2 skipped, 1 xfailed**; Windows `43616142584` each **2338 passed, 4 skipped, 1 xfailed** (two extra Unix-only skips). Original 18 named cases/fixture and eight new integration cases are release-gated. Mainline integration is PR #29; source/run/artifact receipts are in `docs/named_access_restore_report.md`. No shared SDK replacement or live server-pass claim. M11-53 remains next; stage 4 remains held.
@@ -853,23 +869,24 @@ The repository is executing its post-M10 direction:
 - M11-52 (Window messaging) is **landed and verified on real V8 (Linux +
   Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_52_window_messaging.md` and `docs/m11_52_report.md`;
-- the current execution order is **Window-first**: continue with a
-  deterministic focus/visibility model (M11-53) before returning to Document
-  `write`/import/adopt. Prototype chains are explicitly deferred to a later
-  stage. The unassigned selector follow-up and `navigator.userAgentData`
-  remain deferred. Gaps are inventoried in `docs/dom_bom_gaps.md`.
+- the active development batch is **PRES-01 presence-first**, with shared
+  prototype/inheritance design included in each new slice. Its configured
+  `navigator.userAgentData` is implemented in the local candidate; complete
+  device/profile fidelity is not implied. The next coverage batch is DOM
+  logic/reflection; M11-53 focus/visibility remains a numbered candidate.
+  Remaining gaps are inventoried in `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which concrete Window surface should become `M11-53` next, now that Window is
-  prioritized above Document? (`docs/decision_log.md` §A — `M11-1` through
-  `M11-52` are settled, landed, and verified. The planned next Window slice is
-  a deterministic focus/visibility model. Document `write` + import/adopt are
-  explicitly later; DOM prototype chains, the unassigned selector pseudo-class
-  follow-up, and UA-CH remain deferred; candidates come from
-  `docs/dom_bom_gaps.md`.)
+- Which bounded DOM logic/reflection APIs should form the next coverage batch
+  before returning to numbered M11-53 focus/visibility work? `M11-1` through `M11-52`
+  remain release-verified; BIND-01 is the latest verified release and PRES-01 is
+  locally accepted candidate. Dataset/attributes, root/tree helpers and
+  import/adopt are the next candidates; Document `write` and the unassigned
+  selector follow-up remain separate work. Configured UAData presence does not complete
+  browser device/profile behavior; candidates come from `docs/dom_bom_gaps.md`.
 - Should the `in` operator, non-HostObject query targets, or wrapper-cached
   references ever be covered through a Proxy/AST design, or remain explicit
   out-of-scope blind spots? (Steps 6a–6h cover the explicit has/descriptor APIs

@@ -17,7 +17,13 @@ public:
     std::vector<std::string> property_names() const override {
         return {"width",      "height",     "availWidth", "availHeight",
                 "availLeft",  "availTop",   "colorDepth", "pixelDepth",
-                "orientation"};
+                "orientation", "isExtended", "onchange"};
+    }
+
+    std::vector<std::string> writable_property_names() const override { return {"onchange"}; }
+    void set_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+                      const std::string& name, v8::Local<v8::Value> value) override {
+        if (name == "onchange") set_event_handler(isolate, name, value);
     }
 
     std::vector<std::string> method_names() const override { return event_method_names(); }
@@ -25,6 +31,8 @@ public:
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
                                       v8::Local<v8::Context> context,
                                       const std::string& name) override {
+        if (name == "isExtended") return v8::False(isolate);
+        if (name == "onchange") return get_event_handler(isolate, name);
         if (name == "width") {
             return v8::Integer::New(isolate, environment_->screen_width);
         }

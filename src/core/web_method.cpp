@@ -30,6 +30,7 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"setCustomValidity", 1}, {"item", 1}, {"namedItem", 1},
         {"toggle", 1}, {"observe", 2}, {"readAsText", 1},
         {"readAsArrayBuffer", 1}, {"query", 1}, {"getRandomValues", 1},
+        {"getHighEntropyValues", 1},
         {"mark", 1}, {"measure", 1}, {"getEntriesByName", 1},
         {"getEntriesByType", 1}, {"moveTo", 2}, {"moveBy", 2},
         {"resizeTo", 2}, {"resizeBy", 2},

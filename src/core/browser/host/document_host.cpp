@@ -116,7 +116,7 @@ std::string DocumentHost::global_name() const { return "document"; }
 std::string DocumentHost::trace_object_type() const { return "document"; }
 
 std::vector<std::string> DocumentHost::property_names() const {
-        return {"URL",  "title",           "documentURI", "baseURI",
+        std::vector<std::string> names = {"URL",  "title",           "documentURI", "baseURI",
                 "defaultView", "location", "readyState",  "documentElement",
                 "head", "body",            "currentScript", "scripts",
                 // M4-B-6 document's direct element children.
@@ -141,11 +141,17 @@ std::vector<std::string> DocumentHost::property_names() const {
                 "ownerDocument", "parentNode", "parentElement", "isConnected",
                 "childNodes", "firstChild", "lastChild", "previousSibling", "nextSibling",
                 "firstElementChild", "lastElementChild", "childElementCount"};
+        const auto& handlers = event_handler_names(EventHandlerTarget::kDocument);
+        names.insert(names.end(), handlers.begin(), handlers.end());
+        return names;
     }
 
 std::vector<std::string> DocumentHost::writable_property_names() const {
         // M11-46 cookie jar; M11-47 writable document.title.
-        return {"cookie", "title", "location", "nodeValue", "textContent"};
+        std::vector<std::string> names = {"cookie", "title", "location", "nodeValue", "textContent"};
+        const auto& handlers = event_handler_names(EventHandlerTarget::kDocument);
+        names.insert(names.end(), handlers.begin(), handlers.end());
+        return names;
     }
 
 std::vector<std::string> DocumentHost::method_names() const {
@@ -199,6 +205,7 @@ void DocumentHost::release_v8_handles() noexcept {
     }
 
 v8::Local<v8::Value> DocumentHost::get_property(v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name) {
+        if (is_event_handler_name(EventHandlerTarget::kDocument, name)) return get_event_handler(isolate, name);
         if (name == "nodeType") return v8::Integer::New(isolate, 9);
         if (name == "nodeName") return v8_string(isolate, "#document");
         if (name == "nodeValue" || name == "textContent" || name == "ownerDocument" ||
@@ -352,6 +359,10 @@ v8::Local<v8::Value> DocumentHost::get_property(v8::Isolate* isolate, v8::Local<
     }
 
 void DocumentHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Value> value) {
+        if (is_event_handler_name(EventHandlerTarget::kDocument, name)) {
+            set_event_handler(isolate, name, value);
+            return;
+        }
         if (name != "cookie" && name != "title" && name != "location" &&
             name != "nodeValue" && name != "textContent") {
             return;
@@ -714,8 +725,6 @@ ClassListBinding* DocumentHost::create_class_list_binding(DomNode* node) {
     }
 
 void DocumentHost::run_element_bubbling(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> event, DomNode* node, EventTargetHost* element_host, v8::Local<v8::Object> receiver) {
-        (void)event->Set(context, v8_string(isolate, "target"), receiver);
-        reset_event_stopped(isolate, context, event);
         const bool bubbles = event_bubbles(isolate, context, event);
         std::vector<DomNode*> ancestors;
         for (DomNode* ancestor = node->parent; ancestor != nullptr && ancestor != &document_node_;
@@ -723,9 +732,18 @@ void DocumentHost::run_element_bubbling(v8::Isolate* isolate, v8::Local<v8::Cont
             ancestors.push_back(ancestor);
         }
         const bool connected = is_in_tree(node);
+        std::vector<v8::Local<v8::Value>> path = {receiver};
+        for (DomNode* ancestor : ancestors) path.push_back(wrap_node(isolate, context, ancestor));
+        if (connected) {
+            path.push_back(document_global(isolate, context));
+            if (window_target_ != nullptr) path.push_back(context->Global());
+        }
+        if (!begin_event_dispatch(isolate, context, event, path)) return;
+        (void)event->Set(context, v8_string(isolate, "target"), receiver);
         const auto stopped = [&]() {
             return event_is_stopped(isolate, context, event);
         };
+        if (stopped()) { finish_dispatch(isolate, context, event); return; }
 
         // Capture: window -> document -> topmost ancestor -> ... -> parent.
         if (connected) {
@@ -782,8 +800,11 @@ void DocumentHost::run_element_bubbling(v8::Isolate* isolate, v8::Local<v8::Cont
     }
 
 void DocumentHost::dispatch_event(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> event, v8::Local<v8::Object> receiver) {
+        std::vector<v8::Local<v8::Value>> path = {receiver};
+        if (window_target_ != nullptr) path.push_back(context->Global());
+        if (!begin_event_dispatch(isolate, context, event, path)) return;
         (void)event->Set(context, v8_string(isolate, "target"), receiver);
-        reset_event_stopped(isolate, context, event);
+        if (event_is_stopped(isolate, context, event)) { finish_dispatch(isolate, context, event); return; }
         if (window_target_ != nullptr) {
             window_target_->fire_capture_at(isolate, context, event,
                                             context->Global());

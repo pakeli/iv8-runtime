@@ -6,9 +6,138 @@
 
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
+#include "iv8/web_method.h"
 #include "../internal/trace_hooks.h"
 
 namespace iv8::browser {
+
+namespace {
+
+bool define_event_accessor(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                           v8::Local<v8::Object> prototype, const char* name,
+                           v8::FunctionCallback callback, bool writable = false) {
+    v8::Local<v8::String> property;
+    if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&property)) return false;
+    v8::Local<v8::Function> getter;
+    if (!make_web_method(isolate, context, std::string("get ") + name, 0,
+            callback, property).ToLocal(&getter)) return false;
+    v8::Local<v8::Value> setter = v8::Undefined(isolate);
+    if (writable) {
+        v8::Local<v8::Function> function;
+        if (!make_web_method(isolate, context, std::string("set ") + name, 1,
+                &event_extra_setter, property).ToLocal(&function)) return false;
+        setter = function;
+    }
+    v8::PropertyDescriptor descriptor(getter, setter);
+    descriptor.set_enumerable(true);
+    descriptor.set_configurable(true);
+    return prototype->DefineProperty(context, property, descriptor).FromMaybe(false);
+}
+
+bool define_event_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                         v8::Local<v8::Object> prototype, const char* name,
+                         int length, v8::FunctionCallback callback) {
+    v8::Local<v8::String> property;
+    v8::Local<v8::Function> function;
+    return v8::String::NewFromUtf8(isolate, name).ToLocal(&property) &&
+        make_web_method(isolate, context, name, length, callback).ToLocal(&function) &&
+        prototype->DefineOwnProperty(context, property, function).FromMaybe(false);
+}
+
+bool initialize_event_from_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    v8::TryCatch caught(info.GetIsolate());
+    event_constructor(info);
+    if (caught.HasCaught()) { caught.ReThrow(); return false; }
+    return true;
+}
+
+bool initialize_ui_event_from_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!initialize_event_from_constructor(info)) return false;
+    auto isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    v8::Local<v8::Value> view;
+    v8::Local<v8::Value> detail_value;
+    if (!event_init_field(context, info, "view", &view) ||
+        !event_init_field(context, info, "detail", &detail_value)) return false;
+    if (view->IsUndefined()) view = v8::Null(isolate);
+    if (!view->IsNull() && !view->StrictEquals(context->Global())) {
+        isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(isolate, "view must be a Window or null")));
+        return false;
+    }
+    std::int32_t detail = 0;
+    if (!detail_value->IsUndefined()) {
+        const auto converted = detail_value->Int32Value(context);
+        if (converted.IsNothing()) return false;
+        detail = converted.FromMaybe(0);
+    }
+    return initialize_ui_event_state(isolate, context, info.This(), view, detail);
+}
+
+}  // namespace
+
+bool install_event_prototype_members(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     v8::Local<v8::Function> constructor,
+                                     v8::Local<v8::Object> prototype) {
+    const std::pair<const char*, int> constants[] = {
+        {"NONE", 0}, {"CAPTURING_PHASE", 1}, {"AT_TARGET", 2}, {"BUBBLING_PHASE", 3}};
+    for (const auto& [name, value] : constants) {
+        v8::Local<v8::String> property;
+        if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&property)) return false;
+        for (auto target : {v8::Local<v8::Object>(constructor), prototype}) {
+            if (!target->DefineOwnProperty(context, property, v8::Integer::New(isolate, value),
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete)).FromMaybe(false)) return false;
+        }
+    }
+    for (const char* name : {"composed", "timeStamp", "srcElement", "cancelBubble", "returnValue"}) {
+        const bool writable = std::strcmp(name, "cancelBubble") == 0 || std::strcmp(name, "returnValue") == 0;
+        if (!define_event_accessor(isolate, context, prototype, name, &event_extra_getter, writable)) return false;
+    }
+    return define_event_method(isolate, context, prototype, "initEvent", 1, &event_init_callback) &&
+        define_event_method(isolate, context, prototype, "composedPath", 0, &event_composed_path_callback);
+}
+
+bool install_ui_event_prototype_members(v8::Isolate* isolate,
+                                        v8::Local<v8::Context> context,
+                                        v8::Local<v8::Object> prototype) {
+    for (const char* name : {"view", "detail", "which", "sourceCapabilities"}) {
+        if (!define_event_accessor(isolate, context, prototype, name, &ui_event_extra_getter)) return false;
+    }
+    return define_event_method(isolate, context, prototype, "initUIEvent", 1, &ui_event_init_callback);
+}
+
+v8::MaybeLocal<v8::Object> create_runtime_event(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const std::string& type,
+    bool bubbles, bool cancelable) {
+    const auto prototype_slot = v8::Private::ForApi(isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8.webidl.prototype.Event"));
+    const auto constructor_slot = v8::Private::ForApi(isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8.webidl.constructor"));
+    v8::Local<v8::Value> prototype_value;
+    v8::Local<v8::Value> constructor_value;
+    if (!context->Global()->GetPrivate(context, prototype_slot).ToLocal(&prototype_value) ||
+        !prototype_value->IsObject()) return {};
+    const auto prototype = prototype_value.As<v8::Object>();
+    if (!prototype->GetPrivate(context, constructor_slot).ToLocal(&constructor_value) ||
+        !constructor_value->IsFunction()) return {};
+    v8::Local<v8::String> event_type;
+    if (!v8::String::NewFromUtf8(isolate, type.data(), v8::NewStringType::kNormal,
+            static_cast<int>(type.size())).ToLocal(&event_type)) return {};
+    auto init = v8::Object::New(isolate);
+    if (!init->SetPrototype(context, v8::Null(isolate)).FromMaybe(false) ||
+        !init->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "bubbles"),
+            v8::Boolean::New(isolate, bubbles)).FromMaybe(false) ||
+        !init->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "cancelable"),
+            v8::Boolean::New(isolate, cancelable)).FromMaybe(false) ||
+        !init->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "composed"),
+            v8::False(isolate)).FromMaybe(false)) return {};
+    v8::Local<v8::Value> arguments[] = {event_type, init};
+    v8::Local<v8::Object> event;
+    if (!constructor_value.As<v8::Function>()->NewInstance(context, 2, arguments).ToLocal(&event) ||
+        !event->SetPrototype(context, prototype).FromMaybe(false)) return {};
+    return event;
+}
 
 // M3-3 / M4-A-7 / M11-9 minimal Event constructor. `new Event(type, init?)`
 // yields a plain JS object with `type` (string, coerced from the first
@@ -19,17 +148,17 @@ namespace iv8::browser {
 // `preventDefault`. Still no capture phase, eventPhase / composed / timeStamp,
 // or listener options.
 void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "Event")) return;
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::Object> self = info.This();
     std::string type;
     if (info.Length() > 0) {
         v8::Local<v8::String> str;
-        if (info[0]->ToString(context).ToLocal(&str)) {
-            v8::String::Utf8Value utf8(isolate, str);
-            if (*utf8 != nullptr) {
-                type.assign(*utf8, static_cast<std::size_t>(utf8.length()));
-            }
+        if (!info[0]->ToString(context).ToLocal(&str)) return;
+        v8::String::Utf8Value utf8(isolate, str);
+        if (*utf8 != nullptr) {
+            type.assign(*utf8, static_cast<std::size_t>(utf8.length()));
         }
     }
     // M4-A-7 / M11-9: bubbles / cancelable from init (only when it is an object).
@@ -39,15 +168,16 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
         v8::Local<v8::Value> value;
         if (info[1].As<v8::Object>()
                 ->Get(context, v8_string(isolate, "bubbles"))
-                .ToLocal(&value)) {
-            bubbles = value->BooleanValue(isolate);
-        }
+                .ToLocal(&value)) bubbles = value->BooleanValue(isolate);
+        else return;
         if (info[1].As<v8::Object>()
                 ->Get(context, v8_string(isolate, "cancelable"))
-                .ToLocal(&value)) {
-            cancelable = value->BooleanValue(isolate);
-        }
+                .ToLocal(&value)) cancelable = value->BooleanValue(isolate);
+        else return;
     }
+    v8::Local<v8::Value> composed_value;
+    if (!event_init_field(context, info, "composed", &composed_value) ||
+        !initialize_event_state(isolate, context, self, composed_value->BooleanValue(isolate))) return;
     (void)self->Set(context, v8_string(isolate, "type"), v8_string(isolate, type));
     (void)self->Set(context, v8_string(isolate, "bubbles"),
                     v8::Boolean::New(isolate, bubbles));
@@ -81,6 +211,16 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
                     prevent_default_fn);
 }
 
+void ui_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    if (!event_construct_check(info, "UIEvent")) return;
+    if (info.Length() < 1) {
+        info.GetIsolate()->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8Literal(info.GetIsolate(), "An event type is required")));
+        return;
+    }
+    (void)initialize_ui_event_from_constructor(info);
+}
+
 bool event_construct_check(const v8::FunctionCallbackInfo<v8::Value>& info,
                            const char* name) {
     if (info.IsConstructCall()) {
@@ -89,8 +229,10 @@ bool event_construct_check(const v8::FunctionCallbackInfo<v8::Value>& info,
     v8::Isolate* isolate = info.GetIsolate();
     const std::string message =
         std::string(name) + " constructor requires 'new'";
-    isolate->ThrowException(v8::Exception::TypeError(
-        v8::String::NewFromUtf8(isolate, message.c_str()).ToLocalChecked()));
+    v8::Local<v8::String> exception_message;
+    if (v8::String::NewFromUtf8(isolate, message.c_str()).ToLocal(&exception_message)) {
+        isolate->ThrowException(v8::Exception::TypeError(exception_message));
+    }
     return false;
 }
 
@@ -116,9 +258,9 @@ bool event_init_field(v8::Local<v8::Context> context,
 void set_event_field(v8::Isolate* isolate, v8::Local<v8::Context> context,
                      v8::Local<v8::Object> self, const char* name,
                      v8::Local<v8::Value> value) {
-    (void)self->DefineOwnProperty(
-        context, v8::String::NewFromUtf8(isolate, name).ToLocalChecked(), value,
-        v8::ReadOnly);
+    v8::Local<v8::String> property;
+    if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&property)) return;
+    if (!self->DefineOwnProperty(context, property, value, v8::ReadOnly).FromMaybe(false)) return;
 }
 
 // WebIDL-lite integer conversion: ToNumber, non-finite -> 0, truncate toward
@@ -157,7 +299,7 @@ void custom_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    event_constructor(info);
+    if (!initialize_event_from_constructor(info)) return;
     v8::Local<v8::Value> detail;
     if (!event_init_field(context, info, "detail", &detail)) {
         return;
@@ -174,7 +316,7 @@ void mouse_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    event_constructor(info);
+    if (!initialize_ui_event_from_constructor(info)) return;
     v8::Local<v8::Object> self = info.This();
     const char* const fields[] = {"clientX", "clientY", "button", "buttons"};
     for (const char* field : fields) {
@@ -188,6 +330,8 @@ void mouse_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
         }
         set_event_field(isolate, context, self, field,
                         v8::Number::New(isolate, number));
+        if (std::strcmp(field, "button") == 0 &&
+            !set_ui_event_which(isolate, context, self, number >= 0 ? number + 1 : 0)) return;
     }
 }
 
@@ -198,7 +342,7 @@ void keyboard_event_constructor(
     }
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    event_constructor(info);
+    if (!initialize_ui_event_from_constructor(info)) return;
     v8::Local<v8::Object> self = info.This();
     const char* const fields[] = {"key", "code"};
     for (const char* field : fields) {
@@ -227,7 +371,7 @@ void focus_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    event_constructor(info);
+    if (!initialize_ui_event_from_constructor(info)) return;
     v8::Local<v8::Value> related_target;
     if (!event_init_field(context, info, "relatedTarget", &related_target)) {
         return;
@@ -249,7 +393,7 @@ void message_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) 
     }
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    event_constructor(info);
+    if (!initialize_event_from_constructor(info)) return;
 
     v8::Local<v8::Value> data;
     if (!event_init_field(context, info, "data", &data)) {

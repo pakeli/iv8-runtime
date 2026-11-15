@@ -42,8 +42,10 @@ def test_global_shape_and_prototype_chain():
             assert page.eval(f"typeof {name}") == "function"
             assert page.eval(f"window.{name} === {name}") is True
             assert page.eval(f"globalThis.{name} === {name}") is True
+            # PRES-01 introduces the shared UIEvent layer for UI subclasses.
+            parent = "Event" if name == "CustomEvent" else "UIEvent"
             assert page.eval(
-                f"Object.getPrototypeOf({name}.prototype) === Event.prototype"
+                f"Object.getPrototypeOf({name}.prototype) === {parent}.prototype"
             ) is True
         assert page.eval("typeof Event") == "function"
 
@@ -327,9 +329,9 @@ def test_stop_propagation_is_inherited():
 def test_no_capture_phase_surface():
     with iv8.Page() as page:
         _setup(page)
-        for member in ("composed", "timeStamp"):
-            assert page.eval(
-                f"typeof new CustomEvent('x').{member}") == "undefined"
+        # PRES-01 exposes the base Event fields on its canonical prototype.
+        assert page.eval("typeof new CustomEvent('x').composed") == "boolean"
+        assert page.eval("typeof new CustomEvent('x').timeStamp") == "number"
         assert page.eval("new CustomEvent('x').eventPhase") == 0
         assert page.eval("typeof new CustomEvent('x').detail") != "undefined"
         # M11-9 adds cancellation; the inherited methods exist here too.

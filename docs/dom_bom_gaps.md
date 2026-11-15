@@ -1,303 +1,138 @@
-# DOM / BOM Gap Inventory
+# Browser API presence inventory
 
-Last reviewed: `2026-11-03` · Baseline: **M11-52** (Window messaging, M11-51
-Window event handler attributes, and M11-50 Window scroll/focus/UI completion
-are verified on Linux + Windows + macOS arm64 `2026-11-03`. Window is
-prioritized above Document continuation.)
+Last reviewed: `2026-11-15` · Source: `7be41ab5b107aff2aa411b7b139b350e6b70f43d`
 
-> **Scope note.** This is a reference inventory of browser-surface features that
-> are **not implemented** as of M11-41..M11-45. It is not a contract and not a
-> roadmap.
-> Where a feature is partially present, only the missing parts are listed.
-> Status labels:
->
-> - **excluded** — deliberate standing exclusion or architecture boundary;
-> - **deferred** — needs a separate design decision before implementation;
-> - **candidate** — a viable near-term slice, ranked in
->   `docs/m11_compatibility_backlog.md`;
-> - **absent** — not implemented and not yet ranked.
->
-> Sources: `docs/runtime_surface.md`, the milestone boundary documents, and
-> `docs/m11_compatibility_backlog.md`.
+本轮按用户要求改为 **先覆盖 API，再完善浏览器一致性**。以下是实际浏览器与当前 SDK 的存在性差分，不是沿用历史缺口表。
 
-## 1. BOM gaps
+此表保留 **BIND-01 共享 SDK 基线**，便于追溯。后续第一批 PRES-01 已在本地候选中实现；新增名称、剩余缺口和本地验收见 [presence_01_report.md](presence_01_report.md) / [presence_01_api_delta.json](presence_01_api_delta.json)。共享 SDK 仍是上述基线。
 
-### 1.1 Networking and navigation
+## 1. 统计口径
 
-| Missing | Status |
+- 参考：macOS arm64，Google Chrome **157.0.8103.51**，新建隔离 headless profile，本地 HTTP loopback secure context，关闭后台网络且阻断非 loopback DNS。
+- SDK：实际共享 `iv8-test`，包版本 0.0.1，V8 15.0.245.19，native SHA-256 `d29024112409b373a9a714d9dcd9bb532e22716b2164d5d9b4f773c9b94eef89`。
+- 同一 probe 枚举 22 个固定对象的自身和原型链，按字符串成员名去重；不计数字索引和 `constructor` 元数据，不把 Object.prototype 通用成员加进参考分母。
+- 判定“有没有”时用实际 `key in object`，因此继承到的同名方法也算已暴露。`location.valueOf` 就属于这种情况；其定义位置是否像 Chrome 留到后续。
+- Window 表剔除 ECMAScript 全局内建；单列接口/构造器入口、事件属性和普通属性/方法。带 own prototype 的函数归接口入口，包含禁止公开 new 的接口和别名，并不表示它可直接构造。
+- **已暴露只表示名称存在**；固定值、no-op、明确拒绝、部分实现另列。未列入源码语义审计的成员不自动认证为完整实现。`document.all` 按 descriptor/存在性判定，不用其特殊的 typeof/真假值。
+- DOM 对象继承大量共同 API，表格不能相加当作独立 API 数量或全浏览器覆盖率。参考是本次 Chrome 配置的曝光面，不包含所有隐藏、实验或其他浏览器特有接口。
+- 本轮未递归展开全部全局接口的原型/静态方法，以及样式、图形、媒体、设备子接口。例如 URL 静态方法不是此表的独立统计目标。
+
+原始快照、统一 probe、二次 membership 核验、哈希及 CSV 位于忽略目录 `data/browser-api-inventory-2026-11-15/`。可查询的完整结果见 [browser_api_inventory.json](browser_api_inventory.json)。
+
+## 2. 主对象数量
+
+| 对象 / 范围 | Chrome 成员 | iv8 已暴露 | 完全缺失 |
+|---|---:|---:|---:|
+| Window 普通属性/方法 | 128 | 79 | 49 |
+| Window `on*` 事件属性 | 125 | 18 | 107 |
+| Window 接口/构造器全局入口 | 927 | 98 | 829 |
+| `location` | 15 | 14 | 1 |
+| `document` | 301 | 86 | 215 |
+| `navigator` | 70 | 26 | 44 |
+| `screen` | 15 | 12 | 3 |
+| `history` | 8 | 8 | 0 |
+| `performance` | 22 | 9 | 13 |
+| `crypto` | 3 | 2 | 1 |
+| `console` | 25 | 14 | 11 |
+| `localStorage` | 6 | 6 | 0 |
+| `sessionStorage` | 6 | 6 | 0 |
+
+Window 三组共 **1180 个浏览器相关名称：195 已暴露、985 缺失**。原始 globalThis 数为 Chrome 1246、Page 261、裸 JSContext 67；过滤口径不同，不要混用这些数字。
+
+## 3. 嵌套对象和 DOM 样本
+
+| 对象 | Chrome 成员 | iv8 已暴露 | 完全缺失 |
+|---|---:|---:|---:|
+| `visualViewport` | 14 | 12 | 2 |
+| `screen.orientation` | 9 | 2 | 7 |
+| `navigator.connection` | 9 | 4 | 5 |
+| `navigator.permissions` | 1 | 1 | 0 |
+| `navigator.storage` | 4 | 3 | 1 |
+| `scheduler` | 2 | 1 | 1 |
+| `element`（`div` 样本） | 369 | 81 | 288 |
+| `form` | 386 | 93 | 293 |
+| `input` | 428 | 98 | 330 |
+| `canvas` | 384 | 84 | 300 |
+| `event` | 22 | 10 | 12 |
+
+`document` 的 215 个缺失名包含 **117 个 `on*`** 和 98 个其他成员；`div` 的 288 个缺失名包含 **110 个 `on*`**。Form/Input/Canvas 还重复继承这些共同缺口。全局缺失接口中，SVG 前缀有 97 个、CSS 61 个、GPU 35 个、XR 50 个，适合按接口族组织工作。
+
+## 4. 主要完全缺失 API
+
+### Window 普通属性/方法（全部 49 项）
+
+`CSS`, `GPUBufferUsage`, `GPUColorWrite`, `GPUMapMode`, `GPUShaderStage`, `GPUTextureUsage`, `NodeFilter`, `PERSISTENT`, `TEMPORARY`, `caches`, `captureEvents`, `chrome`, `close`, `cookieStore`, `crashReport`, `createImageBitmap`, `credentialless`, `customElements`, `documentPictureInPicture`, `event`, `external`, `fence`, `fetchLater`, `find`, `getComputedStyle`, `getScreenDetails`, `getSelection`, `indexedDB`, `launchQueue`, `navigation`, `offscreenBuffering`, `open`, `originAgentCluster`, `queryLocalFonts`, `releaseEvents`, `reportError`, `requestResize`, `showDirectoryPicker`, `showOpenFilePicker`, `showSaveFilePicker`, `speechSynthesis`, `styleMedia`, `trustedTypes`, `viewport`, `webkitCancelAnimationFrame`, `webkitRequestAnimationFrame`, `webkitRequestFileSystem`, `webkitResolveLocalFileSystemURL`, `when`
+
+### 常用缺失接口/构造器入口
+
+`DOMException`, `AbortController`, `AbortSignal`, `Headers`, `Request`, `Response`, `FormData`, `DOMParser`, `XMLSerializer`, `Attr`, `NamedNodeMap`, `NodeList`, `HTMLCollection`, `HTMLFormControlsCollection`, `HTMLOptionsCollection`, `FileList`, `Range`, `Selection`, `TreeWalker`, `NodeIterator`, `UIEvent`, `InputEvent`, `PointerEvent`, `WheelEvent`, `ProgressEvent`, `ErrorEvent`, `PromiseRejectionEvent`, `HashChangeEvent`, `PopStateEvent`, `SubmitEvent`, `MessageChannel`, `MessagePort`, `BroadcastChannel`, `ResizeObserver`, `IntersectionObserver`, `PerformanceObserver`, `DOMRect`, `DOMRectReadOnly`, `DOMPoint`, `DOMMatrix`, `WebSocket`, `EventSource`, `SharedWorker`, `ServiceWorker`
+
+完整 829 个缺失接口入口保存在 JSON 的 `objects.window.categories.interface_entries.missing`，未将其逐个列为开发里程碑。
+
+### Navigator（全部 44 项）
+
+`appVersion`, `bluetooth`, `canShare`, `clearAppBadge`, `clipboard`, `cpuPerformance`, `credentials`, `deviceMemory`, `devicePosture`, `geolocation`, `getGamepads`, `getInstalledRelatedApps`, `getUserMedia`, `gpu`, `hid`, `ink`, `keyboard`, `locks`, `login`, `managed`, `mediaCapabilities`, `mediaDevices`, `mediaSession`, `presentation`, `registerProtocolHandler`, `requestMIDIAccess`, `requestMediaKeySystemAccess`, `scheduling`, `serial`, `serviceWorker`, `setAppBadge`, `share`, `storageBuckets`, `unregisterProtocolHandler`, `usb`, `userActivation`, `userAgentData`, `vibrate`, `virtualKeyboard`, `wakeLock`, `webkitGetUserMedia`, `webkitTemporaryStorage`, `windowControlsOverlay`, `xr`
+
+### Document 常用入口与逻辑能力
+
+`write`, `writeln`, `open`, `close`, `createEvent`, `createAttribute`, `createAttributeNS`, `createElementNS`, `createRange`, `createTreeWalker`, `createNodeIterator`, `importNode`, `adoptNode`, `getRootNode`, `normalize`, `compareDocumentPosition`, `implementation`, `doctype`, `scrollingElement`, `charset`, `inputEncoding`, `lastModified`, `getSelection`, `elementFromPoint`, `elementsFromPoint`, `styleSheets`, `fonts`, `adoptedStyleSheets`, `onclick`, `oninput`, `onchange`, `onkeydown`, `onkeyup`, `onsubmit`
+
+### Location / 其他小对象
+
+- `location`：`ancestorOrigins`。
+- `screen`：`isExtended`, `onchange`, `when`。
+- `performance`：`addEventListener`, `clearResourceTimings`, `dispatchEvent`, `eventCounts`, `interactionCount`, `memory`, `navigation`, `onresourcetimingbufferfull`, `removeEventListener`, `setResourceTimingBufferSize`, `timing`, `toJSON`, `when`。
+- `crypto`：`subtle`。
+- `console`：`clear`, `context`, `countReset`, `createTask`, `dirxml`, `groupCollapsed`, `memory`, `profile`, `profileEnd`, `timeLog`, `timeStamp`。
+- `visualViewport`：`onscrollend`, `when`。
+- `screen.orientation`：`addEventListener`, `dispatchEvent`, `lock`, `onchange`, `removeEventListener`, `unlock`, `when`。
+- `navigator.connection`：`addEventListener`, `dispatchEvent`, `onchange`, `removeEventListener`, `when`。
+- `navigator.storage`：`getDirectory`。
+- `scheduler`：`yield`。
+- `event`：`AT_TARGET`, `BUBBLING_PHASE`, `CAPTURING_PHASE`, `NONE`, `cancelBubble`, `composed`, `composedPath`, `initEvent`, `isTrusted`, `returnValue`, `srcElement`, `timeStamp`。
+
+### Element / Form / Input / Canvas
+
+- 通用缺口：`dataset`、`attributes`、`getAttributeNode*`、命名空间属性方法、`getRootNode`、`normalize`、`compareDocumentPosition`、`focus`/`blur`/`click`、事件属性、`attachShadow`、几何/滚动/布局及 ARIA 反射等。
+- Form 相对 div 样本额外缺：`acceptCharset`、`autocomplete`、`length`、`name`、`rel`、`relList`。
+- Input 常用额外缺：`files`、`labels`、`list`、`min`/`max`/`step`、`minLength`/`maxLength`、`pattern`、`multiple`、`formAction`/`formMethod` 等覆盖属性、`selectionStart`/`selectionEnd`、`setSelectionRange`、`setRangeText`、`select`、`valueAsDate`/`valueAsNumber`、`stepUp`/`stepDown`、`showPicker`。
+- Canvas 常用额外缺：`toDataURL`、`toBlob`、`captureStream`、`transferControlToOffscreen`。其 `getContext` 名称已存在，但没有绘图后端。
+
+## 5. 存在但不应当算“功能已补齐”
+
+| 已暴露入口 | 当前能力 |
 |---|---|
-| `fetch` / `Request` / `Response` / `Headers` / `FormData` / `AbortController` | **excluded** (offline XHR/fetch is backlog rank 7) |
-| `XMLHttpRequest`, `WebSocket`, `EventSource`, `navigator.sendBeacon` | **excluded** |
-| `location.assign` / `replace` / `reload`; URL-driven navigation | **excluded** |
-| `history` (`pushState` / `replaceState` / `back` / `forward` / `go`), `hashchange` / `popstate` | **excluded** |
-| `window.open` / `close` | **excluded** |
-| `window.postMessage` / `MessageEvent` | **partially implemented** — M11-52 single-window self-messaging: structured clone at send, bounded target origins, async FIFO timer delivery, and a `MessageEvent` constructor. No iframes, workers, transferables/`MessagePort`, cross-window delivery, `postMessage(message, options)`, messageerror, or full target-origin parsing |
-| `frames` / `parent` / `top` / `opener` as real browsing contexts | **implemented as single-context aliases** — M11-39 (`parent` / `frames` replaceable, `top` unforgeable read-only, `opener` writable, no child contexts) |
-| `beforeunload` / `unload` / `pageshow` / `pagehide` lifecycle events | **excluded** |
+| `fetch` | Promise 明确拒绝，尚无请求执行 |
+| `XMLHttpRequest` / `Worker` | 构造器存在，执行构造即 NotSupportedError |
+| `navigator.sendBeacon` | 固定 false，无请求发送 |
+| `canvas.getContext` | 固定 null，无 Canvas/WebGL 后端 |
+| Location 写入及 assign/replace/reload | 记录离线导航意图，不执行导航 |
+| History back/forward/go | 记录有效遍历/重载意图，不执行历史遍历 |
+| Window 滚动、焦点、移动/缩放/UI 方法 | 多数 no-op 或固定返回，无布局/UI联动 |
+| Form submit/requestSubmit | 可调用的 no-op，无真实提交 |
+| navigator.storage / permissions | 固定估算或权限状态，无实际存储持久化/设备权限 |
+| localStorage/sessionStorage | 方法名齐，提供 per-Page 内存存储，非完整 origin/持久化/跨页事件模型 |
 
-### 1.2 Storage and persistence
+源码审计另有 183 个精确成员的状态和行号：4 个硬不可用、16 个 intent-only、22 个 no-op、85 个固定/配置值、55 个有限实现及一个明确 native 实现示例。这是选择性审计，不能把这些数量和“完全缺失”相加。固定值也不自动代表错误。JSON 中的 `source_review` 给出对应证据。
 
-| Missing | Status |
-|---|---|
-| `storage` events and cross-page/cross-tab notification | **absent** — M11-7 provides per-Page in-memory stores only |
-| `document.cookie` | **implemented** — M11-46 deterministic per-Page in-memory jar (`max-age` / epoch `expires` deletion; path/domain/secure/SameSite ignored; no HTTP integration) |
-| IndexedDB, Cache API | **absent** |
-| `navigator.storage` / `StorageManager` | **partially implemented** — M11-43 adds static Promise-based `estimate()` (`usage: 0`, fixed 10 GiB quota), `persisted()`, and `persist()` (both `false`); no quota accounting, persistence, buckets, filesystem, or `getDirectory()` |
-| Persistence across `Page` instances or processes | **excluded** — entries survive `load()` within one Page only |
+## 6. 单列的引擎缺口
 
-### 1.3 Time, scheduling, event loop
+`Intl` 和 `Temporal` 在 Chrome 中存在，但当前裸 JSContext 和 Page 都缺失。macOS/manylinux V8 构建脚本明确设置 `v8_enable_i18n_support=false` 和 `v8_enable_temporal_support=false`，当前 BUILD_INFO 也记录了关闭状态。这两个名字从 Window 浏览器 API 数量中剔除并单独记录；其中 Intl 影响常见语言、数字、日期和时区调用，值得单独优先评估。
 
-| Missing | Status |
-|---|---|
-| Full Performance API (`mark` / `measure` / timelines / entries / timing) | **partially implemented** — M11-31 adds virtual `performance.now()` / `timeOrigin`; M11-37 adds `mark` / `measure` / entry queries / clears. `PerformanceObserver`, resource/navigation timing, `performance.timing` / `navigation`, and a real clock remain absent |
-| `requestAnimationFrame` callback timestamp argument | **implemented** — M11-31 passes the current virtual timestamp |
-| `requestIdleCallback` `options.timeout` firing semantics | **deferred** — validated but never fires |
-| `scheduler.postTask` | **implemented** — M11-40 Promise wrapper over the timer queue with `delay`; no priority queue, `AbortSignal`, or automatic loop |
-| Microtask cancellation | **absent** |
-| Full event-loop facade (rAF/idle + real sleep/clock) | **partially implemented** — M11-29/M11-30 add virtual `tick` / `advance` / `run_until_idle` for timers, microtasks, rAF, and idle; real sleep/clock remain absent |
-| Automatic event loop / background timers | **excluded** — explicit Python pumps/facade only; no background execution |
+## 7. 建议的覆盖顺序
 
-### 1.4 Dialogs and UI
-
-| Missing | Status |
-|---|---|
-| `alert` / `confirm` / `prompt`, `window.print` | **implemented as deterministic stubs** — M11-36 returns fixed values and never blocks or renders UI; no Python callback bridge |
-| Fullscreen API | **absent** |
-| `visualViewport` | **implemented as static metadata** — M11-41 derives width/height from the reported viewport with zero offsets, scale 1, no-op listeners, and no scroll/zoom/resize events |
-| Scroll APIs (`scroll` / `scrollTo` / `scrollBy` / `scrollX` / `scrollY` / `pageXOffset` / `pageYOffset`) | **implemented as deterministic stubs** — M11-50: positions are always `0`; methods accept any arguments and do nothing; no layout, clamping, smooth scrolling, or scroll events |
-| `window.focus` / `blur`, `moveBy` / `moveTo`, `resizeBy` / `resizeTo`, `stop` | **implemented as no-ops** — M11-50; `document.hasFocus()` stays `false`, and window geometry is unchanged |
-| Window event handler attributes (`window.onload` / `onerror` / `onmessage` / lifecycle and messaging `on*`) | **partially implemented** — M11-51: bounded accessor list with install/replace/clear, post-listener invocation at target and in bubbling, `return false` cancellation, and per-generation reset. Automatic error/unhandled-rejection events, the legacy `onerror` signature, capture-phase handlers, and unlisted names (e.g. `window.onclick`) remain absent |
-| Document/element event handler attributes (`document.onclick`, `element.onclick`, HTML `on*` content attributes) | **absent** — assignments create ordinary properties and never dispatch; `onchange` on MediaQueryList/PermissionStatus is likewise inert |
-| `matchMedia` | **partially implemented** — M11-42 adds a bounded static evaluator for media types, comma lists, `not`/`only`/`and`, width/height, orientation, and fixed desktop capabilities; no dynamic viewport changes or `change` events |
-
-### 1.5 Device and platform APIs
-
-| Missing | Status |
-|---|---|
-| `crypto` (`getRandomValues`, SubtleCrypto) | **partially implemented** — M11-33 adds OS-backed `getRandomValues()` / `randomUUID()`; `crypto.subtle` (digest, AES, RSA, ECDH/ECDSA, HMAC, KDF) is absent |
-| `Worker` / `SharedWorker` / `ServiceWorker` | **absent** |
-| `navigator.clipboard`, `geolocation`, `Notification` | **absent** |
-| `navigator.permissions` | **partially implemented** — M11-44 adds static `query({name})` statuses (`state: "prompt"` for a bounded known-name set, unknown names reject with `TypeError`); no prompt UI, device access, or change events |
-| `navigator.userAgentData` (UA-CH) | **absent** — M11-35 adds `navigator.connection` metadata only |
-| `structuredClone` and other transfer/serialization APIs | **partially implemented** — M11-38 clones primitives/objects/arrays/boxed primitives/`Date`/`Map`/`Set`/buffers/views with cycles and identity; transfer lists, RegExp/Error, shared buffers, and other exotic objects are rejected |
-
-### 1.6 Screen and window metadata
-
-| Missing | Status |
-|---|---|
-| `screen.orientation` / `availLeft` / `availTop` | **implemented** — M11-35 (orientation is a read-only derived `{type, angle}`, no events/lock) |
-| `window.name` / `length` | **implemented** — M11-35 (`name` mutable/Page-persistent; `length` is always 0) |
-| `window.parent` / `top` / `frames` / `opener` | **implemented** — M11-39 single-context aliases (`parent` / `frames` replaceable, `top` unforgeable read-only, `opener` writable; no child frames or popups) |
-| `window.visualViewport` / `origin` / `crossOriginIsolated` / `closed` / `frameElement` | **implemented** — M11-41 static read-only metadata; visualViewport has no scroll/zoom/resize events |
-| `window.status` / BarProps (`locationbar` / `menubar` / `personalbar` / `scrollbars` / `statusbar` / `toolbar`) / `clientInformation` | **implemented** — M11-50: `status` is a writable per-document string; each BarProp is a read-only `{visible: true}` metadata object; `clientInformation === navigator` |
-| `navigator.plugins` / `mimeTypes` / `javaEnabled()` | **implemented as empty metadata** — M11-45 frozen empty arrays and `javaEnabled() === false`; no plugin objects or Java support |
-
-Implemented for contrast: `screen.width` / `height` / `availWidth` /
-`availHeight` / `colorDepth` / `pixelDepth`, and `window.devicePixelRatio` /
-`innerWidth` / `innerHeight` / `outerWidth` / `outerHeight` / `screenX` /
-`screenY` (read-only reported values, M11-1/M11-25/M11-26).
-
-### 1.7 Console
-
-| Missing | Status |
-|---|---|
-| Console formatting, stack capture, table rendering, group nesting, real timing | **absent** — M11-28 provides deterministic method aliases |
-
-Implemented for contrast: `console.log` / `info` / `warn` / `error`, plus
-M11-28 `debug` / `trace` / `table` / `dir` / `group` / `groupEnd` / `time` /
-`timeEnd` / `assert` / `count`, all routed to Python `logging`; no clock,
-formatting, stack, or nesting state.
-
-## 2. DOM gaps
-
-### 2.1 Node model
-
-| Missing | Status |
-|---|---|
-| Text and comment nodes; `createTextNode` / `createComment` | **implemented** — M11-48 parser emits text (including whitespace/top-level) and comments; CharacterData hosts expose `nodeValue` / `data` / `length` |
-| CDATA nodes / `createCDATASection` | **absent** |
-| `DocumentFragment` and `createDocumentFragment` | **implemented** — M11-48 detached container; inserting it moves its children |
-| Live `textContent` after structural edits | **implemented** — M11-48 computes text live from text descendants; comments excluded from parents |
-| `importNode`, `adoptNode`, `normalize`, `compareDocumentPosition`, `getRootNode` | **absent** |
-| `Range`, `Selection`, `TreeWalker`, `NodeIterator` | **absent** |
-
-Implemented for contrast: M11-13 added raw `firstChild` / `lastChild` /
-`previousSibling` / `nextSibling` / `hasChildNodes()`; M11-48 makes them span all
-node kinds and adds `childNodes` vs `children` plus Text/Comment/DocumentFragment
-hosts. M11-14 added `cloneNode`, `isSameNode`, and `isEqualNode`.
-
-### 2.2 Collections
-
-| Missing | Status |
-|---|---|
-| `HTMLCollection` / `NodeList`, `item()` / `namedItem()` | **excluded** — collections are plain JS `Array`s |
-| Live collection objects and object-identity guarantees | **excluded** — collections are recollected per access; wrappers may be recreated |
-| Iteration helpers specific to `NodeList` (`forEach`, entries/keys/values) | **absent** (plain arrays cover ordinary iteration) |
-
-### 2.3 Selectors and queries
-
-| Missing | Status |
-|---|---|
-| Combinators (descendant/child/sibling), attribute selectors, selector lists | **partially implemented** — M11-34 adds compound selectors, all four combinators, attribute operators, selector lists, and `*`; pseudo-classes/elements, escapes, namespaces, and `i`/`s` flags remain absent |
-| Complex selectors in `matches` / `closest` (currently `false` / `null`) | **implemented** — M11-34 uses the same selector engine as the query APIs; pseudo-classes remain a later selector slice |
-| `document.all` | **absent** |
-
-Implemented for contrast: M11-19 added multi-token `getElementsByClassName`
-(document + element, descendants only for the element form); M11-20 added
-`document.getElementsByName`.
-
-### 2.4 Element surface
-
-| Missing | Status |
-|---|---|
-| `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `insertAdjacentElement` / `insertAdjacentText` | **implemented** — M11-49 (minimal fragment parser/serializer; bounded entity decoding; context-sensitive table/select parsing absent) |
-| `dataset`, `style` / CSSOM, `attributes` (`NamedNodeMap`) | **absent** |
-| `getAttributeNS` / `setAttributeNS` / `removeAttributeNS` | **absent** |
-| Attribute-reflection properties (`.src`, `.href`, `.type`, `.name`, …) | **partially implemented (M11-18)** — form-control subset only; other reflections **absent** |
-| `replaceWith`, `append`, `prepend`, `before`, `after`, `replaceChildren` | **implemented** — M11-49 (nodes or strings; fragments move children; adjacent Text nodes are not auto-merged) |
-| Specialized `HTML*Element` classes | **excluded** |
-| Shadow DOM (`attachShadow`, `ShadowRoot`, slots), Custom Elements, `<template>` | **absent** |
-| SVG / MathML namespaces (`createElementNS`) | **absent** |
-| Layout/geometry members (`getBoundingClientRect`, `offset*`, `client*`, `scroll*`) | **absent** — no layout engine |
-| Resource-backed element behavior (`img` loading, `naturalWidth`, media elements) | **absent** |
-
-Implemented for contrast: M11-12 added writable `id` / `className`,
-`hasAttributes()`, and `getAttributeNames()`; M11-13 added `remove()` and
-`replaceChild()`.
-
-### 2.5 Events
-
-| Missing | Status |
-|---|---|
-| `composed`, `timeStamp`, `isTrusted` | **absent** |
-| More event classes (`UIEvent`, `InputEvent`, `WheelEvent`, …) | **absent** — M11-6 delivered `CustomEvent` / `MouseEvent` / `KeyboardEvent` / `FocusEvent` |
-| `signal` listener option, `on*` handler properties | **absent** |
-| Native event generation and default actions (`click()`, `submit` / `reset` / `input` / `change`, media events) | **excluded** |
-| Additional lifecycle events (`beforeunload` / `unload` / `pageshow` / `pagehide` / `visibilitychange`) | **absent** |
-| `document.createEvent` | **absent** |
-| `MutationRecord` global | **excluded** — records are plain objects |
-| `characterData` mutation records | **implemented** — M11-48 Text/Comment data writes produce records (oldValue per option) |
-| `document`-target `childList` records without `subtree` | **excluded** — no JS API mutates the document node itself |
-
-Implemented for contrast: `Event(type, {bubbles})`, `target` / `currentTarget`,
-`stopPropagation()`, bubbling up to `document` / `window`, and the
-`readystatechange` / `DOMContentLoaded` / `load` lifecycle events. M11-9 added
-cancellation (`cancelable` / `defaultPrevented` / `preventDefault` /
-`stopImmediatePropagation`); M11-11 added the capture phase, `eventPhase`, and
-`capture` / `once` / `passive` listener options.
-
-### 2.6 Forms
-
-| Missing | Status |
-|---|---|
-| Validation API (`checkValidity`, `reportValidity`, `validity`, `willValidate`, `setCustomValidity`) | **partially implemented** — M11-32 adds `required`, `minlength` / `maxlength`, email/URL `typeMismatch`, custom validity, form aggregation, and minimal `invalid` events; `pattern`, `min` / `max` / `step`, radio-group semantics, and native UI remain absent |
-| Automatic `submit` / `reset` / `input` / `change` events and default submit action | **excluded** |
-| `requestSubmit(submitter)` argument and `event.submitter` | **absent** |
-| `FormData` and real form encoding | **absent** |
-| Writable `select.length`, option collection methods, multi-select behavior | **absent** — minimal single-select only |
-| Radio-group exclusivity; type-specific input behavior | **absent** |
-| Browsing-context resolution of `target`; URL resolution of `action` | **absent** — stored verbatim |
-
-Implemented for contrast: `form.elements` (plain array), `reset()`, no-op
-`submit()` / `requestSubmit()`, the five form metadata properties,
-control `value` / `checked` / `default*` / `form`, and the option surface.
-M11-16 added `select.options`, writable `selectedIndex`, and read-only
-`multiple` / `size`; M11-18 added input `type` / `disabled` / `readOnly` /
-`placeholder`, button `type` / `disabled`, `form.encoding`, and
-`option.label` / `index`; M11-32 added the bounded validation surface
-(`required`, `minlength` / `maxlength`, email/URL `typeMismatch`, custom
-validity, form aggregation, and `invalid` events); `URL.searchParams` (M11-15)
-is a non-live snapshot.
-
-### 2.7 Scripts and document loading
-
-| Missing | Status |
-|---|---|
-| ES modules, import maps, dynamic `import()`, `nomodule` | **excluded** — classic scripts only |
-| `async` / `defer` scheduling and real network loading | **excluded** |
-| Dynamic script execution on tree insertion | **excluded** — inserted `<script>` is inert |
-| `document.write` / `writeln` / `open` / `close` | **absent** |
-| MIME sniffing and script load/error events (`onload` / `onerror`) | **absent** |
-| Subresource loading: CSS, images, fonts, `<iframe>` | **excluded** |
-| `DOMParser`, `XMLSerializer` | **absent** |
-| Full HTML5 parser (foster parenting, tables, full named entities, error recovery) | **absent** — a minimal static element parser with bounded named/numeric entity decoding (M11-49) |
-
-Implemented for contrast: inline and classic external `<script>` execution,
-`resources` pre-resolution, `document.currentScript`, `document.scripts`,
-`document.readyState`, and the static `Page.load()` lifecycle.
-
-### 2.8 Rendering and layout
-
-| Missing | Status |
-|---|---|
-| CSSOM, `getComputedStyle`, style sheets | **absent** |
-| `matchMedia` | **partially implemented** — M11-42 provides a static bounded evaluator, not a CSS/media-query engine |
-| Layout / geometry / scrolling / hit testing (`elementFromPoint`) | **absent** — no layout engine |
-| Canvas / WebGL / SVG rendering | **absent** (backlog rank 9) |
-| Image and media rendering (`HTMLImageElement`, `HTMLVideoElement`, …) | **absent** |
-
-### 2.9 Document misc
-
-| Missing | Status |
-|---|---|
-| `document.cookie` | **implemented** — M11-46 deterministic per-Page in-memory jar; see §1.2 for limits |
-| `document.createRange` / `createTreeWalker` / `createNodeIterator` / `createEvent` | **absent** |
-| `document.all` / `document.plugins` | **absent** — M11-45 adds empty `navigator.plugins` / `mimeTypes` only |
-| Browsing contexts, frames, `<iframe>` behavior | **absent** |
-
-Implemented for contrast: M11-23 added read-only `characterSet` / `contentType`
-/ `compatMode` / `referrer` / `domain` / `visibilityState` / `hidden` /
-`activeElement` and `hasFocus()`; M11-22 added read-only `select.length`, plus
-`select.item` / `namedItem`; M11-46 added the writable, traced
-`document.cookie` jar (deterministic and page-scoped, with no HTTP backing);
-M11-47 made `document.title` writable (reflected into the first parsed
-`<title>`) and added the read-only `documentURI` / `baseURI` / `defaultView` /
-`location` identity aliases (single-context, no `<base href>` or navigation).
-
-## 3. Cross-cutting architecture boundaries
-
-These are not ordinary missing APIs; changing them is a project-level decision:
-
-- No automatic event loop, clock, or background thread. Asynchronous work is
-  driven only by the four explicit pumps (`run_timers` / `run_jobs` /
-  `run_animation_frame` / `run_idle_callbacks`).
-- No networking, navigation, or persistence in the core runtime.
-- No JS-to-Python callback bridge (`expose()`); the DevTools surface is
-  monitoring only.
-- No Python-side DOM or event API (`Page.document`); the DOM exists only in JS.
-- Element-only tree, plain-array collections, no wrapper-identity guarantee.
-- No layout/rendering tree; geometry and CSS surfaces cannot exist without one.
-
-## 4. Near-term candidates
-
-The M11-6..M11-10 batch delivered event subclasses, Web Storage,
-Blob/File/FileReader, event cancellation, and classList/toggleAttribute;
-M11-11 delivered event capture and listener options; M11-12..M11-17 delivered
-the element attribute/tree/clone/URL.searchParams/select extensions and the
-nested environment + `get_defaults()`; M11-18 delivered form-control attribute
-reflection; M11-19..M11-23 delivered query, form, select, and document-metadata
-completeness; M11-24..M11-28 delivered navigator/screen/window metadata and the
-console method cluster; M11-29 delivered the deterministic timer/microtask
-event-loop facade, M11-30 integrated rAF/idle into it, M11-31/M11-32 added the
-virtual performance clock and minimal form validation, M11-33 added OS-backed
-`crypto.getRandomValues()` / `randomUUID()`, M11-34 expanded the CSS selector
-engine, M11-35 completed the deterministic window/screen/navigator metadata, and
-M11-36..M11-40 completed deterministic dialogs, the performance entry timeline,
-bounded `structuredClone`, single-context window metadata, and
-`scheduler.postTask`; M11-41..M11-45 completed the static viewport/media/device
-metadata (including bounded `matchMedia`). Remaining candidates (mapping to
-`docs/m11_compatibility_backlog.md`):
-
-| Gap area | Backlog rank | Notes |
+| 批次 | 优先补齐的 API 族 | 基础交付目标 |
 |---|---|---|
-| Real clock / sleep semantics in the event-loop facade | 6 | M11-29/M11-31 expose virtual time to JS; real sleeping and a wall clock remain absent |
-| Offline XHR/fetch | 7 | Requires approval of the networking exclusion |
-| JS→Python `expose()` | 8 | Requires a separate architecture decision |
-| Canvas / WebGL / CSSOM / Workers / full storage | 9 | Not a near-term slice |
+| 1. BOM / 事件基础 | appVersion、deviceMemory、userAgentData、userActivation、ancestorOrigins；常用 on*；Event 缺字段/方法；Console 缺方法 | 常用脚本可读取或调用，并有基本用例 |
+| 2. DOM 逻辑与反射 | dataset、Attr/NamedNodeMap、命名空间基础、getRootNode/normalize/compareDocumentPosition、importNode/adoptNode、Document 创建/DOMParser | 复用现有树/解析器，无需布局或网络 |
+| 3. Web 数据对象 | DOMException、AbortController/Signal、Headers/Request/Response、FormData、Range/遍历器、更多事件类 | 离线对象和基本处理链可执行 |
+| 4. 执行子系统 | 可执行 fetch/XHR、Worker/MessageChannel、IndexedDB/Cache 等 | 分别约定离线资源、调度、origin 和安全边界 |
+| 5. 渲染与设备 | computed style/布局/几何、Canvas/WebGL、Audio/GPU/媒体、真实窗口/设备权限 | 独立系统设计及样本，不按构造器名字逐项铺开 |
 
-## 5. Maintenance
+按 API 族合批开发；第一阶段验收基础存在性和可执行用例，同时建立可扩展的共享原型链，后续再集中提升描述符、函数形态和细节一致性。已有 History、命名访问、数据转换和生命周期回归保留。盘点本身没有修改运行时；PRES-01 的实现和本地构建是后续单独记录的批次，尚未发布。
 
-- When a slice lands, remove the implemented rows here and add the feature to
-  `docs/runtime_surface.md`.
-- New rows should carry one of the four status labels; unranked items belong in
-  the `absent` bucket until the backlog ranks them.
+## 8. 证据与规范分组
+
+- 机器可读全名单：[browser_api_inventory.json](browser_api_inventory.json)。每对象含所有缺失名、已暴露名、分类计数和已审计限制。
+- 本地原始 Chrome/Page/裸 JSContext 快照、统一 probe、membership 核验及 `missing-members.csv`：`data/browser-api-inventory-2026-11-15/`。CSV 是 qualified object/member 路径，继承重复成员不可合计为独立 API。
+- 规范分组参考：[HTML Window/Location](https://html.spec.whatwg.org/multipage/nav-history-apis.html#the-window-object)、[HTML Navigator](https://html.spec.whatwg.org/multipage/system-state.html#the-navigator-object)、[DOM Document](https://dom.spec.whatwg.org/#interface-document)。数量来自本轮实测，不是规范页面推算。

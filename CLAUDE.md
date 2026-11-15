@@ -1,5 +1,24 @@
 # CLAUDE.md
 
+**Latest implemented local candidate (`2026-11-15`): PRES-01.** Read
+`docs/presence_01_bom_events.md` before extending this presence-first offline
+BOM/event batch. It adds configured Navigator identity/UAData, inactive
+UserActivation, empty Location ancestorOrigins, UIEvent/Event fields and paths,
+shared IDL handlers, Console additions and Screen metadata. NavigatorUAData,
+UserActivation and DOMStringList use shared native defining prototypes with
+illegal public constructors; the actual Event/UIEvent constructors and
+prototypes are registered together, including Event → UIEvent →
+MouseEvent/KeyboardEvent/FocusEvent inheritance. Nested instances and handler
+state reset per generation, V8 handles release before isolate disposal, and
+transient event dispatch state is cleared after delivery. Local acceptance is
+**447 focused, 1 xfailed**; full macOS arm64/Python 3.13 is
+**2417 passed, 2 skipped, 1 xfailed**. Read `docs/presence_01_report.md` for
+candidate identity, evidence and limits. Next coverage batch: DOM logic/reflection.
+No complete release matrix or shared SDK update
+has been performed for PRES-01; **latest release/deployment verified remains
+BIND-01 below**. Do not turn configured UAData, inactive activation or synthetic
+events into claims of real device observation, trusted input or server acceptance.
+
 **Latest release/deployment verified (`2026-11-15`): BIND-01.** Source `f015745`, tree `0914106d38d0c2c245b47e70daa7623b4ed04fc5`, passes all 12 lanes: 87 focused, Linux/macOS **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Shared iv8-test is backed up and upgraded from NAMED native `4b2f871d...` to `d2902411...`; actual shared interpreter passes focused/full and cached EPUB offline. Mainline integration is PR #30. Read `docs/native_binding_restore.md` / report for identities, artifact IDs, Windows retry, helper restoration and rollback. History/named access remain preserved; null-this/key-coercion/base-Event behavior gaps are separate. No live requests or server-pass claim. M11-53 remains next; stage 4 stays held.
 
 **Previous release verified (`2026-11-15`): NAMED-01 named-access restoration.** Source `374c81b`, tree `d16031ea344e5ff182c9d986d2a9ca634c6388e0`, restores the private Epub named-access patch in the split tree while preserving History. All 12 release lanes pass 56 focused tests before the full suite: Linux/macOS **2340 passed, 2 skipped, 1 xfailed**, Windows **2338 passed, 4 skipped, 1 xfailed**. Mainline integration is PR #29. Read `docs/named_access_restore.md` and its report for source/run/artifact identity, helper restoration and delivery. This named-access slice originally excluded callback metadata; BIND-01 above restores it. Do not replace shared SDKs silently or claim live business acceptance. M11-53 remains next; stage 4 remains held.
@@ -275,6 +294,11 @@ Answer roughly as follows:
 - M1 contract still exists and matters for `JSContext`.
 - Real implementation has progressed through M2–M11.
 - Current `HEAD` includes:
+  - PRES-01 as an implemented local candidate: configured Navigator identity,
+    native UAData/UserActivation/DOMStringList prototypes, UIEvent inheritance,
+    shared IDL handlers and the bounded Event/Console/Screen additions. Local
+    acceptance passes (see report); it has not run a full release
+    matrix and has not replaced the shared BIND-01 SDK;
   - `JSContext` lifecycle / eval / conversion / errors;
   - `Page` + minimal DOM / scripts / lifecycle / forms / URL utilities;
   - DevTools attach base and multiple watch/monitor APIs;
@@ -299,8 +323,9 @@ Answer roughly as follows:
     stubs, the M11-51 Window event handler attributes, and the M11-52 Window
     messaging surface — verified on real V8 Linux + Windows + macOS arm64;
     latest verification `2026-11-03`;
-  - latest implemented and verified compatibility feature: M11-52 (Window
-    messaging);
+  - latest verified numbered compatibility milestone: M11-52 (Window messaging);
+    latest release/deployment verified: BIND-01. Latest implemented local batch:
+    PRES-01, with release acceptance pending;
   - latest verified post-M11 monitoring slice: host access trace steps 1–4 +
     step-5 native BOM calls, window metadata, nested metadata, static
     visualViewport, navigator.storage manager, navigator.permissions,

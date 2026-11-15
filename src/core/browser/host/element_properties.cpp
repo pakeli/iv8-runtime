@@ -35,6 +35,9 @@ std::string reflected_element_attribute(const DomNode* node, const std::string& 
 v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
                                                v8::Local<v8::Context> context,
                                                const std::string& name) {
+    if (html_document_ && is_event_handler_name(EventHandlerTarget::kHTMLElement, name)) {
+        return get_event_handler(isolate, name);
+    }
     if (name == "baseURI") return document_->get_property(isolate, context, "baseURI");
     if (node_->tag == "canvas" && (name == "width" || name == "height")) {
         const auto found = node_->attributes.find(name);
@@ -442,6 +445,10 @@ v8::Local<v8::Value> ElementHost::get_property(v8::Isolate* isolate,
 
 void ElementHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
                                const std::string& name, v8::Local<v8::Value> value) {
+    if (html_document_ && is_event_handler_name(EventHandlerTarget::kHTMLElement, name)) {
+        set_event_handler(isolate, name, value);
+        return;
+    }
     if (name == "nodeValue") return;
     // M11-16: select.selectedIndex = i — single-select model; -1 clears all,
     // out-of-range values are ignored.
