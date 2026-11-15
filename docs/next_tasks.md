@@ -1,8 +1,8 @@
 # Next Tasks
 
-**Active task (`2026-11-15`): BIND-01 release and backed-up shared SDK update.** Candidate metadata restoration passes four local Python lanes (**87 focused; 2371 passed, 2 skipped, 1 xfailed**). Complete 12 release lanes, then back up the currently installed NAMED-01 package and install/verify the unified History/named/binding wheel in the actual iv8-test interpreter. Cached EPUB stays offline; no live server-pass claim. See `docs/native_binding_restore_report.md`. Follow-up behavior gaps (null this normalization, object-key double conversion, base Event without-new) are separate from this candidate-metadata slice. M11-53 remains the next numbered feature; stage 4 stays held.
+**BIND-01 release/deployment verified (`2026-11-15`).** Source `f015745` passes 12 lanes and the unified 87-test gate; Linux/macOS report **2371 passed, 2 skipped, 1 xfailed**, Windows **2369 passed, 4 skipped, 1 xfailed**. Backed-up shared iv8-test is upgraded and verified with the full suite and original cached EPUB offline. Mainline integration is PR #30; receipts are in `docs/native_binding_restore_report.md`. The remaining concrete behavior gaps (null-this normalization, object-key double conversion, base Event without-new) require a separate slice, not another metadata port. M11-53 remains the next numbered feature; stage 4 stays held.
 
-**NAMED-01 release verified (`2026-11-15`).** Source `374c81b` restores Window/form named access and preserves History. All 12 release lanes pass 56 focused tests, then Linux/macOS **2340 passed, 2 skipped, 1 xfailed** or Windows **2338 passed, 4 skipped, 1 xfailed**. Mainline integration is PR #29; exact receipts are in `docs/named_access_restore_report.md`. Preserve this combined regression gate for future SDK replacement. M11-53 stays the next numbered feature; stage 4 remains held. The separate candidate callback-metadata diff remains a tracked follow-up, not part of this port.
+**NAMED-01 release verified (`2026-11-15`).** Source `374c81b` restores Window/form named access and preserves History. All 12 release lanes pass 56 focused tests, then Linux/macOS **2340 passed, 2 skipped, 1 xfailed** or Windows **2338 passed, 4 skipped, 1 xfailed**. Mainline integration is PR #29; exact receipts are in `docs/named_access_restore_report.md`. Preserve this combined regression gate for future SDK replacement. M11-53 stays the next numbered feature; stage 4 remains held. The separate candidate callback-metadata diff was subsequently restored by BIND-01; its behavior limitations remain explicit.
 
 **Previous caller configuration alignment (`2026-11-14`).** Shared identity and per-request guards are deployed; native/client distinction and external receipts are in `docs/request_configuration_report.md`. Its tests are now covered by the NAMED-01 release. Continue selecting repairs from observed mismatches rather than configuration warnings alone.
 
@@ -63,13 +63,13 @@ Last reviewed: `2026-11-15`
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — after NAMED-01 restoration (`2026-11-15`)
+## Current execution order — after BIND-01 deployment (`2026-11-15`)
 
-Offline diagnostics, caller configuration alignment and the user-prioritized
-named-access restoration are implemented; the combined release passes all 12
-lanes. Keep History and named-access acceptance together before any future SDK
-replacement. Review the separate candidate callback-metadata diff only within
-its own browser-derived boundary. M11-53 focus/visibility remains the next
+Offline diagnostics, caller configuration alignment, named access and remaining
+candidate binding metadata are implemented. The combined release passes all 12
+lanes and is installed with backup/identity/offline receipts. Keep all three
+feature groups in the focused gate before future SDK replacement. The observed
+receiver/key-coercion/base-Event behavior gaps need their own approved boundary. M11-53 focus/visibility remains the next
 numbered feature. Navigator/permissions repairs need observed API evidence;
 Page time-model changes, product networking, iframe/Worker and graphics remain
 separate proposals.

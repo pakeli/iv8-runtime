@@ -18,6 +18,8 @@ full browser equivalence. Existing delegate limitations remain explicit gaps.
 Verify 12 release lanes before installing and record actual old/new native,
 wheel/package metadata and rollback identity. Boundary and receipts:
 `docs/native_binding_restore.md` / `docs/native_binding_restore_report.md`.
+Source `f015745` subsequently passes all 12 release lanes and the shared SDK
+upgrade/combined offline acceptance. Mainline integration is PR #30.
 
 ### Restore named access before further runtime work (`2026-11-15`)
 

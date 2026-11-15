@@ -28,5 +28,6 @@ package, then back up and update the shared iv8-test SDK and verify it offline.
   session tests, new Web APIs or full-browser/server-pass claims are authorized
   by this slice.
 
-Implementation/verification are pending. Evidence and deployment receipts are
-recorded in `docs/native_binding_restore_report.md`.
+Implementation, all 12 release lanes and the backed-up shared SDK update are
+verified. Exact source/tree, per-platform counts, installed identities and
+offline acceptance are recorded in `docs/native_binding_restore_report.md`.

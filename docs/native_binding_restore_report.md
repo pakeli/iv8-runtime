@@ -1,7 +1,7 @@
 # BIND-01 — native binding metadata restoration report
 
-Date: 2026-11-15. Implementation and four-version local acceptance complete;
-cross-platform release verification and shared SDK deployment pending.
+Date: 2026-11-15. **All 12 release lanes and shared SDK deployment verified.**
+Mainline integration is through PR #30.
 Boundary: `native_binding_restore.md`.
 
 ## Audit and repair
@@ -64,9 +64,28 @@ All macOS arm64 CPython 3.11–3.14 wheels target macOS 11.0 and pinned V8
 | 3.14 | `7e61794f11e653a59028b3d90e43efb05f87a0f811336f5af2e66c79001e7a41` |
 
 Logs, source/binary receipts and the negative controls are in ignored
-`data/binding-restore-2026-11-15/`. Release source/tree/run/artifact identities
-will be recorded after all 12 lanes finish; local results do not replace that
-release verdict.
+`data/binding-restore-2026-11-15/`. Verified implementation source is
+`f015745266f5eb0cc3a3f59b9baada49e77d162b`, tree
+`0914106d38d0c2c245b47e70daa7623b4ed04fc5`. Required V8 checks
+`43675863843` / `43675916387` passed. All release wheels ran **87 focused tests**
+before the full suite; every lane collected 2,374 tests.
+
+| Platform, Python 3.11–3.14 | Run | Per-lane result | Artifacts |
+|---|---|---|---|
+| Linux x64 | `43675920281` | 2371 passed, 2 skipped, 1 xfailed | `14146119248`, four wheels |
+| Windows x64 | `43675928957`, attempt 2 | 2369 passed, 4 skipped, 1 xfailed | cp311 `14146039847`, cp312 `14146377947`, cp313 `14145914048`, cp314 `14146421823` |
+| macOS arm64 | `43675968125` | 2371 passed, 2 skipped, 1 xfailed | cp311 `14146078677`, cp312 `14146552427`, cp313 `14146278262`, cp314 `14146298198` |
+
+Windows has two extra Unix-device skips. Its first cp311 run passed all 87
+focused cases but one existing offline manifest-schema test exceeded its
+2-second worker deadline. Only that failed lane was rerun, without source
+changes; it passed. Both attempts and the initial failure remain recorded.
+
+macOS driver `942f466ea87e7754e6fedc629135462f34086ec6` pins both checkout
+sites to the exact implementation source; all five actual job checkouts agree.
+Restore `aa0bfe3c0d57b59dc18bb15e53064f552406644d` restores original workflow
+blob `eb730d3e77a17d4d527e67646475385cebb2428c` with a SHA guard. Branch
+protection and required checks are unchanged.
 
 ## Cached EPUB execution
 
@@ -99,13 +118,36 @@ Synthetic evidence and callback hashes are in `known-limitations.json`. These
 gaps require separate behavior repairs; no all-receiver/all-conversion or full
 Event compatibility claim is made here.
 
-## Deployment boundary
+## Verified shared SDK deployment
 
-The actual pre-install shared SDK is now the NAMED-01 CI package, native SHA
+The actual pre-install shared SDK was the NAMED-01 CI package, native SHA
 `4b2f871d40a97452b27a461390c7fe21a46ce149fb66a7f574af4253bed774d4`,
 wheel SHA `1c0ba23a815ee35efce38f27d8825bbff9efa66f47402c2a1de2e1f923622ed3`.
 Do not use the obsolete History-only or Nov8 backup as this task's rollback point.
-After release acceptance, back up the actual package and dist-info with file
-hashes, install the verified cp311 wheel without dependency changes, and verify
-the shared interpreter/module/native identity, combined gates and cached EPUB.
-No live business request is part of deployment acceptance.
+The actual package (20 files), dist-info (7 files) and a byte-verified rollback
+wheel were backed up under ignored
+`data/binding-restore-2026-11-15/backup/20261115-121648/`. Semantic-file hashes
+were checked again immediately before installation. No dependency was installed
+or upgraded.
+
+The CI cp311 archive matches published SHA-256
+`37fc3b4f935ccc7e2c706205949ba8e8b5d057752520d218c98dd0da5b7f75b0`.
+Installed wheel SHA-256:
+`40a57fa8ebdfd822bc1ca595570044c4605a98eab690798b7e6c8c201ef540a0`.
+Installed native SHA-256:
+`d29024112409b373a9a714d9dcd9bb532e22716b2164d5d9b4f773c9b94eef89`.
+
+The actual `/Users/lil/miniconda3/envs/iv8-test/bin/python`, from `/tmp` with
+PYTHONPATH cleared, verified its module/native and distribution receipt in fresh
+processes. It passes **87 focused** and **2371 passed, 2 skipped, 1 xfailed** full
+suite checks. Pytest dependencies were borrowed only after binding the verified
+shared iv8 module; pytest was not added to the user environment. The same pinned
+EPUB manifest also passes using that interpreter, with no first error and server
+`not_tested`. No live business request or Cookie/output equivalence is claimed.
+
+Backups, rollback identity, per-file hashes, installed direct_url, focused/full
+logs and the replay are in `shared-sdk-backup.json`,
+`shared-sdk-installation.json`, `shared-sdk-final-identity.json`,
+`shared-focused.log`, `shared-full.log` and `epub-offline-installed/` in that
+ignored evidence directory. Subsequent handoff commits are documentation-only
+and retain the verified implementation/test/build files.
