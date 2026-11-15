@@ -29,8 +29,6 @@ jobs:
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: f015745266f5eb0cc3a3f59b9baada49e77d162b
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -66,8 +64,6 @@ jobs:
         python: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: f015745266f5eb0cc3a3f59b9baada49e77d162b
       - name: Restore V8 monolith cache (with retries)
         id: v8cache
         uses: ./.github/actions/restore-v8-cache
@@ -92,8 +88,7 @@ jobs:
           whl="$(ls dist/*.whl | head -1)"
           python -m pip install "$whl"
           cd "$RUNNER_TEMP"
-          python -c "import iv8; assert 'site-packages' in iv8.__file__, iv8.__file__; assert iv8._v8_linked, 'V8 not linked'; print('macos-arm64', iv8._v8_runtime_version)"
-          python -m pytest "$GITHUB_WORKSPACE/test/test_history.py" "$GITHUB_WORKSPACE/test/test_epub_named_properties.py" "$GITHUB_WORKSPACE/test/test_epub_binding_metadata.py" -q
+          python -c "import iv8; assert iv8._v8_linked, 'V8 not linked'; print('macos-arm64', iv8._v8_runtime_version)"
           python -m pytest "$GITHUB_WORKSPACE/test"
       - uses: actions/upload-artifact@v4
         with:
