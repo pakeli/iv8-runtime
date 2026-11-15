@@ -7,6 +7,21 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Prioritize BOM objects before further DOM/Web-data work (`2026-11-15`)
+
+The user explicitly selected Window, Location, Navigator and History as the
+priority and deferred further node operations. This supersedes the post-PRES-02
+recommendation to start the Web-data batch. Preserve completed DOM work, but
+select subsequent batches from missing ordinary Window APIs, low-dependency
+Navigator capabilities and related BOM objects. Location/History names are
+already complete in the fixed inventory; keep their existing state/URL behavior
+and named-access regressions protected. Window-global constructor exposure is
+not itself a BOM classification. Retain browser-derived native prototypes,
+configuration consistency, bounded behavior and the lean local-acceptance cadence.
+This is a queue change, not approval for arbitrary networking/device/real
+navigation subsystems. Current counts and execution order:
+`docs/bom_coverage_plan.md`.
+
 ### Build live DOM reflection on shared state and document ownership (`2026-11-15`)
 
 The user approved the DOM logic/reflection batch after PRES-01. PRES-02 keeps

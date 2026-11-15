@@ -1,5 +1,10 @@
 # iv8-runtime Runtime Surface Index
 
+**Current queue (`2026-11-15`): BOM first.** Window/Location/Navigator/History
+coverage and related BOM objects take precedence over further DOM nodes and the
+proposed Web-data batch. This changes no runtime exposure. Counts and selected
+candidate families: `docs/bom_coverage_plan.md`.
+
 **Latest implemented local candidate (`2026-11-15`): PRES-02.** Live native
 DOMStringMap/NamedNodeMap/Attr interfaces, namespace-aware creation and attribute
 operations, live namespace tag collections, Node root/normalize/position helpers

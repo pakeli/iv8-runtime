@@ -1,5 +1,14 @@
 # CLAUDE.md
 
+**Current user priority (`2026-11-15`): BOM first.** Prioritize Window, Location,
+Navigator and History, then related BOM objects; defer further DOM-node work and
+the proposed DOMException/Abort/Headers/Request/Response/FormData batch. Preserve
+the completed PRES-01/PRES-02 work. Read `docs/bom_coverage_plan.md` and the top
+of `docs/next_tasks.md` before choosing a task; these override older next-DOM or
+next-Web-data recommendations. Retain shared native prototypes, configuration
+consistency and meaningful local regressions. This priority change alone adds no
+runtime API or release/deployment verification.
+
 **Latest implemented local candidate (`2026-11-15`): PRES-02.** Read
 `docs/presence_02_dom.md` before extending the DOM logic/reflection batch.
 Native dataset/DOMStringMap, attributes/NamedNodeMap and Attr share live backing

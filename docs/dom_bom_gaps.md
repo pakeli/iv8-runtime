@@ -121,6 +121,8 @@ Window 三组共 **1180 个浏览器相关名称：195 已暴露、985 缺失**�
 
 ## 7. 建议的覆盖顺序
 
+**最新优先级（2026-11-15）**：用户要求优先 Window、Location、Navigator、History 等 BOM 环境，后续节点操作和 Web 数据对象置后。PRES-01/PRES-02 已完成的本地成果保留；以下表格为此前合批建议，当前执行顺序以 [bom_coverage_plan.md](bom_coverage_plan.md) 为准。Window 普通成员仍缺 49 项，Navigator 缺 40 项；Location/History 在固定参考中的名称已齐，继续保护已有功能。
+
 | 批次 | 优先补齐的 API 族 | 基础交付目标 |
 |---|---|---|
 | 1. BOM / 事件基础 | appVersion、deviceMemory、userAgentData、userActivation、ancestorOrigins；常用 on*；Event 缺字段/方法；Console 缺方法 | 常用脚本可读取或调用，并有基本用例 |

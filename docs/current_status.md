@@ -1,5 +1,12 @@
 # Current Status
 
+**Current development direction (`2026-11-15`): BOM first.** The user prioritizes
+Window, Location, Navigator and History, then related BOM objects. Further DOM
+node work and the proposed Web-data batch move behind this queue. Current local
+counts, candidate batches and execution boundaries: `docs/bom_coverage_plan.md`.
+This planning update leaves the local acceptance and release/deployment records
+below unchanged.
+
 **Latest implemented local candidate (`2026-11-15`): PRES-02.** The DOM
 logic/reflection batch adds live dataset/DOMStringMap and attributes/NamedNodeMap,
 Attr nodes, namespace-aware creation and attribute operations, namespace-aware
@@ -885,21 +892,24 @@ The repository is executing its post-M10 direction:
 - M11-52 (Window messaging) is **landed and verified on real V8 (Linux +
   Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_52_window_messaging.md` and `docs/m11_52_report.md`;
-- the active implemented batch is **PRES-02 DOM logic/reflection**, with final
-  local acceptance and release acceptance pending. Live attribute interfaces,
+- the latest implemented batch is **PRES-02 DOM logic/reflection**, locally
+  accepted with release acceptance pending. Live attribute interfaces,
   namespace operations, root/tree helpers, import/adopt and inert HTML DOMParser
   build on the previous locally accepted PRES-01 BOM/events. Shared native
   prototype and generation ownership remain required. BIND-01 remains the
   release-verified and deployed SDK; M11-53 focus/visibility is still a numbered
   candidate. Configured UAData does not imply complete device/profile fidelity.
-  Remaining gaps are inventoried in `docs/dom_bom_gaps.md`.
+  Subsequent development is BOM-first: Window/Location/Navigator/History and
+  related objects, with further node/Web-data work deferred. Current queue:
+  `docs/bom_coverage_plan.md`; gaps: `docs/dom_bom_gaps.md`.
 
 ## 7. Current Open Questions
 
 These are the questions a new coding session should resolve before major new work:
 
-- Following PRES-02 local acceptance, which API family should follow before
-  returning to numbered M11-53 focus/visibility work? `M11-1` through `M11-52`
+- Which bounded Window/Navigator members should form the first BOM continuation
+  batch? The object-family priority is settled in `docs/bom_coverage_plan.md`.
+  `M11-1` through `M11-52`
   remain release-verified; BIND-01 is the latest verified release/deployed SDK.
   PRES-01 has prior local acceptance; PRES-02 now implements dataset/attributes,
   namespace APIs, root/tree helpers, import/adopt and HTML DOMParser, with final

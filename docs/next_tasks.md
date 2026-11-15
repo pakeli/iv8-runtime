@@ -1,6 +1,8 @@
 # Next Tasks
 
-**Latest implemented — PRES-02 (`2026-11-15`), locally accepted; release verification pending.** DOM logic/reflection now covers live dataset/attributes, Attr/NamedNodeMap, namespace creation/attributes/live tag collections, root/normalize/position helpers, import/adopt and inert HTML DOMParser. Shared native prototypes and cross-document wrapper/listener/view/observer ownership are covered by 37 new cases. macOS arm64/Python 3.13 passes **489 focused, 1 xfailed** and full **2454 passed, 2 skipped, 1 xfailed**. Boundary/report/delta: `docs/presence_02_dom.md`, `docs/presence_02_report.md`, `docs/presence_02_api_delta.json`. Shared SDK remains BIND-01; no full release matrix or deployment was performed. Next coverage candidate is Web data objects (DOMException, AbortController/Signal, Headers/Request/Response, FormData) with offline behavior and explicit execution boundaries. XML parsing/serialization and broader DOM fidelity remain recorded gaps.
+**Current priority — BOM first (`2026-11-15`, user direction).** Prioritize Window, Location, Navigator and History, then related BOM objects. Continue missing ordinary Window members and low-dependency Navigator/BOM subobjects; further DOM node operations and the previously proposed Web-data batch are deferred. Location and History have no missing names in the current fixed inventory, so protect their existing state/URL/configuration behavior and repair evidenced gaps. Window's DOM/graphics/device constructor entries are not automatically BOM work. Concrete queue/counts/boundaries: `docs/bom_coverage_plan.md`. This overrides older “next DOM/Web-data” recommendations below; PRES-01/PRES-02 local acceptance and BIND-01 release/deployment status are unchanged.
+
+**Latest implemented — PRES-02 (`2026-11-15`), locally accepted; release verification pending.** DOM logic/reflection now covers live dataset/attributes, Attr/NamedNodeMap, namespace creation/attributes/live tag collections, root/normalize/position helpers, import/adopt and inert HTML DOMParser. Shared native prototypes and cross-document wrapper/listener/view/observer ownership are covered by 37 new cases. macOS arm64/Python 3.13 passes **489 focused, 1 xfailed** and full **2454 passed, 2 skipped, 1 xfailed**. Boundary/report/delta: `docs/presence_02_dom.md`, `docs/presence_02_report.md`, `docs/presence_02_api_delta.json`. Shared SDK remains BIND-01; no full release matrix or deployment was performed. The newer BOM-first direction above supersedes the earlier Web-data recommendation. Further DOM/Web-data coverage is deferred; existing limits remain recorded.
 
 **Previous local acceptance — PRES-01 (`2026-11-15`); release verification pending.** The first BOM/event coverage batch implements Navigator identity/activation, Location ancestorOrigins, Event/UIEvent, reference on* attributes, eight Console operations and Screen isExtended/onchange. Shared native interface prototypes, Event/UIEvent constructor inheritance and generation cleanup are in place. Boundary: `docs/presence_01_bom_events.md`; acceptance and remaining limits: `docs/presence_01_report.md`; presence delta: `docs/presence_01_api_delta.json`. Use focused checks and one local full suite during development, then group release verification later. The following DOM batch is PRES-02 above; shared SDK remains BIND-01.
 
@@ -71,9 +73,10 @@ task queue for Claude after chat-history loss.
 
 ## Current execution order — after PRES-02 local acceptance (`2026-11-15`)
 
-The user's newer presence-first direction and PRES-01/PRES-02 above take precedence
+The user's latest BOM-first direction and `docs/bom_coverage_plan.md` take precedence
 over the older per-slice queue below. DOM foundations are locally accepted;
-continue with Web-data API batches. M11-53 remains a numbered candidate rather than an
+continue Window/Navigator coverage, with Location/History regressions protected.
+Further DOM-node and Web-data batches are deferred. M11-53 remains a numbered candidate rather than an
 automatic next task; detailed function/prototype conformance follows basic API
 coverage. Network/rendering/device subsystems still need explicit boundaries.
 
