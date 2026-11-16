@@ -7,6 +7,22 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Record user API use while excluding runtime housekeeping (`2026-11-16`)
+
+The user approves native origin filtering: empty debug loads must be silent,
+location.href eval has exactly three gets, and lifecycle callbacks retain user
+API accesses. Exclude setup, synthetic events and state maintenance before store
+accounting. Native entries start runtime implementation scopes after recording;
+explicit invocation/conversion scopes retain native-bound user callbacks that
+engine stack depth cannot distinguish. Trusted script IDs, bridge token restore,
+receiver-preserving CSS forwarding and non-executing descriptor checks protect
+nested accessors and exceptions. Local acceptance is 522 focused and full
+2812 passed / 2 skipped, including 40 origin cases. Update the existing PR #32;
+retain the previous release as verified until the new matrix finishes. Scope,
+raw/manual changes and evidence: `docs/access_trace_origins.md` /
+`docs/access_trace_origins_report.md`. Other API coverage gaps and shared SDK
+replacement remain separate.
+
 ### Verify the PR #32 monitoring candidate across all release lanes (`2026-11-16`)
 
 Fixed source `aa72e50` / tree `3f07dc72a09b78f97f74924ecd3f15b2cb0624cd`

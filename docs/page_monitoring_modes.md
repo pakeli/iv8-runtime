@@ -41,8 +41,10 @@ Ordinary output/formatting errors do not replace a JavaScript result or exceptio
 Python interrupts and process-exit signals retain their normal control behavior.
 Each Page controls its own mode and buffer. Internal environment installation is
 discarded before the debug session starts, rather than printed as user API use.
-The existing synthetic lifecycle event traces can still appear, including for a
-document without user scripts; this layer does not filter those native entries.
+The user-origin trace layer excludes native setup, synthetic lifecycle event
+creation and state bookkeeping before event/capacity accounting. An empty load
+prints nothing; user lifecycle handlers and scripts still produce their actual
+API entries. See `docs/access_trace_origins.md` for callback/coercion provenance.
 
 ## Example
 

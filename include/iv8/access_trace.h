@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace v8 {
@@ -28,6 +29,8 @@ enum class AccessOperation {
     kGetOwnPropertyDescriptor,
     kDefineProperty,
 };
+
+enum class AccessOriginKind { kRuntime, kUser, kRuntimeBridge };
 
 struct AccessEvent {
     std::uint64_t seq = 0;
@@ -85,9 +88,9 @@ struct AccessSnapshot {
 };
 
 // Page-owned tracing channel for native HostObject get/set/call entry points.
-// It deliberately has no V8 or Python dependency in its write path: host
-// callbacks only record native strings/integers, and Python reads a snapshot
-// after the trace mutex is released.
+// Origin checks may inspect engine stack metadata before the write lock. The
+// locked store only handles native strings/integers; no V8/Python operation or
+// user JavaScript runs while holding its mutex.
 class AccessTrace {
 public:
     AccessTrace() = default;
@@ -109,6 +112,35 @@ public:
     // Advance the Page generation and clear object-ID bindings. Events keep
     // their old generation; object IDs are never reused.
     void begin_generation(std::uint64_t generation) noexcept;
+
+    void bind_isolate(v8::Isolate* isolate) noexcept;
+    void register_runtime_script(int script_id);
+    bool runtime_script(int script_id) const noexcept {
+        return runtime_script_ids_.contains(script_id);
+    }
+    bool user_entry() noexcept;
+
+    struct OriginMark {
+        int runtime_depth = -1;
+        bool user_entry = false;
+        bool runtime_bridge = false;
+    };
+
+    OriginMark enter_origin(v8::Isolate* isolate, AccessOriginKind kind) noexcept;
+    OriginMark origin_mark() const noexcept { return origin_; }
+    void restore_origin(OriginMark mark) noexcept;
+
+    class OriginScope {
+    public:
+        OriginScope(AccessTrace* trace, v8::Isolate* isolate,
+                    AccessOriginKind kind) noexcept;
+        ~OriginScope() noexcept;
+        OriginScope(const OriginScope&) = delete;
+        OriginScope& operator=(const OriginScope&) = delete;
+    private:
+        AccessTrace* trace_ = nullptr;
+        OriginMark previous_;
+    };
 
     bool enabled() const noexcept {
         return enabled_.load(std::memory_order_acquire);
@@ -154,6 +186,7 @@ public:
         std::string previous_resource_;
         std::string previous_source_kind_;
         bool active_ = false;
+        OriginMark previous_origin_;
     };
 
     static const std::vector<std::string>& supported_object_types();
@@ -172,6 +205,11 @@ private:
     std::optional<std::vector<std::string>> filter_object_types_;
     std::string current_resource_;
     std::string current_source_kind_ = "unknown";
+    // Only accessed under the context operation guard / isolate locker.
+    v8::Isolate* origin_isolate_ = nullptr;
+    std::unordered_set<int> runtime_script_ids_;
+    OriginMark origin_;
+    int user_stack_depth() noexcept;
 };
 
 // Recover the Page-owned trace from the isolate embedder slot. Returns nullptr

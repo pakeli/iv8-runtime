@@ -35,11 +35,7 @@ def test_empty_debug_load_has_no_environment_bootstrap_noise(capsys):
     with iv8.Page() as page:
         page.load(HTML, BASE, mode="debug")
         output = capsys.readouterr().out
-        # A successful load dispatches lifecycle events through the existing JS
-        # event facade, so its synthetic Event entries remain visible. Native
-        # environment/prototype installation must finish before tracing starts.
-        assert not any(line.startswith("DEFINE ") for line in output.splitlines())
-        assert "prototype" not in output
+        assert output == ""
         report = page.read_access_trace()
         assert report["enabled"] and report["filter_object_types"] is None
         assert report["events"] == []

@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <utility>
 
+#include "iv8/access_origin.h"
 #include "iv8/dom_url.h"
 #include "iv8/url_parser.h"
 #include "../dom/dom_query.h"
@@ -386,7 +387,7 @@ void DocumentHost::set_property(v8::Isolate* isolate, v8::Local<v8::Context> con
             return;
         }
         v8::Local<v8::String> str;
-        if (!value->ToString(context).ToLocal(&str)) {
+        if (!access_user_operation(isolate, [&] { return value->ToString(context); }).ToLocal(&str)) {
             return;
         }
         v8::String::Utf8Value utf8(isolate, str);
@@ -481,6 +482,7 @@ v8::Local<v8::Value> DocumentHost::call_method(v8::Isolate* isolate, v8::Local<v
         if (call_node_method(isolate, context, &document_node_, name, args, node_result)) return node_result;
         std::string arg;
         if (args.Length() > 0) {
+            auto user_origin = access_user_scope(isolate);
             v8::String::Utf8Value utf8(isolate, args[0]);
             if (*utf8 != nullptr) {
                 arg.assign(*utf8, static_cast<std::size_t>(utf8.length()));
@@ -771,6 +773,7 @@ ClassListBinding* DocumentHost::create_class_list_binding(DomNode* node) {
     }
 
 void DocumentHost::run_element_bubbling(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> event, DomNode* node, EventTargetHost* element_host, v8::Local<v8::Object> receiver) {
+        auto runtime_origin = access_runtime_scope(isolate);
         const bool bubbles = event_bubbles(isolate, context, event);
         std::vector<DomNode*> ancestors;
         for (DomNode* ancestor = node->parent; ancestor != nullptr && ancestor != &document_node_;
@@ -785,7 +788,7 @@ void DocumentHost::run_element_bubbling(v8::Isolate* isolate, v8::Local<v8::Cont
             if (window_target_ != nullptr) path.push_back(context->Global());
         }
         if (!begin_event_dispatch(isolate, context, event, path)) return;
-        (void)event->Set(context, v8_string(isolate, "target"), receiver);
+        (void)set_runtime_api_field(isolate, context, event, "target", receiver);
         const auto stopped = [&]() {
             return event_is_stopped(isolate, context, event);
         };
@@ -846,10 +849,11 @@ void DocumentHost::run_element_bubbling(v8::Isolate* isolate, v8::Local<v8::Cont
     }
 
 void DocumentHost::dispatch_event(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> event, v8::Local<v8::Object> receiver) {
+        auto runtime_origin = access_runtime_scope(isolate);
         std::vector<v8::Local<v8::Value>> path = {receiver};
         if (window_target_ != nullptr) path.push_back(context->Global());
         if (!begin_event_dispatch(isolate, context, event, path)) return;
-        (void)event->Set(context, v8_string(isolate, "target"), receiver);
+        (void)set_runtime_api_field(isolate, context, event, "target", receiver);
         if (event_is_stopped(isolate, context, event)) { finish_dispatch(isolate, context, event); return; }
         if (window_target_ != nullptr) {
             window_target_->fire_capture_at(isolate, context, event,

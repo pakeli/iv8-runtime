@@ -6,6 +6,7 @@
 #include <string>
 
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/base64.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
@@ -26,7 +27,9 @@ void btoa_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(isolate, "window", "btoa");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::String> str;
-    if (!info[0]->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return info[0]->ToString(context);
+        }).ToLocal(&str)) {
         return;  // ToString threw
     }
     v8::String::Value units(isolate, str);  // UTF-16 code units
@@ -55,7 +58,9 @@ void atob_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(isolate, "window", "atob");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::String> str;
-    if (!info[0]->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return info[0]->ToString(context);
+        }).ToLocal(&str)) {
         return;  // ToString threw
     }
     v8::String::Utf8Value utf8(isolate, str);  // valid base64 is ASCII

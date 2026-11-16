@@ -3,6 +3,7 @@
 
 #include <utility>
 
+#include "iv8/access_origin.h"
 #include "iv8/dom_url.h"
 #include "iv8/access_summary.h"
 #include "iv8/page_state.h"
@@ -31,7 +32,9 @@ void history_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
 bool to_text(v8::Isolate* isolate, v8::Local<v8::Context> context,
              v8::Local<v8::Value> value, std::string* output) {
     v8::Local<v8::String> string;
-    if (!value->ToString(context).ToLocal(&string)) return false;
+    if (!access_user_operation(isolate, [&] {
+            return value->ToString(context);
+        }).ToLocal(&string)) return false;
     v8::String::Utf8Value text(isolate, string);
     if (*text == nullptr) return false;
     output->assign(*text, static_cast<std::size_t>(text.length()));
@@ -125,7 +128,9 @@ v8::Local<v8::Value> HistoryHost::call_method(v8::Isolate* isolate,
         const bool has_url = args.Length() > 2 && !args[2]->IsNullOrUndefined();
         if (has_url && !to_text(isolate, context, args[2], &requested)) return v8::Undefined(isolate);
         std::vector<std::uint8_t> serialized;
-        if (!serialize_history_state(isolate, context, args[0], name, &serialized)) return v8::Undefined(isolate);
+        if (!access_user_operation(isolate, [&] {
+                return serialize_history_state(isolate, context, args[0], name, &serialized);
+            })) return v8::Undefined(isolate);
         std::string url = entries_[current_].url;
         if (has_url && !requested.empty()) {
             auto target = resolve_dom_url(requested, url);
@@ -155,7 +160,9 @@ v8::Local<v8::Value> HistoryHost::call_method(v8::Isolate* isolate,
     if (name == "go") {
         delta = 0;
         if (args.Length() > 0) {
-            auto converted = args[0]->Int32Value(context);
+            auto converted = access_user_operation(isolate, [&] {
+                return args[0]->Int32Value(context);
+            });
             if (converted.IsNothing()) return v8::Undefined(isolate);
             delta = converted.FromJust();
         }

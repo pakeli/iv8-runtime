@@ -161,8 +161,8 @@ def test_element_object_id_tracks_native_backing_not_js_wrapper():
 def test_generation_and_load_lifecycle():
     with iv8.Page() as page:
         _load(page)
-        # Use normal capacity: this checks lifecycle, including installation
-        # records; separate bounded-buffer tests exercise dropped-event behavior.
+        # Use normal capacity: this checks lifecycle across a generation rebuild;
+        # separate bounded-buffer tests exercise dropped-event behavior.
         page.start_access_trace()
         page.eval("navigator.userAgent;", name="probe.js")
         first = _events(page, source_kind="eval", member="userAgent")[0]
@@ -180,7 +180,7 @@ def test_generation_and_load_lifecycle():
 
 
 @on_only
-def test_source_attribution_internal_html_eval_and_callbacks():
+def test_source_attribution_excludes_runtime_and_keeps_html_eval_and_callbacks():
     with iv8.Page() as page:
         page.start_access_trace()
         page.load(
@@ -191,7 +191,7 @@ def test_source_attribution_internal_html_eval_and_callbacks():
             event for event in report["events"]
             if event["source_kind"] == "internal"
         ]
-        assert internal
+        assert internal == []
         html_accesses = [
             event for event in report["events"]
             if event["source_kind"] == "html_script"

@@ -15,6 +15,7 @@
 
 #include "iv8/web_method.h"
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
 
@@ -31,7 +32,9 @@ void register_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info,
     v8::Local<v8::Function> callback = info[0].As<v8::Function>();
     std::int32_t delay = 0;
     if (info.Length() > 1) {
-        delay = info[1]->Int32Value(context).FromMaybe(0);
+        delay = access_user_operation(isolate, [&] {
+            return info[1]->Int32Value(context);
+        }).FromMaybe(0);
     }
     const std::int64_t id = state->register_timer(callback, delay, repeating);
     info.GetReturnValue().Set(static_cast<double>(id));
@@ -92,7 +95,9 @@ void cancel_animation_frame_callback(
     }
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::int64_t handle =
-        static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
+        static_cast<std::int64_t>(access_user_operation(isolate, [&] {
+            return info[0]->IntegerValue(context);
+        }).FromMaybe(0));
     state->cancel_animation_frame(handle);
 }
 
@@ -117,7 +122,9 @@ void request_idle_callback_callback(
         }
         v8::Local<v8::Object> options = info[1].As<v8::Object>();
         v8::Local<v8::Value> value;
-        if (!options->Get(context, v8_string(isolate, "timeout")).ToLocal(&value)) {
+        if (!access_user_operation(isolate, [&] {
+                return options->Get(context, v8_string(isolate, "timeout"));
+            }).ToLocal(&value)) {
             return;  // the getter threw
         }
         if (!value->IsUndefined()) {
@@ -159,7 +166,9 @@ void cancel_idle_callback_callback(
     }
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::int64_t handle =
-        static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
+        static_cast<std::int64_t>(access_user_operation(isolate, [&] {
+            return info[0]->IntegerValue(context);
+        }).FromMaybe(0));
     state->cancel_idle_callback(handle);
 }
 
@@ -171,7 +180,9 @@ void clear_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::int64_t id =
-        static_cast<std::int64_t>(info[0]->IntegerValue(context).FromMaybe(0));
+        static_cast<std::int64_t>(access_user_operation(isolate, [&] {
+            return info[0]->IntegerValue(context);
+        }).FromMaybe(0));
     state->clear_timer(id);
 }
 

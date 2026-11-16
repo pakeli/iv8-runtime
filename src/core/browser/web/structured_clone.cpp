@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
@@ -247,18 +248,20 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
         return {};
     }
     v8::Local<v8::Array> keys;
-    if (!source
-             ->GetOwnPropertyNames(
-                 context, v8::PropertyFilter::ONLY_ENUMERABLE,
-                 v8::KeyConversionMode::kKeepNumbers)
-             .ToLocal(&keys)) {
+    if (!access_user_operation(isolate, [&] {
+            return source->GetOwnPropertyNames(
+                context, v8::PropertyFilter::ONLY_ENUMERABLE,
+                v8::KeyConversionMode::kKeepNumbers);
+        }).ToLocal(&keys)) {
         return {};
     }
     for (std::uint32_t i = 0; i < keys->Length(); i++) {
         v8::Local<v8::Value> key;
         v8::Local<v8::Value> item;
         if (!keys->Get(context, i).ToLocal(&key) ||
-            !source->Get(context, key).ToLocal(&item)) {
+            !access_user_operation(isolate, [&] {
+                return source->Get(context, key);
+            }).ToLocal(&item)) {
             return {};
         }
         v8::Local<v8::Value> item_clone;
@@ -266,7 +269,9 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
                  .ToLocal(&item_clone)) {
             return {};
         }
-        if (clone->Set(context, key, item_clone).IsEmpty()) {
+        if (access_user_operation(isolate, [&] {
+                return clone->Set(context, key, item_clone);
+            }).IsEmpty()) {
             return {};
         }
     }

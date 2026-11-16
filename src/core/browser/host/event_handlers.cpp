@@ -1,6 +1,8 @@
 #include "event_handlers.h"
 
+#include "iv8/access_origin.h"
 #include "../internal/common.h"
+#include "../internal/event_support.h"
 
 namespace iv8::browser {
 
@@ -48,6 +50,7 @@ void EventHandlerStore::invoke(v8::Isolate* isolate,
                                 v8::Local<v8::Object> event,
                                 v8::Local<v8::Value> receiver, int phase,
                                 const std::string& type) {
+    auto runtime_origin = access_runtime_scope(isolate);
     // IDL handlers remain non-capture listeners, following the ordinary listener
     // snapshot at the target or during bubbling, as in the M11-51 contract.
     if (phase == 1) {
@@ -61,7 +64,9 @@ void EventHandlerStore::invoke(v8::Isolate* isolate,
     v8::Local<v8::Value> event_arg = event;
     v8::Local<v8::Value> result;
     v8::TryCatch try_catch(isolate);
-    if (!handler->Call(context, receiver, 1, &event_arg).ToLocal(&result) ||
+    if (!access_user_operation(isolate, [&] {
+            return handler->Call(context, receiver, 1, &event_arg);
+        }).ToLocal(&result) ||
         try_catch.HasCaught()) {
         ContextState* state = state_from_isolate(isolate);
         if (state != nullptr) {
@@ -74,9 +79,9 @@ void EventHandlerStore::invoke(v8::Isolate* isolate,
         return;
     }
     v8::Local<v8::Value> cancelable;
-    if (event->Get(context, v8_string(isolate, "cancelable"))
+    if (get_runtime_api_field(isolate, context, event, "cancelable")
             .ToLocal(&cancelable) && cancelable->BooleanValue(isolate)) {
-        (void)event->Set(context, v8_string(isolate, "defaultPrevented"),
+        (void)set_runtime_api_field(isolate, context, event, "defaultPrevented",
                          v8::True(isolate));
     }
 }

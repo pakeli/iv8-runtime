@@ -1895,6 +1895,7 @@ void PageState::install_page(const std::string& base_url,
         state_->with_scope(
             [this, &base_url](v8::Isolate* isolate,
                               v8::Local<v8::Context> context) {
+            access_trace_.bind_isolate(isolate);
             if (!capture_window_intrinsic_names(isolate, context)) return;
             if (!install_native_api_trace_store(isolate, context, host_objects_)) return;
             install_web_interfaces(isolate, context, &web_interface_factory,
@@ -2235,6 +2236,7 @@ void PageState::install_page(const std::string& base_url,
                     .ToLocalChecked();
                 v8::Local<v8::Script> script;
                 if (v8::Script::Compile(context, source).ToLocal(&script)) {
+                    access_trace_.register_runtime_script(script->GetUnboundScript()->ScriptId());
                     v8::Local<v8::Value> scheduler;
                     if (script->Run(context).ToLocal(&scheduler)) {
                         if (!scheduler->IsObject() ||
@@ -2278,6 +2280,7 @@ void PageState::install_page(const std::string& base_url,
                     .ToLocalChecked();
                 v8::Local<v8::Script> script;
                 if (v8::Script::Compile(context, source).ToLocal(&script)) {
+                    access_trace_.register_runtime_script(script->GetUnboundScript()->ScriptId());
                     v8::Local<v8::Value> match_media;
                     if (script->Run(context).ToLocal(&match_media)) {
                         if (!match_media->IsFunction() ||
@@ -2495,6 +2498,7 @@ void PageState::install_page(const std::string& base_url,
                     .ToLocalChecked();
                 v8::Local<v8::Script> script;
                 if (v8::Script::Compile(context, source).ToLocal(&script)) {
+                    access_trace_.register_runtime_script(script->GetUnboundScript()->ScriptId());
                     (void)script->Run(context);
                 }
                 if (!clear_script_call_trace_hooks(isolate, context)) return;
@@ -2735,6 +2739,8 @@ void PageState::dispatch_lifecycle_events() {
     // so a listener reading document.readyState sees the value for that step.
     state_->with_scope(
         [this](v8::Isolate* isolate, v8::Local<v8::Context> context) {
+            AccessTrace::OriginScope runtime_origin(&access_trace_, isolate,
+                                                    AccessOriginKind::kRuntime);
             py::gil_scoped_release release_gil;
             v8::Local<v8::Object> global = context->Global();
 

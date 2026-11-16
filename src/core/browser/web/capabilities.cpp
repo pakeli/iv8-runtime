@@ -4,6 +4,7 @@
 #include <unordered_set>
 
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
@@ -15,8 +16,10 @@ v8::Local<v8::Value> unsupported_capability(v8::Isolate* isolate,
                                                  const std::string& capability) {
     auto error = v8::Exception::Error(v8_string(isolate,
         capability + " execution is unavailable in the offline Page runtime").As<v8::String>());
-    (void)error.As<v8::Object>()->Set(isolate->GetCurrentContext(),
-        v8_string(isolate, "name"), v8_string(isolate, "NotSupportedError"));
+    (void)access_user_operation(isolate, [&] {
+        return error.As<v8::Object>()->Set(isolate->GetCurrentContext(),
+            v8_string(isolate, "name"), v8_string(isolate, "NotSupportedError"));
+    });
     return error;
 }
 

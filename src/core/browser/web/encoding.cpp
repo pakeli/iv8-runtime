@@ -8,6 +8,7 @@
 #include <string>
 
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
 #include "../window/window_trace_support.h"
@@ -42,7 +43,9 @@ void text_encoder_encode(const v8::FunctionCallbackInfo<v8::Value>& info) {
     watch_record(isolate, "TextEncoder", "encode");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::String> str;
-    if (!info[0]->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return info[0]->ToString(context);
+        }).ToLocal(&str)) {
         return;  // a throwing ToString already scheduled the exception
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -74,7 +77,9 @@ void text_decoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> label = info[0];
     if (!label->IsUndefined()) {
         v8::Local<v8::String> str;
-        if (!label->ToString(context).ToLocal(&str)) {
+        if (!access_user_operation(isolate, [&] {
+                return label->ToString(context);
+            }).ToLocal(&str)) {
             return;  // ToString threw
         }
         v8::String::Utf8Value utf8(isolate, str);
@@ -97,10 +102,14 @@ void text_decoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (info.Length() > 1 && info[1]->IsObject()) {
         v8::Local<v8::Object> opts = info[1].As<v8::Object>();
         v8::Local<v8::Value> v;
-        if (opts->Get(context, v8_string(isolate, "fatal")).ToLocal(&v)) {
+        if (access_user_operation(isolate, [&] {
+                return opts->Get(context, v8_string(isolate, "fatal"));
+            }).ToLocal(&v)) {
             fatal = v->BooleanValue(isolate);
         }
-        if (opts->Get(context, v8_string(isolate, "ignoreBOM")).ToLocal(&v)) {
+        if (access_user_operation(isolate, [&] {
+                return opts->Get(context, v8_string(isolate, "ignoreBOM"));
+            }).ToLocal(&v)) {
             ignore_bom = v->BooleanValue(isolate);
         }
     }

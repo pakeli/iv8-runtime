@@ -25,6 +25,13 @@ manual workflow on a new Page, or to continue a previously chosen debug mode.
 See `docs/page_monitoring_modes.md` for lifecycle/exception semantics and local
 verification status. This convenience does not extend native trace coverage.
 
+The current user-origin layer suppresses runtime setup, synthetic event
+construction and dispatch field maintenance in both raw/manual and debug logs.
+An empty debug load is silent. User `new Event`, event-field reads, callbacks
+and input accessors/coercions remain recorded. Native descriptor materialization
+and internal API forwarding do not add duplicate user GET/SET events. Scope:
+`docs/access_trace_origins.md`.
+
 For a short per-event log, use the optional readable view:
 
 ```python

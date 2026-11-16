@@ -13,6 +13,7 @@
 #include "iv8/page_state.h"
 #include "iv8/host_object.h"
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/web_interface.h"
 #include "iv8/browser_compatibility.h"
 
@@ -57,10 +58,14 @@ public:
         const v8::FunctionCallbackInfo<v8::Value>& args) override {
         if (name == "add") {
             const double a =
-                args.Length() > 0 ? args[0]->NumberValue(context).FromMaybe(0.0)
+                args.Length() > 0 ? access_user_operation(isolate, [&] {
+                    return args[0]->NumberValue(context);
+                }).FromMaybe(0.0)
                                   : 0.0;
             const double b =
-                args.Length() > 1 ? args[1]->NumberValue(context).FromMaybe(0.0)
+                args.Length() > 1 ? access_user_operation(isolate, [&] {
+                    return args[1]->NumberValue(context);
+                }).FromMaybe(0.0)
                                   : 0.0;
             return v8::Number::New(isolate, a + b);
         }

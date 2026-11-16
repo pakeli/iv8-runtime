@@ -159,7 +159,7 @@ def test_readonly_data_roots_reject_writes_without_fake_set_events(page):
         assert not [record for record in events(page) if record["member"] == name and record["operation"] == "set"], name
 
 
-def test_location_assignment_has_parent_and_href_sets_with_one_conversion(page):
+def test_location_assignment_records_user_set_without_native_forwarding_with_one_conversion(page):
     page.watch_apis(["window.location", "location.href"])
     page.start_access_trace()
     assert page.eval("""(() => {
@@ -169,7 +169,7 @@ def test_location_assignment_has_parent_and_href_sets_with_one_conversion(page):
     })()""", name="assign-location.js")
     writes = [record for record in events(page) if record["operation"] == "set"]
     assert [(record["object_type"], record["label"], record["member"]) for record in writes] == [
-        ("window", "window", "location"), ("location", "location", "href"),
+        ("window", "window", "location"),
     ]
     assert all(record["outcome"] == "returned" and record["value_summary"] == "object" for record in writes)
     assert all(record["resource_name"] == "assign-location.js" for record in writes)
@@ -179,26 +179,49 @@ def test_location_assignment_has_parent_and_href_sets_with_one_conversion(page):
     ]
     assert page.read_watch_api_hits() == []
 
-
-def test_location_throw_preserves_identity_and_failed_parent_child_completion(page):
+    # The forwarded href assignment above belongs to the implementation. A
+    # direct user href write must still record its own set and conversion.
     page.start_access_trace()
     assert page.eval("""(() => {
-        const sentinel=Error('location coercion sentinel');let conversions=0,caught=false;
-        try {window.location={toString(){conversions++;throw sentinel;}};}
-        catch(error){caught=error===sentinel;}
-        return conversions===1 && caught;
-    })()""", name="location-throw.js")
+        const original=location;let conversions=0;
+        original.href={toString(){conversions++;return 'href-next';}};
+        return conversions===1 && original.href==='""" + BASE + """';
+    })()""", name="assign-href.js")
     writes = [record for record in events(page) if record["operation"] == "set"]
-    assert [(record["object_type"], record["member"]) for record in writes] == [
-        ("window", "location"), ("location", "href"),
+    assert [(record["object_type"], record["label"], record["member"]) for record in writes] == [
+        ("location", "location", "href"),
     ]
-    assert all(record["outcome"] == "threw" for record in writes)
-    assert writes[0]["value_summary"] == "object"
-    # The established generic HostObject setter captures exception evidence on
-    # failure; it only publishes the original value summary after a returned set.
-    assert "value_summary" not in writes[1]
-    assert all("location coercion sentinel" in record["exception_message"] for record in writes)
-    assert page.read_navigation_requests()["requests"] == []
+    assert writes[0]["outcome"] == "returned" and writes[0]["value_summary"] == "object"
+    assert writes[0]["resource_name"] == "assign-href.js"
+    assert [(item["operation"], item["url"]) for item in page.read_navigation_requests()["requests"]] == [
+        ("assign", "https://legacy-roots.test/href-next"),
+    ]
+    assert page.read_watch_api_hits() == []
+
+
+def test_location_throw_preserves_identity_and_failed_user_set_completion(page):
+    for target, object_type, member in (
+        ("window.location", "window", "location"),
+        ("location.href", "location", "href"),
+    ):
+        page.start_access_trace()
+        assert page.eval("""(() => {
+            const sentinel=Error('location coercion sentinel');let conversions=0,caught=false;
+            try {""" + target + """={toString(){conversions++;throw sentinel;}};}
+            catch(error){caught=error===sentinel;}
+            return conversions===1 && caught;
+        })()""", name="location-throw.js")
+        writes = [record for record in events(page) if record["operation"] == "set"]
+        assert [(record["object_type"], record["member"]) for record in writes] == [(object_type, member)]
+        assert writes[0]["outcome"] == "threw"
+        if object_type == "window":
+            assert writes[0]["value_summary"] == "object"
+        else:
+            # Generic HostObject setters publish the value summary only after
+            # success; their original synchronous exception evidence remains.
+            assert "value_summary" not in writes[0]
+        assert "location coercion sentinel" in writes[0]["exception_message"]
+        assert page.read_navigation_requests()["requests"] == []
 
 
 def test_root_filters_and_stop_do_not_turn_property_reads_into_watch_hits(page):

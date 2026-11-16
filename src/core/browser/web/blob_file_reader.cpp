@@ -13,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "iv8/access_origin.h"
 #include "iv8/access_summary.h"
 #include "iv8/web_method.h"
 #include "../host/document_host.h"
@@ -103,7 +104,7 @@ bool blob_append_part(v8::Isolate* isolate, v8::Local<v8::Context> context,
         return true;
     }
     v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] { return value->ToString(context); }).ToLocal(&str)) {
         return false;
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -122,8 +123,9 @@ bool blob_type_from_options(v8::Isolate* isolate,
         return true;
     }
     v8::Local<v8::Value> value;
-    if (!options.As<v8::Object>()
-             ->Get(context, v8_string(isolate, "type"))
+    if (!access_user_operation(isolate, [&] {
+             return options.As<v8::Object>()->Get(context, v8_string(isolate, "type"));
+         })
              .ToLocal(&value)) {
         return false;
     }
@@ -131,7 +133,7 @@ bool blob_type_from_options(v8::Isolate* isolate,
         return true;
     }
     v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] { return value->ToString(context); }).ToLocal(&str)) {
         return false;
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -162,7 +164,7 @@ bool blob_initialize(v8::Isolate* isolate, v8::Local<v8::Context> context,
         const std::uint32_t length = array->Length();
         for (std::uint32_t i = 0; i < length; i++) {
             v8::Local<v8::Value> part;
-            if (!array->Get(context, i).ToLocal(&part)) {
+            if (!access_user_operation(isolate, [&] { return array->Get(context, i); }).ToLocal(&part)) {
                 return false;
             }
             if (!blob_append_part(isolate, context, part, &bytes)) {
@@ -215,7 +217,7 @@ void file_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     std::string name;
     if (info.Length() > 1 && !info[1]->IsUndefined()) {
         v8::Local<v8::String> str;
-        if (!info[1]->ToString(context).ToLocal(&str)) {
+        if (!access_user_operation(isolate, [&] { return info[1]->ToString(context); }).ToLocal(&str)) {
             return;
         }
         v8::String::Utf8Value utf8(isolate, str);
@@ -228,15 +230,15 @@ void file_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     double last_modified = 0;
     if (info.Length() > 2 && info[2]->IsObject()) {
         v8::Local<v8::Value> value;
-        if (!info[2]
-                 .As<v8::Object>()
-                 ->Get(context, v8_string(isolate, "lastModified"))
+        if (!access_user_operation(isolate, [&] {
+                 return info[2].As<v8::Object>()->Get(context, v8_string(isolate, "lastModified"));
+             })
                  .ToLocal(&value)) {
             return;
         }
         if (!value->IsUndefined()) {
             v8::Local<v8::Number> number;
-            if (!value->ToNumber(context).ToLocal(&number)) {
+            if (!access_user_operation(v8::Isolate::GetCurrent(), [&] { return value->ToNumber(context); }).ToLocal(&number)) {
                 return;
             }
             const double value_number = number->Value();
@@ -275,7 +277,7 @@ bool blob_index_arg(v8::Local<v8::Context> context, v8::Local<v8::Value> value,
         return true;
     }
     v8::Local<v8::Number> number;
-    if (!value->ToNumber(context).ToLocal(&number)) {
+    if (!access_user_operation(v8::Isolate::GetCurrent(), [&] { return value->ToNumber(context); }).ToLocal(&number)) {
         return false;
     }
     double index = number->Value();
@@ -317,7 +319,7 @@ void blob_slice(const v8::FunctionCallbackInfo<v8::Value>& info) {
     std::string type;
     if (info.Length() > 2 && !info[2]->IsUndefined()) {
         v8::Local<v8::String> str;
-        if (!info[2]->ToString(context).ToLocal(&str)) {
+        if (!access_user_operation(isolate, [&] { return info[2]->ToString(context); }).ToLocal(&str)) {
             return;
         }
         v8::String::Utf8Value utf8(isolate, str);
@@ -445,6 +447,7 @@ void file_reader_schedule(v8::Isolate* isolate,
 }
 
 void file_reader_delivery(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto runtime_origin = access_runtime_scope(info.GetIsolate());
     if (!info.Data()->IsExternal()) {
         return;
     }
@@ -458,7 +461,7 @@ void file_reader_delivery(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::Object> self = state->self.Get(isolate);
     state->pending = false;
-    if (!self->Set(context, v8_string(isolate, "readyState"),
+    if (!set_runtime_api_field(isolate, context, self, "readyState",
                     v8::Integer::New(isolate, 2)).FromMaybe(false)) return;
     if (state->mode == FileReaderState::Mode::Text) {
         v8::Local<v8::Value> result = v8::String::Empty(isolate);
@@ -473,7 +476,7 @@ void file_reader_delivery(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 result = text;
             }
         }
-        if (!self->Set(context, v8_string(isolate, "result"), result).FromMaybe(false)) return;
+        if (!set_runtime_api_field(isolate, context, self, "result", result).FromMaybe(false)) return;
     } else {
         v8::Local<v8::ArrayBuffer> buffer =
             v8::ArrayBuffer::New(isolate, state->bytes.size());
@@ -481,7 +484,7 @@ void file_reader_delivery(const v8::FunctionCallbackInfo<v8::Value>& info) {
             std::memcpy(buffer->Data(), state->bytes.data(),
                         state->bytes.size());
         }
-        if (!self->Set(context, v8_string(isolate, "result"), buffer).FromMaybe(false)) return;
+        if (!set_runtime_api_field(isolate, context, self, "result", buffer).FromMaybe(false)) return;
     }
     state->mode = FileReaderState::Mode::None;
     state->bytes.clear();
@@ -513,9 +516,9 @@ void file_reader_begin(const v8::FunctionCallbackInfo<v8::Value>& info,
                           : FileReaderState::Mode::ArrayBuffer;
     state->pending = true;
     v8::Local<v8::Object> self = info.This();
-    if (!self->Set(context, v8_string(isolate, "readyState"),
+    if (!set_runtime_api_field(isolate, context, self, "readyState",
                     v8::Integer::New(isolate, 1)).FromMaybe(false)) return;
-    if (!self->Set(context, v8_string(isolate, "result"), v8::Null(isolate)).FromMaybe(false)) return;
+    if (!set_runtime_api_field(isolate, context, self, "result", v8::Null(isolate)).FromMaybe(false)) return;
     state->events.dispatch_native(isolate, context, "loadstart", self);
     file_reader_schedule(isolate, context, state);
 }
@@ -552,9 +555,9 @@ void file_reader_abort(const v8::FunctionCallbackInfo<v8::Value>& info) {
     state->mode = FileReaderState::Mode::None;
     state->bytes.clear();
     v8::Local<v8::Object> self = info.This();
-    if (!self->Set(context, v8_string(isolate, "readyState"),
+    if (!set_runtime_api_field(isolate, context, self, "readyState",
                     v8::Integer::New(isolate, 2)).FromMaybe(false)) return;
-    if (!self->Set(context, v8_string(isolate, "result"), v8::Null(isolate)).FromMaybe(false)) return;
+    if (!set_runtime_api_field(isolate, context, self, "result", v8::Null(isolate)).FromMaybe(false)) return;
     state->events.dispatch_native(isolate, context, "abort", self);
     state->events.dispatch_native(isolate, context, "loadend", self);
 }
@@ -610,7 +613,7 @@ bool initialize_file_reader_field(v8::Isolate* isolate,
     auto key = v8_string(isolate, name).As<v8::String>();
     // Keep the existing assignment path, including inherited subclass setters.
     // Only a resulting own data property belongs to this native field path.
-    if (!self->Set(context, key, value).FromMaybe(false)) return false;
+    if (!set_runtime_api_field(isolate, context, self, name, value).FromMaybe(false)) return false;
     v8::Local<v8::Value> descriptor_value;
     if (!self->GetOwnPropertyDescriptor(context, key).ToLocal(&descriptor_value)) return false;
     if (!descriptor_value->IsObject()) return true;

@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "iv8/access_origin.h"
 #include "../internal/common.h"
 
 namespace iv8::browser {
@@ -20,7 +21,9 @@ v8::MaybeLocal<v8::Array> brand_array(v8::Isolate* isolate,
                 v8_string(isolate, brands[index].brand)).FromMaybe(false) ||
             !item->CreateDataProperty(context, v8_string(isolate, "version").As<v8::String>(),
                 v8_string(isolate, brands[index].version)).FromMaybe(false) ||
-            !array->Set(context, static_cast<std::uint32_t>(index), item).FromMaybe(false)) {
+            !access_user_operation(isolate, [&] {
+                return array->Set(context, static_cast<std::uint32_t>(index), item);
+            }).FromMaybe(false)) {
             return {};
         }
     }
@@ -53,27 +56,41 @@ bool read_hints(v8::Isolate* isolate, v8::Local<v8::Context> context,
     if (!value->IsObject()) return fail();
     auto input = value.As<v8::Object>();
     v8::Local<v8::Value> iterator_method;
-    if (!input->Get(context, v8::Symbol::GetIterator(isolate)).ToLocal(&iterator_method)) return false;
+    if (!access_user_operation(isolate, [&] {
+            return input->Get(context, v8::Symbol::GetIterator(isolate));
+        }).ToLocal(&iterator_method)) return false;
     if (!iterator_method->IsFunction()) return fail();
     v8::Local<v8::Value> iterator_value;
-    if (!iterator_method.As<v8::Function>()->Call(context, input, 0, nullptr).ToLocal(&iterator_value)) return false;
+    if (!access_user_operation(isolate, [&] {
+            return iterator_method.As<v8::Function>()->Call(context, input, 0, nullptr);
+        }).ToLocal(&iterator_value)) return false;
     if (!iterator_value->IsObject()) return fail();
     auto iterator = iterator_value.As<v8::Object>();
     v8::Local<v8::Value> next;
-    if (!iterator->Get(context, v8_string(isolate, "next")).ToLocal(&next)) return false;
+    if (!access_user_operation(isolate, [&] {
+            return iterator->Get(context, v8_string(isolate, "next"));
+        }).ToLocal(&next)) return false;
     if (!next->IsFunction()) return fail();
     while (true) {
         v8::Local<v8::Value> result_value;
-        if (!next.As<v8::Function>()->Call(context, iterator, 0, nullptr).ToLocal(&result_value)) return false;
+        if (!access_user_operation(isolate, [&] {
+                return next.As<v8::Function>()->Call(context, iterator, 0, nullptr);
+            }).ToLocal(&result_value)) return false;
         if (!result_value->IsObject()) return fail();
         auto result = result_value.As<v8::Object>();
         v8::Local<v8::Value> done;
-        if (!result->Get(context, v8_string(isolate, "done")).ToLocal(&done)) return false;
+        if (!access_user_operation(isolate, [&] {
+                return result->Get(context, v8_string(isolate, "done"));
+            }).ToLocal(&done)) return false;
         if (done->BooleanValue(isolate)) return true;
         v8::Local<v8::Value> item;
         v8::Local<v8::String> text;
-        if (!result->Get(context, v8_string(isolate, "value")).ToLocal(&item) ||
-            !item->ToString(context).ToLocal(&text)) return false;
+        if (!access_user_operation(isolate, [&] {
+                return result->Get(context, v8_string(isolate, "value"));
+            }).ToLocal(&item) ||
+            !access_user_operation(isolate, [&] {
+                return item->ToString(context);
+            }).ToLocal(&text)) return false;
         v8::String::Utf8Value utf8(isolate, text);
         if (*utf8 == nullptr) return false;
         const std::string hint(*utf8, static_cast<std::size_t>(utf8.length()));
@@ -158,7 +175,9 @@ v8::Local<v8::Value> NavigatorUADataHost::call_method(v8::Isolate* isolate,
     if (hints.contains("wow64") && !result->CreateDataProperty(context,
             v8_string(isolate, "wow64").As<v8::String>(),
             v8::Boolean::New(isolate, environment_->user_agent_data_wow64)).FromMaybe(false)) return v8::Undefined(isolate);
-    if (!resolver->Resolve(context, result).FromMaybe(false)) return v8::Undefined(isolate);
+    if (!access_user_operation(isolate, [&] {
+            return resolver->Resolve(context, result);
+        }).FromMaybe(false)) return v8::Undefined(isolate);
     return resolver->GetPromise();
 }
 
@@ -190,12 +209,16 @@ v8::Local<v8::Value> DOMStringListHost::call_method(v8::Isolate* isolate,
         return v8::Undefined(isolate);
     }
     if (name == "item") {
-        if (arguments[0]->Uint32Value(context).IsNothing()) return v8::Undefined(isolate);
+        if (access_user_operation(isolate, [&] {
+                return arguments[0]->Uint32Value(context);
+            }).IsNothing()) return v8::Undefined(isolate);
         return v8::Null(isolate);
     }
     if (name == "contains") {
         v8::Local<v8::String> text;
-        if (!arguments[0]->ToString(context).ToLocal(&text)) return v8::Undefined(isolate);
+        if (!access_user_operation(isolate, [&] {
+                return arguments[0]->ToString(context);
+            }).ToLocal(&text)) return v8::Undefined(isolate);
         return v8::False(isolate);
     }
     return v8::Undefined(isolate);

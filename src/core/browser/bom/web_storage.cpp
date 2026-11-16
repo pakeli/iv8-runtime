@@ -3,6 +3,7 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
@@ -49,6 +50,7 @@ StorageStore* traced_storage_receiver(
     // this rejected receiver path needs a separate receiver token and event.
     const auto sequence = native_api_trace_record(isolate, info.This(),
         "Storage", member, operation);
+    auto runtime = access_runtime_scope(isolate);
     if (sequence != 0) {
         try {
             AccessCompletion completion;
@@ -81,7 +83,9 @@ std::string storage_string_arg(v8::Isolate* isolate,
                                v8::Local<v8::Context> context,
                                v8::Local<v8::Value> value) {
     v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return value->ToString(context);
+        }).ToLocal(&str)) {
         return std::string();
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -186,7 +190,9 @@ void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
         AccessOperation::kCall);
     AccessCallCompletion completion(isolate, seq, info);
     v8::Local<v8::Uint32> index_value;
-    if (!info[0]->ToUint32(context).ToLocal(&index_value)) {
+    if (!access_user_operation(isolate, [&] {
+            return info[0]->ToUint32(context);
+        }).ToLocal(&index_value)) {
         return;
     }
     const std::uint32_t index = index_value->Value();
@@ -203,6 +209,7 @@ void storage_length_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto* store = traced_storage_receiver(info, "length", AccessOperation::kGet);
     if (store == nullptr) return;
     const auto seq = access_trace_record(isolate, store, "storage", "storage", "length", AccessOperation::kGet);
+    auto runtime = access_runtime_scope(isolate);
     auto result = v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size()));
     if (seq != 0) {
         AccessCompletion completion;

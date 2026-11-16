@@ -14,7 +14,8 @@ bool clear_script_call_trace_hooks(v8::Isolate* isolate,
     v8::Local<v8::Context> context);
 bool make_script_call_trace_hooks(v8::Isolate* isolate,
     v8::Local<v8::Context> context, v8::Local<v8::Function>& begin,
-    v8::Local<v8::Function>& end, v8::Local<v8::Function>& data_property);
+    v8::Local<v8::Function>& end, v8::Local<v8::Function>& data_property,
+    v8::Local<v8::Function>& user_operation);
 bool install_scheduler_post_task_tracing(v8::Isolate* isolate,
     v8::Local<v8::Context> context, v8::Local<v8::Object> scheduler);
 

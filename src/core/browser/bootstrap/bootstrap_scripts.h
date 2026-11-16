@@ -20,11 +20,11 @@ namespace iv8 {
 
 namespace browser {
 
-extern const char kSchedulerBootstrap[1382];
+extern const char kSchedulerBootstrap[1526];
 
-extern const char kBomExtrasBootstrap[5316];
+extern const char kBomExtrasBootstrap[5444];
 
-extern const char kWindowPostMessageBootstrap[2019];
+extern const char kWindowPostMessageBootstrap[2163];
 
 }  // namespace browser
 }  // namespace iv8

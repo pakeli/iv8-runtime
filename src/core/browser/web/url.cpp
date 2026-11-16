@@ -3,9 +3,11 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_origin.h"
 #include "iv8/access_summary.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
+#include "../internal/event_support.h"
 #include "../internal/trace_hooks.h"
 #include "../window/window_trace_support.h"
 
@@ -28,7 +30,7 @@ void url_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     const auto to_std = [&](v8::Local<v8::Value> v, std::string& out) -> bool {
         v8::Local<v8::String> str;
-        if (!v->ToString(context).ToLocal(&str)) {
+        if (!access_user_operation(isolate, [&] { return v->ToString(context); }).ToLocal(&str)) {
             return false;
         }
         v8::String::Utf8Value utf8(isolate, str);
@@ -94,7 +96,7 @@ void url_return_href(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::Value> href;
-    if (info.This()->Get(context, v8_string(isolate, "href")).ToLocal(&href)) {
+    if (get_runtime_api_field(isolate, context, info.This(), "href").ToLocal(&href)) {
         info.GetReturnValue().Set(href);
     } else {
         info.GetReturnValue().Set(v8::String::Empty(isolate));
@@ -149,7 +151,7 @@ void usp_write_state(v8::Isolate* isolate, v8::Local<v8::Context> context,
 std::string usp_arg_string(v8::Isolate* isolate, v8::Local<v8::Context> context,
                            v8::Local<v8::Value> v) {
     v8::Local<v8::String> str;
-    if (!v->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] { return v->ToString(context); }).ToLocal(&str)) {
         return std::string();
     }
     v8::String::Utf8Value utf8(isolate, str);

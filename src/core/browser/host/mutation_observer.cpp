@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "iv8/web_method.h"
+#include "iv8/access_origin.h"
 #include "../dom/dom_query.h"
 #include "../dom/selector_match.h"
 #include "../internal/trace_hooks.h"
@@ -258,6 +259,7 @@ v8::Local<v8::Array> DocumentHost::build_records_array(
 void mutation_observer_delivery(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    auto runtime_origin = access_runtime_scope(isolate);
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     if (!info.Data()->IsExternal()) {
         return;
@@ -283,7 +285,9 @@ void mutation_observer_delivery(
     v8::Local<v8::Value> argv[2] = {array.As<v8::Value>(),
                                     self.As<v8::Value>()};
     v8::TryCatch try_catch(isolate);
-    (void)callback->Call(context, self.As<v8::Value>(), 2, argv);
+    access_user_operation(isolate, [&] {
+        return callback->Call(context, self.As<v8::Value>(), 2, argv);
+    });
     if (try_catch.HasCaught()) {
         try_catch.Reset();
     }

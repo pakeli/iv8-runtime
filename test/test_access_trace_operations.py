@@ -148,6 +148,8 @@ def test_method_delete_and_redefine_events():
             name="ops.js"
         ) == "function|true|9"
         ops = _ops(page)
-        assert ("host_probe", "echo", "get_method") in ops
-        assert ("host_probe", "echo", "delete") in ops
-        assert ("host_probe", "echo", "define_property") in ops
+        assert ops == [
+            ("host_probe", "echo", "get_own_property_descriptor"),
+            ("host_probe", "echo", "delete"),
+            ("host_probe", "echo", "define_property"),
+        ]

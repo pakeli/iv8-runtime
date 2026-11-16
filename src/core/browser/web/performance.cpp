@@ -3,6 +3,7 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
@@ -38,7 +39,9 @@ std::string performance_arg_string(
     }
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::String> str;
-    if (!info[index]->ToString(isolate->GetCurrentContext()).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return info[index]->ToString(isolate->GetCurrentContext());
+        }).ToLocal(&str)) {
         return std::string();
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -122,8 +125,10 @@ v8::Local<v8::Array> performance_entries_array(
     for (const PerformanceEntryRecord& entry : store->entries) {
         if ((type.empty() || entry.entry_type == type) &&
             (name.empty() || entry.name == name)) {
-            (void)array->Set(context, index++,
-                             make_performance_entry(isolate, context, entry));
+            const auto value = make_performance_entry(isolate, context, entry);
+            (void)access_user_operation(isolate, [&] {
+                return array->Set(context, index++, value);
+            });
         }
     }
     return array;

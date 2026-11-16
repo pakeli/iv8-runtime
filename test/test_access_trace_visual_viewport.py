@@ -116,16 +116,14 @@ def test_visual_viewport_read_only_and_missing_probe_behavior():
             name="probe.js"
         ) == "1024|undefined"
         events = _events(page)
-        # The descriptor wrapper records the query; the native-data-property
-        # descriptor read itself evaluates the getter, then the ordinary read
-        # evaluates it again.
+        # Keep the explicit query and ordinary user read. V8's internal getter
+        # evaluation while materializing descriptor.value is not a user get.
         assert [(event["member"], event["operation"],
                  event.get("resolution"))
                 for event in events] == [
             ("visualViewport", "get", None),
             ("visualViewport", "get", None),
             ("width", "get_own_property_descriptor", None),
-            ("width", "get", None),
             ("visualViewport", "get", None),
             ("width", "get", None),
             ("visualViewport", "get", None),

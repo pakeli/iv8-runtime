@@ -13,6 +13,7 @@
 #include "iv8/page_state.h"
 #include "iv8/host_object.h"
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/web_interface.h"
 #include "iv8/browser_compatibility.h"
 #include "navigator_parts.h"
@@ -92,8 +93,10 @@ public:
             v8::Local<v8::Array> array =
                 v8::Array::New(isolate, static_cast<int>(languages.size()));
             for (std::size_t i = 0; i < languages.size(); i++) {
-                (void)array->Set(context, static_cast<std::uint32_t>(i),
-                                 v8_string(isolate, languages[i]));
+                (void)access_user_operation(isolate, [&] {
+                    return array->Set(context, static_cast<std::uint32_t>(i),
+                        v8_string(isolate, languages[i]));
+                });
             }
             return array;
         }

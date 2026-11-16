@@ -12,6 +12,7 @@
 
 #include "iv8/access_summary.h"
 #include "iv8/access_trace.h"
+#include "iv8/access_origin.h"
 #include "iv8/web_interface.h"
 #include "iv8/web_method.h"
 
@@ -70,6 +71,7 @@ NamedPropertyLookup lookup_named_property(
     if (host == nullptr || !host->has_named_properties() || !property->IsString()) {
         return NamedPropertyLookup::kAbsent;
     }
+    auto runtime_origin = access_runtime_scope(isolate);
     v8::TryCatch caught(isolate);
     v8::String::Utf8Value name(isolate, property);
     bool found = false;
@@ -135,6 +137,7 @@ v8::Intercepted named_property_definer(
     record_operation(info.GetIsolate(), info.Holder(), property,
                      AccessOperation::kDefineProperty);
     auto isolate = info.GetIsolate();
+    auto runtime_origin = access_runtime_scope(isolate);
     auto* host = backing_of(info.Holder());
     std::string member;
     v8::Local<v8::Value> result;
@@ -164,6 +167,7 @@ void named_property_enumerator(
                           std::string(), AccessOperation::kOwnKeys);
         }
     }
+    auto runtime_origin = access_runtime_scope(isolate);
     auto* host = backing_of(info.Holder());
     const auto names = host != nullptr ? host->named_property_names() : std::vector<std::string>{};
     if (names.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
@@ -184,9 +188,10 @@ void named_property_enumerator(
 // Walk real own-property descriptors without invoking getters or interceptors.
 // A Proxy or a host-object prototype is conservatively treated as present: we
 // suppress a probe rather than report a false missing property.
-bool property_is_present(v8::Local<v8::Object> holder,
+bool property_is_present(v8::Isolate* isolate, v8::Local<v8::Object> holder,
                          v8::Local<v8::Context> context,
                          v8::Local<v8::Name> property) {
+    auto runtime_origin = access_runtime_scope(isolate);
     v8::Local<v8::Object> current = holder;
     for (int depth = 0; depth < 1000; depth++) {
         if (current.IsEmpty() || current->IsProxy()) {
@@ -213,6 +218,7 @@ bool property_is_present(v8::Local<v8::Object> holder,
 bool is_interface_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          v8::Local<v8::Object> object, HostObject* host,
                          const std::string& member) {
+    auto runtime_origin = access_runtime_scope(isolate);
     if (host->prototype_key().empty()) return false;
     auto interface = web_member_interface(host->prototype_key(), member, true);
     auto prototype = web_interface_prototype(isolate, context, interface);
@@ -282,7 +288,7 @@ v8::Intercepted named_property_getter(
     v8::String::Utf8Value utf8(isolate, property);
     if (*utf8 == nullptr) return v8::Intercepted::kNo;
     const std::string key(*utf8, static_cast<std::size_t>(utf8.length()));
-    if (property_is_present(info.Holder(), context, property)) {
+    if (property_is_present(isolate, info.Holder(), context, property)) {
         if (is_interface_method(isolate, context, info.Holder(), host, key)) {
             record_access(trace, host, key, AccessOperation::kGetMethod);
         }
@@ -322,7 +328,9 @@ v8::Intercepted named_property_setter(
                     if (setter->IsFunction()) {
                         v8::Local<v8::Value> arguments[] = {value};
                         v8::Local<v8::Value> ignored;
-                        if (!setter.As<v8::Function>()->Call(context, info.Holder(), 1, arguments).ToLocal(&ignored)) return v8::Intercepted::kYes;
+                        if (!access_user_operation(isolate, [&] {
+                                return setter.As<v8::Function>()->Call(context, info.Holder(), 1, arguments);
+                            }).ToLocal(&ignored)) return v8::Intercepted::kYes;
                         info.GetReturnValue().Set(true);
                         return v8::Intercepted::kYes;
                     }
@@ -362,6 +370,7 @@ void property_getter(v8::Local<v8::Name> property,
     AccessTrace* trace = active_trace(isolate);
     const std::uint64_t seq =
         record_access(trace, host, key, AccessOperation::kGet);
+    auto runtime_origin = access_runtime_scope(isolate);
     std::optional<v8::TryCatch> try_catch;
     if (seq != 0) {
         try {
@@ -409,6 +418,7 @@ void property_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
     AccessTrace* trace = active_trace(isolate);
     const std::uint64_t seq =
         record_access(trace, host, key, AccessOperation::kSet);
+    auto runtime_origin = access_runtime_scope(isolate);
     std::optional<v8::TryCatch> try_catch;
     if (seq != 0) {
         try {
@@ -484,6 +494,7 @@ void idl_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto context = isolate->GetCurrentContext();
     AccessTrace* trace = active_trace(isolate);
     const auto seq = record_access(trace, host, key, AccessOperation::kGet);
+    auto runtime_origin = access_runtime_scope(isolate);
     v8::TryCatch caught(isolate);
     auto result = host->get_property(isolate, context, key);
     if (seq != 0) {
@@ -512,6 +523,7 @@ void idl_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
         v8::Local<v8::Value>(v8::Undefined(isolate));
     AccessTrace* trace = active_trace(isolate);
     const auto seq = record_access(trace, host, key, AccessOperation::kSet);
+    auto runtime_origin = access_runtime_scope(isolate);
     v8::TryCatch caught(isolate);
     auto native_value = value;
     if (key == "nodeValue" || key == "textContent") {
@@ -519,7 +531,9 @@ void idl_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
             native_value = v8str(isolate, "");
         } else {
             v8::Local<v8::String> text;
-            if (native_value->ToString(context).ToLocal(&text)) native_value = text;
+            if (access_user_operation(isolate, [&] {
+                    return native_value->ToString(context);
+                }).ToLocal(&text)) native_value = text;
         }
     }
     if (!caught.HasCaught()) host->set_property(isolate, context, key, native_value);
@@ -576,6 +590,7 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
             seq = record_access(trace, host, key, AccessOperation::kCall);
         }
     }
+    auto runtime_origin = access_runtime_scope(isolate);
     AccessCompletion completion;
     std::optional<v8::TryCatch> try_catch;
     if (seq != 0) {
@@ -699,6 +714,7 @@ void method_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
     AccessTrace* trace = active_trace(isolate);
     const std::uint64_t seq =
         record_access(trace, host, key, AccessOperation::kSet);
+    auto runtime_origin = access_runtime_scope(isolate);
     std::optional<v8::TryCatch> try_catch;
     if (seq != 0) {
         try {

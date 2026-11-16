@@ -108,7 +108,7 @@ def test_window_alias_descriptor_shape():
         ) == "true|true|true|true|true|false|true|false"
         assert [(event["member"], event["operation"])
                 for event in _events(page)] == [
-            ("window", "get"), ("parent", "get"), ("window", "get"), ("top", "get"),
+            ("window", "get"), ("window", "get"),
             ("window", "get"), ("window", "get")]
 
 

@@ -240,7 +240,8 @@ void access_capture_exception(v8::Isolate* isolate,
 AccessCallCompletion::AccessCallCompletion(
     v8::Isolate* isolate, std::uint64_t seq,
     const v8::FunctionCallbackInfo<v8::Value>& info)
-    : isolate_(isolate), seq_(seq), info_(&info) {
+    : isolate_(isolate), seq_(seq), info_(&info),
+      runtime_origin_(access_trace_from_isolate(isolate), isolate, AccessOriginKind::kRuntime) {
     if (seq_ == 0) {
         return;
     }
@@ -292,7 +293,8 @@ AccessCallCompletion::~AccessCallCompletion() noexcept {
 AccessPropertyCompletion::AccessPropertyCompletion(
     v8::Isolate* isolate, std::uint64_t seq,
     const v8::PropertyCallbackInfo<v8::Value>& info)
-    : isolate_(isolate), seq_(seq), info_(&info) {
+    : isolate_(isolate), seq_(seq), info_(&info),
+      runtime_origin_(access_trace_from_isolate(isolate), isolate, AccessOriginKind::kRuntime) {
     if (seq_ == 0) {
         return;
     }
@@ -348,7 +350,8 @@ AccessPropertySetCompletion::AccessPropertySetCompletion(v8::Isolate* isolate,
 
 AccessPropertySetCompletion::AccessPropertySetCompletion(v8::Isolate* isolate,
     std::uint64_t seq, v8::Local<v8::Value> value)
-    : isolate_(isolate), seq_(seq) {
+    : isolate_(isolate), seq_(seq),
+      runtime_origin_(access_trace_from_isolate(isolate), isolate, AccessOriginKind::kRuntime) {
     if (seq_ == 0) {
         return;
     }
@@ -393,7 +396,8 @@ AccessPropertySetCompletion::~AccessPropertySetCompletion() noexcept {
 AccessFunctionPropertyCompletion::AccessFunctionPropertyCompletion(
     v8::Isolate* isolate, std::uint64_t seq,
     const v8::FunctionCallbackInfo<v8::Value>& info, AccessOperation operation)
-    : isolate_(isolate), seq_(seq), info_(&info), operation_(operation) {
+    : isolate_(isolate), seq_(seq), info_(&info), operation_(operation),
+      runtime_origin_(access_trace_from_isolate(isolate), isolate, AccessOriginKind::kRuntime) {
     if (seq_ == 0) return;
     try {
         try_catch_.emplace(isolate);

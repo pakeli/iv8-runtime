@@ -113,9 +113,14 @@ def test_definition_queries_and_enumeration_do_not_double_record(attribute_page)
     described = _events(page)
     assert _operations(described) == [
         ("dom_string_map", "DOMStringMap", "added", "get_own_property_descriptor"),
-        ("dom_string_map", "DOMStringMap", "added", "get"),
     ]
     assert all(event["object_id"] == dataset_id for event in described)
+    # Materializing descriptor.value is native work; an explicit user read is
+    # still a separate observable operation on the same dataset object.
+    assert page.eval("datasetObject.added") == "new"
+    read = _events(page)
+    assert _operations(read) == [("dom_string_map", "DOMStringMap", "added", "get")]
+    assert read[0]["object_id"] == dataset_id
 
     assert page.eval("Object.keys(datasetObject).join(',')") == "seed,added"
     enumerated = _events(page)

@@ -20,6 +20,18 @@ namespace iv8 {
 
 namespace browser {
 
+// Internal Event/FileReader-style field maintenance keeps runtime attribution,
+// while an application-provided accessor (including a bound native function)
+// re-enters user attribution. Diagnostics never inspect Proxy/interceptor paths.
+v8::MaybeLocal<v8::Value> get_runtime_api_field(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> object, const char* name);
+v8::Maybe<bool> set_runtime_api_field(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> object, const char* name,
+    v8::Local<v8::Value> value);
+bool runtime_api_field_has_user_accessor(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> object,
+    v8::Local<v8::Name> name, bool writing, bool method_call = false);
+
 extern bool event_bubbles(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> event);
 
 extern v8::Local<v8::Private> event_stopped_key(v8::Isolate* isolate);

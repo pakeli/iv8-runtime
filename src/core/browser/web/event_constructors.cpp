@@ -7,8 +7,10 @@
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "iv8/web_method.h"
+#include "iv8/access_origin.h"
 #include "iv8/access_summary.h"
 #include "../window/window_trace_support.h"
+#include "../internal/event_support.h"
 #include "../internal/trace_hooks.h"
 
 namespace iv8::browser {
@@ -116,7 +118,7 @@ bool initialize_ui_event_from_constructor(const v8::FunctionCallbackInfo<v8::Val
     }
     std::int32_t detail = 0;
     if (!detail_value->IsUndefined()) {
-        const auto converted = detail_value->Int32Value(context);
+        const auto converted = access_user_operation(isolate, [&] { return detail_value->Int32Value(context); });
         if (converted.IsNothing()) return false;
         detail = converted.FromMaybe(0);
     }
@@ -161,6 +163,7 @@ bool install_ui_event_prototype_members(v8::Isolate* isolate,
 v8::MaybeLocal<v8::Object> create_runtime_event(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& type,
     bool bubbles, bool cancelable) {
+    auto runtime_origin = access_runtime_scope(isolate);
     const auto prototype_slot = v8::Private::ForApi(isolate,
         v8::String::NewFromUtf8Literal(isolate, "iv8.webidl.prototype.Event"));
     const auto constructor_slot = v8::Private::ForApi(isolate,
@@ -206,7 +209,7 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     std::string type;
     if (info.Length() > 0) {
         v8::Local<v8::String> str;
-        if (!info[0]->ToString(context).ToLocal(&str)) return;
+        if (!access_user_operation(isolate, [&] { return info[0]->ToString(context); }).ToLocal(&str)) return;
         v8::String::Utf8Value utf8(isolate, str);
         if (*utf8 != nullptr) {
             type.assign(*utf8, static_cast<std::size_t>(utf8.length()));
@@ -217,25 +220,27 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     bool cancelable = false;
     if (info.Length() > 1 && info[1]->IsObject()) {
         v8::Local<v8::Value> value;
-        if (info[1].As<v8::Object>()
-                ->Get(context, v8_string(isolate, "bubbles"))
+        if (access_user_operation(isolate, [&] {
+                return info[1].As<v8::Object>()->Get(context, v8_string(isolate, "bubbles"));
+            })
                 .ToLocal(&value)) bubbles = value->BooleanValue(isolate);
         else return;
-        if (info[1].As<v8::Object>()
-                ->Get(context, v8_string(isolate, "cancelable"))
+        if (access_user_operation(isolate, [&] {
+                return info[1].As<v8::Object>()->Get(context, v8_string(isolate, "cancelable"));
+            })
                 .ToLocal(&value)) cancelable = value->BooleanValue(isolate);
         else return;
     }
     v8::Local<v8::Value> composed_value;
     if (!event_init_field(context, info, "composed", &composed_value) ||
         !initialize_event_state(isolate, context, self, composed_value->BooleanValue(isolate))) return;
-    if (!self->Set(context, v8_string(isolate, "type"), v8_string(isolate, type)).FromMaybe(false) ||
-        !self->Set(context, v8_string(isolate, "bubbles"), v8::Boolean::New(isolate, bubbles)).FromMaybe(false) ||
-        !self->Set(context, v8_string(isolate, "cancelable"), v8::Boolean::New(isolate, cancelable)).FromMaybe(false) ||
-        !self->Set(context, v8_string(isolate, "defaultPrevented"), v8::False(isolate)).FromMaybe(false) ||
-        !self->Set(context, v8_string(isolate, "eventPhase"), v8::Integer::New(isolate, 0)).FromMaybe(false) ||
-        !self->Set(context, v8_string(isolate, "target"), v8::Null(isolate)).FromMaybe(false) ||
-        !self->Set(context, v8_string(isolate, "currentTarget"), v8::Null(isolate)).FromMaybe(false)) return;
+    if (!set_runtime_api_field(isolate, context, self, "type", v8_string(isolate, type)).FromMaybe(false) ||
+        !set_runtime_api_field(isolate, context, self, "bubbles", v8::Boolean::New(isolate, bubbles)).FromMaybe(false) ||
+        !set_runtime_api_field(isolate, context, self, "cancelable", v8::Boolean::New(isolate, cancelable)).FromMaybe(false) ||
+        !set_runtime_api_field(isolate, context, self, "defaultPrevented", v8::False(isolate)).FromMaybe(false) ||
+        !set_runtime_api_field(isolate, context, self, "eventPhase", v8::Integer::New(isolate, 0)).FromMaybe(false) ||
+        !set_runtime_api_field(isolate, context, self, "target", v8::Null(isolate)).FromMaybe(false) ||
+        !set_runtime_api_field(isolate, context, self, "currentTarget", v8::Null(isolate)).FromMaybe(false)) return;
     // Preserve the existing own function objects and stop immediately if an
     // inherited setter throws, with or without a monitoring TryCatch.
     for (const auto& [name, callback] : {
@@ -244,7 +249,7 @@ void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
             {"preventDefault", &prevent_default_callback}}) {
         v8::Local<v8::Function> function;
         if (!v8::FunctionTemplate::New(isolate, callback)->GetFunction(context).ToLocal(&function) ||
-            !self->Set(context, v8_string(isolate, name), function).FromMaybe(false)) return;
+            !set_runtime_api_field(isolate, context, self, name, function).FromMaybe(false)) return;
     }
     if (!trace_event_fields(isolate, context, self)) return;
 }
@@ -284,10 +289,9 @@ bool event_init_field(v8::Local<v8::Context> context,
         *out = v8::Undefined(isolate);
         return true;
     }
-    return info[1]
-        .As<v8::Object>()
-        ->Get(context, v8_string(isolate, name))
-        .ToLocal(out);
+    return access_user_operation(isolate, [&] {
+        return info[1].As<v8::Object>()->Get(context, v8_string(isolate, name));
+    }).ToLocal(out);
 }
 
 // Subclass fields are own read-only data properties (sloppy assignment is a
@@ -307,7 +311,7 @@ void set_event_field(v8::Isolate* isolate, v8::Local<v8::Context> context,
 bool event_int_field(v8::Local<v8::Context> context, v8::Local<v8::Value> value,
                      double* out) {
     v8::Local<v8::Number> number;
-    if (!value->ToNumber(context).ToLocal(&number)) {
+    if (!access_user_operation(v8::Isolate::GetCurrent(), [&] { return value->ToNumber(context); }).ToLocal(&number)) {
         return false;
     }
     const double number_value = number->Value();
@@ -322,7 +326,7 @@ bool event_string_field(v8::Local<v8::Context> context, v8::Isolate* isolate,
         return true;
     }
     v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] { return value->ToString(context); }).ToLocal(&str)) {
         return false;
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -485,7 +489,7 @@ void message_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) 
         const std::uint32_t length = source_ports->Length();
         for (std::uint32_t i = 0; i < length; ++i) {
             v8::Local<v8::Value> item;
-            if (!source_ports->Get(context, i).ToLocal(&item) ||
+            if (!access_user_operation(isolate, [&] { return source_ports->Get(context, i); }).ToLocal(&item) ||
                 ports->Set(context, i, item).IsEmpty()) {
                 return;
             }

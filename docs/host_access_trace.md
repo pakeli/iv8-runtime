@@ -1,5 +1,13 @@
 # Host Access Trace
 
+Current origin contract (`2026-11-16`): tracing records user JavaScript API
+entries, including callbacks/accessors/coercions, and excludes runtime setup,
+native implementation forwarding, descriptor materialization and synthetic
+event/state maintenance before buffer accounting. Raw/manual and automatic
+debug logs share this gate. Historical foundation evidence below is retained;
+the origin delta and its current verification status are defined in
+`docs/access_trace_origins.md` / `docs/access_trace_origins_report.md`.
+
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
 BOM callback calls + window/nested metadata + static visualViewport + navigator
 storage/permissions managers + matchMedia results + legacy navigator metadata +
@@ -695,10 +703,10 @@ JS-visible surface. The exact report shape and recommended run workflow are in
   slice).
 - `html_script` — inline/external HTML script execution through
   `PageState::run_html_script`.
-- `internal` — generation bootstrap during `install_page`. The current fixed
-  bootstrap reads `window.innerWidth` / `innerHeight` once for the static media
-  evaluator, so those two `get` events appear with `source_kind: "internal"` on
-  every load.
+- `internal` — retained as a source-kind value for historical compatibility;
+  the current user-origin gate excludes generation bootstrap before recording,
+  including its viewport reads. User accesses in lifecycle callbacks remain
+  observable.
 - `unknown` — timer/microtask/rAF/idle callbacks, lifecycle/event dispatch after
   the originating eval, DevTools evaluation, and `to_py` result conversion.
 

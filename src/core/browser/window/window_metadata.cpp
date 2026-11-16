@@ -14,6 +14,7 @@
 
 #include "iv8/page_state.h"
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/url_parser.h"
 #include "iv8/web_method.h"
 #include "../internal/common.h"
@@ -46,7 +47,9 @@ void window_name_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
     const std::uint64_t seq = window_trace_record(isolate, "name", AccessOperation::kSet);
     AccessPropertySetCompletion completion(isolate, seq, info, value);
     v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return value->ToString(context);
+        }).ToLocal(&str)) {
         return;  // coercion threw; leave the stored name unchanged
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -75,7 +78,9 @@ void window_status_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
     const std::uint64_t seq = window_trace_record(isolate, "status", AccessOperation::kSet);
     AccessPropertySetCompletion completion(isolate, seq, info, value);
     v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return value->ToString(context);
+        }).ToLocal(&str)) {
         return;  // coercion threw; leave the stored status unchanged
     }
     v8::String::Utf8Value utf8(isolate, str);

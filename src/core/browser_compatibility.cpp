@@ -3,6 +3,7 @@
 #include <pybind11/pybind11.h>
 
 #include "iv8/dom_url.h"
+#include "iv8/access_origin.h"
 #include "browser/window/post_message.h"
 
 namespace iv8 {
@@ -10,8 +11,9 @@ namespace {
 
 // No rendering, real device access, storage allocation, or network I/O. The
 // closure owns its WeakMaps and browser object identities for one generation.
-constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall, dataProperty) {
+constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall, dataProperty, withUser) {
   'use strict';
+  const runtimeField = (object, name) => withUser(object, name);
   const styles = new WeakMap(), elements = new WeakMap(), traceTargets = new WeakMap();
   const traceTargetOf = WeakMap.prototype.get.bind(traceTargets);
   const rememberTraceTarget = WeakMap.prototype.set.bind(traceTargets);
@@ -45,11 +47,11 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     'user-select pointer-events vertical-align object-fit outline zoom ' +
     '-webkit-transform -webkit-transition -webkit-user-select -webkit-appearance').split(/\s+/));
   const cssName = name => name === 'cssFloat' ? 'float' :
-    String(name).replace(/[A-Z]/g, character => '-' + character.toLowerCase());
+    withUser(() => String(name)).replace(/[A-Z]/g, character => '-' + character.toLowerCase());
   const isSupported = name => supported.has(name) || name.startsWith('--');
   function declarationParts(text) {
     const output = []; let current = '', quote = '', depth = 0;
-    text = String(text).replace(/\/\*[\s\S]*?\*\//g, '');
+    text = withUser(() => String(text)).replace(/\/\*[\s\S]*?\*\//g, '');
     for (let index = 0; index < text.length; ++index) {
       const character = text[index];
       if (quote) {
@@ -87,7 +89,10 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     if (!elements.has(style)) throw new TypeError('Illegal invocation');
     return elements.get(style);
   }
-  const declarationsOf = style => parse(elementOf(style).getAttribute('style') || '');
+  const declarationsOf = style => {
+    const element = elementOf(style);
+    return parse(withUser(() => element.getAttribute('style'), element, 'getAttribute', false, true) || '');
+  };
   function CSSStyleDeclaration() {
       const traceToken = beginCall('window.CSSStyleDeclaration', arguments);
       let traceResult, traceError, traceThrew = false;
@@ -115,7 +120,9 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       set(value) {
       const traceToken = beginStyleProperty('set', this, 'cssText', arguments);
       let traceResult, traceError, traceThrew = false;
-      try { elementOf(this).setAttribute('style', serialize(parse(value)));
+      try {
+        const element = elementOf(this);
+        withUser(() => element.setAttribute('style', serialize(parse(value))), element, 'setAttribute', false, true);
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
       } finally {
@@ -147,7 +154,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     getPropertyValue(name) {
       const traceToken = beginTrace('call', traceTarget(this), 'CSSStyleDeclaration', 'getPropertyValue', arguments);
       let traceResult, traceError, traceThrew = false;
-      try { return traceResult = (declarationsOf(this).get(String(name))?.value || '');
+      try { return traceResult = (declarationsOf(this).get(withUser(() => String(name)))?.value || '');
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
       } finally {
@@ -157,7 +164,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     getPropertyPriority(name) {
       const traceToken = beginTrace('call', traceTarget(this), 'CSSStyleDeclaration', 'getPropertyPriority', arguments);
       let traceResult, traceError, traceThrew = false;
-      try { return traceResult = (declarationsOf(this).get(String(name))?.priority || '');
+      try { return traceResult = (declarationsOf(this).get(withUser(() => String(name)))?.priority || '');
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
       } finally {
@@ -168,15 +175,15 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       const traceToken = beginTrace('call', traceTarget(this), 'CSSStyleDeclaration', 'setProperty', arguments);
       let traceResult, traceError, traceThrew = false;
       try {
-      const element = elementOf(this); name = String(name); value = value == null ? '' : String(value);
-      priority = String(priority).toLowerCase();
+      const element = elementOf(this); name = withUser(() => String(name)); value = value == null ? '' : withUser(() => String(value));
+      priority = withUser(() => String(priority)).toLowerCase();
       if (!isSupported(name)) return;
       if (!value) { this.removeProperty(name); return; }
       if (priority && priority !== 'important') return;
       const parsed = parse(name + ': ' + value + (priority ? ' !important' : '') + ';');
       if (!parsed.has(name)) return;
       const declarations = declarationsOf(this); declarations.set(name, parsed.get(name));
-      element.setAttribute('style', serialize(declarations));
+      withUser(() => element.setAttribute('style', serialize(declarations)), element, 'setAttribute', false, true);
 
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
@@ -188,9 +195,11 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       const traceToken = beginTrace('call', traceTarget(this), 'CSSStyleDeclaration', 'removeProperty', arguments);
       let traceResult, traceError, traceThrew = false;
       try {
-      name = String(name); const declarations = declarationsOf(this);
+      name = withUser(() => String(name)); const declarations = declarationsOf(this);
       const previous = declarations.get(name)?.value || ''; declarations.delete(name);
-      elementOf(this).setAttribute('style', serialize(declarations)); return traceResult = (previous);
+      const element = elementOf(this);
+      withUser(() => element.setAttribute('style', serialize(declarations)), element, 'setAttribute', false, true);
+      return traceResult = (previous);
 
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
@@ -201,7 +210,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     item(index) {
       const traceToken = beginTrace('call', traceTarget(this), 'CSSStyleDeclaration', 'item', arguments);
       let traceResult, traceError, traceThrew = false;
-      try { return traceResult = (Array.from(declarationsOf(this).keys())[Number(index) >>> 0] || '');
+      try { return traceResult = (Array.from(declarationsOf(this).keys())[withUser(() => Number(index)) >>> 0] || '');
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
       } finally {
@@ -226,17 +235,19 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     elements.set(target, element); rememberTraceTarget(target, target);
     const proxy = new Proxy(target, {
       get(target, key, receiver) {
-        if (isStyleMethod(key)) return Reflect.get(target, key, receiver);
+        if (isStyleMethod(key)) {
+          return withUser(() => Reflect.get(target, key, receiver), true);
+        }
       const traceToken = beginTrace('get', target, 'CSSStyleDeclaration', key, []);
       let traceResult, traceError, traceThrew = false;
       const previousProperty = interceptedProperty;
       interceptedProperty = {operation: 'get', receiver, member: key};
       try {
         if (typeof key === 'string' && /^(0|[1-9][0-9]*)$/.test(key))
-          return traceResult = (Array.from(declarationsOf(receiver).keys())[Number(key)]);
+          return traceResult = (Array.from(declarationsOf(receiver).keys())[withUser(() => Number(key))]);
         if (typeof key === 'string' && isSupported(cssName(key)))
           return traceResult = (prototype.getPropertyValue.call(receiver, cssName(key)));
-        return traceResult = (Reflect.get(target, key, receiver));
+        return traceResult = withUser(() => Reflect.get(target, key, receiver), target, key);
 
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
@@ -254,7 +265,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
         if (typeof key === 'string' && isSupported(cssName(key))) {
           prototype.setProperty.call(receiver, cssName(key), value); return traceResult = (true);
         }
-        return traceResult = (Reflect.set(target, key, value, receiver));
+        return traceResult = withUser(() => Reflect.set(target, key, value, receiver), target, key, true);
 
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
@@ -276,7 +287,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       ownKeys(target) {
       const traceToken = beginTrace('own_keys', target, 'CSSStyleDeclaration', '*', []);
       let traceResult, traceError, traceThrew = false;
-      try { return traceResult = ([...Array.from(declarationsOf(target).keys(), (_, index) => String(index)), ...Reflect.ownKeys(target)]);
+      try { return traceResult = ([...Array.from(declarationsOf(target).keys(), (_, index) => withUser(() => String(index))), ...Reflect.ownKeys(target)]);
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
       } finally {
@@ -288,7 +299,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       let traceResult, traceError, traceThrew = false;
       try {
         if (typeof key === 'string' && /^(0|[1-9][0-9]*)$/.test(key)) {
-          const value = Array.from(declarationsOf(target).keys())[Number(key)];
+          const value = Array.from(declarationsOf(target).keys())[withUser(() => Number(key))];
           if (value !== undefined) return traceResult = ({value, writable: false, enumerable: true, configurable: true});
         }
         return traceResult = (Reflect.getOwnPropertyDescriptor(target, key));
@@ -317,7 +328,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     brand(this);
     if (arguments.length === 0) throw new TypeError('A beacon URL is required');
     // Native resolver is supplied by the closure; no HTTP request is queued.
-    const target = resolveBeacon(String(url));
+    const target = resolveBeacon(withUser(() => String(url)));
     if (!target || !/^https?:/i.test(target)) throw new TypeError('Beacon URL must be HTTP or HTTPS');
     return traceResult = (false);
 
@@ -339,7 +350,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       try {
         if (this !== battery) throw new TypeError('Illegal invocation');
         if (callback == null) return;
-        const entries = listeners.get(String(type)) || new Set(); entries.add(callback); listeners.set(String(type), entries);
+        const entries = listeners.get(withUser(() => String(type))) || new Set(); entries.add(callback); listeners.set(withUser(() => String(type)), entries);
 
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
@@ -352,7 +363,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       let traceResult, traceError, traceThrew = false;
       try {
         if (this !== battery) throw new TypeError('Illegal invocation');
-        listeners.get(String(type))?.delete(callback);
+        listeners.get(withUser(() => String(type)))?.delete(callback);
 
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
@@ -365,11 +376,12 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       let traceResult, traceError, traceThrew = false;
       try {
         if (this !== battery || !(event instanceof Event)) throw new TypeError('Illegal invocation');
-        for (const callback of Array.from(listeners.get(String(event.type)) || [])) {
-          if (typeof callback === 'function') callback.call(this, event);
-          else if (typeof callback.handleEvent === 'function') callback.handleEvent(event);
+        const eventType = runtimeField(event, 'type');
+        for (const callback of Array.from(listeners.get(withUser(() => String(eventType))) || [])) {
+          if (typeof callback === 'function') withUser(() => callback.call(this, event));
+          else if (withUser(() => typeof callback.handleEvent) === 'function') withUser(() => callback.handleEvent(event));
         }
-        return traceResult = (!event.defaultPrevented);
+        return traceResult = (!runtimeField(event, 'defaultPrevented'));
 
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
@@ -402,8 +414,8 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       let traceResult, traceError, traceThrew = false;
       try {
       if (this !== quota) throw new TypeError('Illegal invocation');
-      navigatorObject.storage.estimate().then(result => { if (typeof success === 'function') success(result.usage, result.quota); },
-        error => { if (typeof failure === 'function') failure(error); });
+      navigatorObject.storage.estimate().then(result => { if (typeof success === 'function') withUser(() => success(result.usage, result.quota)); },
+        error => { if (typeof failure === 'function') withUser(() => failure(error)); });
 
       } catch (error) {
         traceThrew = true; traceError = error; throw error;
@@ -416,11 +428,11 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       let traceResult, traceError, traceThrew = false;
       try {
       if (this !== quota) throw new TypeError('Illegal invocation');
-      size = Number(size);
+      size = withUser(() => Number(size));
       Promise.resolve().then(() => {
-        if (size === 0) { if (typeof success === 'function') success(0); }
+        if (size === 0) { if (typeof success === 'function') withUser(() => success(0)); }
         else if (typeof failure === 'function') {
-          const error = new Error('Persistent quota allocation is unavailable'); error.name = 'NotSupportedError'; failure(error);
+          const error = new Error('Persistent quota allocation is unavailable'); error.name = 'NotSupportedError'; withUser(() => failure(error));
         }
       });
 
@@ -472,18 +484,21 @@ void install_browser_compatibility(v8::Isolate* isolate, v8::Local<v8::Context> 
     v8::Local<v8::Script> script;
     v8::Local<v8::Value> result;
     if (!v8::String::NewFromUtf8(isolate, kBootstrap).ToLocal(&source) ||
-        !v8::Script::Compile(context, source).ToLocal(&script) ||
-        !script->Run(context).ToLocal(&result)) return;
+        !v8::Script::Compile(context, source).ToLocal(&script)) return;
+    if (auto* trace = access_trace_from_isolate(isolate)) {
+        trace->register_runtime_script(script->GetUnboundScript()->ScriptId());
+    }
+    if (!script->Run(context).ToLocal(&result)) return;
     v8::Local<v8::String> base;
     v8::Local<v8::Function> resolver;
     if (!result->IsFunction() ||
         !v8::String::NewFromUtf8(isolate, base_url.c_str()).ToLocal(&base) ||
         !v8::Function::New(context, &resolve_beacon_url, base).ToLocal(&resolver)) return;
-    v8::Local<v8::Function> begin, end, data_property;
-    if (!browser::make_script_call_trace_hooks(isolate, context, begin, end, data_property)) return;
-    v8::Local<v8::Value> arguments[] = {resolver, begin, end, data_property};
+    v8::Local<v8::Function> begin, end, data_property, user_operation;
+    if (!browser::make_script_call_trace_hooks(isolate, context, begin, end, data_property, user_operation)) return;
+    v8::Local<v8::Value> arguments[] = {resolver, begin, end, data_property, user_operation};
     v8::Local<v8::Value> factory;
-    if (!result.As<v8::Function>()->Call(context, v8::Undefined(isolate), 4, arguments).ToLocal(&factory)) return;
+    if (!result.As<v8::Function>()->Call(context, v8::Undefined(isolate), 5, arguments).ToLocal(&factory)) return;
     (void)context->Global()->SetPrivate(context, style_slot(isolate), factory);
 }
 

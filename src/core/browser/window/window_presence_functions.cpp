@@ -7,6 +7,7 @@
 #include "iv8/web_interface.h"
 #include "iv8/web_method.h"
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
 #include "../web/capabilities.h"
@@ -59,7 +60,9 @@ void prefixed_animation_frame(const v8::FunctionCallbackInfo<v8::Value>& info) {
         if (!info[0]->IsFunction()) return;
         info.GetReturnValue().Set(static_cast<double>(state->register_animation_frame(info[0].As<v8::Function>())));
     } else {
-        const auto handle = info[0]->IntegerValue(isolate->GetCurrentContext());
+        const auto handle = access_user_operation(isolate, [&] {
+            return info[0]->IntegerValue(isolate->GetCurrentContext());
+        });
         if (handle.IsNothing()) return;
         state->cancel_animation_frame(handle.FromJust());
     }

@@ -4,9 +4,12 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "iv8/web_method.h"
+#include "iv8/host_object.h"
+#include "iv8/web_interface.h"
 #include "../window/window_trace_support.h"
 #include "../internal/trace_hooks.h"
 
@@ -15,6 +18,82 @@ namespace iv8::browser {
 void apply_prevent_default(const v8::FunctionCallbackInfo<v8::Value>& info);
 
 namespace {
+
+// Plain descriptors and real own properties on known non-masking HostObjects
+// can be inspected without invoking user accessors. Private interface metadata
+// distinguishes original host methods from user replacements. Unknown/proxy
+// paths conservatively retain user attribution without diagnostic trap calls.
+bool runtime_field_has_user_accessor(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> object,
+    v8::Local<v8::Name> name, bool writing, bool method_call = false) {
+    v8::TryCatch diagnostic(isolate);
+    const auto unknown = [&]() {
+        if (diagnostic.HasCaught()) {
+            if (!diagnostic.CanContinue()) diagnostic.ReThrow();
+            else diagnostic.Reset();
+        }
+        return true;
+    };
+    auto holder = object;
+    for (int depth = 0; depth < 128; ++depth) {
+        if (holder->IsProxy()) return true;
+        if (holder->HasNamedLookupInterceptor() || holder->HasIndexedLookupInterceptor() ||
+            holder->InternalFieldCount() != 0) {
+            if (host_object_backing(holder) == nullptr) return true;
+            // Real-property checks bypass interceptors. Non-masking host
+            // handlers leave an existing own JS accessor to the engine.
+            const auto own = holder->HasRealNamedProperty(context, name);
+            if (own.IsNothing()) return unknown();
+            if (!own.FromJust()) {
+                const auto parent = holder->GetPrototype();
+                if (!parent->IsObject()) return false;
+                holder = parent.As<v8::Object>();
+                continue;
+            }
+        }
+        v8::Local<v8::Value> descriptor_value;
+        if (!holder->GetOwnPropertyDescriptor(context, name).ToLocal(&descriptor_value))
+            return unknown();
+        if (descriptor_value->IsObject()) {
+            const auto descriptor = descriptor_value.As<v8::Object>();
+            const auto accessor_name = writing
+                ? v8::String::NewFromUtf8Literal(isolate, "set")
+                : v8::String::NewFromUtf8Literal(isolate, "get");
+            const auto has_accessor = descriptor->HasOwnProperty(context, accessor_name);
+            if (has_accessor.IsNothing()) return unknown();
+            if (!has_accessor.FromJust()) {
+                if (!method_call) return false;
+                v8::Local<v8::Value> value;
+                if (!descriptor->Get(context, v8::String::NewFromUtf8Literal(isolate, "value")).ToLocal(&value)) return unknown();
+                if (!value->IsFunction()) return false;
+                if (auto* host = host_object_backing(object); host != nullptr && name->IsString()) {
+                    v8::String::Utf8Value member(isolate, name);
+                    if (*member == nullptr) return unknown();
+                    const auto interface = web_member_interface(host->prototype_key(), *member, true);
+                    const auto prototype = web_interface_prototype(isolate, context, interface);
+                    v8::Local<v8::String> key;
+                    v8::Local<v8::Value> original;
+                    const std::string private_name = std::string("iv8.webidl.method.") + *member;
+                    if (prototype.IsEmpty() ||
+                        !v8::String::NewFromUtf8(isolate, private_name.c_str()).ToLocal(&key) ||
+                        !prototype->GetPrivate(context, v8::Private::ForApi(isolate, key)).ToLocal(&original)) return unknown();
+                    if (original->StrictEquals(value)) return false;
+                }
+                return true;
+            }
+            v8::Local<v8::Value> accessor;
+            if (!descriptor->Get(context, accessor_name).ToLocal(&accessor)) return unknown();
+            if (!accessor->IsFunction()) return false;
+            const auto* trace = access_trace_from_isolate(isolate);
+            return trace == nullptr ||
+                !trace->runtime_script(accessor.As<v8::Function>()->ScriptId());
+        }
+        const auto parent = holder->GetPrototype();
+        if (!parent->IsObject()) return false;
+        holder = parent.As<v8::Object>();
+    }
+    return true;
+}
 
 v8::Local<v8::Private> event_state_key(v8::Isolate* isolate) {
     return v8::Private::ForApi(isolate,
@@ -85,9 +164,7 @@ bool dispatch_in_progress(v8::Isolate* isolate, v8::Local<v8::Context> context,
 bool set_event_value(v8::Isolate* isolate, v8::Local<v8::Context> context,
                      v8::Local<v8::Object> event, const char* name,
                      v8::Local<v8::Value> value) {
-    v8::Local<v8::String> key;
-    return v8::String::NewFromUtf8(isolate, name).ToLocal(&key) &&
-        event->Set(context, key, value).FromMaybe(false);
+    return set_runtime_api_field(isolate, context, event, name, value).FromMaybe(false);
 }
 
 bool legacy_event_type(const v8::FunctionCallbackInfo<v8::Value>& info,
@@ -98,7 +175,7 @@ bool legacy_event_type(const v8::FunctionCallbackInfo<v8::Value>& info,
             v8::String::NewFromUtf8Literal(isolate, "An event type is required")));
         return false;
     }
-    return info[0]->ToString(isolate->GetCurrentContext()).ToLocal(type);
+    return access_user_operation(isolate, [&] { return info[0]->ToString(isolate->GetCurrentContext()); }).ToLocal(type);
 }
 
 bool apply_legacy_event(const v8::FunctionCallbackInfo<v8::Value>& info,
@@ -123,6 +200,40 @@ bool initialize_legacy_event(const v8::FunctionCallbackInfo<v8::Value>& info,
 }
 
 }  // namespace
+
+bool runtime_api_field_has_user_accessor(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> object,
+    v8::Local<v8::Name> name, bool writing, bool method_call) {
+    auto runtime_origin = access_runtime_scope(isolate);
+    return runtime_field_has_user_accessor(isolate, context, object, name, writing, method_call);
+}
+
+v8::MaybeLocal<v8::Value> get_runtime_api_field(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> object, const char* name) {
+    auto runtime_origin = access_runtime_scope(isolate);
+    v8::Local<v8::String> key;
+    if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&key)) return {};
+    const auto* trace = access_trace_from_isolate(isolate);
+    if (trace != nullptr && trace->enabled() &&
+        runtime_field_has_user_accessor(isolate, context, object, key, false)) {
+        return access_user_operation(isolate, [&] { return object->Get(context, key); });
+    }
+    return object->Get(context, key);
+}
+
+v8::Maybe<bool> set_runtime_api_field(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Object> object, const char* name,
+    v8::Local<v8::Value> value) {
+    auto runtime_origin = access_runtime_scope(isolate);
+    v8::Local<v8::String> key;
+    if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&key)) return v8::Nothing<bool>();
+    const auto* trace = access_trace_from_isolate(isolate);
+    if (trace != nullptr && trace->enabled() &&
+        runtime_field_has_user_accessor(isolate, context, object, key, true)) {
+        return access_user_operation(isolate, [&] { return object->Set(context, key, value); });
+    }
+    return object->Set(context, key, value);
+}
 
 bool initialize_event_state(v8::Isolate* isolate, v8::Local<v8::Context> context,
                             v8::Local<v8::Object> event, bool composed) {
@@ -193,7 +304,7 @@ void event_extra_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (name == "returnValue") { info.GetReturnValue().Set(!event_default_prevented(isolate, context, info.This())); return; }
     v8::Local<v8::Value> value;
     if (name == "srcElement") {
-        if (info.This()->Get(context, v8::String::NewFromUtf8Literal(isolate, "target")).ToLocal(&value)) info.GetReturnValue().Set(value);
+        if (get_runtime_api_field(isolate, context, info.This(), "target").ToLocal(&value)) info.GetReturnValue().Set(value);
     } else if (state_field(isolate, context, state, name.c_str(), &value)) info.GetReturnValue().Set(value);
 }
 
@@ -264,7 +375,7 @@ void ui_event_init_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     std::int32_t detail = 0;
     if (info.Length() > 4) {
-        auto converted = info[4]->Int32Value(context);
+        auto converted = access_user_operation(isolate, [&] { return info[4]->Int32Value(context); });
         if (converted.IsNothing()) return;
         detail = converted.FromMaybe(0);
     }
@@ -290,7 +401,7 @@ bool define_event_trusted_accessor(v8::Isolate* isolate,
 bool event_bubbles(v8::Isolate* isolate, v8::Local<v8::Context> context,
                    v8::Local<v8::Object> event) {
     v8::Local<v8::Value> value;
-    if (event->Get(context, v8_string(isolate, "bubbles")).ToLocal(&value)) {
+    if (get_runtime_api_field(isolate, context, event, "bubbles").ToLocal(&value)) {
         return value->BooleanValue(isolate);
     }
     return false;
@@ -401,13 +512,12 @@ void apply_prevent_default(const v8::FunctionCallbackInfo<v8::Value>& info) {
         return;  // passive listeners cannot cancel
     }
     v8::Local<v8::Value> cancelable;
-    if (!info.This()
-             ->Get(context, v8_string(isolate, "cancelable"))
+    if (!get_runtime_api_field(isolate, context, info.This(), "cancelable")
              .ToLocal(&cancelable) ||
         !cancelable->BooleanValue(isolate)) {
         return;
     }
-    (void)info.This()->Set(context, v8_string(isolate, "defaultPrevented"),
+    (void)set_runtime_api_field(isolate, context, info.This(), "defaultPrevented",
                            v8::True(isolate));
 }
 
@@ -415,7 +525,7 @@ bool event_default_prevented(v8::Isolate* isolate,
                              v8::Local<v8::Context> context,
                              v8::Local<v8::Object> event) {
     v8::Local<v8::Value> value;
-    if (event->Get(context, v8_string(isolate, "defaultPrevented"))
+    if (get_runtime_api_field(isolate, context, event, "defaultPrevented")
             .ToLocal(&value)) {
         return value->BooleanValue(isolate);
     }

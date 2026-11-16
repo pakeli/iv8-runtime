@@ -154,8 +154,13 @@ def test_identity_descriptors_and_access_trace():
             ("document", "defaultView", "get"),
             ("window", "document", "get"),
             ("document", "location", "get"),
-            ("window", "location", "get"),
         ]
         assert events[1]["value_summary"] == "string:1:T"
         assert events[3]["value_summary"] == "string:1:X"
         assert events[3]["outcome"] == "returned"
+        # The Document location getter delegates internally; only an explicit
+        # user global read should record the Window location getter itself.
+        location = page.eval("location")
+        assert isinstance(location, iv8.JSValue) and location.context_alive
+        assert [(event["object_type"], event["member"], event["operation"])
+                for event in page.read_access_trace()["events"]] == [("window", "location", "get")]

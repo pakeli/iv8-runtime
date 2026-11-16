@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "iv8/access_trace.h"
+#include "iv8/access_origin.h"
 #include "iv8/engine_runtime.h"
 #include "iv8/js_exception.h"
 #include "iv8/js_value.h"
@@ -209,6 +210,7 @@ void ContextState::run_timers() {
         {
             py::gil_scoped_release release_gil;
             v8::Local<v8::Value> recv = context->Global();
+            auto user_origin = access_user_scope(isolate);
             (void)callback->Call(context, recv, 0, nullptr);
         }
         if (try_catch.HasCaught()) {
@@ -260,6 +262,7 @@ void ContextState::fire_timer_locked(v8::Isolate* isolate,
     {
         py::gil_scoped_release release_gil;
         v8::Local<v8::Value> recv = context->Global();
+        auto user_origin = access_user_scope(isolate);
         (void)callback->Call(context, recv, 0, nullptr);
     }
     if (try_catch.HasCaught()) {
@@ -270,6 +273,7 @@ void ContextState::fire_timer_locked(v8::Isolate* isolate,
 
 void ContextState::drain_microtasks_locked(v8::Isolate* isolate) {
     py::gil_scoped_release release_gil;
+    auto user_origin = access_user_scope(isolate);
     isolate->PerformMicrotaskCheckpoint();
 }
 
@@ -513,6 +517,7 @@ void ContextState::fire_animation_frame_locked(
             // do not advance the clock, so they pass the unchanged current time.
             v8::Local<v8::Value> argv[1] = {
                 v8::Number::New(isolate, static_cast<double>(virtual_now_ms_))};
+            auto user_origin = access_user_scope(isolate);
             (void)callback->Call(context, recv, 1, argv);
         }
         if (try_catch.HasCaught()) {
@@ -626,6 +631,7 @@ void ContextState::fire_idle_round_locked(
             py::gil_scoped_release release_gil;
             v8::Local<v8::Value> recv = context->Global();
             v8::Local<v8::Value> argv[1] = {deadline};
+            auto user_origin = access_user_scope(isolate);
             (void)callback->Call(context, recv, 1, argv);
         }
         if (try_catch.HasCaught()) {
@@ -658,6 +664,7 @@ void ContextState::run_jobs() {
     v8::Local<v8::Context> context = context_.Get(isolate);
     v8::Context::Scope context_scope(context);
     py::gil_scoped_release release_gil;
+    auto user_origin = access_user_scope(isolate);
     isolate->PerformMicrotaskCheckpoint();
 }
 

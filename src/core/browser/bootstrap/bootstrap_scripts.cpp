@@ -20,8 +20,10 @@ constexpr char kSchedulerBootstrap[] = R"JS(
   'use strict';
   var beginCall = globalThis.__iv8HostCallBegin;
   var endCall = globalThis.__iv8HostCallEnd;
+  var withUser = globalThis.__iv8HostUserOperation;
   delete globalThis.__iv8HostCallBegin;
   delete globalThis.__iv8HostCallEnd;
+  delete globalThis.__iv8HostUserOperation;
   function postTask(callback, options) {
     var callToken = beginCall('scheduler.postTask', arguments);
     var callResult, callError, callThrew = false;
@@ -31,8 +33,8 @@ constexpr char kSchedulerBootstrap[] = R"JS(
     }
     options = options || {};
     var delay = 0;
-    if (options.delay !== undefined) {
-      delay = Number(options.delay);
+    if (withUser(() => options.delay) !== undefined) {
+      delay = withUser(() => Number(options.delay));
       if (!isFinite(delay) || delay < 0) {
         throw new TypeError(
           'scheduler.postTask: delay must be a non-negative finite number');
@@ -41,7 +43,7 @@ constexpr char kSchedulerBootstrap[] = R"JS(
     return callResult = new Promise(function (resolve, reject) {
       setTimeout(function () {
         try {
-          resolve(callback());
+          resolve(withUser(() => callback()));
         } catch (error) {
           reject(error);
         }
@@ -74,8 +76,10 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
 
   var beginCall = globalThis.__iv8HostCallBegin;
   var endCall = globalThis.__iv8HostCallEnd;
+  var withUser = globalThis.__iv8HostUserOperation;
   delete globalThis.__iv8HostCallBegin;
   delete globalThis.__iv8HostCallEnd;
+  delete globalThis.__iv8HostUserOperation;
 
   // Step 5g: capture the temporary native result factory and remove its global
   // binding. matchMedia keeps its JS function kind; the captured diagnostics
@@ -189,7 +193,7 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
   }
 
   function mediaMatches(rawQuery) {
-    var queries = String(rawQuery).split(',');
+    var queries = withUser(() => String(rawQuery)).split(',');
     for (var i = 0; i < queries.length; i++) {
       if (singleQueryMatches(queries[i])) return true;
     }
@@ -200,7 +204,7 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
     var callToken = beginCall('window.matchMedia', arguments);
     var callResult, callError, callThrew = false;
     try {
-      var text = String(query);
+      var text = withUser(() => String(query));
       return callResult = makeMediaQueryList(text, mediaMatches(text));
     } catch (error) {
       callThrew = true; callError = error; throw error;
@@ -234,9 +238,11 @@ constexpr char kWindowPostMessageBootstrap[] = R"JS(
   var dispatch = globalThis.__iv8PostMessageDispatch;
   var beginCall = globalThis.__iv8HostCallBegin;
   var endCall = globalThis.__iv8HostCallEnd;
+  var withUser = globalThis.__iv8HostUserOperation;
   delete globalThis.__iv8PostMessageDispatch;
   delete globalThis.__iv8HostCallBegin;
   delete globalThis.__iv8HostCallEnd;
+  delete globalThis.__iv8HostUserOperation;
 
   var scheduleTask = globalThis.setTimeout;
   var clone = globalThis.structuredClone;
@@ -245,7 +251,7 @@ constexpr char kWindowPostMessageBootstrap[] = R"JS(
 
   function normalizeTargetOrigin(targetOrigin) {
     if (targetOrigin === undefined) return '/';
-    var text = String(targetOrigin);
+    var text = withUser(() => String(targetOrigin));
     if (text === '*') return '*';
     if (text === '/' || text === windowOrigin ||
         text === windowOrigin + '/') {
@@ -262,7 +268,7 @@ constexpr char kWindowPostMessageBootstrap[] = R"JS(
       throw new TypeError('postMessage: message is required');
     }
     if (transfer !== undefined && transfer !== null) {
-      if (typeof transfer.length !== 'number' || transfer.length !== 0) {
+      if (withUser(() => typeof transfer.length) !== 'number' || withUser(() => transfer.length) !== 0) {
         throw new TypeError('postMessage: transfer lists are not supported');
       }
     }

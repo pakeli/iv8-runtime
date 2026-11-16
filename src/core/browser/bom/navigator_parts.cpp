@@ -3,6 +3,7 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
@@ -17,7 +18,9 @@ v8::Local<v8::Value> resolved_promise(v8::Isolate* isolate,
     if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) {
         return v8::Undefined(isolate);
     }
-    (void)resolver->Resolve(context, value);
+    (void)access_user_operation(isolate, [&] {
+        return resolver->Resolve(context, value);
+    });
     return resolver->GetPromise();
 }
 
@@ -31,10 +34,14 @@ void storage_manager_estimate_callback(
         "navigator.storage", "estimate", AccessOperation::kCall);
     AccessCallCompletion completion(isolate, seq, info);
     v8::Local<v8::Object> estimate = v8::Object::New(isolate);
-    (void)estimate->Set(context, v8_string(isolate, "usage"),
-                        v8::Integer::New(isolate, 0));
-    (void)estimate->Set(context, v8_string(isolate, "quota"),
-                        v8::Number::New(isolate, 10737418240.0));
+    (void)access_user_operation(isolate, [&] {
+        return estimate->Set(context, v8_string(isolate, "usage"),
+            v8::Integer::New(isolate, 0));
+    });
+    (void)access_user_operation(isolate, [&] {
+        return estimate->Set(context, v8_string(isolate, "quota"),
+            v8::Number::New(isolate, 10737418240.0));
+    });
     info.GetReturnValue().Set(resolved_promise(isolate, context, estimate));
 }
 
@@ -239,8 +246,9 @@ void permissions_query_callback(
     }
     v8::Local<v8::Object> descriptor = info[0].As<v8::Object>();
     v8::Local<v8::Value> name_value;
-    if (!descriptor->Get(context, v8_string(isolate, "name").As<v8::String>())
-             .ToLocal(&name_value)) {
+    if (!access_user_operation(isolate, [&] {
+            return descriptor->Get(context, v8_string(isolate, "name").As<v8::String>());
+        }).ToLocal(&name_value)) {
         return;  // a throwing descriptor getter propagates synchronously
     }
     if (!name_value->IsString()) {

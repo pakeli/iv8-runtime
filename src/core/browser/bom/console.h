@@ -13,6 +13,7 @@
 #include "iv8/page_state.h"
 #include "iv8/host_object.h"
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/web_interface.h"
 #include "iv8/browser_compatibility.h"
 
@@ -129,7 +130,9 @@ private:
                                            v8::Local<v8::Value> value) {
         v8::TryCatch try_catch(isolate);
         v8::Local<v8::String> str;
-        if (value->ToString(context).ToLocal(&str)) {
+        if (access_user_operation(isolate, [&] {
+                return value->ToString(context);
+            }).ToLocal(&str)) {
             v8::String::Utf8Value utf8(isolate, str);
             if (*utf8 != nullptr) {
                 return std::string(*utf8, static_cast<std::size_t>(utf8.length()));

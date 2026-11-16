@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "iv8/access_origin.h"
 #include "iv8/access_summary.h"
 #include "iv8/dom_url.h"
 #include "iv8/query_parameters.h"
@@ -25,21 +26,22 @@ namespace iv8::browser {
 void ElementHost::fire_invalid_event(v8::Isolate* isolate,
                                      v8::Local<v8::Context> context,
                                      v8::Local<v8::Object> receiver) {
+    auto runtime_origin = access_runtime_scope(isolate);
     v8::Local<v8::Object> event;
     if (!create_runtime_event(isolate, context, "invalid", false, true).ToLocal(&event)) return;
     if (!begin_event_dispatch(isolate, context, event, {receiver})) return;
-    (void)event->Set(context, v8_string(isolate, "type"),
+    (void)set_runtime_api_field(isolate, context, event, "type",
                      v8_string(isolate, "invalid"));
-    (void)event->Set(context, v8_string(isolate, "bubbles"),
+    (void)set_runtime_api_field(isolate, context, event, "bubbles",
                      v8::Boolean::New(isolate, false));
-    (void)event->Set(context, v8_string(isolate, "cancelable"),
+    (void)set_runtime_api_field(isolate, context, event, "cancelable",
                      v8::Boolean::New(isolate, true));
-    (void)event->Set(context, v8_string(isolate, "defaultPrevented"),
+    (void)set_runtime_api_field(isolate, context, event, "defaultPrevented",
                      v8::Boolean::New(isolate, false));
-    (void)event->Set(context, v8_string(isolate, "eventPhase"),
+    (void)set_runtime_api_field(isolate, context, event, "eventPhase",
                      v8::Integer::New(isolate, 0));
-    (void)event->Set(context, v8_string(isolate, "target"), receiver);
-    (void)event->Set(context, v8_string(isolate, "currentTarget"),
+    (void)set_runtime_api_field(isolate, context, event, "target", receiver);
+    (void)set_runtime_api_field(isolate, context, event, "currentTarget",
                      v8::Null(isolate));
     fire_target_at(isolate, context, event, receiver);
     finish_dispatch(isolate, context, event);
@@ -119,7 +121,7 @@ v8::Local<v8::Value> ElementHost::call_method(
             return v8::Undefined(isolate);
         }
         v8::Local<v8::String> identifier;
-        if (!args[0]->ToString(context).ToLocal(&identifier)) return v8::Undefined(isolate);
+        if (!access_user_operation(isolate, [&] { return args[0]->ToString(context); }).ToLocal(&identifier)) return v8::Undefined(isolate);
         // Context allocation is explicitly unavailable in this headless runtime.
         return v8::Null(isolate);
     }
@@ -142,7 +144,7 @@ v8::Local<v8::Value> ElementHost::call_method(
         std::string message;
         if (args.Length() > 0) {
             v8::Local<v8::String> str;
-            if (args[0]->ToString(context).ToLocal(&str)) {
+            if (access_user_operation(isolate, [&] { return args[0]->ToString(context); }).ToLocal(&str)) {
                 v8::String::Utf8Value utf8(isolate, str);
                 if (*utf8 != nullptr) {
                     message.assign(*utf8,
@@ -155,6 +157,7 @@ v8::Local<v8::Value> ElementHost::call_method(
     }
     const auto arg_string = [&](int index) -> std::string {
         if (index >= args.Length()) return std::string();
+        auto user_origin = access_user_scope(isolate);
         v8::String::Utf8Value utf8(isolate, args[index]);
         return *utf8 != nullptr
                    ? std::string(*utf8, static_cast<std::size_t>(utf8.length()))
