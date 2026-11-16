@@ -70,6 +70,7 @@
 #include "browser/host/attribute_hosts.h"
 #include "browser/web/capabilities.h"
 #include "browser/web/xml_http_request.h"
+#include "browser/window/to_string_monitoring.h"
 #include "browser/web/event_constructors.h"
 #include "browser/web/url.h"
 #include "browser/bootstrap/bootstrap_scripts.h"
@@ -2700,6 +2701,7 @@ void PageState::install_page(const std::string& base_url,
                 !install_window_error_support(isolate, context) ||
                 !install_window_shell_objects(isolate, context, host_objects_)) return;
             if (!install_window_public_data_tracing(isolate, context)) return;
+            if (!install_to_string_monitoring(isolate, context)) return;
 
             // M9-1: if DevTools was enabled on a prior generation, give this fresh
             // generation its own Inspector + registered context (the WS URL stays

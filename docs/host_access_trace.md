@@ -200,6 +200,24 @@ listed as not covered.
   `#document-fragment`. Labels must not be built by reading JS `id`, text,
   attributes, or other properties.
 
+## Intrinsic toString calls — TOSTRING-MON-01 (`2026-11-17`)
+
+The Page bootstrap installs native call observers for Function.prototype.toString
+and Object.prototype.toString before user scripts, including aliases cached
+before tracing starts. Each actual invocation records a host_object CALL with
+fixed Function.prototype/Object.prototype label, member toString, real extra
+arguments, full string result or safe synchronous exception completion. Internal
+runtime calls stay silent; actual user tag getters/traps retain provenance.
+
+The original V8 builtins compute results; native Proxy apply interposers preserve
+strict raw receivers. Only the two private monitor entries are mapped to their
+originals when V8 generates native function source; user Proxies are untouched.
+Inspector can expose the interposers' Proxy internals, and pristine cross-Realm
+transparency is not claimed. Replacements/deletions retain normal semantics;
+constructor rejection before apply entry produces no fabricated call event.
+No new Python watch API is added. Boundary/evidence: `docs/to_string_monitoring.md`
+and `docs/to_string_monitoring_report.md`.
+
 ## 4. Public API and report
 
 ```python

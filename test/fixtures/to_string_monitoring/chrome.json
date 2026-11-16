@@ -1,0 +1,2841 @@
+{
+  "browser": "Google Chrome 157.0.8103.51",
+  "captured_at_utc": "2026-11-16T16:00:11.514058+00:00",
+  "execution": {
+    "os": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:57953/reference",
+    "network": "Only loopback fixture document; external DNS mapped to NOTFOUND; background networking disabled; no business site traffic",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--virtual-time-budget=1000",
+      "--dump-dom",
+      "http://127.0.0.1:57953/reference"
+    ]
+  },
+  "probe_sha256": "00d213ab1f10596e44920adf4da7c1913e317f47f417cfa569c47ecc8fefef39",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "conditions": {
+      "url": "http://127.0.0.1:57953/reference",
+      "origin": "http://127.0.0.1:57953",
+      "isSecureContext": true,
+      "worker": false,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    "shapes": {
+      "Function.prototype.toString": {
+        "function": {
+          "name": "toString",
+          "length": 0,
+          "source": "function toString() { [native code] }",
+          "ownPrototype": false,
+          "constructable": false,
+          "ownKeys": [
+            "length",
+            "name"
+          ],
+          "functionPrototype": true
+        },
+        "descriptor": {
+          "kind": "data",
+          "writable": true,
+          "enumerable": false,
+          "configurable": true,
+          "value": {
+            "name": "toString",
+            "length": 0,
+            "source": "function toString() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ],
+            "functionPrototype": true
+          }
+        },
+        "ownDescriptors": {
+          "name": {
+            "kind": "data",
+            "writable": false,
+            "enumerable": false,
+            "configurable": true,
+            "value": "toString"
+          },
+          "length": {
+            "kind": "data",
+            "writable": false,
+            "enumerable": false,
+            "configurable": true,
+            "value": 0
+          }
+        },
+        "repeatedIdentity": true
+      },
+      "Object.prototype.toString": {
+        "function": {
+          "name": "toString",
+          "length": 0,
+          "source": "function toString() { [native code] }",
+          "ownPrototype": false,
+          "constructable": false,
+          "ownKeys": [
+            "length",
+            "name"
+          ],
+          "functionPrototype": true
+        },
+        "descriptor": {
+          "kind": "data",
+          "writable": true,
+          "enumerable": false,
+          "configurable": true,
+          "value": {
+            "name": "toString",
+            "length": 0,
+            "source": "function toString() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ],
+            "functionPrototype": true
+          }
+        },
+        "ownDescriptors": {
+          "name": {
+            "kind": "data",
+            "writable": false,
+            "enumerable": false,
+            "configurable": true,
+            "value": "toString"
+          },
+          "length": {
+            "kind": "data",
+            "writable": false,
+            "enumerable": false,
+            "configurable": true,
+            "value": 0
+          }
+        },
+        "repeatedIdentity": true
+      }
+    },
+    "identities": {
+      "differentMethods": true,
+      "functionInherited": true,
+      "objectInherited": true
+    },
+    "receivers": {
+      "undefined": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Undefined]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "null": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Null]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "boolean": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Boolean]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "number": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Number]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "nan": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Number]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "string": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object String]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "bigint": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object BigInt]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "symbol": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Symbol]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "boxedNumber": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Number]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "boxedString": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object String]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "boxedSymbol": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Symbol]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "plainObject": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "nullPrototype": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "array": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Array]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "date": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Date]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "map": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Map]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "set": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Set]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "regexp": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object RegExp]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "error": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Error]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "ordinaryFunction": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function Sample(value) { return value + 1; }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "arrowFunction": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "(value) => value + 1"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "asyncFunction": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "async function AsyncSample() {}"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object AsyncFunction]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "generatorFunction": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function* GeneratorSample() {}"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object GeneratorFunction]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "classConstructor": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "class SampleClass {}"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "nativeFunction": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function max() { [native code] }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "functionPrototype": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function () { [native code] }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "boundUserFunction": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function () { [native code] }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "boundNativeFunction": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function () { [native code] }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "callableProxy": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function () { [native code] }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [
+              "Symbol(Symbol.toStringTag)"
+            ],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "objectProxy": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [
+              "Symbol(Symbol.toStringTag)"
+            ],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "arrayProxy": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Array]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [
+              "Symbol(Symbol.toStringTag)"
+            ],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "revokedCallableProxy": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function () { [native code] }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Cannot perform 'Object.prototype.toString' on a proxy that has been revoked"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "revokedObjectProxy": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Cannot perform 'Object.prototype.toString' on a proxy that has been revoked"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "customTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object CustomTag]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "emptyTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object ]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "numericTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "nullTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "undefinedTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "symbolTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "boxedTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "callableCustomTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function Sample(value) { return value + 1; }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object CallableTag]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "throwingObjectTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "threwSameSentinel": true,
+            "sentinelType": "object"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "throwingStringTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "threwSameSentinel": true,
+            "sentinelType": "string"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "throwingUndefinedTag": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "threwSameSentinel": true,
+            "sentinelType": "undefined"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "poisonedOrdinaryProperties": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Object]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "poisonedFunctionName": {
+        "Function.prototype.toString": {
+          "outcome": {
+            "returned": "function Sample(value) { return value + 1; }"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        },
+        "Object.prototype.toString": {
+          "outcome": {
+            "returned": "[object Function]"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      }
+    },
+    "forms": {
+      "Function.prototype.toString": {
+        "undefined": {
+          "call": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "null": {
+          "call": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "number": {
+          "call": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "ordinaryFunction": {
+          "call": {
+            "outcome": {
+              "returned": "function Sample(value) { return value + 1; }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "function Sample(value) { return value + 1; }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "function Sample(value) { return value + 1; }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "function Sample(value) { return value + 1; }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "plainObject": {
+          "call": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "customTag": {
+          "call": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "throwingObjectTag": {
+          "call": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Function.prototype.toString requires that 'this' be a Function"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "callableProxy": {
+          "call": {
+            "outcome": {
+              "returned": "function () { [native code] }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "function () { [native code] }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "function () { [native code] }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "function () { [native code] }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "revokedCallableProxy": {
+          "call": {
+            "outcome": {
+              "returned": "function () { [native code] }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "function () { [native code] }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "function () { [native code] }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "function () { [native code] }"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        }
+      },
+      "Object.prototype.toString": {
+        "undefined": {
+          "call": {
+            "outcome": {
+              "returned": "[object Undefined]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "[object Undefined]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "[object Undefined]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "[object Undefined]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "null": {
+          "call": {
+            "outcome": {
+              "returned": "[object Null]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "[object Null]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "[object Null]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "[object Null]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "number": {
+          "call": {
+            "outcome": {
+              "returned": "[object Number]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "[object Number]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "[object Number]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "[object Number]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "ordinaryFunction": {
+          "call": {
+            "outcome": {
+              "returned": "[object Function]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "[object Function]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "[object Function]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "[object Function]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "plainObject": {
+          "call": {
+            "outcome": {
+              "returned": "[object Object]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "[object Object]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "[object Object]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "[object Object]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "customTag": {
+          "call": {
+            "outcome": {
+              "returned": "[object CustomTag]"
+            },
+            "effects": {
+              "tagGetterCalls": 1,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "[object CustomTag]"
+            },
+            "effects": {
+              "tagGetterCalls": 1,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "[object CustomTag]"
+            },
+            "effects": {
+              "tagGetterCalls": 1,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "[object CustomTag]"
+            },
+            "effects": {
+              "tagGetterCalls": 1,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "throwingObjectTag": {
+          "call": {
+            "outcome": {
+              "threwSameSentinel": true,
+              "sentinelType": "object"
+            },
+            "effects": {
+              "tagGetterCalls": 1,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "threwSameSentinel": true,
+              "sentinelType": "object"
+            },
+            "effects": {
+              "tagGetterCalls": 1,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "threwSameSentinel": true,
+              "sentinelType": "object"
+            },
+            "effects": {
+              "tagGetterCalls": 1,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "threwSameSentinel": true,
+              "sentinelType": "object"
+            },
+            "effects": {
+              "tagGetterCalls": 1,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "callableProxy": {
+          "call": {
+            "outcome": {
+              "returned": "[object Function]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [
+                "Symbol(Symbol.toStringTag)"
+              ],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "returned": "[object Function]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [
+                "Symbol(Symbol.toStringTag)"
+              ],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "returned": "[object Function]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [
+                "Symbol(Symbol.toStringTag)"
+              ],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "returned": "[object Function]"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [
+                "Symbol(Symbol.toStringTag)"
+              ],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        },
+        "revokedCallableProxy": {
+          "call": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Cannot perform 'Object.prototype.toString' on a proxy that has been revoked"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "apply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Cannot perform 'Object.prototype.toString' on a proxy that has been revoked"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "bind": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Cannot perform 'Object.prototype.toString' on a proxy that has been revoked"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          },
+          "reflectApply": {
+            "outcome": {
+              "name": "TypeError",
+              "message": "Cannot perform 'Object.prototype.toString' on a proxy that has been revoked"
+            },
+            "effects": {
+              "tagGetterCalls": 0,
+              "getKeys": [],
+              "getPrototypeOf": 0,
+              "ownKeys": 0,
+              "getOwnPropertyDescriptor": 0,
+              "conversionCalls": 0,
+              "nameGetterCalls": 0
+            }
+          }
+        }
+      }
+    },
+    "direct": {
+      "Function.prototype.toString": {
+        "outcome": {
+          "name": "TypeError",
+          "message": "Function.prototype.toString requires that 'this' be a Function"
+        },
+        "effects": {
+          "tagGetterCalls": 0,
+          "getKeys": [],
+          "getPrototypeOf": 0,
+          "ownKeys": 0,
+          "getOwnPropertyDescriptor": 0,
+          "conversionCalls": 0,
+          "nameGetterCalls": 0
+        }
+      },
+      "Object.prototype.toString": {
+        "outcome": {
+          "returned": "[object Undefined]"
+        },
+        "effects": {
+          "tagGetterCalls": 0,
+          "getKeys": [],
+          "getPrototypeOf": 0,
+          "ownKeys": 0,
+          "getOwnPropertyDescriptor": 0,
+          "conversionCalls": 0,
+          "nameGetterCalls": 0
+        }
+      },
+      "functionPrototypeMember": {
+        "outcome": {
+          "returned": "function () { [native code] }"
+        },
+        "effects": {
+          "tagGetterCalls": 0,
+          "getKeys": [],
+          "getPrototypeOf": 0,
+          "ownKeys": 0,
+          "getOwnPropertyDescriptor": 0,
+          "conversionCalls": 0,
+          "nameGetterCalls": 0
+        }
+      },
+      "objectPrototypeMember": {
+        "outcome": {
+          "returned": "[object Object]"
+        },
+        "effects": {
+          "tagGetterCalls": 0,
+          "getKeys": [],
+          "getPrototypeOf": 0,
+          "ownKeys": 0,
+          "getOwnPropertyDescriptor": 0,
+          "conversionCalls": 0,
+          "nameGetterCalls": 0
+        }
+      },
+      "functionNaturalMember": {
+        "outcome": {
+          "returned": "function Sample(value) { return value + 1; }"
+        },
+        "effects": {
+          "tagGetterCalls": 0,
+          "getKeys": [],
+          "getPrototypeOf": 0,
+          "ownKeys": 0,
+          "getOwnPropertyDescriptor": 0,
+          "conversionCalls": 0,
+          "nameGetterCalls": 0
+        }
+      },
+      "objectNaturalMember": {
+        "outcome": {
+          "returned": "[object CustomTag]"
+        },
+        "effects": {
+          "tagGetterCalls": 1,
+          "getKeys": [],
+          "getPrototypeOf": 0,
+          "ownKeys": 0,
+          "getOwnPropertyDescriptor": 0,
+          "conversionCalls": 0,
+          "nameGetterCalls": 0
+        }
+      }
+    },
+    "boundCreation": {
+      "Function.prototype.toString": {
+        "shape": {
+          "name": "bound toString",
+          "length": 0,
+          "source": "function () { [native code] }",
+          "ownPrototype": false,
+          "constructable": false,
+          "ownKeys": [
+            "length",
+            "name"
+          ],
+          "functionPrototype": true
+        },
+        "creationEffects": {
+          "tagGetterCalls": 0,
+          "getKeys": [],
+          "getPrototypeOf": 0,
+          "ownKeys": 0,
+          "getOwnPropertyDescriptor": 0,
+          "conversionCalls": 0,
+          "nameGetterCalls": 0
+        },
+        "invoked": {
+          "outcome": {
+            "name": "TypeError",
+            "message": "Function.prototype.toString requires that 'this' be a Function"
+          },
+          "effects": {
+            "tagGetterCalls": 0,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      },
+      "Object.prototype.toString": {
+        "shape": {
+          "name": "bound toString",
+          "length": 0,
+          "source": "function () { [native code] }",
+          "ownPrototype": false,
+          "constructable": false,
+          "ownKeys": [
+            "length",
+            "name"
+          ],
+          "functionPrototype": true
+        },
+        "creationEffects": {
+          "tagGetterCalls": 0,
+          "getKeys": [],
+          "getPrototypeOf": 0,
+          "ownKeys": 0,
+          "getOwnPropertyDescriptor": 0,
+          "conversionCalls": 0,
+          "nameGetterCalls": 0
+        },
+        "invoked": {
+          "outcome": {
+            "returned": "[object CustomTag]"
+          },
+          "effects": {
+            "tagGetterCalls": 1,
+            "getKeys": [],
+            "getPrototypeOf": 0,
+            "ownKeys": 0,
+            "getOwnPropertyDescriptor": 0,
+            "conversionCalls": 0,
+            "nameGetterCalls": 0
+          }
+        }
+      }
+    }
+  }
+}

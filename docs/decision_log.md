@@ -1,11 +1,26 @@
 # Decision Log
 
-Last reviewed: `2026-11-16`
+Last reviewed: `2026-11-17`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
 
 ## Confirmed Decisions
+
+### Observe intrinsic method/object stringification calls (`2026-11-17`)
+
+The user explicitly requests Function.prototype.toString and
+Object.prototype.toString detection monitoring. Install native Proxy apply
+observers before user scripts; preserve raw null/undefined/primitive receivers
+and delegate original V8 algorithms. Only two internal observers map to their
+original targets during function-source generation; user Proxies stay untouched.
+Reuse host_object CALL schema with actual extra arguments and safe completion,
+fixed owner tokens and user accessor provenance. No M9 watch API is added.
+Inspector Proxy internals/pristine cross-Realm transparency remain explicit
+limits, not an unchanged builtin-kind claim. Local CPython3.11 installed-wheel
+acceptance: 35 new cases, 748 focused and 2974 passed / 2 skipped full suite.
+Update PR #32; full release/deployment stays separate. Boundary/report:
+`docs/to_string_monitoring.md` / `docs/to_string_monitoring_report.md`.
 
 ### Retain complete logged string values and argument lists (`2026-11-16`)
 

@@ -64,6 +64,7 @@ if(IV8_LINK_V8)
       src/core/browser/window/window_functions.cpp
       src/core/browser/window/window_presence_functions.cpp
       src/core/browser/window/window_trace_support.cpp
+      src/core/browser/window/to_string_monitoring.cpp
       src/core/browser/window/window_shell_objects.cpp
       src/core/browser/window/window_error_support.cpp
       src/core/browser/window/window_event_handlers.cpp

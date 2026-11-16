@@ -321,10 +321,17 @@ def test_prototype_method_monitoring_preserves_native_function_and_data_descript
     page.start_access_trace()
     assert json.loads(page.eval(snapshot)) == expected
     records = events(page)
-    assert event_keys(records) == [("host_object", interface + ".prototype", member, "get")
-                                   for interface, member, _ in METHODS]
+    assert event_keys(records) == [entry for interface, member, _ in METHODS for entry in (
+        ("host_object", interface + ".prototype", member, "get"),
+        ("host_object", "Function.prototype", "toString", "call"),
+    )]
     assert all(record["outcome"] == "returned" and record["value_summary"] == "function"
-               for record in records)
+               for record in records[::2])
+    for record, (_, member, _) in zip(records[1::2], METHODS):
+        source = "function " + member + "() { [native code] }"
+        assert record["outcome"] == "returned"
+        assert record["argument_count"] == 0 and record["argument_summaries"] == []
+        assert record["return_summary"] == "string:" + str(len(source)) + ":" + source
     page.stop_access_trace()
     assert json.loads(page.eval(snapshot)) == expected
 
