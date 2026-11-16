@@ -46,7 +46,13 @@ CALL document.querySelector("#app") -> <HostObject>
 ```
 
 Text shows paths, attempted setter inputs, call argument summaries, captured
-values/results, missing properties, and synchronous throws. Internal IDs,
+values/results, missing properties, and synchronous throws. Calls with optional
+`receiver_summary` are normalized as `<entry>.call(<this>[, <extra args>])`.
+`receiver_label` is used only for direct native HostObject labels, with unsafe
+labels JSON-quoted. This makes toString's actual receiver explicit without
+claiming the original JS used `.call`. Argument counts still exclude this;
+reports without receiver metadata retain their previous text. See
+`docs/to_string_receivers_report.md`. Internal IDs,
 sequence/generation/source fields, and full stacks remain available in raw mode.
 Lines retain native entry order, not completion timing. Non-identifier
 property names use quoted bracket notation. Control characters

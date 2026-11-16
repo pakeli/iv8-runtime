@@ -167,6 +167,132 @@ def test_empty_trace_and_capacity_warning():
         "WARNING: 3 trace event(s) dropped (capacity 10)."
 
 
+def _receiver_call(**changes):
+    event = _event(operation="call", label="Object.prototype", member="toString",
+                   argument_count=0, argument_summaries=[],
+                   return_summary="string:15:[object Object]")
+    event.update(changes)
+    return event
+
+
+@pytest.mark.parametrize("summary,expected", [
+    ("null", "null"), ("undefined", "undefined"),
+    ("string:0:", '""'), ("string:3:a:b", '"a:b"'),
+    (r"string:1:\n", r'"\n"'), ("number:-0", "-0"),
+    ("boolean:false", "false"), ("object", "<Object>"),
+    ("array", "<Array>"), ("function", "<Function>"),
+    ("host_object", "<HostObject>"), ("bigint", "<BigInt>"),
+    ("symbol", "<Symbol>"), (None, "<receiver not recorded>"),
+])
+def test_call_receiver_uses_captured_summary_without_inventing_extra_arguments(summary, expected):
+    event = _receiver_call(receiver_summary=summary)
+    assert format_access_trace(_report(event)) == (
+        "CALL Object.prototype.toString.call(" + expected + ') -> "[object Object]"')
+
+
+def test_named_native_host_receiver_and_extra_arguments_remain_distinct():
+    event = _receiver_call(receiver_summary="host_object", receiver_label="document",
+                           argument_count=2, argument_summaries=["number:7", "string:1:x"],
+                           return_summary="string:21:[object HTMLDocument]")
+    assert format_access_trace(_report(event)) == (
+        'CALL Object.prototype.toString.call(<HostObject: document>, 7, "x") -> "[object HTMLDocument]"')
+
+
+@pytest.mark.parametrize("label,expected", [
+    ("document", "<HostObject: document>"),
+    ("native_label$1", "<HostObject: native_label$1>"),
+    ("document node", '<HostObject: "document node">'),
+    ("document, null", '<HostObject: "document, null">'),
+    ("document>", '<HostObject: "document>">'),
+    ('document"), null', r'<HostObject: "document\"), null">'),
+    ("document\nforged", r'<HostObject: "document\nforged">'),
+    ("文档", '<HostObject: "文档">'),
+    ("document\u2028forged", r'<HostObject: "document\u2028forged">'),
+])
+def test_native_receiver_labels_are_quoted_and_cannot_add_log_lines_or_arguments(label, expected):
+    event = _receiver_call(receiver_summary="host_object", receiver_label=label)
+    text = format_access_trace(_report(event))
+    assert text == 'CALL Object.prototype.toString.call(' + expected + ') -> "[object Object]"'
+    assert len(text.splitlines()) == 1
+
+
+@pytest.mark.parametrize("summary,expected", [
+    ("object", "<Object>"), ("array", "<Array>"),
+    ("function", "<Function>"), ("null", "null"),
+])
+def test_receiver_label_does_not_name_an_arbitrary_non_host_value(summary, expected):
+    event = _receiver_call(receiver_summary=summary, receiver_label="document>, null")
+    assert format_access_trace(_report(event)) == (
+        "CALL Object.prototype.toString.call(" + expected + ') -> "[object Object]"')
+
+
+@pytest.mark.parametrize("label", ["", None])
+def test_empty_native_receiver_label_keeps_the_type_only_placeholder(label):
+    event = _receiver_call(receiver_summary="host_object", receiver_label=label)
+    assert format_access_trace(_report(event)) == (
+        'CALL Object.prototype.toString.call(<HostObject>) -> "[object Object]"')
+
+
+def test_receiver_label_without_receiver_summary_keeps_the_legacy_call_form():
+    event = _receiver_call(receiver_label="document")
+    assert format_access_trace(_report(event)) == 'CALL Object.prototype.toString() -> "[object Object]"'
+
+
+@pytest.mark.parametrize("argument_count", [None, 0, 3])
+def test_receiver_does_not_hide_missing_argument_or_return_metadata(argument_count):
+    event = _receiver_call(receiver_summary="undefined")
+    del event["argument_summaries"]
+    del event["return_summary"]
+    if argument_count is None:
+        del event["argument_count"]
+    else:
+        event["argument_count"] = argument_count
+    assert format_access_trace(_report(event)) == (
+        "CALL Object.prototype.toString.call(undefined, <arguments not recorded>) -> <return value not recorded>")
+
+
+def test_receiver_is_not_counted_as_a_legacy_omitted_extra_argument():
+    event = _receiver_call(receiver_summary="object", argument_count=10,
+                           argument_summaries=["number:" + str(index) for index in range(8)])
+    expected_arguments = ", ".join(map(str, range(8))) + ", … <2 more arguments>"
+    assert format_access_trace(_report(event)) == (
+        "CALL Object.prototype.toString.call(<Object>, " + expected_arguments + ') -> "[object Object]"')
+
+
+def test_throwing_call_keeps_the_receiver_and_escapes_the_exception_message():
+    event = _receiver_call(receiver_summary="null", outcome="threw",
+                           argument_count=1, argument_summaries=["string:1:x"],
+                           exception_name="TypeError",
+                           exception_message="Uncaught TypeError: bad\nreceiver")
+    del event["return_summary"]
+    text = format_access_trace(_report(event))
+    assert text == r'CALL Object.prototype.toString.call(null, "x") !! TypeError: bad\nreceiver'
+    assert len(text.splitlines()) == 1
+
+
+def test_receiver_strings_respect_full_capture_and_saved_legacy_encoding():
+    value = "a" * 64 + "..."
+    event = _receiver_call(receiver_summary="string:67:" + value)
+    legacy = _report(event)
+    full = copy.deepcopy(legacy)
+    full["coverage"]["string_capture"] = "full"
+    assert format_access_trace(legacy) == (
+        'CALL Object.prototype.toString.call("' + "a" * 64 +
+        '" … <truncated, 67 bytes>) -> "[object Object]"')
+    assert format_access_trace(full) == (
+        "CALL Object.prototype.toString.call(" + json.dumps(value) + ') -> "[object Object]"')
+
+
+def test_receiver_rendering_does_not_modify_the_captured_event_or_report():
+    report = _report(_receiver_call(receiver_summary="host_object", receiver_label="document node",
+                                    argument_count=1, argument_summaries=["string:1:x"]))
+    report["coverage"]["string_capture"] = "full"
+    before = copy.deepcopy(report)
+    assert format_access_trace(report) == (
+        'CALL Object.prototype.toString.call(<HostObject: "document node">, "x") -> "[object Object]"')
+    assert report == before
+
+
 class _NativeTrace:
     def __init__(self):
         self.report = _report(_event())

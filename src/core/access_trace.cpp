@@ -261,6 +261,8 @@ void AccessTrace::complete(std::uint64_t seq,
             it->argument_count = completion.argument_count;
             it->argument_summaries = std::move(completion.argument_summaries);
             it->return_summary = std::move(completion.return_summary);
+            it->receiver_summary = std::move(completion.receiver_summary);
+            it->receiver_label = std::move(completion.receiver_label);
             it->exception_name = std::move(completion.exception_name);
             it->exception_message = std::move(completion.exception_message);
             it->exception_stack = std::move(completion.exception_stack);

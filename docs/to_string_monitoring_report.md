@@ -2,6 +2,8 @@
 
 Date: `2026-11-17`. **Implemented and locally accepted; full release verification pending.**
 Boundary: [to_string_monitoring.md](to_string_monitoring.md).
+Subsequent receiver-logging repair and its separate results:
+[to_string_receivers_report.md](to_string_receivers_report.md).
 
 ## Delivered behavior
 

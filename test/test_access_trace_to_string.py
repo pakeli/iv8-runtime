@@ -60,11 +60,18 @@ def entries(page):
             and event["member"] == "toString"]
 
 
-def assert_entry(event, api, outcome, arguments=()):
+def assert_entry(event, api, outcome, arguments=(), receiver_summary=None, receiver_label=None):
     assert (event["object_type"], event["label"], event["member"], event["operation"]) == (
         "host_object", api.rsplit(".", 1)[0], "toString", "call")
     assert event["argument_count"] == len(arguments)
     assert event["argument_summaries"] == list(arguments)
+    assert isinstance(event["receiver_summary"], str) and event["receiver_summary"]
+    if receiver_summary is not None:
+        assert event["receiver_summary"] == receiver_summary
+    if receiver_label is None:
+        assert "receiver_label" not in event
+    else:
+        assert event["receiver_label"] == receiver_label
     if "returned" in outcome:
         assert event["outcome"] == "returned"
         assert event["return_summary"].startswith("string:" + str(len(outcome["returned"].encode("utf-8"))) + ":")
@@ -94,6 +101,7 @@ def test_intrinsic_native_shape_descriptors_identity_and_self_inspection_match_c
     records = entries(page)
     assert len(records) == 2
     assert all(record["label"] == "Function.prototype" and record["outcome"] == "returned" for record in records)
+    assert all(record["receiver_summary"] == "function" and "receiver_label" not in record for record in records)
     page.stop_access_trace()
     assert json.loads(page.eval(expression)) == expected
     assert not hasattr(iv8.Page, "watch_function_to_string")
@@ -114,7 +122,7 @@ def test_cached_before_start_intrinsic_and_bound_invocations_record_once(page, b
     expected = browser_reference["result"]["forms"][api][label][form]
     assert actual == expected
     record, = events(page)
-    assert_entry(record, api, expected["outcome"])
+    assert_entry(record, api, expected["outcome"], receiver_summary="function" if api.startswith("Function") else "object")
     assert record["source_kind"] == "eval" and record["resource_name"] == "to-string-call.js"
     assert page.read_access_trace(clear=False)["dropped_events"] == 0
 
@@ -148,7 +156,10 @@ def test_strict_null_undefined_and_primitive_receivers_match_both_chrome_intrins
         actual = observe(page, browser_reference, "Reflect.apply(ts_methods[" + json.dumps(api) + "],ts_sample.receiver,[])")
         assert actual == expected[api]
         record, = events(page)
-        assert_entry(record, api, expected[api]["outcome"])
+        receiver_summary = {"undefined": "undefined", "null": "null", "boolean": "boolean:true",
+                            "number": "number:17", "string": "string:6:sample", "bigint": "bigint",
+                            "symbol": "symbol"}[label]
+        assert_entry(record, api, expected[api]["outcome"], receiver_summary=receiver_summary)
         records.append(record)
     assert records[0]["object_id"] != records[1]["object_id"]
 
@@ -162,7 +173,8 @@ def test_proxy_and_revoked_proxy_results_errors_and_traps_match_chrome(page, bro
         expected = browser_reference["result"]["receivers"][label][api]
         assert actual == expected
         record, = events(page)
-        assert_entry(record, api, expected["outcome"])
+        assert_entry(record, api, expected["outcome"],
+                     receiver_summary="function" if "Callable" in label or label == "callableProxy" else "object")
         assert page.read_access_trace(clear=False)["dropped_events"] == 0
 
 
@@ -225,10 +237,14 @@ def test_actual_extra_arguments_and_complete_source_are_captured_without_inspect
     assert page.eval("ts_bound_extra(...ts_arguments.slice(1))", name="to-string-args.js") == expected
     record, = events(page)
     assert_entry(record, api, {"returned": expected},
-                 [*["number:" + str(index) for index in range(10)], "object", "object"])
+                 [*["number:" + str(index) for index in range(10)], "object", "object"],
+                 receiver_summary="function" if api.startswith("Function") else "object")
     assert page.eval("ts_effects") == 0
     rendered = page.read_access_trace(clear=False, format="text")
     assert len(rendered.splitlines()) == 1
+    rendered_receiver = "<Function>" if api.startswith("Function") else "<Object>"
+    assert rendered.startswith("CALL " + api + ".call(" + rendered_receiver +
+                               ", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, <Object>, <Object>) -> ")
     returned = rendered.split(" -> ", 1)[1]
     assert json.loads(returned) == expected
 
@@ -245,7 +261,8 @@ def test_debug_outputs_one_intrinsic_call_and_prod_preserves_behavior_without_ou
         capsys.readouterr()
         expression = "ts_methods[" + json.dumps(api) + "].call(ts_sample.receiver)"
         assert page.eval(expression) == expected
-        assert capsys.readouterr().out.splitlines() == ["CALL " + api + "() -> " + json.dumps(expected)]
+        receiver = "<Function>" if api.startswith("Function") else "<Object>"
+        assert capsys.readouterr().out.splitlines() == ["CALL " + api + ".call(" + receiver + ") -> " + json.dumps(expected)]
         assert page.read_access_trace()["events"] == []
         page.load(HTML, BASE, mode="prod")
         bind_methods(page)
@@ -338,6 +355,8 @@ def test_reload_and_page_isolation_keep_generation_owned_intrinsic_identities(pa
         after = entries(page)
         assert len(before) == len(after) == 2
         assert [event["label"] for event in after] == [event["label"] for event in before]
+        assert [event["receiver_summary"] for event in before] == ["function", "object"]
+        assert [event["receiver_summary"] for event in after] == ["function", "object"]
         assert {event["generation"] for event in after} == {before[0]["generation"] + 1}
         assert {event["object_id"] for event in before}.isdisjoint(event["object_id"] for event in after)
         assert not old_method.context_alive
@@ -369,3 +388,69 @@ def test_user_overrides_delete_and_redefinition_do_not_fake_native_calls_but_cac
     page.stop_access_trace()
     assert page.eval("Function.prototype.toString===ts_methods['Function.prototype.toString'] && "
                      "Object.prototype.toString===ts_methods['Object.prototype.toString']")
+
+
+def test_receiver_fields_distinguish_prototypes_native_methods_documents_and_observer_functions(page):
+    page.eval("""globalThis.ts_document=document;globalThis.ts_native_method=document.createElement;
+        globalThis.ts_name_reads=0;Object.defineProperty(ts_native_method,'name',{
+            configurable:true,get(){ts_name_reads++;throw Error('must not read native function name');}});""")
+    samples = [
+        ("Function.prototype.toString", "Function.prototype", "function", None,
+         "function () { [native code] }"),
+        ("Object.prototype.toString", "Object.prototype", "object", None, "[object Object]"),
+        ("Function.prototype.toString", "ts_native_method", "function", None,
+         "function createElement() { [native code] }"),
+        ("Object.prototype.toString", "ts_document", "host_object", "document", "[object HTMLDocument]"),
+        ("Function.prototype.toString", "ts_methods['Function.prototype.toString']", "function", None,
+         "function toString() { [native code] }"),
+        ("Function.prototype.toString", "ts_methods['Object.prototype.toString']", "function", None,
+         "function toString() { [native code] }"),
+    ]
+    for api, receiver, summary, label, expected in samples:
+        page.start_access_trace(max_events=1)
+        assert page.eval("ts_methods[" + json.dumps(api) + "].call(" + receiver + ")") == expected
+        record, = events(page)
+        assert_entry(record, api, {"returned": expected}, receiver_summary=summary, receiver_label=label)
+        assert record["argument_count"] == 0 and record["argument_summaries"] == []
+        assert page.read_access_trace(clear=False)["dropped_events"] == 0
+    page.stop_access_trace()
+    assert page.eval("ts_name_reads") == 0
+
+
+def test_proxy_wrapping_a_host_receiver_is_not_unwrapped_or_given_a_native_receiver_label(page):
+    page.eval("""globalThis.ts_host_gets=[];globalThis.ts_host_proxy=new Proxy(document,{
+        get(target,key,receiver){ts_host_gets.push(String(key));return Reflect.get(target,key,receiver);},
+        getPrototypeOf(){throw Error('must not inspect receiver prototype');},
+        getOwnPropertyDescriptor(){throw Error('must not inspect receiver descriptor');}
+    });""")
+    page.start_access_trace(max_events=1)
+    expected = "[object HTMLDocument]"
+    assert page.eval("ts_methods['Object.prototype.toString'].call(ts_host_proxy)") == expected
+    record, = events(page)
+    assert_entry(record, "Object.prototype.toString", {"returned": expected}, receiver_summary="object")
+    page.stop_access_trace()
+    assert page.eval("ts_host_gets", to_py=True) == ["Symbol(Symbol.toStringTag)"]
+
+
+def test_debug_document_receiver_label_uses_native_metadata_and_prod_stays_silent(capsys):
+    with iv8.Page() as page:
+        page.load(HTML, BASE, mode="debug")
+        assert capsys.readouterr().out == ""
+        bind_methods(page)
+        setup = """globalThis.ts_document=document;globalThis.ts_label_reads=0;
+            for(const name of ['name','constructor'])Object.defineProperty(ts_document,name,{
+                configurable:true,get(){ts_label_reads++;throw Error('diagnostics must not read '+name);}});"""
+        page.eval(setup)
+        capsys.readouterr()
+        expression = "ts_methods['Object.prototype.toString'].call(ts_document)"
+        assert page.eval(expression) == "[object HTMLDocument]"
+        assert capsys.readouterr().out.splitlines() == [
+            'CALL Object.prototype.toString.call(<HostObject: document>) -> "[object HTMLDocument]"']
+        assert page.eval("ts_label_reads") == 0
+        assert capsys.readouterr().out == ""
+        page.load(HTML, BASE, mode="prod")
+        bind_methods(page)
+        page.eval(setup)
+        assert page.eval(expression) == "[object HTMLDocument]"
+        assert page.eval("ts_label_reads") == 0
+        assert capsys.readouterr().out == ""

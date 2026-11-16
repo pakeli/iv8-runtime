@@ -206,7 +206,13 @@ The Page bootstrap installs native call observers for Function.prototype.toStrin
 and Object.prototype.toString before user scripts, including aliases cached
 before tracing starts. Each actual invocation records a host_object CALL with
 fixed Function.prototype/Object.prototype label, member toString, real extra
-arguments, full string result or safe synchronous exception completion. Internal
+arguments, full string result or safe synchronous exception completion. The
+`2026-11-17` receiver repair adds `receiver_summary` plus optional native-host
+`receiver_label`, captured before internal observer mapping. Text normalizes
+`.call(this, ...extraArgs)` so the entrypoint is not mistaken for the receiver.
+No name/constructor/tag getter is used for labels; user Proxies are not unwrapped.
+Argument counts still exclude this; old reports without these fields keep their
+previous view. Evidence: `docs/to_string_receivers_report.md`. Internal
 runtime calls stay silent; actual user tag getters/traps retain provenance.
 
 The original V8 builtins compute results; native Proxy apply interposers preserve
@@ -254,7 +260,7 @@ Event shape:
 seq, generation, object_id, object_type, label, member,
 operation, phase, resolution?, resource_name, source_kind,
 outcome?, value_summary?, argument_count?, argument_summaries?,
-return_summary?, exception_name?, exception_message?,
+return_summary?, receiver_summary?, receiver_label?, exception_name?, exception_message?,
 exception_stack?, exception_location?
 ```
 
@@ -275,6 +281,9 @@ exception_stack?, exception_location?
   - `argument_count`: full argument count for traced calls and query wrappers;
   - `argument_summaries`: all argument summaries (older reports may retain eight);
   - `return_summary`: for traced calls and query wrappers that return;
+  - optional `receiver_summary` / `receiver_label`: raw this for intrinsic
+    toString calls; labels use only direct native HostObject metadata, and
+    neither field adds an argument to `argument_count`;
   - `exception_name`, `exception_message`, `exception_location`,
     `exception_stack`: safe synchronous exception metadata when a traced entry
     throws.

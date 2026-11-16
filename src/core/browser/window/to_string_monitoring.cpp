@@ -7,6 +7,7 @@
 
 #include "iv8/access_origin.h"
 #include "iv8/access_summary.h"
+#include "iv8/host_object.h"
 #include "iv8/web_method.h"
 #include "window_trace_support.h"
 #include "../internal/event_support.h"
@@ -22,11 +23,16 @@ constexpr int kObjectObserver = 3;
 constexpr int kFunctionIdentity = 4;
 constexpr int kObjectIdentity = 5;
 
-void capture_arguments(v8::Isolate* isolate, v8::Local<v8::Context> context,
-    v8::Local<v8::Array> arguments, AccessCompletion& completion) {
+void capture_call_inputs(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Value> receiver, v8::Local<v8::Array> arguments,
+    AccessCompletion& completion) {
     v8::TryCatch diagnostic(isolate);
     try {
         completion.argument_count = arguments->Length();
+        completion.receiver_summary = access_value_summary(isolate, receiver);
+        if (!receiver->IsProxy()) {
+            if (auto* host = host_object_backing(receiver)) completion.receiver_label = host->trace_label();
+        }
         completion.argument_summaries.reserve(arguments->Length());
         for (std::uint32_t index = 0; index < arguments->Length(); ++index) {
             v8::Local<v8::Value> argument;
@@ -67,7 +73,7 @@ void to_string_apply(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     auto runtime_origin = access_runtime_scope(isolate);
     AccessCompletion completion;
-    if (sequence != 0) capture_arguments(isolate, context, arguments, completion);
+    if (sequence != 0) capture_call_inputs(isolate, context, receiver, arguments, completion);
     if (isolate->IsExecutionTerminating()) return;
 
     if (function_call) {

@@ -103,11 +103,25 @@ def _arguments(event, complete_strings=False):
     return ", ".join(rendered)
 
 
+def _receiver(event, complete_strings=False):
+    value = event.get("receiver_summary")
+    label = event.get("receiver_label")
+    if value == "host_object" and label:
+        rendered_label = label if _IDENTIFIER.fullmatch(label) else _quoted(label)
+        return "<HostObject: " + rendered_label + ">"
+    return _summary(value, "<receiver not recorded>", complete_strings)
+
+
 def _event_line(event, complete_strings=False):
     operation = event.get("operation", "unknown")
     path = _path(event)
     if operation == "call":
-        line = f"CALL {path}({_arguments(event, complete_strings)})"
+        arguments = _arguments(event, complete_strings)
+        if "receiver_summary" in event:
+            receiver = _receiver(event, complete_strings)
+            arguments = receiver + (", " + arguments if arguments else "")
+            path += ".call"
+        line = f"CALL {path}({arguments})"
     elif operation == "set":
         value = _summary(event.get("value_summary"), "<value not recorded>", complete_strings)
         line = f"SET {path} = {value}"

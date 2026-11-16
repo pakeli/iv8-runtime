@@ -7,6 +7,20 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Make intrinsic stringifier receivers explicit in logs (`2026-11-17`)
+
+The user identifies ambiguous toString text and approves receiver metadata.
+Capture raw receiver_summary before internal observer mapping and receiver_label
+only from a direct native HostObject's C++ trace_label. Do not read JS
+name/constructor/tag, unwrap user Proxies or introduce receiver IDs. Keep this
+separate from actual extra-argument counts. Text normalizes .call(this,...),
+quotes unsafe native labels and preserves the old view when fields are absent.
+Original algorithms, throws and diagnostic safety remain unchanged. Fresh CP311
+installed-wheel acceptance: 41 new cases, 133 focused, 789 gate and
+3015 passed / 2 skipped full suite. Update PR #32 without a full release or SDK
+replacement claim. Boundary/report: `docs/to_string_monitoring.md` /
+`docs/to_string_receivers_report.md`.
+
 ### Observe intrinsic method/object stringification calls (`2026-11-17`)
 
 The user explicitly requests Function.prototype.toString and

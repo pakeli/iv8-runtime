@@ -1622,6 +1622,12 @@ py::dict PageState::read_access_trace(bool clear) {
         if (!event.return_summary.empty()) {
             record["return_summary"] = event.return_summary;
         }
+        if (!event.receiver_summary.empty()) {
+            record["receiver_summary"] = event.receiver_summary;
+        }
+        if (!event.receiver_label.empty()) {
+            record["receiver_label"] = event.receiver_label;
+        }
         if (!event.exception_name.empty()) {
             record["exception_name"] = event.exception_name;
         }

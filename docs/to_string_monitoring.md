@@ -23,6 +23,40 @@ their existing entries; arbitrary user-defined replacement toString functions
 are not rewritten or monitored by this intrinsic slice. Constructor rejection
 before the apply boundary produces no fabricated CALL event.
 
+## Receiver metadata update — `2026-11-17`
+
+The user reports that an entry such as Function.prototype.toString() hides the
+actual receiver and can imply the wrong result for a direct prototype call.
+Each retained intrinsic CALL now includes optional `receiver_summary`, using the
+existing complete primitive/type-only encoding. `receiver_label` is present only
+for a direct native HostObject with a nonempty native trace_label. Capture uses
+the raw apply receiver before mapping either private monitor Proxy to its target.
+Never infer labels from function.name, constructor, Symbol.toStringTag, returned
+text or JS variable names; do not unwrap user Proxies or inspect their properties.
+Unknown objects/functions retain type-only summaries.
+
+Receiver fields are separate from argument_count/argument_summaries, which still
+count only actual extra arguments. New text events normalize the invocation as
+`CALL <entry>.call(<receiver>[, <extra arguments>])`, regardless of whether the JS
+used a direct, bound, call/apply or Reflect.apply form. This is an explicit
+receiver view, not reconstruction of the original source syntax. Native host
+labels are bare identifiers when possible and JSON-quoted otherwise. Existing
+reports without receiver_summary retain their old text, without guessing this.
+None/missing receiver metadata is explicitly marked, never invented. Returned
+values, exceptions, native function shape and provenance remain unchanged.
+
+Examples:
+
+```text
+CALL Function.prototype.toString.call(<Function>) -> "function createElement() { [native code] }"
+CALL Object.prototype.toString.call(<HostObject: document>) -> "[object HTMLDocument]"
+CALL Object.prototype.toString.call(null) -> "[object Null]"
+CALL Object.prototype.toString.call(undefined) -> "[object Undefined]"
+```
+
+Current receiver-update results/source/release evidence:
+`docs/to_string_receivers_report.md`.
+
 The original V8 builtins still compute results/errors. V8 API Function callbacks
 coerce null/undefined receivers, so this monitor uses V8 Proxy apply interposers
 with native C++ traps to preserve raw this. No JS wrapper or hardcoded function

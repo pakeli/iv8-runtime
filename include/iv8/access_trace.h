@@ -54,6 +54,8 @@ struct AccessEvent {
     std::uint64_t argument_count = 0;
     std::vector<std::string> argument_summaries;  // all arguments
     std::string return_summary;                   // call
+    std::string receiver_summary;  // optional raw this, separate from arguments
+    std::string receiver_label;    // optional direct native HostObject label
     // Step 6h: best-effort synchronous exception metadata. These fields are
     // populated only when a traced native entry actually throws; asynchronous
     // failures may leave them absent.
@@ -72,6 +74,8 @@ struct AccessCompletion {
     std::uint64_t argument_count = 0;
     std::vector<std::string> argument_summaries;
     std::string return_summary;
+    std::string receiver_summary;
+    std::string receiver_label;
     std::string exception_name;
     std::string exception_message;
     std::string exception_stack;
