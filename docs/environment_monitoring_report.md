@@ -34,8 +34,8 @@ filters, and compared actual entries with valid-operation controls. It found:
 
 | Path | Observed gap |
 |---|---|
-| Generic interface prototype methods | Reading cached `Element.prototype.getAttribute` or `Navigator.prototype.javaEnabled` returns a function without a property event |
-| Invalid native receivers | Cached `getAttribute.call({}, "id")` enters the callback and throws TypeError before any call event is created |
+| Generic interface prototype methods | Closed for the shared HostObject path by `docs/generic_binding_monitoring_report.md`; direct/inherited defining-prototype references now emit GET |
+| Invalid native receivers | Closed for generic method/IDL accessor callbacks by `docs/generic_binding_monitoring_report.md`; independent callback families remain separate |
 | Returned browser structures | MutationRecord `type`/`target`/`attributeName`, several API-returned arrays and value dictionaries have no member events |
 | Symbol and structural queries | Some `Symbol.toStringTag` / `Symbol.iterator`, `in`, cached query wrappers and non-HostObject query targets are silent |
 | Readonly write attempts | Engine-ignored/rejected attempts can have no set event |
@@ -44,7 +44,7 @@ filters, and compared actual entries with valid-operation controls. It found:
 Debug mode starts after native installation, drains automatically between
 execution calls and uses `sys.maxsize` as its ceiling. This removes that manual
 default from the automatic path, while the other API coverage failures remain
-open. Existing synthetic lifecycle Event entries remain visible. FileReader's
+open. The subsequent user-origin repair excludes synthetic lifecycle/state entries; see `docs/access_trace_origins_report.md`. FileReader's
 unimplemented `onload` handler is a missing API/probe issue rather than evidence
 of a missing hook on a working handler.
 

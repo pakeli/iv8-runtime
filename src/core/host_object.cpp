@@ -15,6 +15,7 @@
 #include "iv8/access_origin.h"
 #include "iv8/web_interface.h"
 #include "iv8/web_method.h"
+#include "browser/window/window_trace_support.h"
 
 namespace iv8 {
 
@@ -217,7 +218,7 @@ bool property_is_present(v8::Isolate* isolate, v8::Local<v8::Object> holder,
 
 bool is_interface_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          v8::Local<v8::Object> object, HostObject* host,
-                         const std::string& member) {
+                         const std::string& member, v8::Local<v8::Value>& result) {
     auto runtime_origin = access_runtime_scope(isolate);
     if (host->prototype_key().empty()) return false;
     auto interface = web_member_interface(host->prototype_key(), member, true);
@@ -234,9 +235,12 @@ bool is_interface_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
             v8::Local<v8::Value> value;
             if (!object->GetOwnPropertyDescriptor(context, key).ToLocal(&descriptor) ||
                 !descriptor->IsObject() ||
+                !descriptor.As<v8::Object>()->HasOwnProperty(context, v8str(isolate, "value")).FromMaybe(false) ||
                 !descriptor.As<v8::Object>()->Get(context, v8str(isolate, "value")).ToLocal(&value))
                 return false;
-            return value == canonical;
+            if (value != canonical) return false;
+            result = value;
+            return true;
         }
         auto parent = object->GetPrototype();
         if (!parent->IsObject()) return false;
@@ -289,8 +293,11 @@ v8::Intercepted named_property_getter(
     if (*utf8 == nullptr) return v8::Intercepted::kNo;
     const std::string key(*utf8, static_cast<std::size_t>(utf8.length()));
     if (property_is_present(isolate, info.Holder(), context, property)) {
-        if (is_interface_method(isolate, context, info.Holder(), host, key)) {
+        v8::Local<v8::Value> method;
+        if (is_interface_method(isolate, context, info.Holder(), host, key, method)) {
             record_access(trace, host, key, AccessOperation::kGetMethod);
+            info.GetReturnValue().Set(method);
+            return v8::Intercepted::kYes;
         }
         return v8::Intercepted::kNo;
     }
@@ -345,7 +352,8 @@ v8::Intercepted named_property_setter(
     if (host == nullptr || trace == nullptr || !property->IsString()) return v8::Intercepted::kNo;
     v8::String::Utf8Value text(isolate, property);
     const std::string member(*text != nullptr ? *text : "");
-    if (is_interface_method(isolate, isolate->GetCurrentContext(), info.Holder(), host, member)) {
+    v8::Local<v8::Value> original_method;
+    if (is_interface_method(isolate, isolate->GetCurrentContext(), info.Holder(), host, member, original_method)) {
         auto seq = record_access(trace, host, member, AccessOperation::kSet);
         AccessCompletion completion;
         completion.outcome = "returned";
@@ -465,8 +473,58 @@ HostObject* method_receiver(v8::Isolate* isolate, v8::Local<v8::Object> receiver
         v8::kExternalPointerTypeTagDefault));
 }
 
+std::uint64_t record_rejected_access(v8::Isolate* isolate,
+    v8::Local<v8::Array> data, const std::string& interface,
+    const std::string& key, AccessOperation operation, HostObject* legacy_owner = nullptr) {
+    auto* trace = active_trace(isolate);
+    if (trace == nullptr || !trace->user_entry()) return 0;
+    auto context = isolate->GetCurrentContext();
+    v8::TryCatch diagnostic(isolate);
+    const void* identity = nullptr;
+    std::string type;
+    std::string label;
+    try {
+        {
+            auto runtime_origin = access_runtime_scope(isolate);
+            HostObject* owner = legacy_owner;
+            v8::Local<v8::Value> target;
+            if (owner == nullptr && data->Length() > 2 && data->Get(context, 2).ToLocal(&target)) {
+                if (target->IsExternal()) {
+                    owner = static_cast<HostObject*>(target.As<v8::External>()->Value(
+                        v8::kExternalPointerTypeTagDefault));
+                } else if (target->IsObject()) {
+                    owner = backing_of(target.As<v8::Object>());
+                    if (owner == nullptr) {
+                        identity = browser::native_api_identity(isolate, target.As<v8::Object>());
+                        type = "host_object";
+                        label = interface + ".prototype";
+                    }
+                }
+            }
+            if (owner != nullptr) {
+                identity = owner;
+                type = owner->trace_object_type();
+                label = owner->trace_label();
+            }
+        }
+        if (diagnostic.HasCaught()) {
+            if (!diagnostic.CanContinue()) diagnostic.ReThrow();
+            else diagnostic.Reset();
+            return 0;
+        }
+        return trace->record(identity, type, label, key, operation);
+    } catch (...) {
+        // Failed diagnostics must not replace the original brand error.
+        if (diagnostic.HasCaught()) {
+            if (!diagnostic.CanContinue()) diagnostic.ReThrow();
+            else diagnostic.Reset();
+        }
+        return 0;
+    }
+}
+
 HostObject* idl_receiver(const v8::FunctionCallbackInfo<v8::Value>& info,
-                          std::string& key) {
+                          std::string& key, std::string& interface_name) {
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
     auto data = info.Data().As<v8::Array>();
@@ -477,20 +535,29 @@ HostObject* idl_receiver(const v8::FunctionCallbackInfo<v8::Value>& info,
     v8::String::Utf8Value member_text(isolate, member);
     v8::String::Utf8Value interface_text(isolate, interface);
     key = *member_text != nullptr ? *member_text : "";
+    interface_name = *interface_text != nullptr ? *interface_text : "";
     HostObject* host = method_receiver(isolate, info.This());
     if (host == nullptr || *interface_text == nullptr ||
         !web_interface_inherits(host->prototype_key(), *interface_text)) {
-        isolate->ThrowException(v8::Exception::TypeError(v8str(isolate, "Illegal invocation")));
         return nullptr;
     }
     return host;
 }
 
 void idl_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    std::string key;
-    HostObject* host = idl_receiver(info, key);
-    if (host == nullptr) return;
     auto isolate = info.GetIsolate();
+    std::string key;
+    std::string interface;
+    HostObject* host = idl_receiver(info, key, interface);
+    if (host == nullptr) {
+        const auto sequence = record_rejected_access(isolate, info.Data().As<v8::Array>(),
+            interface, key, AccessOperation::kGet);
+        AccessFunctionPropertyCompletion completion(isolate, sequence, info, AccessOperation::kGet);
+        if (!isolate->IsExecutionTerminating()) {
+            isolate->ThrowException(v8::Exception::TypeError(v8str(isolate, "Illegal invocation")));
+        }
+        return;
+    }
     auto context = isolate->GetCurrentContext();
     AccessTrace* trace = active_trace(isolate);
     const auto seq = record_access(trace, host, key, AccessOperation::kGet);
@@ -514,10 +581,19 @@ void idl_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
 }
 
 void idl_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
-    std::string key;
-    HostObject* host = idl_receiver(info, key);
-    if (host == nullptr) return;
     auto isolate = info.GetIsolate();
+    std::string key;
+    std::string interface;
+    HostObject* host = idl_receiver(info, key, interface);
+    if (host == nullptr) {
+        const auto sequence = record_rejected_access(isolate, info.Data().As<v8::Array>(),
+            interface, key, AccessOperation::kSet);
+        AccessFunctionPropertyCompletion completion(isolate, sequence, info, AccessOperation::kSet);
+        if (!isolate->IsExecutionTerminating()) {
+            isolate->ThrowException(v8::Exception::TypeError(v8str(isolate, "Illegal invocation")));
+        }
+        return;
+    }
     auto context = isolate->GetCurrentContext();
     v8::Local<v8::Value> value = info.Length() ? info[0] :
         v8::Local<v8::Value>(v8::Undefined(isolate));
@@ -566,18 +642,27 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     const std::string key(*name != nullptr ? *name : "");
     HostObject* host = method_receiver(isolate, info.This());
     bool compatible = false;
+    std::string interface_name;
+    HostObject* legacy_owner = nullptr;
     if (owner_value->IsString()) {
         v8::String::Utf8Value interface(isolate, owner_value);
+        interface_name = *interface != nullptr ? *interface : "";
         compatible = host != nullptr && *interface != nullptr &&
             web_interface_inherits(host->prototype_key(), *interface);
     } else {
         auto* owner = static_cast<HostObject*>(owner_value.As<v8::External>()->Value(
             v8::kExternalPointerTypeTagDefault));
+        legacy_owner = owner;
         if (owner->trace_object_type() == "console") host = owner;
         compatible = host != nullptr && owner->trace_object_type() == host->trace_object_type();
     }
     if (!compatible) {
-        isolate->ThrowException(v8::Exception::TypeError(v8str(isolate, "Illegal invocation")));
+        const auto sequence = record_rejected_access(isolate, data, interface_name,
+            key, AccessOperation::kCall, legacy_owner);
+        AccessCallCompletion completion(isolate, sequence, info);
+        if (!isolate->IsExecutionTerminating()) {
+            isolate->ThrowException(v8::Exception::TypeError(v8str(isolate, "Illegal invocation")));
+        }
         return;
     }
     AccessTrace* trace = active_trace(isolate);
@@ -749,17 +834,24 @@ void method_setter(v8::Local<v8::Name> property, v8::Local<v8::Value> value,
 }
 
 v8::Local<v8::Array> member_data(v8::Isolate* isolate, v8::Local<v8::Context> context,
-                                const std::string& member, const std::string& interface) {
-    auto data = v8::Array::New(isolate, 2);
-    if (!data->Set(context, 0, v8str(isolate, member)).FromMaybe(false) ||
-        !data->Set(context, 1, v8str(isolate, interface)).FromMaybe(false)) return {};
+    const std::string& member, const std::string& interface, v8::Local<v8::Value> owner) {
+    auto data = v8::Array::New(isolate, 3);
+    if (!data->CreateDataProperty(context, 0, v8str(isolate, member)).FromMaybe(false) ||
+        !data->CreateDataProperty(context, 1, v8str(isolate, interface)).FromMaybe(false) ||
+        !data->CreateDataProperty(context, 2, owner).FromMaybe(false)) return {};
     return data;
 }
 
 bool define_idl_attribute(v8::Isolate* isolate, v8::Local<v8::Context> context,
                           v8::Local<v8::Object> target, const std::string& member,
                           const std::string& interface, bool writable, bool configurable) {
-    auto data = member_data(isolate, context, member, interface);
+    auto* owner_host = backing_of(target);
+    // An own accessor may outlive its JS receiver. Its diagnostic owner is a
+    // generation-owned native host, not a captured receiver object.
+    v8::Local<v8::Value> owner = owner_host != nullptr
+        ? v8::Local<v8::Value>(v8::External::New(isolate, owner_host, v8::kExternalPointerTypeTagDefault))
+        : v8::Local<v8::Value>(target);
+    auto data = member_data(isolate, context, member, interface, owner);
     if (data.IsEmpty()) return false;
     v8::Local<v8::Function> getter;
     v8::Local<v8::Function> setter;
@@ -805,14 +897,21 @@ void install_host_interface(v8::Isolate* isolate, v8::Local<v8::Context> context
         if (prototype.IsEmpty()) return;
         auto registered = v8::Private::ForApi(isolate, v8str(isolate, "iv8.webidl.method." + member));
         if (prototype->HasPrivate(context, registered).FromMaybe(true)) continue;
-        auto data = member_data(isolate, context, member, interface);
+        // Location exposes own methods. Its owner is diagnostic only; the
+        // shared callback still validates the actual invocation receiver.
+        v8::Local<v8::Value> owner = name == "Location"
+            ? v8::Local<v8::Value>(v8::External::New(isolate, host, v8::kExternalPointerTypeTagDefault))
+            : v8::Local<v8::Value>(prototype);
+        auto data = member_data(isolate, context, member, interface, owner);
         v8::Local<v8::Function> function;
         if (data.IsEmpty() || !make_web_method(isolate, context, member,
                 web_method_length(host->trace_object_type(), member), &method_callback, data)
                 .ToLocal(&function)) return;
         (void)prototype->SetPrivate(context, registered, function);
         if (name != "Location") {
-            (void)prototype->DefineOwnProperty(context, v8str(isolate, member), function);
+            (void)browser::install_traced_api_data_property(isolate, context, prototype,
+                member, function, browser::native_api_identity(isolate, prototype),
+                "host_object", interface + ".prototype");
         }
     }
 }

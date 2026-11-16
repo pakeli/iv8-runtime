@@ -7,6 +7,20 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Trace shared prototype references and native receiver rejections (`2026-11-16`)
+
+The user requests the next two concrete monitoring gaps be repaired. At generic
+interface lazy registration, reuse native data callbacks while preserving exact
+function objects and descriptors. Return canonical functions in the instance
+interceptor to preserve its METHOD/CALL folding without prototype duplicates.
+Known binding owners give failed native entries stable identity; brand errors
+retain their original message/side effects and do not coerce arguments. Own
+Location/Document owners are generation-owned native pointers; receiver dispatch
+never uses those diagnostic owners. Local acceptance is 36 new cases, 558 focused
+and full 2848 passed / 2 skipped. Update PR #32; full release verification and
+SDK replacement remain separate. Scope: `docs/generic_binding_monitoring.md` /
+`docs/generic_binding_monitoring_report.md`.
+
 ### Validate origin filtering with local macOS fallback (`2026-11-16`)
 
 Source `4c777f78` / tree `6184c309a03437de7bb13774a0bdf8008ba198cf`

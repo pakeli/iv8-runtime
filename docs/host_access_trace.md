@@ -1,5 +1,11 @@
 # Host Access Trace
 
+Generic binding delta (`2026-11-16`): defining-prototype method references record
+GET with host_object / <Interface>.prototype attribution. Generic receiver-brand
+rejections record failed CALL/GET/SET without executing host code or converting
+arguments. Valid instance get_method/call folding is unchanged; see
+`docs/generic_binding_monitoring.md` for the bounded contract and release status.
+
 Current origin contract (`2026-11-16`): tracing records user JavaScript API
 entries, including callbacks/accessors/coercions, and excludes runtime setup,
 native implementation forwarding, descriptor materialization and synthetic
