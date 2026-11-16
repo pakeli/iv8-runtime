@@ -1,5 +1,11 @@
 # Host Access Trace
 
+MutationRecord delta (`2026-11-16`): its nine existing own data fields record
+GET/SET with host_object / MutationRecord attribution and one generation-owned
+identity per record. Cached fields and observer callbacks are covered; record
+materialization is internal, and arrays remain unchanged. See
+`docs/mutation_record_monitoring.md` for current limits/status.
+
 Generic binding delta (`2026-11-16`): defining-prototype method references record
 GET with host_object / <Interface>.prototype attribution. Generic receiver-brand
 rejections record failed CALL/GET/SET without executing host code or converting

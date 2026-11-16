@@ -7,6 +7,20 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Observe existing MutationRecord returned fields (`2026-11-16`)
+
+The next strict-use slice monitors the nine existing plain-object MutationRecord
+fields with native data hooks, not a new MutationRecord interface or constructor.
+Perform original Set once before diagnostic own-data inspection; retain actual
+values/flags and inherited setter/error behavior. One generation token covers
+each record, including records cached before tracing. Materialization stays
+runtime-origin, user callbacks stay observable, and arrays keep current behavior.
+Local acceptance is 23 new cases, 581 focused and full 2871 passed / 2 skipped.
+The pre-existing ignored-Maybe error asymmetry is recorded, not silently fixed.
+Update PR #32; full release verification and SDK installation remain separate.
+Scope and evidence: `docs/mutation_record_monitoring.md` /
+`docs/mutation_record_monitoring_report.md`.
+
 ### Trace shared prototype references and native receiver rejections (`2026-11-16`)
 
 The user requests the next two concrete monitoring gaps be repaired. At generic

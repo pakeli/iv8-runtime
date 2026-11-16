@@ -19,6 +19,51 @@ namespace iv8::browser {
 constexpr v8::ExternalPointerTypeTag kMutationObserverTag =
     v8::kExternalPointerTypeTagDefault;
 
+namespace {
+
+void initialize_record_field(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Object> object, const void* identity, const char* name,
+    v8::Local<v8::Value> value) {
+    // Keep the original Set (including inherited setter behavior) separate
+    // from diagnostics, so a user exception is never caught or replayed here.
+    if (set_runtime_api_field(isolate, context, object, name, value).IsNothing() ||
+        identity == nullptr) return;
+    v8::TryCatch diagnostic(isolate);
+    try {
+        auto runtime_origin = access_runtime_scope(isolate);
+        v8::Local<v8::String> key;
+        v8::Local<v8::Value> descriptor_value;
+        if (v8::String::NewFromUtf8(isolate, name).ToLocal(&key) &&
+            object->GetOwnPropertyDescriptor(context, key).ToLocal(&descriptor_value) &&
+            descriptor_value->IsObject()) {
+            auto descriptor = descriptor_value.As<v8::Object>();
+            const auto value_key = v8::String::NewFromUtf8Literal(isolate, "value");
+            v8::Local<v8::Value> stored, writable, enumerable, configurable;
+            if (descriptor->HasOwnProperty(context, value_key).FromMaybe(false) &&
+                descriptor->Get(context, value_key).ToLocal(&stored) &&
+                descriptor->Get(context, v8::String::NewFromUtf8Literal(isolate, "writable")).ToLocal(&writable) &&
+                descriptor->Get(context, v8::String::NewFromUtf8Literal(isolate, "enumerable")).ToLocal(&enumerable) &&
+                descriptor->Get(context, v8::String::NewFromUtf8Literal(isolate, "configurable")).ToLocal(&configurable) &&
+                configurable->IsTrue()) {
+                int attributes = v8::None;
+                if (!writable->IsTrue()) attributes |= v8::ReadOnly;
+                if (!enumerable->IsTrue()) attributes |= v8::DontEnum;
+                (void)install_traced_api_data_property(isolate, context, object, name,
+                    stored, identity, "host_object", "MutationRecord",
+                    static_cast<v8::PropertyAttribute>(attributes));
+            }
+        }
+    } catch (...) {
+        // Observation must not alter the original record materialization.
+    }
+    if (diagnostic.HasCaught()) {
+        if (!diagnostic.CanContinue()) diagnostic.ReThrow();
+        else diagnostic.Reset();
+    }
+}
+
+}  // namespace
+
 MutationObserverState* DocumentHost::create_mutation_observer(
     v8::Isolate* isolate, v8::Local<v8::Function> callback,
     v8::Local<v8::Object> self) {
@@ -208,6 +253,7 @@ void DocumentHost::queue_character_data(v8::Isolate* isolate,
 v8::Local<v8::Array> DocumentHost::build_records_array(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
     const std::vector<MutationRecordData>& records) {
+    auto runtime_origin = access_runtime_scope(isolate);
     v8::Local<v8::Array> array =
         v8::Array::New(isolate, static_cast<int>(records.size()));
     for (std::size_t i = 0; i < records.size(); ++i) {
@@ -217,38 +263,41 @@ v8::Local<v8::Array> DocumentHost::build_records_array(
         const bool attributes =
             record.type == MutationRecordData::Type::Attributes;
         v8::Local<v8::Object> object = v8::Object::New(isolate);
-        (void)object->Set(
-            context, v8_string(isolate, "type"),
+        const auto* identity = native_api_identity(isolate, object);
+        const auto field = [&](const char* name, v8::Local<v8::Value> value) {
+            initialize_record_field(isolate, context, object, identity, name, value);
+        };
+        field("type",
             v8_string(isolate, child_list
                                   ? "childList"
                                   : (attributes ? "attributes"
                                                 : "characterData")));
-        (void)object->Set(context, v8_string(isolate, "target"),
+        field("target",
                           wrap_node(isolate, context, record.target));
-        (void)object->Set(context, v8_string(isolate, "addedNodes"),
+        field("addedNodes",
                           nodes_array(isolate, context, record.added));
-        (void)object->Set(context, v8_string(isolate, "removedNodes"),
+        field("removedNodes",
                           nodes_array(isolate, context, record.removed));
-        (void)object->Set(context, v8_string(isolate, "previousSibling"),
+        field("previousSibling",
                           wrap_node(isolate, context,
                                        record.previous_sibling));
-        (void)object->Set(context, v8_string(isolate, "nextSibling"),
+        field("nextSibling",
                           wrap_node(isolate, context, record.next_sibling));
         if (attributes) {
-            (void)object->Set(context, v8_string(isolate, "attributeName"),
+            field("attributeName",
                               v8_string(isolate, record.attribute_name));
         } else {
-            (void)object->Set(context, v8_string(isolate, "attributeName"),
+            field("attributeName",
                               v8::Null(isolate));
         }
-        (void)object->Set(context, v8_string(isolate, "attributeNamespace"),
+        field("attributeNamespace",
                           attributes && !record.attribute_namespace.empty()
                               ? v8_string(isolate, record.attribute_namespace) : v8::Local<v8::Value>(v8::Null(isolate)));
         if (record.has_old_value) {
-            (void)object->Set(context, v8_string(isolate, "oldValue"),
+            field("oldValue",
                               v8_string(isolate, record.old_value));
         } else {
-            (void)object->Set(context, v8_string(isolate, "oldValue"),
+            field("oldValue",
                               v8::Null(isolate));
         }
         (void)array->Set(context, static_cast<std::uint32_t>(i), object);
