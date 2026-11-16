@@ -69,6 +69,7 @@
 #include "browser/web/dom_parser.h"
 #include "browser/host/attribute_hosts.h"
 #include "browser/web/capabilities.h"
+#include "browser/web/xml_http_request.h"
 #include "browser/web/event_constructors.h"
 #include "browser/web/url.h"
 #include "browser/bootstrap/bootstrap_scripts.h"
@@ -1779,7 +1780,17 @@ v8::Local<v8::Value> PageState::parse_html_document(v8::Isolate* isolate,
 
 v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Array> arguments) {
-    if (name == "XMLHttpRequest" || name == "Worker") {
+    if (name == "XMLHttpRequest") {
+        auto upload = std::make_unique<XMLHttpRequestUploadHost>();
+        auto upload_object = make_host_object(isolate, context, upload.get());
+        auto request = std::make_unique<XMLHttpRequestHost>(isolate, upload_object,
+            window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate));
+        auto request_object = make_host_object(isolate, context, request.get());
+        host_objects_.push_back(std::move(upload));
+        host_objects_.push_back(std::move(request));
+        return request_object;
+    }
+    if (name == "Worker") {
         isolate->ThrowException(unsupported_capability(isolate, name));
         return v8::Undefined(isolate);
     }
@@ -1900,6 +1911,8 @@ void PageState::install_page(const std::string& base_url,
             if (!install_native_api_trace_store(isolate, context, host_objects_)) return;
             install_web_interfaces(isolate, context, &web_interface_factory,
                 v8::External::New(isolate, this, v8::kExternalPointerTypeTagDefault));
+            if (!install_xml_http_request_interfaces(isolate, context,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
             install_navigator_identity_interfaces(isolate, context, &environment_);
             install_dom_parser_interface(isolate, context, this);
             install_attribute_interfaces(isolate, context);

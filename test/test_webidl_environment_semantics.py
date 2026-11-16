@@ -207,17 +207,20 @@ def test_unavailable_execution_is_explicit():
     with iv8.Page() as page:
         assert evaluate(page, """(() => {
           const failures = [];
-          for (const create of [() => new XMLHttpRequest(), () => new Worker('worker.js')]) {
+          for (const create of [() => new Worker('worker.js')]) {
             try { create(); } catch (error) { failures.push([error.name, /offline/.test(error.message)]); }
           }
           globalThis.fetchResults = [];
           fetch('/resource').catch(error => fetchResults.push(error.name));
           fetch().catch(error => fetchResults.push(error.name));
+          const request = new XMLHttpRequest();
           return [typeof XMLHttpRequest, typeof Worker, typeof fetch, typeof open,
             fetch.name, fetch.length, failures,
-            Object.getPrototypeOf(Worker.prototype) === EventTarget.prototype];
+            Object.getPrototypeOf(Worker.prototype) === EventTarget.prototype,
+            request instanceof XMLHttpRequest, request.readyState,
+            request.send('placeholder') === undefined];
         })()""") == ["function", "function", "function", "function", "fetch", 1,
-            [["NotSupportedError", True], ["NotSupportedError", True]], True]
+            [["NotSupportedError", True]], True, True, 0, True]
         page.run_jobs()
         assert evaluate(page, "fetchResults") == ["NotSupportedError", "TypeError"]
 

@@ -35,7 +35,8 @@ std::string_view parent_interface(std::string_view name) {
         {"CookieStore", "EventTarget"}, {"Navigation", "EventTarget"},
         {"DocumentPictureInPicture", "EventTarget"}, {"SpeechSynthesis", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
-        {"XMLHttpRequest", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
+        {"XMLHttpRequest", "XMLHttpRequestEventTarget"},
+        {"XMLHttpRequestUpload", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
         {"UIEvent", "Event"}, {"CustomEvent", "Event"}, {"MessageEvent", "Event"},
         {"MouseEvent", "UIEvent"}, {"KeyboardEvent", "UIEvent"}, {"FocusEvent", "UIEvent"},
     };
@@ -76,9 +77,10 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> factory;
     if (!context->Global()->GetPrivate(context, registry_key(isolate, "factory"))
             .ToLocal(&factory) || !factory->IsFunction()) return;
-    auto arguments = v8::Array::New(isolate, info.Length());
-    for (int index = 0; index < info.Length(); ++index) {
-        if (!arguments->Set(context, index, info[index]).FromMaybe(false)) return;
+    const int argument_count = name == "XMLHttpRequest" ? 0 : info.Length();
+    auto arguments = v8::Array::New(isolate, argument_count);
+    for (int index = 0; index < argument_count; ++index) {
+        if (!arguments->CreateDataProperty(context, index, info[index]).FromMaybe(false)) return;
     }
     v8::Local<v8::Value> factory_arguments[] = {info.Data(), arguments};
     v8::Local<v8::Value> result;
@@ -164,6 +166,9 @@ std::string html_element_interface(std::string_view tag) {
 
 std::string web_member_interface(const std::string& name,
                                   std::string_view member, bool method) {
+    if (!method && web_interface_inherits(name, "XMLHttpRequestEventTarget") &&
+        member_in(member, {"onloadstart", "onprogress", "onabort", "onerror",
+            "onload", "ontimeout", "onloadend"})) return "XMLHttpRequestEventTarget";
     if (web_interface_inherits(name, "EventTarget") && method &&
         member_in(member, {"addEventListener", "removeEventListener", "dispatchEvent"}))
         return "EventTarget";
@@ -301,7 +306,7 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "Navigator", "Screen", "Location", "EventTarget", "Node", "Element",
             "HTMLElement", "HTMLDivElement", "HTMLFormElement", "HTMLScriptElement",
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
-            "XMLHttpRequest", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
+            "XMLHttpRequest", "XMLHttpRequestUpload", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
             "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }

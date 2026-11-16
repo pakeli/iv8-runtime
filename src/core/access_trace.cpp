@@ -335,6 +335,7 @@ const std::vector<std::string>& AccessTrace::supported_object_types() {
         "location", "media_query_list", "named_node_map", "navigator", "navigator_ua_data", "orientation",
         "performance", "permission_status", "permissions", "screen",
         "storage", "storage_manager", "text", "user_activation", "visual_viewport", "window", "window_shell",
+        "xml_http_request", "xml_http_request_upload",
     };
     return types;
 }

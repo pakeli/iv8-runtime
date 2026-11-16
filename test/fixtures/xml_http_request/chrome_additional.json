@@ -1,0 +1,326 @@
+{
+  "browser": "Google Chrome 157.0.8103.51",
+  "captured_at_utc": "2026-11-16T14:35:11.606460+00:00",
+  "execution": {
+    "os": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:62972/reference",
+    "network": "Only loopback fixture document; external DNS mapped to NOTFOUND; background networking disabled; XHR send is called only in UNSENT invalid-state cases",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--virtual-time-budget=3000",
+      "--dump-dom",
+      "http://127.0.0.1:62972/reference"
+    ],
+    "purpose_built_browser_tool": "unavailable: no remote-debugging Chrome connection"
+  },
+  "probe_sha256": "1bd7cd7c8efce936a38a024a3922feccf77a710368a23ba8e14857436754a63b",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "responseTypes": {
+      "": {
+        "set": {
+          "returned": ""
+        },
+        "response": {
+          "returned": ""
+        },
+        "responseText": {
+          "returned": ""
+        },
+        "responseXML": {
+          "returned": null
+        }
+      },
+      "text": {
+        "set": {
+          "returned": "text"
+        },
+        "response": {
+          "returned": ""
+        },
+        "responseText": {
+          "returned": ""
+        },
+        "responseXML": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseXML' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'document' (was 'text').",
+          "code": 11
+        }
+      },
+      "json": {
+        "set": {
+          "returned": "json"
+        },
+        "response": {
+          "returned": null
+        },
+        "responseText": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseText' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'text' (was 'json').",
+          "code": 11
+        },
+        "responseXML": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseXML' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'document' (was 'json').",
+          "code": 11
+        }
+      },
+      "document": {
+        "set": {
+          "returned": "document"
+        },
+        "response": {
+          "returned": null
+        },
+        "responseText": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseText' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'text' (was 'document').",
+          "code": 11
+        },
+        "responseXML": {
+          "returned": null
+        }
+      },
+      "arraybuffer": {
+        "set": {
+          "returned": "arraybuffer"
+        },
+        "response": {
+          "returned": null
+        },
+        "responseText": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseText' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'text' (was 'arraybuffer').",
+          "code": 11
+        },
+        "responseXML": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseXML' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'document' (was 'arraybuffer').",
+          "code": 11
+        }
+      },
+      "blob": {
+        "set": {
+          "returned": "blob"
+        },
+        "response": {
+          "returned": null
+        },
+        "responseText": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseText' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'text' (was 'blob').",
+          "code": 11
+        },
+        "responseXML": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseXML' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'document' (was 'blob').",
+          "code": 11
+        }
+      },
+      "madeup": {
+        "set": {
+          "returned": "text"
+        },
+        "response": {
+          "returned": ""
+        },
+        "responseText": {
+          "returned": ""
+        },
+        "responseXML": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseXML' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'document' (was 'text').",
+          "code": 11
+        }
+      },
+      "null": {
+        "set": {
+          "returned": "text"
+        },
+        "response": {
+          "returned": ""
+        },
+        "responseText": {
+          "returned": ""
+        },
+        "responseXML": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseXML' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'document' (was 'text').",
+          "code": 11
+        }
+      },
+      "undefined": {
+        "set": {
+          "returned": "text"
+        },
+        "response": {
+          "returned": ""
+        },
+        "responseText": {
+          "returned": ""
+        },
+        "responseXML": {
+          "name": "InvalidStateError",
+          "message": "Failed to read the 'responseXML' property from 'XMLHttpRequest': The value is only accessible if the object's 'responseType' is '' or 'document' (was 'text').",
+          "code": 11
+        }
+      }
+    },
+    "timeout": {
+      "negative": {
+        "returned": 4294967295
+      },
+      "wrap": {
+        "returned": 0
+      },
+      "fraction": {
+        "returned": 1
+      },
+      "nan": {
+        "returned": 0
+      },
+      "infinity": {
+        "returned": 0
+      },
+      "undefined": {
+        "returned": 0
+      },
+      "null": {
+        "returned": 0
+      },
+      "string": {
+        "returned": 12
+      },
+      "bigint": {
+        "name": "TypeError",
+        "message": "Failed to set the 'timeout' property on 'XMLHttpRequest': Cannot convert a BigInt value to a number"
+      },
+      "object": {
+        "returned": 3,
+        "coercions": 1
+      }
+    },
+    "handlerValues": {
+      "object": {
+        "same": true,
+        "isNull": false,
+        "type": "object"
+      },
+      "array": {
+        "same": true,
+        "isNull": false,
+        "type": "object"
+      },
+      "number": {
+        "same": false,
+        "isNull": true,
+        "type": "object"
+      },
+      "string": {
+        "same": false,
+        "isNull": true,
+        "type": "object"
+      },
+      "null": {
+        "same": true,
+        "isNull": true,
+        "type": "object"
+      },
+      "undefined": {
+        "same": false,
+        "isNull": true,
+        "type": "object"
+      }
+    },
+    "arity": {
+      "open:0": {
+        "name": "TypeError",
+        "message": "Failed to execute 'open' on 'XMLHttpRequest': 2 arguments required, but only 0 present."
+      },
+      "open:1": {
+        "name": "TypeError",
+        "message": "Failed to execute 'open' on 'XMLHttpRequest': 2 arguments required, but only 1 present."
+      },
+      "setRequestHeader:0": {
+        "name": "TypeError",
+        "message": "Failed to execute 'setRequestHeader' on 'XMLHttpRequest': 2 arguments required, but only 0 present."
+      },
+      "setRequestHeader:1": {
+        "name": "TypeError",
+        "message": "Failed to execute 'setRequestHeader' on 'XMLHttpRequest': 2 arguments required, but only 1 present."
+      },
+      "getResponseHeader:0": {
+        "name": "TypeError",
+        "message": "Failed to execute 'getResponseHeader' on 'XMLHttpRequest': 1 argument required, but only 0 present."
+      },
+      "overrideMimeType:0": {
+        "name": "TypeError",
+        "message": "Failed to execute 'overrideMimeType' on 'XMLHttpRequest': 1 argument required, but only 0 present."
+      },
+      "setAttributionReporting:0": {
+        "name": "TypeError",
+        "message": "Failed to execute 'setAttributionReporting' on 'XMLHttpRequest': 1 argument required, but only 0 present."
+      },
+      "setPrivateToken:0": {
+        "name": "TypeError",
+        "message": "Failed to execute 'setPrivateToken' on 'XMLHttpRequest': 1 argument required, but only 0 present."
+      }
+    },
+    "coercionBeforeState": {
+      "send": {
+        "name": "InvalidStateError",
+        "message": "Failed to execute 'send' on 'XMLHttpRequest': The object's state must be OPENED.",
+        "code": 11,
+        "effects": [
+          "string"
+        ]
+      },
+      "setRequestHeader": {
+        "name": "InvalidStateError",
+        "message": "Failed to execute 'setRequestHeader' on 'XMLHttpRequest': The object's state must be OPENED.",
+        "code": 11,
+        "effects": [
+          "string",
+          "string"
+        ]
+      },
+      "getResponseHeader": {
+        "returned": null,
+        "effects": [
+          "string"
+        ]
+      },
+      "overrideMimeType": {
+        "returned": "<undefined>",
+        "effects": [
+          "string"
+        ]
+      }
+    }
+  }
+}

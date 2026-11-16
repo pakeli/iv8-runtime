@@ -7,6 +7,19 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Add XHR native shape and monitoring with an inert send (`2026-11-16`)
+
+The user selects XMLHttpRequest interface shape and monitoring only and asks for
+send to print its parameters. Implement native request/upload EventTargets and
+eager browser-derived interface surfaces; request methods are explicit no-ops,
+not an HTTP backend or state machine. Debug uses existing safe CALL summaries;
+prod stays silent. Preserve native identities, receiver checks and config/user
+coercion tracing. Secure-only extra methods follow the captured browser origin
+profile. Local acceptance: 62 new tests, 643 focused and 2933 passed / 2 skipped
+full suite. Update PR #32; full release and shared SDK deployment remain separate.
+Boundary/report: `docs/xml_http_request_shape.md` /
+`docs/xml_http_request_shape_report.md`.
+
 ### Observe existing MutationRecord returned fields (`2026-11-16`)
 
 The next strict-use slice monitors the nine existing plain-object MutationRecord

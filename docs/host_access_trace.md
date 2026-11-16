@@ -219,6 +219,10 @@ report = page.read_access_trace(clear=True)
 - `max_events` is a positive integer; `bool` is invalid. `object_types` is
   `None` or a list of supported object-type strings; duplicates are deduped and
   unknown types raise `ValueError`. An empty list is valid and records nothing.
+- XHR-01 adds `xml_http_request` and `xml_http_request_upload` filter types;
+  constructor entries retain Window attribution and defining-prototype/constants
+  retain host_object attribution. Request methods are inert placeholders; see
+  `docs/xml_http_request_shape.md`.
 - Capacity is earliest-N: once full, later events are dropped and
   `dropped_events` increments. Filtered-out events do not increment drops.
 - `seq` starts at 1 for each `start()` and increments only for retained events.

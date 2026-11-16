@@ -102,6 +102,7 @@ if(IV8_LINK_V8)
       src/core/browser/web/structured_clone.cpp
       src/core/browser/web/dom_parser.cpp
       src/core/browser/web/capabilities.cpp
+      src/core/browser/web/xml_http_request.cpp
       src/core/browser/web/event_constructors.cpp
       src/core/browser/web/url.cpp
       src/core/browser/bootstrap/bootstrap_scripts.cpp
