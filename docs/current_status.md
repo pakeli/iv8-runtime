@@ -1,10 +1,12 @@
 # Current Status
 
-**Latest implemented/local acceptance (`2026-11-16`): Page load monitoring modes; release pending.** `Page.load(..., mode="debug")` starts unfiltered access tracing before user scripts and automatically prints/consumes readable logs after load, eval and every event-loop pump. `mode="prod"` stops/clears access tracing; omission preserves existing manual use and active debug across reloads. A per-Page guard covers execution, output and mode/trace controls so competing threads cannot drain unfinished completion metadata. Debug uses `sys.maxsize` as the per-call ceiling instead of the manual 10,000-event default. macOS arm64/Python 3.13 acceptance: **57 new mode tests**, **328 focused passed**, full **2772 passed, 2 skipped**. This Python usability layer relies on the existing local ENV-MON-01 native candidate; the API coverage audit's prototype/invalid-receiver/symbol/query/returned-object gaps remain open. The user now authorizes a PR and V8-linked release builds; progress/source evidence is tracked in `docs/monitoring_release_report.md`. Shared SDK replacement remains outside this request. Boundary/report: `docs/page_monitoring_modes.md` / `docs/page_monitoring_modes_report.md`.
+**Latest release-verified candidate (`2026-11-16`): ENV-MON-01 + Page debug/prod modes, PR #32.** Fixed build source `aa72e50f29bd2d1f472bad87a4038eb09086854b` (tree `3f07dc72a09b78f97f74924ecd3f15b2cb0624cd`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Every lane passes the **482-test focused gate**; full Linux/macOS are **2772 passed, 2 skipped**, Windows **2770 passed, 4 skipped**. Runs: Linux `43822383750`, Windows `43822388334`, macOS `43822440892`. Matching V8 15.0.245.19 engine caches were reused and extensions/wheels rebuilt. All 9 artifact archives and 12 wheels are downloaded and SHA-256/CRC/tag verified; the temporary macOS helper is restored and its original bytes verified. **Strict API-use observation remains incomplete**: documented prototype, invalid-receiver, symbol/query and returned-object gaps stay open. PR remains unmerged, with no tag publication or shared SDK replacement; deployed SDK remains BIND-01. Full evidence: `docs/monitoring_release_report.md`.
+
+**Previous local acceptance (`2026-11-16`): Page load monitoring modes; now included in the verified candidate above.** `Page.load(..., mode="debug")` starts unfiltered access tracing before user scripts and automatically prints/consumes readable logs after load, eval and every event-loop pump. `mode="prod"` stops/clears access tracing; omission preserves existing manual use and active debug across reloads. A per-Page guard covers execution, output and mode/trace controls so competing threads cannot drain unfinished completion metadata. Debug uses `sys.maxsize` as the per-call ceiling instead of the manual 10,000-event default. macOS arm64/Python 3.13 acceptance: **57 new mode tests**, **328 focused passed**, full **2772 passed, 2 skipped**. This Python usability layer relies on the existing local ENV-MON-01 native candidate; the API coverage audit's prototype/invalid-receiver/symbol/query/returned-object gaps remain open. The user now authorizes a PR and V8-linked release builds; progress/source evidence is tracked in `docs/monitoring_release_report.md`. Shared SDK replacement remains outside this request. Boundary/report: `docs/page_monitoring_modes.md` / `docs/page_monitoring_modes_report.md`.
 
 **Previous local acceptance (`2026-11-15`): History parent-entry tracing; release pending.** The user reproduction `start_access_trace(); eval("window.history"); stop; read(format="text")` exposed an untraced native global getter. The fix records Window/history/get and its safe return/exception completion without changing History behavior or getter shape. Local macOS arm64/Python 3.13 checks pass **94 focused** and **2552 passed, 2 skipped** full-suite tests. This is a new local fix beyond the combined release below; shared SDK and release artifacts are unchanged. Scope/evidence: `docs/history_entry_monitoring.md`.
 
-**Latest release verified (`2026-11-15`): combined PRES-01/PRES-02/PRES-03 and WIN-MON-01.** Build source `40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff` (tree `b7d518ecc9ab46a30812622041bd48f3c28ab1aa`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Each lane passes the combined **257-test focused gate**; full Linux/macOS are **2547 passed, 2 skipped**, Windows **2545 passed, 4 skipped**. Runs: Linux `43704599952`, Windows `43704600017`, macOS `43704687043`. Fixed V8 15.0.245.19 caches are reused; the host extension/wheels are rebuilt. Required V8 checks pass, macOS source pins/restore are verified, and branch protection is unchanged. **Latest shared SDK deployment remains BIND-01**; no environment installation or version-tag publication was performed. Source/run/artifact evidence and limits: `docs/bom_release_report.md`.
+**Previous release verified (`2026-11-15`): combined PRES-01/PRES-02/PRES-03 and WIN-MON-01.** Build source `40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff` (tree `b7d518ecc9ab46a30812622041bd48f3c28ab1aa`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Each lane passes the combined **257-test focused gate**; full Linux/macOS are **2547 passed, 2 skipped**, Windows **2545 passed, 4 skipped**. Runs: Linux `43704599952`, Windows `43704600017`, macOS `43704687043`. Fixed V8 15.0.245.19 caches are reused; the host extension/wheels are rebuilt. Required V8 checks pass, macOS source pins/restore are verified, and branch protection is unchanged. **Latest shared SDK deployment remains BIND-01**; no environment installation or version-tag publication was performed. Source/run/artifact evidence and limits: `docs/bom_release_report.md`.
 
 **Current development direction (`2026-11-15`): BOM first.** The user prioritizes
 Window, Location, Navigator and History, then related BOM objects. Further DOM
@@ -13,7 +15,7 @@ counts, candidate batches and execution boundaries: `docs/bom_coverage_plan.md`.
 This planning update leaves the local acceptance and release/deployment records
 below unchanged.
 
-**Latest implemented, now release-verified in the combined build (`2026-11-15`): WIN-MON-01.** The
+**Previous Window monitoring batch, release-verified in the combined build (`2026-11-15`): WIN-MON-01.** The
 PRES-03 monitoring extension maps all 49 added Window globals into structured
 native get/get_method tracing and their supported writes into set completion.
 All 22 callable globals enter both watch_apis and structured calls, including
@@ -938,12 +940,13 @@ The repository is executing its post-M10 direction:
 - M11-52 (Window messaging) is **landed and verified on real V8 (Linux +
   Windows + macOS arm64)** on `2026-11-03`; see
   `docs/m11_52_window_messaging.md` and `docs/m11_52_report.md`;
-- the latest implemented batch is **WIN-MON-01 Window monitoring**, locally accepted;
-  combined release verification is recorded above. It adds structured get/set/call coverage for
+- the latest implemented/release-tested batch is **ENV-MON-01 + Page debug/prod modes**;
+  strict coverage gaps remain open in `docs/environment_monitoring_report.md`.
+  The earlier WIN-MON-01 batch adds structured get/set/call coverage for
   the mapped globals and call-only watches for native globals/shell methods;
   `docs/window_monitoring.md` records the native-entry and data-property limits.
   **PRES-03 Window ordinary-member presence** has previous local acceptance;
-  release acceptance remains pending. Its 49 names include native
+  its combined release is verified. Its 49 names include native
   globals, deterministic flags/constants, private-prototype object shells,
   prefixed rAF and bounded event/reportError integration. The 821 missing global
   interface entries remain excluded. PRES-01/PRES-02 retain previous local
@@ -958,9 +961,9 @@ The repository is executing its post-M10 direction:
 
 These are the questions a new coding session should resolve before major new work:
 
-- Which bounded Navigator/BOM subobject slice should follow WIN-MON-01 local
-  acceptance? Its event/watch-hit regressions and full local suite have passed;
-  release acceptance remains pending. The family priority is settled in
+- Which bounded strict-use coverage repair should follow the verified ENV-MON-01 /
+  Page-mode candidate? The remaining gaps are in `docs/environment_monitoring_report.md`.
+  New Navigator/BOM breadth remains a separate family queue in
   `docs/bom_coverage_plan.md`.
   `M11-1` through `M11-52`
   remain release-verified; the combined build above is release-verified; BIND-01 is the deployed SDK.

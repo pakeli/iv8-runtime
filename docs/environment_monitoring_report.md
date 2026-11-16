@@ -1,6 +1,6 @@
 # Environment monitoring candidate report
 
-Date: `2026-11-16`. **Locally tested candidate; strict API coverage incomplete.**
+Date: `2026-11-16`. **Locally tested and release-verified candidate; strict API coverage incomplete.**
 
 Boundary: [environment_monitoring.md](environment_monitoring.md). The delivered
 version also includes [Page debug/prod modes](page_monitoring_modes.md).
@@ -55,7 +55,7 @@ the gaps as unresolved work; it does not reinterpret them as acceptance waivers.
 ## Release and deployment
 
 The user separately authorizes submitting this tested candidate and building
-the V8-linked wheels. Source, runs and final lane results are tracked in
+the V8-linked wheels. Source, runs and all 12 successful lane results are recorded in
 [monitoring_release_report.md](monitoring_release_report.md). The V8 pin and
 M1 kernel remain unchanged. Shared SDK installation, version tags and live
 business/server acceptance are not part of this release-build request.

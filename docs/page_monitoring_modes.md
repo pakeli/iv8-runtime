@@ -66,3 +66,5 @@ validation, manual-API compatibility, per-Page isolation and runs exceeding the
 manual default capacity. Local results and artifact identities belong in
 `docs/page_monitoring_modes_report.md`. Cross-platform release verification and
 shared SDK deployment are separate from local implementation and acceptance.
+The subsequent user-requested PR #32 release matrix is verified on source
+`aa72e50` in all 12 lanes; see `docs/monitoring_release_report.md`.

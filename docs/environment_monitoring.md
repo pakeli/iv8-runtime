@@ -58,5 +58,5 @@ Record actual counts and source/binary hashes in the report after completion.
 Cross-platform release verification and shared SDK deployment are separate.
 The subsequent `2026-11-16` user request authorizes a PR and V8-linked release
 builds for the current candidate, not a shared SDK replacement or a claim that
-the remaining coverage gaps are closed. The latest verified release remains
-the combined PRES/WIN-MON-01 build until the new release matrix completes.
+the remaining coverage gaps are closed. The subsequent PR #32 build is now
+verified in all 12 release lanes on source `aa72e50`; deployed SDK remains BIND-01.

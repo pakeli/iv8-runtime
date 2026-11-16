@@ -7,6 +7,20 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Verify the PR #32 monitoring candidate across all release lanes (`2026-11-16`)
+
+Fixed source `aa72e50` / tree `3f07dc72a09b78f97f74924ecd3f15b2cb0624cd`
+passes all 12 Python 3.11–3.14 release lanes: 482 focused each, full
+Linux/macOS 2772 passed / 2 skipped and Windows 2770 passed / 4 skipped.
+The V8 pin/cache keys and branch protection are unchanged; matching engine
+monoliths are reused and host wheels rebuilt. All nine artifact archives and
+12 wheels are downloaded and digest/CRC/tag verified. The macOS source-pinned
+helper is restored in `5baaf744` and original bytes verified by a fresh read.
+This verifies the delivered candidate, not complete browser API observation:
+the strict-use audit gaps remain open. PR stays unmerged, no tag is published,
+and shared SDK deployment remains BIND-01. Exact source/run/artifact evidence:
+`docs/monitoring_release_report.md`.
+
 ### Submit the monitoring candidate and build V8-linked wheels (`2026-11-16`)
 
 The user requests a PR and V8 build for this version. Include the already-tested
