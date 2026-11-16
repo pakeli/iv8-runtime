@@ -1193,11 +1193,11 @@ class Page:
 
         Step 6a adds optional completion fields to generic HostObject
         ``get``/``set``/``call`` events: ``outcome`` (``returned``/``threw``),
-        ``value_summary`` for get/set, ``argument_count`` plus up to eight
+        ``value_summary`` for get/set, ``argument_count`` plus all
         ``argument_summaries`` for calls, and ``return_summary`` for returned
         calls. Summaries are primitive/type-only and never run user
-        ``toString``/``valueOf``; string content is capped at 64 bytes with the
-        original byte length, and strings over 4096 bytes keep only the length.
+        ``toString``/``valueOf``; complete string content and its original UTF-8
+        byte length are retained. ``coverage.string_capture`` is ``"full"``.
         Step 6g extends the same summaries to traced native BOM callbacks and
         getters and to the explicit query wrappers. Step 6h adds safe
         synchronous ``exception_name`` / ``exception_message`` /
@@ -1297,8 +1297,8 @@ class Page:
 
         ``format="text"`` returns concise one-event-per-line text, for example
         ``GET document.cookie -> ""``. ``format="raw"`` (default) returns the
-        existing dictionary. Text uses captured summaries only: truncated strings,
-        type-only object previews, and missing values are explicitly marked.
+        existing dictionary. Text uses captured values only: strings are complete, objects remain
+        type-only, and missing values or legacy truncation are explicitly marked.
         No getters or page code run during formatting.
 
         The raw report has ``events``, ``enabled``, ``generation``, ``max_events``,

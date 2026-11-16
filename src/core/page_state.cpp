@@ -1680,12 +1680,13 @@ py::dict PageState::read_access_trace(bool clear) {
     operations.append("define_property");
     coverage["operations"] = operations;
     coverage["phase"] = "enter";
+    coverage["string_capture"] = "full";
     coverage["summaries"] =
         "generic HostObject and traced native get/set/call plus has/descriptor "
         "queries: returned/threw outcome, primitive value/argument/return "
-        "summaries, first 8 arguments, safe exception name/message/location/"
-        "stack; string content capped at 64 bytes with the original byte "
-        "length and exception text capped at 4096 bytes";
+        "summaries, all arguments and full string content with original byte "
+        "length; safe exception name/message/location/stack with exception "
+        "text capped at 4096 bytes";
     py::list not_covered;
     for (const std::string& gap : AccessTrace::not_covered()) {
         not_covered.append(gap);

@@ -130,7 +130,7 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `navigator.javaEnabled()` | records a navigator `get` plus `call`; returns `false` |
 | `hostProbe.answer` / `element.textContent` reads | record `get` with `value_summary` and `outcome` |
 | `element.textContent = 'x'` | records `set` with the assigned `value_summary` |
-| `hostProbe.add(2, 3)` | records one `call` (the immediately preceding method read is folded); includes `argument_count`, up to 8 `argument_summaries`, `return_summary`, and `outcome` |
+| `hostProbe.add(2, 3)` | records one `call` (the immediately preceding method read is folded); includes `argument_count`, all `argument_summaries`, `return_summary`, and `outcome` |
 | method read, other trace event, then call | keeps the `get_method` and adds a separate `call` |
 | assignment to `hostProbe.echo` | records `set`; a non-function override read is an ordinary read, not `get_method` |
 | method that throws | records `call` with `outcome: "threw"` (no return summary), exception still propagates |
@@ -255,7 +255,7 @@ exception_stack?, exception_location?
   - `value_summary`: for traced getters and setters when `outcome` is
     `"returned"`;
   - `argument_count`: full argument count for traced calls and query wrappers;
-  - `argument_summaries`: first up to 8 argument summaries;
+  - `argument_summaries`: all argument summaries (older reports may retain eight);
   - `return_summary`: for traced calls and query wrappers that return;
   - `exception_name`, `exception_message`, `exception_location`,
     `exception_stack`: safe synchronous exception metadata when a traced entry
@@ -528,12 +528,12 @@ serialization are not used):
 | `undefined` / `null` | The primitive value. |
 | `boolean:true` / `boolean:false` | Boolean primitive. |
 | `number:<value>` | Number formatted with `%.17g` (including `nan`/`inf`). |
-| `string:<utf8-byte-length>:<content>` | UTF-8 string. Content is capped at 64 bytes (rounded down to a complete UTF-8 sequence); longer content gets a trailing `...`. If the source is over 4096 bytes, content is omitted and only the length plus `...` is stored. `\`, newline, CR, tab, and other control bytes are escaped. |
+| `string:<utf8-byte-length>:<content>` | Complete UTF-8 string content since `2026-11-16`; the previous 64-byte preview and 4096-byte omission are removed. New reports mark `coverage.string_capture` as `"full"`; old reports retain legacy decoding. `\`, newline, CR, tab, and other control bytes are escaped. |
 | `bigint` / `symbol` | Primitive type only; no value/description conversion. |
 | `function` / `array` / `host_object` / `object` | Type-only summary. |
 
-`call` arguments are summarized for the first 8 positions; `argument_count`
-always carries the full count. `outcome` is `"returned"` when no exception was
+`call` arguments are summarized for every position; `argument_count`
+carries the full count. Older reports may retain only the first eight arguments. `outcome` is `"returned"` when no exception was
 pending after dispatch and `"threw"` otherwise. Completion is attached by the
 recorded `seq`, so a nested host access during the implementation cannot steal
 it. Summaries are best-effort: allocation failure leaves the enter event intact.
@@ -678,7 +678,7 @@ also apply to the traced native callbacks and getters:
 - window metadata/name/alias getters and setters;
 - the explicit query wrappers in §4.14.
 
-Calls carry `argument_count`, up to eight `argument_summaries`, and a
+Calls carry `argument_count`, all `argument_summaries`, and a
 `return_summary` when they return; getters and setters carry `value_summary`.
 All summaries use the primitive/type-only rules in §4.11 and never execute user
 `toString`/`valueOf` or property Gets. A traced callback that throws records
@@ -874,8 +874,8 @@ Coverage in this slice:
 - window parent/top/frames/opener get/set events preserve replaceable,
   read-only, delete, and lexical-declaration behavior across loads;
 - generic HostObject get/set/call completion records returned/threw outcomes,
-  primitive value and return summaries, 8-argument summaries with full counts,
-  UTF-8-safe string truncation, and nested-completion attachment by seq;
+  primitive value and return summaries, complete argument lists and UTF-8
+  strings, legacy truncated-report rendering, and nested-completion attachment by seq;
 - method references record `get_method`; adjacent calls fold into one `call`,
   intervening accesses keep both, method identity/override/descriptor behavior
   and non-function override reads are covered;

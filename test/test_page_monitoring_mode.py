@@ -1,5 +1,6 @@
 """Page debug mode streams real native API use; prod and manual tracing stay distinct."""
 
+import json
 import threading
 
 import pytest
@@ -90,6 +91,25 @@ def test_debug_eval_streams_actual_values_and_does_not_repeat_prior_events(capsy
         value = page.eval("navigator")
         assert isinstance(value, iv8.JSValue) and value.context_alive
         assert "GET window.navigator" in capsys.readouterr().out
+
+
+def test_debug_script_src_get_and_set_print_the_complete_url_and_prod_stays_quiet(capsys):
+    url = "https://cdn.example.test/library/" + "runtime-module-" * 40 + "?token=" + "abcdef0123456789" * 20 + "#tail"
+    with iv8.Page() as page:
+        page.load(HTML, BASE, mode="debug")
+        assert capsys.readouterr().out == ""
+        setup = "globalThis.long_script=document.createElement('script');long_script.src=" + json.dumps(url)
+        page.eval(setup)
+        setters = [line for line in capsys.readouterr().out.splitlines() if line.startswith("SET script.src = ")]
+        assert len(setters) == 1 and json.loads(setters[0][len("SET script.src = "):]) == url
+        assert page.eval("long_script.src") == url
+        output = capsys.readouterr().out.splitlines()
+        assert len(output) == 1 and output[0].startswith("GET script.src -> ")
+        assert json.loads(output[0][len("GET script.src -> "):]) == url
+        page.load(HTML, BASE, mode="prod")
+        page.eval(setup)
+        assert page.eval("long_script.src") == url
+        assert capsys.readouterr().out == ""
 
 
 @pytest.mark.parametrize("method,setup,arguments,expected", PUMPS,

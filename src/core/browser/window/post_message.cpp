@@ -176,16 +176,17 @@ void script_call_begin(const v8::FunctionCallbackInfo<v8::Value>& info) {
         if (trace == nullptr || !trace->enabled()) return;
         std::uint32_t count = 0;
         auto summaries = v8::Array::New(isolate);
-        if (info[1]->IsArgumentsObject() || info[1]->IsArray()) {
+        if (sequence != 0 && (info[1]->IsArgumentsObject() || info[1]->IsArray())) {
             auto arguments = info[1].As<v8::Object>();
             v8::Local<v8::Value> length;
             if (!arguments->Get(context, v8::String::NewFromUtf8Literal(isolate, "length")).ToLocal(&length)) return;
             if (length->IsUint32()) count = length.As<v8::Uint32>()->Value();
-            for (std::uint32_t index = 0; index < std::min(count, 8u); ++index) {
+            for (std::uint32_t index = 0; index < count; ++index) {
                 v8::Local<v8::Value> argument;
                 v8::Local<v8::String> summary;
                 if (!arguments->Get(context, index).ToLocal(&argument)) return;
                 const auto text = access_value_summary(isolate, argument);
+                if (text.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())) return;
                 if (!v8::String::NewFromUtf8(isolate, text.data(), v8::NewStringType::kNormal,
                         static_cast<int>(text.size())).ToLocal(&summary) ||
                     !summaries->CreateDataProperty(context, index, summary).FromMaybe(false)) return;
@@ -244,7 +245,8 @@ void script_call_end(const v8::FunctionCallbackInfo<v8::Value>& info) {
         for (std::uint32_t index = 0; index < summaries.As<v8::Array>()->Length(); ++index) {
             v8::Local<v8::Value> summary;
             if (!summaries.As<v8::Array>()->Get(context, index).ToLocal(&summary)) return;
-            completion.argument_summaries.push_back(safe_text(isolate, summary));
+            completion.argument_summaries.push_back(safe_text(isolate, summary,
+                std::numeric_limits<std::size_t>::max()));
         }
         if (info[2]->IsTrue()) capture_thrown_value(isolate, context, info[1], completion);
         else {

@@ -206,6 +206,28 @@ def test_debug_prints_native_send_parameters_once_and_prod_is_silent(capsys):
         assert not page.read_access_trace()["enabled"]
 
 
+def test_debug_send_prints_full_long_values_all_arguments_and_no_object_side_effects(capsys):
+    body = ("请求😀\n\t\\\0" * 700) + "..."
+    with iv8.Page() as page:
+        page.load(HTML, BASE, mode="debug")
+        bind_xhr(page)
+        capsys.readouterr()
+        call = "xhr.send(" + json.dumps(body) + ",1,2,3,4,5,6,7,8,9,xhr_poison)"
+        assert page.eval(call) is iv8.JSUndefined
+        lines = capsys.readouterr().out.splitlines()
+        assert len(lines) == 1 and lines[0].startswith("CALL XMLHttpRequest.send(")
+        rendered_arguments = lines[0][len("CALL XMLHttpRequest.send("):]
+        actual_body, end = json.JSONDecoder().raw_decode(rendered_arguments)
+        assert actual_body == body
+        assert rendered_arguments[end:] == ", 1, 2, 3, 4, 5, 6, 7, 8, 9, <Object>) -> undefined"
+        assert page.eval("xhr_effects.length") == 0
+        page.load(HTML, BASE, mode="prod")
+        bind_xhr(page)
+        assert page.eval(call) is iv8.JSUndefined
+        assert page.eval("xhr_effects.length") == 0
+        assert capsys.readouterr().out == ""
+
+
 @pytest.mark.parametrize("target,object_type,label", [
     ("xhr", "xml_http_request", "XMLHttpRequest"),
     ("upload", "xml_http_request_upload", "XMLHttpRequestUpload"),

@@ -4,7 +4,7 @@ import json
 import re
 
 
-# Frozen native bound in src/core/access_summary.cpp, not a new capture limit.
+# Legacy reports lack the full-string capture marker and used this preview bound.
 _STRING_PREVIEW_BYTES = 64
 _IDENTIFIER = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*\Z")
 _TYPES = {
@@ -49,7 +49,7 @@ def _unescape_preview(text):
     return "".join(output)
 
 
-def _summary(value, missing):
+def _summary(value, missing, complete_strings=False):
     if value is None:
         return missing
     if value in ("undefined", "null"):
@@ -68,12 +68,14 @@ def _summary(value, missing):
             preview = parts[2]
         except (ValueError, IndexError):
             return "<summary: " + _quoted(value) + ">"
+        text = _unescape_preview(preview)
+        if complete_strings and length >= 0 and len(text.encode("utf-8")) == length:
+            return _quoted(text)
         if length > _STRING_PREVIEW_BYTES and preview.endswith("..."):
             if preview == "...":
                 return f"<String: {length} bytes; preview not recorded>"
             text = _unescape_preview(preview[:-3])
             return f"{_quoted(text)} … <truncated, {length} bytes>"
-        text = _unescape_preview(preview)
         if length >= 0 and len(text.encode("utf-8")) == length:
             return _quoted(text)
     return "<summary: " + _quoted(value) + ">"
@@ -90,24 +92,24 @@ def _path(event):
     return path + "[" + _quoted(member) + "]"
 
 
-def _arguments(event):
+def _arguments(event, complete_strings=False):
     summaries = event.get("argument_summaries")
     if summaries is None:
         return "<arguments not recorded>"
-    rendered = [_summary(value, "<value not recorded>") for value in summaries]
+    rendered = [_summary(value, "<value not recorded>", complete_strings) for value in summaries]
     count = event.get("argument_count", len(summaries))
     if count > len(summaries):
         rendered.append(f"… <{count - len(summaries)} more arguments>")
     return ", ".join(rendered)
 
 
-def _event_line(event):
+def _event_line(event, complete_strings=False):
     operation = event.get("operation", "unknown")
     path = _path(event)
     if operation == "call":
-        line = f"CALL {path}({_arguments(event)})"
+        line = f"CALL {path}({_arguments(event, complete_strings)})"
     elif operation == "set":
-        value = _summary(event.get("value_summary"), "<value not recorded>")
+        value = _summary(event.get("value_summary"), "<value not recorded>", complete_strings)
         line = f"SET {path} = {value}"
     else:
         verb = {"get": "GET", "get_probe": "GET", "get_method": "METHOD",
@@ -133,15 +135,16 @@ def _event_line(event):
         return line + ("" if event.get("outcome") == "returned"
                        else " [completion not recorded]")
     if operation == "get":
-        result = _summary(event.get("value_summary"), "<value not recorded>")
+        result = _summary(event.get("value_summary"), "<value not recorded>", complete_strings)
     else:
-        result = _summary(event.get("return_summary"), "<return value not recorded>")
+        result = _summary(event.get("return_summary"), "<return value not recorded>", complete_strings)
     return line + " -> " + result
 
 
 def format_access_trace(report):
     """Render one snapshot without inspecting live values or mutating events."""
-    lines = [_event_line(event) for event in report["events"]]
+    complete_strings = report.get("coverage", {}).get("string_capture") == "full"
+    lines = [_event_line(event, complete_strings) for event in report["events"]]
     dropped = report.get("dropped_events", 0)
     if dropped:
         lines.append(f"WARNING: {dropped} trace event(s) dropped "

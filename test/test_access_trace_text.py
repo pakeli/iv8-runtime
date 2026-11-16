@@ -70,6 +70,16 @@ def test_64_byte_real_ellipsis_and_67_byte_truncation_are_distinct():
         'GET document.cookie -> "' + "a" * 64 + '" … <truncated, 67 bytes>'
 
 
+def test_full_capture_marker_disambiguates_an_identical_legacy_ellipsis_summary():
+    complete = "a" * 64 + "..."
+    event = _event(value_summary="string:67:" + complete)
+    legacy = _report(event)
+    full = copy.deepcopy(legacy)
+    full["coverage"]["string_capture"] = "full"
+    assert format_access_trace(legacy) == 'GET document.cookie -> "' + "a" * 64 + '" … <truncated, 67 bytes>'
+    assert format_access_trace(full) == "GET document.cookie -> " + json.dumps(complete)
+
+
 def test_multibyte_truncation_and_omitted_preview_are_explicit():
     assert format_access_trace(_report(_event(value_summary="string:67:" + "值" * 21 + "..."))) == \
         'GET document.cookie -> "' + "值" * 21 + '" … <truncated, 67 bytes>'
@@ -94,13 +104,17 @@ def test_paths_controls_and_values_stay_on_one_line():
         assert len(output.splitlines()) == 1
 
 
-def test_call_arguments_values_and_argument_limit():
+def test_call_arguments_and_legacy_missing_argument_marker_remain_compatible():
     event = _event(operation="call", label="hostProbe", member="add",
                    argument_count=2, argument_summaries=["number:2", "number:3"],
                    return_summary="number:5")
     assert format_access_trace(_report(event)) == "CALL hostProbe.add(2, 3) -> 5"
     event.update(argument_count=10, argument_summaries=["null"] * 8)
     assert "… <2 more arguments>" in format_access_trace(_report(event))
+    event.update(argument_count=12, argument_summaries=["number:" + str(index) for index in range(12)])
+    full = _report(event)
+    full["coverage"]["string_capture"] = "full"
+    assert format_access_trace(full) == "CALL hostProbe.add(" + ", ".join(map(str, range(12))) + ") -> 5"
     event.update(argument_count=0, argument_summaries=[])
     assert "hostProbe.add()" in format_access_trace(_report(event))
 
@@ -230,16 +244,19 @@ def test_native_calls_missing_and_method_reference():
 
 
 @on_only
-def test_native_truncation_and_real_ellipsis():
+def test_native_complete_strings_unicode_escapes_and_real_ellipsis():
     with iv8.Page() as page:
         page.start_access_trace()
-        page.eval('hostProbe.echo("a".repeat(67)); hostProbe.echo("a".repeat(61) + "...");'
-                  'hostProbe.echo("值".repeat(21) + "😀"); hostProbe.echo("x".repeat(5000));')
+        values = ["a" * 67, "a" * 64 + "...", "值" * 21 + "😀", "x" * 5000,
+                  ("汉🙂\n\t\\\0" * 600) + "..."]
+        page.eval(json.dumps(values) + ".forEach(value=>hostProbe.echo(value))")
+        assert page.read_access_trace(clear=False)["coverage"]["string_capture"] == "full"
         lines = page.read_access_trace(format="text").splitlines()
-        assert lines[0].count("<truncated, 67 bytes>") == 2
-        assert "<truncated" not in lines[1]
-        assert lines[2].count('"' + "值" * 21 + '" … <truncated, 67 bytes>') == 2
-        assert lines[3].count("<String: 5000 bytes; preview not recorded>") == 2
+        assert len(lines) == len(values)
+        for line, value in zip(lines, values):
+            argument, returned = line[len("CALL hostProbe.echo("):].split(") -> ", 1)
+            assert json.loads(argument) == json.loads(returned) == value
+            assert "<truncated" not in line and "preview not recorded" not in line
 
 
 @on_only

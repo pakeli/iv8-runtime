@@ -7,6 +7,19 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Retain complete logged string values and argument lists (`2026-11-16`)
+
+The user reports truncated script.src URLs. Remove the native 64-byte preview,
+4096-byte omission and eight-argument caps for captured API values. Preserve full
+summaries through the script/bootstrap bridge. New reports carry
+`coverage.string_capture="full"` to distinguish actual trailing ellipses from
+ambiguous saved legacy previews; absent-marker reports keep old formatting.
+Objects stay type-only without extra property reads; exception diagnostics and
+event limits remain separate. Local acceptance: six new cases, 154 focused,
+713 release gate and 2939 passed / 2 skipped full. Update PR #32 without SDK
+installation or a full release claim. Boundary/evidence: `docs/access_trace_text.md`
+and `docs/full_trace_values_report.md`.
+
 ### Add XHR native shape and monitoring with an inert send (`2026-11-16`)
 
 The user selects XMLHttpRequest interface shape and monitoring only and asks for

@@ -52,7 +52,7 @@ struct AccessEvent {
     std::string outcome;        // "returned" | "threw"
     std::string value_summary;  // get/set
     std::uint64_t argument_count = 0;
-    std::vector<std::string> argument_summaries;  // first 8 arguments
+    std::vector<std::string> argument_summaries;  // all arguments
     std::string return_summary;                   // call
     // Step 6h: best-effort synchronous exception metadata. These fields are
     // populated only when a traced native entry actually throws; asynchronous

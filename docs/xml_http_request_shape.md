@@ -40,7 +40,8 @@ UNSENT, status stays zero, and response values remain their pre-transfer baselin
 
 In debug mode the existing native CALL trace prints `send(...)` argument
 summaries and returned undefined automatically. Prod stays silent. Logging uses
-the existing safe summaries (type previews/string limits), not arbitrary object
+the existing safe summaries (type-only objects and complete strings since the
+`2026-11-16` full-value update), not arbitrary object
 JSON or user getters; it does not add a Python callback/console side channel.
 Trace filters add `xml_http_request` and `xml_http_request_upload`.
 Manual tracing/watches, cached methods, prototype references, property writes,

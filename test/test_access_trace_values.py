@@ -1,5 +1,7 @@
 """Step 6a: value, argument, and return summaries for HostObject access."""
 
+import json
+
 import pytest
 
 import iv8
@@ -121,7 +123,7 @@ def test_setter_value_and_read_back_summaries():
 
 
 @on_only
-def test_argument_cap_and_string_truncation():
+def test_all_arguments_and_full_string_values_are_captured():
     with iv8.Page() as page:
         _load(page)
         page.start_access_trace()
@@ -134,15 +136,65 @@ def test_argument_cap_and_string_truncation():
         events = [event for event in _events(page)
                   if event["member"] == "echo" and event["operation"] == "call"]
         assert events[0]["argument_summaries"] == [
-            "string:100:" + "a" * 64 + "..."]
+            "string:100:" + long_value]
         assert events[0]["return_summary"] == (
-            "string:100:" + "a" * 64 + "...")
+            "string:100:" + long_value)
         assert events[1]["argument_count"] == 10
         assert events[1]["argument_summaries"] == [
             "number:1", "number:2", "number:3", "number:4",
-            "number:5", "number:6", "number:7", "number:8",
+            "number:5", "number:6", "number:7", "number:8", "number:9", "number:10",
         ]
         assert events[1]["return_summary"] == "number:1"
+        assert page.read_access_trace(clear=False)["coverage"]["string_capture"] == "full"
+
+
+@on_only
+def test_late_arguments_are_summarized_without_proxy_or_error_getters():
+    with iv8.Page() as page:
+        _load(page)
+        page.eval("""globalThis.summary_reads=0;
+            const trap=()=>{summary_reads++;throw Error('must not inspect');};
+            globalThis.summary_proxy=new Proxy({},{get:trap,getPrototypeOf:trap,
+                getOwnPropertyDescriptor:trap,ownKeys:trap});
+            globalThis.summary_error=Error('argument');
+            for(const name of ['name','message','stack'])Object.defineProperty(summary_error,name,
+                {get:trap,configurable:true});""")
+        page.start_access_trace()
+        assert page.eval("hostProbe.echo('first',1,2,3,4,5,6,7,8,summary_proxy,summary_error)") == "first"
+        record, = _events(page)
+        assert record["argument_count"] == 11
+        assert record["argument_summaries"] == ["string:5:first", *["number:" + str(index) for index in range(1, 9)],
+                                                 "object", "object"]
+        assert record["return_summary"] == "string:5:first"
+        assert page.eval("summary_reads") == 0
+
+
+@on_only
+@pytest.mark.parametrize("payload", [("桥😀\\\n" * 1200) + "...", "\0" * 1024],
+                         ids=["large-unicode", "escaped-size-exceeds-original-size"])
+def test_script_bootstrap_bridge_keeps_full_strings_and_every_argument(payload):
+    with iv8.Page() as page:
+        _load(page)
+        page.eval("""globalThis.post_alias=postMessage;globalThis.bridge_reads=0;
+            globalThis.bridge_poison=new Proxy({},{get(){bridge_reads++;throw Error('must not inspect');}});""")
+        page.start_access_trace(max_events=1)
+        assert page.eval("post_alias(" + json.dumps(payload) + ",'*',null,3,4,5,6,7,8,9,10,bridge_poison)") is iv8.JSUndefined
+        report = page.read_access_trace(clear=False)
+        record, = report["events"]
+        assert (record["label"], record["member"], record["operation"]) == ("window", "postMessage", "call")
+        assert record["argument_count"] == len(record["argument_summaries"]) == 12
+        assert record["argument_summaries"][1:] == ["string:1:*", "null",
+            *["number:" + str(index) for index in range(3, 11)], "object"]
+        assert record["argument_summaries"][0].startswith("string:" + str(len(payload.encode("utf-8"))) + ":")
+        assert record["outcome"] == "returned" and record["return_summary"] == "undefined"
+        assert report["coverage"]["string_capture"] == "full" and report["dropped_events"] == 0
+        output = page.read_access_trace(clear=False, format="text")
+        rendered_arguments = output[len("CALL window.postMessage("):]
+        encoded, end = json.JSONDecoder().raw_decode(rendered_arguments)
+        assert encoded == payload
+        assert rendered_arguments[end:] == ', "*", null, 3, 4, 5, 6, 7, 8, 9, 10, <Object>) -> undefined'
+        assert len(output.splitlines()) == 1
+        assert page.eval("bridge_reads") == 0
 
 
 @on_only
