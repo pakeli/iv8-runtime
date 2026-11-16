@@ -44,11 +44,20 @@ def test_storage_manager_reads_and_calls_are_traced():
         events = _events(page)
         assert [(event["object_type"], event["label"], event["member"],
                  event["operation"]) for event in events] == [
+            ("window", "window", "estimate", "get_probe"),
+            ("window", "window", "persisted", "get_probe"),
+            ("window", "window", "persist", "get_probe"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "storage", "get"),
+            ("storage_manager", "navigator.storage", "estimate", "get"),
             ("storage_manager", "navigator.storage", "estimate", "call"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "storage", "get"),
+            ("storage_manager", "navigator.storage", "persisted", "get"),
             ("storage_manager", "navigator.storage", "persisted", "call"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "storage", "get"),
+            ("storage_manager", "navigator.storage", "persist", "get"),
             ("storage_manager", "navigator.storage", "persist", "call"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)
@@ -86,13 +95,18 @@ def test_storage_manager_keeps_plain_object_shape_and_identity():
              typeof navigator.storage.estimate].join('|');
             """
         ) == "object|function"
-        # Each parent read is traced; the rejected read-only writes and the
-        # plain-object method write are not.
+        # Parent reads and the final method reference are observable. Rejected
+        # read-only assignments do not create native set events.
         assert [(event["object_type"], event["member"], event["operation"])
                 for event in _events(page)] == [
+            ("window", "navigator", "get"),
+            ("window", "navigator", "get"),
             ("navigator", "storage", "get"),
+            ("window", "navigator", "get"),
             ("navigator", "storage", "get"),
-            ("navigator", "storage", "get")]
+            ("window", "navigator", "get"),
+            ("navigator", "storage", "get"),
+            ("storage_manager", "estimate", "get")]
 
 
 @on_only
@@ -115,8 +129,12 @@ def test_storage_manager_descriptor_does_not_evaluate_the_parent_getter():
         assert descriptor == "true|function|true|true|true"
         assert [(event["object_type"], event["member"], event["operation"])
                 for event in _events(page)] == [
+            ("window", "navigator", "get"),
             ("navigator", "storage", "get_own_property_descriptor"),
+            ("window", "Navigator", "get"),
+            ("window", "navigator", "get"),
             ("navigator", "storage", "get"),
+            ("window", "navigator", "get"),
             ("navigator", "storage", "get")]
 
 
@@ -129,9 +147,9 @@ def test_storage_manager_filter_and_generation():
                   "navigator.storage.persisted();",
                   name="probe.js")
         events = _events(page)
-        assert [(event["object_type"], event["member"]) for event in events] == [
-            ("storage_manager", "estimate"),
-            ("storage_manager", "persisted"),
+        assert [(event["object_type"], event["member"], event["operation"]) for event in events] == [
+            ("storage_manager", "estimate", "get"), ("storage_manager", "estimate", "call"),
+            ("storage_manager", "persisted", "get"), ("storage_manager", "persisted", "call"),
         ]
         first_id = events[0]["object_id"]
         assert events[0]["generation"] == 2
@@ -143,6 +161,7 @@ def test_storage_manager_filter_and_generation():
             if event["object_type"] == "storage_manager"
             and event["source_kind"] == "eval"
         ]
-        assert [event["generation"] for event in events] == [2, 2, 3]
-        assert events[0]["object_id"] == events[1]["object_id"] == first_id
-        assert events[2]["object_id"] != first_id
+        assert [(event["generation"], event["operation"]) for event in events] == [
+            (2, "get"), (2, "call"), (2, "get"), (2, "call"), (3, "get"), (3, "call")]
+        assert {event["object_id"] for event in events[:4]} == {first_id}
+        assert events[4]["object_id"] == events[5]["object_id"] != first_id

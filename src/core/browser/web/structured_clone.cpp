@@ -3,9 +3,11 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_summary.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -274,6 +276,9 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
 void structured_clone_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "structuredClone", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "structuredClone");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     if (info.Length() < 1) {
         isolate->ThrowException(v8::Exception::TypeError(

@@ -39,6 +39,7 @@
 #include "browser/window/window_presence_functions.h"
 #include "browser/window/window_shell_objects.h"
 #include "browser/window/window_error_support.h"
+#include "browser/window/window_trace_support.h"
 #include "browser/window/history.h"
 #include "browser/window/window_event_handlers.h"
 #include "browser/window/window_named_properties.h"
@@ -1894,6 +1895,8 @@ void PageState::install_page(const std::string& base_url,
         state_->with_scope(
             [this, &base_url](v8::Isolate* isolate,
                               v8::Local<v8::Context> context) {
+            if (!capture_window_intrinsic_names(isolate, context)) return;
+            if (!install_native_api_trace_store(isolate, context, host_objects_)) return;
             install_web_interfaces(isolate, context, &web_interface_factory,
                 v8::External::New(isolate, this, v8::kExternalPointerTypeTagDefault));
             install_navigator_identity_interfaces(isolate, context, &environment_);
@@ -1901,14 +1904,31 @@ void PageState::install_page(const std::string& base_url,
             install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());
             install_host_interface(isolate, context, window_events_.get());
+            v8::Local<v8::Object> global = context->Global();
             for (const auto& host : host_objects_) {
-                if (host->global_name() == "history") {
+                const auto host_name = host->global_name();
+                if (host_name.empty()) continue;
+                if (host_name == "history") {
                     static_cast<HistoryHost*>(host.get())->install(isolate, context);
+                } else if (host_name == "navigator" || host_name == "document" ||
+                           host_name == "screen" || host_name == "console") {
+                    v8::Local<v8::String> property;
+                    if (!v8::String::NewFromUtf8(isolate, host_name.c_str()).ToLocal(&property)) return;
+                    v8::PropertyAttribute attributes = v8::None;
+                    const auto own = global->HasOwnProperty(context, property);
+                    if (own.IsNothing()) return;
+                    if (own.FromMaybe(false)) {
+                        const auto existing = global->GetPropertyAttributes(context, property);
+                        if (existing.IsNothing()) return;
+                        attributes = existing.FromMaybe(v8::None);
+                    }
+                    auto object = make_host_object(isolate, context, host.get());
+                    if (!install_traced_window_data_property(isolate, context, global,
+                            host_name, object, attributes)) return;
                 } else {
                     install_host_object(isolate, context, host.get());
                 }
             }
-            v8::Local<v8::Object> global = context->Global();
             auto* document = static_cast<DocumentHost*>(document_host_);
             v8::Local<v8::Value> document_object;
             if (!global->Get(context, v8_string(isolate, "document")).ToLocal(&document_object)) return;
@@ -2038,12 +2058,10 @@ void PageState::install_page(const std::string& base_url,
                 v8::Local<v8::Object> performance = v8::Object::New(isolate);
                 const auto define_performance_readonly =
                     [&](const char* name, v8::Local<v8::Value> value) {
-                        v8::Local<v8::String> property;
-                        if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&property)) return false;
-                        return performance->DefineOwnProperty(
-                            context, property, value,
+                        return install_traced_api_data_property(isolate, context, performance,
+                            name, value, &kPerformanceTraceToken, "performance", "performance",
                             static_cast<v8::PropertyAttribute>(
-                                v8::ReadOnly | v8::DontDelete)).FromMaybe(false);
+                                v8::ReadOnly | v8::DontDelete));
                     };
                 v8::Local<v8::Function> now_fn;
                 if (!make_web_method(isolate, context, "now", 0, &performance_now_callback)
@@ -2073,11 +2091,10 @@ void PageState::install_page(const std::string& base_url,
                     !add_performance_method("getEntriesByType", &performance_get_entries_by_type_callback) ||
                     !add_performance_method("clearMarks", &performance_clear_marks_callback) ||
                     !add_performance_method("clearMeasures", &performance_clear_measures_callback)) return;
-                (void)global->DefineOwnProperty(
-                    context, v8::String::NewFromUtf8Literal(isolate, "performance"),
-                    performance,
+                if (!install_traced_window_data_property(isolate, context, global,
+                    "performance", performance,
                     static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete));
+                                                       v8::DontDelete))) return;
             }
             // M11-33 OS-backed Crypto slice: getRandomValues + randomUUID.
             // crypto.subtle is intentionally absent in this milestone.
@@ -2086,22 +2103,19 @@ void PageState::install_page(const std::string& base_url,
                 const auto add_crypto_method = [&](const char* name,
                                                    v8::FunctionCallback callback) {
                     v8::Local<v8::Function> function;
-                    v8::Local<v8::String> property;
                     if (!make_web_method(isolate, context, name,
-                            web_method_length("crypto", name), callback).ToLocal(&function) ||
-                        !v8::String::NewFromUtf8(isolate, name).ToLocal(&property)) return false;
-                    return crypto->DefineOwnProperty(
-                        context, property, function,
+                            web_method_length("crypto", name), callback).ToLocal(&function)) return false;
+                    return install_traced_api_data_property(isolate, context, crypto,
+                        name, function, &kCryptoTraceToken, "crypto", "crypto",
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                           v8::DontDelete)).FromMaybe(false);
+                                                           v8::DontDelete));
                 };
                 if (!add_crypto_method("getRandomValues", &crypto_get_random_values_callback) ||
                     !add_crypto_method("randomUUID", &crypto_random_uuid_callback)) return;
-                (void)global->DefineOwnProperty(
-                    context, v8::String::NewFromUtf8Literal(isolate, "crypto"),
-                    crypto,
+                if (!install_traced_window_data_property(isolate, context, global,
+                    "crypto", crypto,
                     static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete));
+                                                       v8::DontDelete))) return;
             }
             // M11-1/M11-26 window geometry. window is the intrinsic global object;
             // these are read-only native accessors on it. Values come from the
@@ -2184,45 +2198,35 @@ void PageState::install_page(const std::string& base_url,
                 // M11-50: browser-chrome BarProp metadata. There is no browser
                 // UI, but the reported desktop window is complete: every bar is
                 // a fresh read-only {visible: true} object. These are plain
-                // metadata, not traced HostObjects.
+                // metadata with independent per-object trace identities.
                 const auto define_bar_prop = [&](const char* name) {
                     v8::Local<v8::Object> bar = v8::Object::New(isolate);
-                    (void)bar->DefineOwnProperty(
-                        context,
-                        v8::String::NewFromUtf8Literal(isolate, "visible"),
-                        v8::True(isolate),
+                    if (!install_traced_api_data_property(isolate, context, bar,
+                        "visible", v8::True(isolate), native_api_identity(isolate, bar), "window", name,
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                           v8::DontDelete));
-                    (void)global->DefineOwnProperty(
-                        context,
-                        v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
-                        bar,
+                                                           v8::DontDelete))) return false;
+                    return install_traced_window_data_property(isolate, context, global, name, bar,
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
                                                            v8::DontDelete));
                 };
-                define_bar_prop("locationbar");
-                define_bar_prop("menubar");
-                define_bar_prop("personalbar");
-                define_bar_prop("scrollbars");
-                define_bar_prop("statusbar");
-                define_bar_prop("toolbar");
+                if (!define_bar_prop("locationbar") || !define_bar_prop("menubar") ||
+                    !define_bar_prop("personalbar") || !define_bar_prop("scrollbars") ||
+                    !define_bar_prop("statusbar") || !define_bar_prop("toolbar")) return;
                 // M11-50: legacy alias required by older feature detection.
                 v8::Local<v8::Value> navigator_value;
                 if (global->Get(context, v8_string(isolate, "navigator"))
                         .ToLocal(&navigator_value)) {
-                    (void)global->DefineOwnProperty(
-                        context,
-                        v8::String::NewFromUtf8Literal(isolate,
-                                                       "clientInformation"),
-                        navigator_value,
+                    if (!install_traced_window_data_property(isolate, context, global,
+                        "clientInformation", navigator_value,
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                           v8::DontDelete));
+                                                           v8::DontDelete))) return;
                 }
             }
             // M11-40 scheduler.postTask bootstrap. Compiled after setTimeout and
             // Promise are available; scheduler tasks therefore use the existing
             // timer queue and explicit pumps.
             {
+                if (!install_script_call_trace_hooks(isolate, context)) return;
                 v8::TryCatch try_catch(isolate);
                 v8::Local<v8::String> source = v8::String::NewFromUtf8(
                     isolate, kSchedulerBootstrap,
@@ -2231,8 +2235,16 @@ void PageState::install_page(const std::string& base_url,
                     .ToLocalChecked();
                 v8::Local<v8::Script> script;
                 if (v8::Script::Compile(context, source).ToLocal(&script)) {
-                    (void)script->Run(context);
+                    v8::Local<v8::Value> scheduler;
+                    if (script->Run(context).ToLocal(&scheduler)) {
+                        if (!scheduler->IsObject() ||
+                            !install_scheduler_post_task_tracing(isolate, context, scheduler.As<v8::Object>()) ||
+                            !install_traced_window_data_property(isolate, context, global,
+                                "scheduler", scheduler,
+                                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))) return;
+                    }
                 }
+                if (!clear_script_call_trace_hooks(isolate, context)) return;
                 if (try_catch.HasCaught()) {
                     try_catch.Reset();  // fixed bootstrap; never poison install
                 }
@@ -2257,6 +2269,7 @@ void PageState::install_page(const std::string& base_url,
             // window dimensions and navigator so the bootstrap can derive the
             // static visual viewport and media-query results from them.
             {
+                if (!install_script_call_trace_hooks(isolate, context)) return;
                 v8::TryCatch try_catch(isolate);
                 v8::Local<v8::String> source = v8::String::NewFromUtf8(
                     isolate, kBomExtrasBootstrap,
@@ -2265,8 +2278,15 @@ void PageState::install_page(const std::string& base_url,
                     .ToLocalChecked();
                 v8::Local<v8::Script> script;
                 if (v8::Script::Compile(context, source).ToLocal(&script)) {
-                    (void)script->Run(context);
+                    v8::Local<v8::Value> match_media;
+                    if (script->Run(context).ToLocal(&match_media)) {
+                        if (!match_media->IsFunction() ||
+                            !install_traced_window_data_property(isolate, context, global,
+                                "matchMedia", match_media,
+                                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))) return;
+                    }
                 }
+                if (!clear_script_call_trace_hooks(isolate, context)) return;
                 if (try_catch.HasCaught()) {
                     try_catch.Reset();  // fixed bootstrap; never poison install
                 }
@@ -2288,12 +2308,10 @@ void PageState::install_page(const std::string& base_url,
                 v8::Local<v8::Object> viewport_object =
                     make_host_object(isolate, context, viewport.get());
                 host_objects_.push_back(std::move(viewport));
-                (void)global->DefineOwnProperty(
-                    context,
-                    v8::String::NewFromUtf8Literal(isolate, "visualViewport"),
-                    viewport_object,
+                if (!install_traced_window_data_property(isolate, context, global,
+                    "visualViewport", viewport_object,
                     static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete));
+                                                       v8::DontDelete))) return;
             }
             // M11-7 Web Storage: two independent, per-Page in-memory stores.
             // The backings live in PageState (so they survive load()); each
@@ -2301,7 +2319,7 @@ void PageState::install_page(const std::string& base_url,
             // Shared prototype members resolve the actual receiver's store.
             {
                 const auto install_storage = [&](const char* name,
-                                                 StorageStore* store) {
+                                                 StorageStore* store) -> bool {
                     v8::Local<v8::Object> storage = v8::Object::New(isolate);
                     v8::Local<v8::Value> data =
                         v8::External::New(isolate, store, kStorageTag);
@@ -2315,7 +2333,9 @@ void PageState::install_page(const std::string& base_url,
                         if (!make_web_method(isolate, context, method,
                                 web_method_length("storage", method), callback)
                                 .ToLocal(&fn)) return;
-                        (void)prototype->DefineOwnProperty(context, v8_string(isolate, method).As<v8::String>(), fn);
+                        (void)install_traced_api_data_property(isolate, context, prototype,
+                            method, fn, native_api_identity(isolate, prototype),
+                            "host_object", "Storage.prototype");
                     };
                     add_method("getItem", &storage_get_item);
                     add_method("setItem", &storage_set_item);
@@ -2325,61 +2345,65 @@ void PageState::install_page(const std::string& base_url,
                     if (!prototype->HasOwnProperty(context, v8_string(isolate, "length").As<v8::String>()).FromMaybe(true)) {
                         v8::Local<v8::Function> getter;
                         if (!make_web_method(isolate, context, "get length", 0,
-                                &storage_length_getter).ToLocal(&getter)) return;
+                                &storage_length_getter).ToLocal(&getter)) return false;
                         v8::PropertyDescriptor descriptor(getter, v8::Undefined(isolate));
                         descriptor.set_enumerable(true);
                         descriptor.set_configurable(true);
                         (void)prototype->DefineProperty(context, v8_string(isolate, "length").As<v8::String>(), descriptor);
                     }
-                    (void)global->DefineOwnProperty(
-                        context,
-                        v8::String::NewFromUtf8(isolate, name)
-                            .ToLocalChecked(),
-                        storage,
+                    return install_traced_window_data_property(isolate, context, global,
+                        name, storage,
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
                                                            v8::DontDelete));
                 };
-                install_storage("localStorage", &local_storage_);
-                install_storage("sessionStorage", &session_storage_);
+                if (!install_storage("localStorage", &local_storage_) ||
+                    !install_storage("sessionStorage", &session_storage_)) return;
             }
             // M3-3 minimal Event constructor (global `Event`). document/element
             // expose addEventListener/removeEventListener/dispatchEvent via their
             // host-object methods; this is the event value they dispatch.
             v8::Local<v8::FunctionTemplate> event_template =
-                v8::FunctionTemplate::New(isolate, &event_constructor, {}, {}, 1);
+                v8::FunctionTemplate::New(isolate, &traced_event_constructor,
+                    v8::String::NewFromUtf8Literal(isolate, "Event"), {}, 1);
             // SetClassName requires a Local<String> (v8_string yields
             // Local<Value>), so build the name string directly.
             event_template->SetClassName(
                 v8::String::NewFromUtf8Literal(isolate, "Event"));
             auto ui_event_template = v8::FunctionTemplate::New(
-                isolate, &ui_event_constructor, {}, {}, 1);
+                isolate, &traced_event_constructor,
+                v8::String::NewFromUtf8Literal(isolate, "UIEvent"), {}, 1);
             ui_event_template->SetClassName(v8::String::NewFromUtf8Literal(isolate, "UIEvent"));
             ui_event_template->Inherit(event_template);
             // Build both Event and UIEvent inheritance before instantiating
             // any template. Each subclass reuses
             // event_constructor for type / bubbles / target / currentTarget /
             // stopPropagation.
-            auto make_event_subclass = [&](const char* name,
-                                           v8::FunctionCallback callback) {
+            auto make_event_subclass = [&](const char* name) {
+                v8::Local<v8::String> interface_name_value;
+                if (!v8::String::NewFromUtf8(isolate, name).ToLocal(&interface_name_value)) {
+                    return v8::Local<v8::FunctionTemplate>();
+                }
                 v8::Local<v8::FunctionTemplate> tpl =
-                    v8::FunctionTemplate::New(isolate, callback, {}, {}, 1);
-                tpl->SetClassName(
-                    v8::String::NewFromUtf8(isolate, name).ToLocalChecked());
+                    v8::FunctionTemplate::New(isolate, &traced_event_constructor,
+                        interface_name_value, {}, 1);
+                tpl->SetClassName(interface_name_value);
                 const std::string interface_name(name);
                 tpl->Inherit(interface_name == "MouseEvent" || interface_name == "KeyboardEvent" ||
                     interface_name == "FocusEvent" ? ui_event_template : event_template);
                 return tpl;
             };
             const auto custom_event_template =
-                make_event_subclass("CustomEvent", &custom_event_constructor);
+                make_event_subclass("CustomEvent");
             const auto mouse_event_template =
-                make_event_subclass("MouseEvent", &mouse_event_constructor);
-            const auto keyboard_event_template = make_event_subclass(
-                "KeyboardEvent", &keyboard_event_constructor);
+                make_event_subclass("MouseEvent");
+            const auto keyboard_event_template = make_event_subclass("KeyboardEvent");
             const auto focus_event_template =
-                make_event_subclass("FocusEvent", &focus_event_constructor);
+                make_event_subclass("FocusEvent");
             const auto message_event_template =
-                make_event_subclass("MessageEvent", &message_event_constructor);
+                make_event_subclass("MessageEvent");
+            if (custom_event_template.IsEmpty() || mouse_event_template.IsEmpty() ||
+                keyboard_event_template.IsEmpty() || focus_event_template.IsEmpty() ||
+                message_event_template.IsEmpty()) return;
             v8::Local<v8::Function> event_function;
             v8::Local<v8::Value> event_prototype;
             if (!event_template->GetFunction(context).ToLocal(&event_function) ||
@@ -2462,9 +2486,7 @@ void PageState::install_page(const std::string& base_url,
                     v8::String::NewFromUtf8Literal(
                         isolate, "__iv8PostMessageDispatch"),
                     dispatch_fn);
-                install_global_function(isolate, context, global,
-                                        "__iv8PostMessageRecord",
-                                        &window_post_message_record);
+                if (!install_script_call_trace_hooks(isolate, context)) return;
                 v8::TryCatch try_catch(isolate);
                 v8::Local<v8::String> source = v8::String::NewFromUtf8(
                     isolate, kWindowPostMessageBootstrap,
@@ -2475,6 +2497,7 @@ void PageState::install_page(const std::string& base_url,
                 if (v8::Script::Compile(context, source).ToLocal(&script)) {
                     (void)script->Run(context);
                 }
+                if (!clear_script_call_trace_hooks(isolate, context)) return;
                 if (try_catch.HasCaught()) {
                     try_catch.Reset();  // fixed bootstrap; never poison install
                 }
@@ -2526,7 +2549,7 @@ void PageState::install_page(const std::string& base_url,
                 url_proto->Set(isolate, "toString",
                                v8::FunctionTemplate::New(isolate, &url_to_href));
                 url_proto->Set(isolate, "toJSON",
-                               v8::FunctionTemplate::New(isolate, &url_to_href));
+                               v8::FunctionTemplate::New(isolate, &url_to_json));
                 (void)global->Set(
                     context, v8_string(isolate, "URL"),
                     url_tpl->GetFunction(context).ToLocalChecked());
@@ -2658,6 +2681,7 @@ void PageState::install_page(const std::string& base_url,
             if (!install_window_presence_functions(isolate, context) ||
                 !install_window_error_support(isolate, context) ||
                 !install_window_shell_objects(isolate, context, host_objects_)) return;
+            if (!install_window_public_data_tracing(isolate, context)) return;
 
             // M9-1: if DevTools was enabled on a prior generation, give this fresh
             // generation its own Inspector + registered context (the WS URL stays

@@ -33,17 +33,19 @@ def test_native_property_gets_and_bracket_access():
         page.start_access_trace()
         page.eval("navigator.userAgent; navigator['language'];", name="probe.js")
         events = page.read_access_trace()
-        assert [event["member"] for event in events["events"]] == [
-            "userAgent", "language"]
+        assert [(event["object_type"], event["member"]) for event in events["events"]] == [
+            ("window", "navigator"), ("navigator", "userAgent"),
+            ("window", "navigator"), ("navigator", "language")]
         for event in events["events"]:
-            assert event["object_type"] == "navigator"
-            assert event["label"] == "navigator"
+            assert event["label"] == event["object_type"]
             assert event["operation"] == "get"
             assert event["phase"] == "enter"
             assert event["source_kind"] == "eval"
             assert event["resource_name"] == "probe.js"
         assert events["events"][0]["seq"] == 1
-        assert events["events"][0]["object_id"] == events["events"][1]["object_id"]
+        assert events["events"][0]["object_id"] == events["events"][2]["object_id"]
+        assert events["events"][1]["object_id"] == events["events"][3]["object_id"]
+        assert events["events"][0]["object_id"] != events["events"][1]["object_id"]
         assert events["events"][0]["generation"] == 2
 
 
@@ -59,13 +61,14 @@ def test_element_set_and_get_keep_behavior():
             name="probe.js")
         events = page.read_access_trace()["events"]
         assert [event["operation"] for event in events] == [
-            "call", "set", "get"]
-        assert events[0]["object_type"] == "document"
-        assert events[0]["member"] == "querySelector"
-        assert events[1]["object_type"] == "element"
-        assert events[1]["label"] == "div"
-        assert events[1]["member"] == "textContent"
-        assert events[2]["operation"] == "get"
+            "get", "call", "set", "get"]
+        assert (events[0]["object_type"], events[0]["member"]) == ("window", "document")
+        assert events[1]["object_type"] == "document"
+        assert events[1]["member"] == "querySelector"
+        assert events[2]["object_type"] == "element"
+        assert events[2]["label"] == "div"
+        assert events[2]["member"] == "textContent"
+        assert events[3]["operation"] == "get"
         assert page.eval("document.querySelector('#app').textContent") == "ready"
 
 
@@ -127,6 +130,7 @@ def test_method_reference_read_is_not_a_call():
                   name="probe.js")
         events = page.read_access_trace()["events"]
         assert [(event["member"], event["operation"]) for event in events] == [
+            ("document", "get"),
             ("querySelector", "get_method")]
 
 
@@ -274,6 +278,8 @@ def test_multiple_pages_and_read_does_not_execute_js():
         first.eval("navigator.userAgent;", name="probe.js")
         assert second.read_access_trace()["events"] == []
         first_report = first.read_access_trace(clear=True)
-        assert len(first_report["events"]) == 1
+        assert [(event["object_type"], event["member"], event["operation"])
+                for event in first_report["events"]] == [
+            ("window", "navigator", "get"), ("navigator", "userAgent", "get")]
         assert first.read_access_trace()["events"] == []
         assert second.read_access_trace()["events"] == []

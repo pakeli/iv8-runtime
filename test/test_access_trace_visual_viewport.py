@@ -37,17 +37,25 @@ def test_visual_viewport_reads_are_traced():
         events = _events(page)
         assert [(event["object_type"], event["label"], event["member"],
                  event["operation"]) for event in events] == [
+            ("window", "window", "visualViewport", "get"),
             ("visual_viewport", "visualViewport", "width", "get"),
+            ("window", "window", "visualViewport", "get"),
             ("visual_viewport", "visualViewport", "height", "get"),
+            ("window", "window", "visualViewport", "get"),
             ("visual_viewport", "visualViewport", "offsetLeft", "get"),
+            ("window", "window", "visualViewport", "get"),
             ("visual_viewport", "visualViewport", "offsetTop", "get"),
+            ("window", "window", "visualViewport", "get"),
             ("visual_viewport", "visualViewport", "pageLeft", "get"),
+            ("window", "window", "visualViewport", "get"),
             ("visual_viewport", "visualViewport", "pageTop", "get"),
+            ("window", "window", "visualViewport", "get"),
             ("visual_viewport", "visualViewport", "scale", "get"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)
         assert all(event["resource_name"] == "probe.js" for event in events)
-        assert len({event["object_id"] for event in events}) == 1
+        assert len({event["object_id"] for event in events if event["object_type"] == "window"}) == 1
+        assert len({event["object_id"] for event in events if event["object_type"] == "visual_viewport"}) == 1
 
 
 @on_only
@@ -75,16 +83,22 @@ def test_visual_viewport_method_calls_and_writable_handlers():
         ) == "undefined|undefined|false|function|true|true"
         events = _events(page)
         assert [(event["member"], event["operation"]) for event in events] == [
+            ("visualViewport", "get"),
             ("onresize", "set"),
+            ("visualViewport", "get"),
             ("addEventListener", "call"),
+            ("visualViewport", "get"),
             ("removeEventListener", "call"),
+            ("visualViewport", "get"),
             ("dispatchEvent", "call"),
+            ("visualViewport", "get"),
             ("onresize", "get"),
+            ("visualViewport", "get"),
             ("onresize", "get"),
+            ("visualViewport", "get"),
             ("onscroll", "get"),
         ]
-        assert all(event["object_type"] == "visual_viewport"
-                   for event in events)
+        assert [event["object_type"] for event in events] == ["window", "visual_viewport"] * 7
 
 
 @on_only
@@ -108,9 +122,13 @@ def test_visual_viewport_read_only_and_missing_probe_behavior():
         assert [(event["member"], event["operation"],
                  event.get("resolution"))
                 for event in events] == [
+            ("visualViewport", "get", None),
+            ("visualViewport", "get", None),
             ("width", "get_own_property_descriptor", None),
             ("width", "get", None),
+            ("visualViewport", "get", None),
             ("width", "get", None),
+            ("visualViewport", "get", None),
             ("missing", "get_probe", "missing"),
         ]
 
@@ -150,7 +168,8 @@ def test_visual_viewport_read_only_and_missing_probe_behavior():
         with pytest.raises(iv8.JSError):
             page.eval("'use strict'; visualViewport.width = 1;",
                       name="probe.js")
-        assert _events(page) == []
+        assert [(event["object_type"], event["member"], event["operation"])
+                for event in _events(page)] == [("window", "visualViewport", "get")]
 
 
 @on_only

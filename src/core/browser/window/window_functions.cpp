@@ -1,4 +1,5 @@
 #include "window_functions.h"
+#include "window_trace_support.h"
 
 #include <algorithm>
 #include <cctype>
@@ -13,6 +14,7 @@
 #include <vector>
 
 #include "iv8/web_method.h"
+#include "iv8/access_summary.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
 
@@ -36,16 +38,22 @@ void register_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info,
 }
 
 void set_timeout_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "setTimeout", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "setTimeout");  // M9-2
     register_timer_callback(info, /*repeating=*/false);
 }
 
 void set_interval_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "setInterval", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "setInterval");  // M9-2
     register_timer_callback(info, /*repeating=*/true);
 }
 
 void queue_microtask_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "queueMicrotask", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "queueMicrotask");  // M9-2
     v8::Isolate* isolate = info.GetIsolate();
     if (info.Length() < 1 || !info[0]->IsFunction()) {
@@ -59,6 +67,8 @@ void queue_microtask_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void request_animation_frame_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "requestAnimationFrame", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "requestAnimationFrame");  // M9-2
     v8::Isolate* isolate = info.GetIsolate();
     ContextState* state = state_from_isolate(isolate);
@@ -72,6 +82,8 @@ void request_animation_frame_callback(
 
 void cancel_animation_frame_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "cancelAnimationFrame", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "cancelAnimationFrame");  // M9-2
     v8::Isolate* isolate = info.GetIsolate();
     ContextState* state = state_from_isolate(isolate);
@@ -86,6 +98,8 @@ void cancel_animation_frame_callback(
 
 void request_idle_callback_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "requestIdleCallback", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "requestIdleCallback");  // M9-2
     v8::Isolate* isolate = info.GetIsolate();
     ContextState* state = state_from_isolate(isolate);
@@ -135,6 +149,8 @@ void request_idle_callback_callback(
 
 void cancel_idle_callback_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "cancelIdleCallback", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "cancelIdleCallback");  // M9-2
     v8::Isolate* isolate = info.GetIsolate();
     ContextState* state = state_from_isolate(isolate);
@@ -159,65 +175,111 @@ void clear_timer_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     state->clear_timer(id);
 }
 
+namespace {
+
+void clear_timeout_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "clearTimeout", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
+    watch_record(info.GetIsolate(), "window", "clearTimeout");
+    clear_timer_callback(info);
+}
+
+void clear_interval_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "clearInterval", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
+    watch_record(info.GetIsolate(), "window", "clearInterval");
+    clear_timer_callback(info);
+}
+
+}  // namespace
+
 void alert_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "alert", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "alert");
 }
 
 void confirm_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "confirm", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "confirm");
     info.GetReturnValue().Set(v8::False(info.GetIsolate()));
 }
 
 void prompt_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "prompt", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "prompt");
     info.GetReturnValue().Set(v8::Null(info.GetIsolate()));
 }
 
 void print_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "print", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "print");
 }
 
 void window_scroll_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "scroll", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "scroll");
 }
 
 void window_scroll_to_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "scrollTo", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "scrollTo");
 }
 
 void window_scroll_by_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "scrollBy", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "scrollBy");
 }
 
 void window_focus_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "focus", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "focus");
 }
 
 void window_blur_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "blur", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "blur");
 }
 
 void window_move_by_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "moveBy", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "moveBy");
 }
 
 void window_move_to_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "moveTo", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "moveTo");
 }
 
 void window_resize_by_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "resizeBy", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "resizeBy");
 }
 
 void window_resize_to_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "resizeTo", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "resizeTo");
 }
 
 void window_stop_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "stop", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
     watch_record(info.GetIsolate(), "window", "stop");
 }
 
@@ -228,6 +290,8 @@ v8::Local<v8::Private> window_location_slot(v8::Isolate* isolate) {
 
 void window_location_get(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "location", AccessOperation::kGet);
+    AccessFunctionPropertyCompletion completion(isolate, sequence, info, AccessOperation::kGet);
     auto context = isolate->GetCurrentContext();
     if (info.This() != context->Global()) {
         isolate->ThrowException(v8::Exception::TypeError(
@@ -241,6 +305,8 @@ void window_location_get(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void window_location_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "location", AccessOperation::kSet);
+    AccessFunctionPropertyCompletion completion(isolate, sequence, info, AccessOperation::kSet);
     auto context = isolate->GetCurrentContext();
     if (info.This() != context->Global()) {
         isolate->ThrowException(v8::Exception::TypeError(
@@ -257,10 +323,23 @@ void window_location_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
 void install_global_function(v8::Isolate* isolate, v8::Local<v8::Context> context,
                              v8::Local<v8::Object> global, const std::string& name,
                              v8::FunctionCallback callback) {
+    if (callback == &clear_timer_callback) {
+        if (name == "clearTimeout") callback = &clear_timeout_callback;
+        else if (name == "clearInterval") callback = &clear_interval_callback;
+    }
     v8::Local<v8::Function> fn;
     if (!make_web_method(isolate, context, name,
             web_method_length("window", name), callback).ToLocal(&fn)) return;
-    (void)global->Set(context, v8_string(isolate, name), fn);
+    auto key = v8_string(isolate, name);
+    v8::PropertyAttribute attributes = v8::None;
+    const auto has_own = global->HasOwnProperty(context, key.As<v8::String>());
+    if (has_own.IsNothing()) return;
+    if (has_own.FromJust()) {
+        const auto existing_attributes = global->GetPropertyAttributes(context, key);
+        if (existing_attributes.IsNothing()) return;
+        attributes = existing_attributes.FromJust();
+    }
+    (void)install_traced_window_data_property(isolate, context, global, name, fn, attributes);
 }
 
 }  // namespace iv8::browser

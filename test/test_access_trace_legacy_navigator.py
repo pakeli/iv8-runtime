@@ -34,8 +34,11 @@ def test_legacy_navigator_reads_and_java_enabled_call_are_traced():
         events = _events(page)
         assert [(event["object_type"], event["label"], event["member"],
                  event["operation"]) for event in events] == [
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "plugins", "get"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "mimeTypes", "get"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "javaEnabled", "call"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)
@@ -44,7 +47,7 @@ def test_legacy_navigator_reads_and_java_enabled_call_are_traced():
                          if event["object_type"] == "navigator"}
         assert len(navigator_ids) == 1
         # The shared native method dispatches through the actual Navigator host.
-        assert events[2]["object_id"] == events[0]["object_id"]
+        assert events[5]["object_id"] == events[1]["object_id"]
 
 
 @on_only
@@ -95,6 +98,9 @@ def test_legacy_navigator_keeps_identity_shape_and_read_only_behavior():
         ) is False
         assert [(event["member"], event["operation"])
                 for event in _events(page)] == [
+            ("navigator", "get"),
+            ("javaEnabled", "get_method"),
+            ("navigator", "get"),
             ("javaEnabled", "call")]
 
 
@@ -105,7 +111,9 @@ def test_legacy_navigator_filter_and_generation():
         page.start_access_trace(object_types=["window"])
         page.eval("navigator.plugins; navigator.javaEnabled();",
                   name="probe.js")
-        assert _events(page) == []
+        assert [(event["object_type"], event["member"], event["operation"])
+                for event in _events(page)] == [
+            ("window", "navigator", "get"), ("window", "navigator", "get")]
 
         page.start_access_trace(object_types=["navigator"])
         page.eval("navigator.plugins; navigator.javaEnabled();",

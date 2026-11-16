@@ -73,12 +73,16 @@ public:
         v8::Isolate* isolate, std::uint64_t seq,
         const v8::PropertyCallbackInfo<void>& info,
         v8::Local<v8::Value> value);
+    AccessPropertySetCompletion(v8::Isolate* isolate, std::uint64_t seq,
+        const v8::PropertyCallbackInfo<v8::Boolean>& info, v8::Local<v8::Value> value);
     ~AccessPropertySetCompletion() noexcept;
 
     AccessPropertySetCompletion(const AccessPropertySetCompletion&) = delete;
     AccessPropertySetCompletion& operator=(const AccessPropertySetCompletion&) = delete;
 
 private:
+    AccessPropertySetCompletion(v8::Isolate* isolate, std::uint64_t seq,
+        v8::Local<v8::Value> value);
     v8::Isolate* isolate_ = nullptr;
     std::uint64_t seq_ = 0;
     std::optional<v8::TryCatch> try_catch_;

@@ -46,17 +46,21 @@ def test_permissions_query_and_status_accesses_are_traced():
         events = _events(page)
         assert [(event["object_type"], event["label"], event["member"],
                  event["operation"]) for event in events] == [
+            ("window", "window", "geo", "get_probe"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "permissions", "get"),
+            ("permissions", "navigator.permissions", "query", "get"),
             ("permissions", "navigator.permissions", "query", "call"),
             ("permission_status", "permissionStatus", "name", "get"),
             ("permission_status", "permissionStatus", "state", "get"),
+            ("permission_status", "permissionStatus", "addEventListener", "get"),
             ("permission_status", "permissionStatus", "addEventListener", "call"),
+            ("permission_status", "permissionStatus", "dispatchEvent", "get"),
             ("permission_status", "permissionStatus", "dispatchEvent", "call"),
         ]
-        assert [event["source_kind"] for event in events] == [
-            "eval", "eval", "eval", "eval", "eval", "eval"]
+        assert all(event["source_kind"] == "eval" for event in events)
         assert [event["resource_name"] for event in events] == [
-            "probe.js", "probe.js", "read.js", "read.js", "read.js", "read.js"]
+            "probe.js"] * 5 + ["read.js"] * 6
         assert len({event["object_id"] for event in events
                     if event["object_type"] == "permission_status"}) == 1
 
@@ -179,8 +183,8 @@ def test_permissions_filter_and_generation():
         page.eval("navigator.permissions.query({name: 'camera'});",
                   name="probe.js")
         events = _events(page)
-        assert [(event["object_type"], event["member"]) for event in events] == [
-            ("permissions", "query")]
+        assert [(event["object_type"], event["member"], event["operation"]) for event in events] == [
+            ("permissions", "query", "get"), ("permissions", "query", "call")]
         assert events[0]["generation"] == 2
 
         page.start_access_trace(object_types=["permission_status"])

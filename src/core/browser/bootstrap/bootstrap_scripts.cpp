@@ -18,7 +18,14 @@ namespace iv8::browser {
 constexpr char kSchedulerBootstrap[] = R"JS(
 (function () {
   'use strict';
+  var beginCall = globalThis.__iv8HostCallBegin;
+  var endCall = globalThis.__iv8HostCallEnd;
+  delete globalThis.__iv8HostCallBegin;
+  delete globalThis.__iv8HostCallEnd;
   function postTask(callback, options) {
+    var callToken = beginCall('scheduler.postTask', arguments);
+    var callResult, callError, callThrew = false;
+    try {
     if (typeof callback !== 'function') {
       throw new TypeError('scheduler.postTask: callback must be a function');
     }
@@ -31,7 +38,7 @@ constexpr char kSchedulerBootstrap[] = R"JS(
           'scheduler.postTask: delay must be a non-negative finite number');
       }
     }
-    return new Promise(function (resolve, reject) {
+    return callResult = new Promise(function (resolve, reject) {
       setTimeout(function () {
         try {
           resolve(callback());
@@ -40,14 +47,17 @@ constexpr char kSchedulerBootstrap[] = R"JS(
         }
       }, delay);
     });
+    } catch (error) {
+      callThrew = true; callError = error; throw error;
+    } finally {
+      endCall(callToken, callThrew ? callError : callResult, callThrew);
+    }
   }
   var scheduler = Object.create(null);
   Object.defineProperty(scheduler, 'postTask', {
-    value: postTask, writable: false, enumerable: true, configurable: false
+    value: postTask, writable: false, enumerable: true, configurable: true
   });
-  Object.defineProperty(globalThis, 'scheduler', {
-    value: scheduler, writable: false, enumerable: true, configurable: false
-  });
+  return scheduler;
 })();
 )JS";
 
@@ -62,18 +72,14 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
 (function () {
   'use strict';
 
-  function defineReadonly(target, name, value) {
-    Object.defineProperty(target, name, {
-      value: value,
-      writable: false,
-      enumerable: true,
-      configurable: false
-    });
-  }
+  var beginCall = globalThis.__iv8HostCallBegin;
+  var endCall = globalThis.__iv8HostCallEnd;
+  delete globalThis.__iv8HostCallBegin;
+  delete globalThis.__iv8HostCallEnd;
 
   // Step 5g: capture the temporary native result factory and remove its global
-  // binding. matchMedia itself stays a JS function (its toString behavior is
-  // unchanged); only the returned list is HostObject-backed.
+  // binding. matchMedia keeps its JS function kind; the captured diagnostics
+  // alter its source text while only the returned list is HostObject-backed.
   var makeMediaQueryList = globalThis.__iv8MakeMediaQueryList;
   delete globalThis.__iv8MakeMediaQueryList;
 
@@ -190,10 +196,18 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
     return false;
   }
 
-  defineReadonly(globalThis, 'matchMedia', function (query) {
-    var text = String(query);
-    return makeMediaQueryList(text, mediaMatches(text));
-  });
+  return function (query) {
+    var callToken = beginCall('window.matchMedia', arguments);
+    var callResult, callError, callThrew = false;
+    try {
+      var text = String(query);
+      return callResult = makeMediaQueryList(text, mediaMatches(text));
+    } catch (error) {
+      callThrew = true; callError = error; throw error;
+    } finally {
+      endCall(callToken, callThrew ? callError : callResult, callThrew);
+    }
+  };
 
   // M11-43: deterministic StorageManager. It is installed natively through
   // NavigatorHost (see make_storage_manager_object) so its reads/calls can be
@@ -218,9 +232,11 @@ constexpr char kWindowPostMessageBootstrap[] = R"JS(
   'use strict';
 
   var dispatch = globalThis.__iv8PostMessageDispatch;
-  var recordCall = globalThis.__iv8PostMessageRecord;
+  var beginCall = globalThis.__iv8HostCallBegin;
+  var endCall = globalThis.__iv8HostCallEnd;
   delete globalThis.__iv8PostMessageDispatch;
-  delete globalThis.__iv8PostMessageRecord;
+  delete globalThis.__iv8HostCallBegin;
+  delete globalThis.__iv8HostCallEnd;
 
   var scheduleTask = globalThis.setTimeout;
   var clone = globalThis.structuredClone;
@@ -239,10 +255,12 @@ constexpr char kWindowPostMessageBootstrap[] = R"JS(
   }
 
   function postMessage(message, targetOrigin, transfer) {
+    var callToken = beginCall('window.postMessage', arguments);
+    var callError, callThrew = false;
+    try {
     if (arguments.length < 1) {
       throw new TypeError('postMessage: message is required');
     }
-    recordCall();
     if (transfer !== undefined && transfer !== null) {
       if (typeof transfer.length !== 'number' || transfer.length !== 0) {
         throw new TypeError('postMessage: transfer lists are not supported');
@@ -260,6 +278,11 @@ constexpr char kWindowPostMessageBootstrap[] = R"JS(
       ports: []
     });
     scheduleTask(function () { dispatch(event); }, 0);
+    } catch (error) {
+      callThrew = true; callError = error; throw error;
+    } finally {
+      endCall(callToken, callThrew ? callError : new.target ? this : undefined, callThrew);
+    }
   }
 
   Object.defineProperty(globalThis, 'postMessage', {

@@ -3,9 +3,11 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_summary.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -29,6 +31,9 @@ void web_interface_factory(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void offline_fetch(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "fetch", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "fetch");
     auto context = isolate->GetCurrentContext();
     v8::Local<v8::Promise::Resolver> resolver;
     if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) return;

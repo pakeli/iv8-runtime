@@ -6,6 +6,7 @@
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -50,10 +51,10 @@ v8::Local<v8::Value> make_performance_entry(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
     const PerformanceEntryRecord& entry) {
     v8::Local<v8::Object> object = v8::Object::New(isolate);
+    const void* identity = native_api_identity(isolate, object);
     const auto define = [&](const char* key, v8::Local<v8::Value> value) {
-        (void)object->DefineOwnProperty(
-            context,
-            v8::String::NewFromUtf8(isolate, key).ToLocalChecked(), value,
+        (void)install_traced_api_data_property(isolate, context, object, key, value,
+            identity, "host_object", "PerformanceEntry",
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
     };
     define("name", v8_string(isolate, entry.name));

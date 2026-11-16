@@ -6,6 +6,7 @@
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -23,6 +24,7 @@ v8::Local<v8::Value> resolved_promise(v8::Isolate* isolate,
 void storage_manager_estimate_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "navigator.storage", "estimate");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::uint64_t seq = access_trace_record(
         isolate, &kStorageManagerTraceToken, "storage_manager",
@@ -39,6 +41,7 @@ void storage_manager_estimate_callback(
 void storage_manager_persisted_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "navigator.storage", "persisted");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::uint64_t seq = access_trace_record(
         isolate, &kStorageManagerTraceToken, "storage_manager",
@@ -51,6 +54,7 @@ void storage_manager_persisted_callback(
 void storage_manager_persist_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "navigator.storage", "persist");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::uint64_t seq = access_trace_record(
         isolate, &kStorageManagerTraceToken, "storage_manager",
@@ -68,9 +72,8 @@ v8::Local<v8::Object> make_storage_manager_object(
             v8::FunctionTemplate::New(isolate, callback)
                 ->GetFunction(context)
                 .ToLocalChecked();
-        (void)manager->DefineOwnProperty(
-            context,
-            v8::String::NewFromUtf8(isolate, name).ToLocalChecked(), fn,
+        (void)install_traced_api_data_property(isolate, context, manager, name, fn,
+            &kStorageManagerTraceToken, "storage_manager", "navigator.storage",
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
     };
     define("estimate", &storage_manager_estimate_callback);
@@ -148,6 +151,7 @@ void permission_status_state_getter(
 void permission_status_add_listener_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "permissionStatus", "addEventListener");
     const auto* entry = static_cast<const PermissionNameInfo*>(
         info.Data().As<v8::External>()->Value(kPermissionStatusTag));
     const std::uint64_t seq = access_trace_record(
@@ -160,6 +164,7 @@ void permission_status_add_listener_callback(
 void permission_status_remove_listener_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "permissionStatus", "removeEventListener");
     const auto* entry = static_cast<const PermissionNameInfo*>(
         info.Data().As<v8::External>()->Value(kPermissionStatusTag));
     const std::uint64_t seq = access_trace_record(
@@ -172,6 +177,7 @@ void permission_status_remove_listener_callback(
 void permission_status_dispatch_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "permissionStatus", "dispatchEvent");
     const auto* entry = static_cast<const PermissionNameInfo*>(
         info.Data().As<v8::External>()->Value(kPermissionStatusTag));
     const std::uint64_t seq = access_trace_record(
@@ -197,18 +203,16 @@ v8::Local<v8::Object> make_permission_status_object(
     };
     define_accessor("name", &permission_status_name_getter);
     define_accessor("state", &permission_status_state_getter);
-    (void)status->Set(
-        context, v8_string(isolate, "onchange").As<v8::String>(),
-        v8::Null(isolate));
+    (void)install_traced_api_data_property(isolate, context, status, "onchange",
+        v8::Null(isolate), entry, "permission_status", "permissionStatus");
     const auto define_method = [&](const char* name,
                                    v8::FunctionCallback callback) {
         v8::Local<v8::Function> fn =
             v8::FunctionTemplate::New(isolate, callback, data)
                 ->GetFunction(context)
                 .ToLocalChecked();
-        (void)status->DefineOwnProperty(
-            context,
-            v8::String::NewFromUtf8(isolate, name).ToLocalChecked(), fn,
+        (void)install_traced_api_data_property(isolate, context, status, name, fn,
+            entry, "permission_status", "permissionStatus",
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
     };
     define_method("addEventListener", &permission_status_add_listener_callback);
@@ -221,6 +225,7 @@ v8::Local<v8::Object> make_permission_status_object(
 void permissions_query_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "navigator.permissions", "query");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::uint64_t seq = access_trace_record(
         isolate, &kPermissionsTraceToken, "permissions",
@@ -262,8 +267,8 @@ v8::Local<v8::Object> make_permissions_object(v8::Isolate* isolate,
         v8::FunctionTemplate::New(isolate, &permissions_query_callback)
             ->GetFunction(context)
             .ToLocalChecked();
-    (void)permissions->DefineOwnProperty(
-        context, v8::String::NewFromUtf8Literal(isolate, "query"), query,
+    (void)install_traced_api_data_property(isolate, context, permissions, "query", query,
+        &kPermissionsTraceToken, "permissions", "navigator.permissions",
         static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
     return permissions;
 }

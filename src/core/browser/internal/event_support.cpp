@@ -7,9 +7,12 @@
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "iv8/web_method.h"
+#include "../window/window_trace_support.h"
 #include "../internal/trace_hooks.h"
 
 namespace iv8::browser {
+
+void apply_prevent_default(const v8::FunctionCallbackInfo<v8::Value>& info);
 
 namespace {
 
@@ -179,10 +182,11 @@ void end_event_dispatch(v8::Isolate* isolate, v8::Local<v8::Context> context,
 void event_extra_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
-    auto state = get_event_state(isolate, context, info.This(), true);
-    if (state.IsEmpty()) return;
     v8::String::Utf8Value field(isolate, info.Data());
     if (*field == nullptr) return;
+    NativeApiPropertyTrace tracing(info, "Event", *field, AccessOperation::kGet);
+    auto state = get_event_state(isolate, context, info.This(), true);
+    if (state.IsEmpty()) return;
     const std::string name(*field, static_cast<std::size_t>(field.length()));
     if (name == "isTrusted") { info.GetReturnValue().Set(false); return; }
     if (name == "cancelBubble") { info.GetReturnValue().Set(event_is_stopped(isolate, context, info.This())); return; }
@@ -196,23 +200,26 @@ void event_extra_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
 void event_extra_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
-    if (get_event_state(isolate, context, info.This(), true).IsEmpty()) return;
     v8::String::Utf8Value field(isolate, info.Data());
     if (*field == nullptr) return;
+    NativeApiPropertyTrace tracing(info, "Event", *field, AccessOperation::kSet);
+    if (get_event_state(isolate, context, info.This(), true).IsEmpty()) return;
     const bool value = info.Length() > 0 && info[0]->BooleanValue(isolate);
     if (std::strcmp(*field, "cancelBubble") == 0 && value) {
         if (!info.This()->SetPrivate(context, event_stopped_key(isolate), v8::True(isolate)).FromMaybe(false)) return;
     } else if (std::strcmp(*field, "returnValue") == 0 && !value) {
-        prevent_default_callback(info);
+        apply_prevent_default(info);
     }
 }
 
 void event_init_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "Event", "initEvent");
     auto state = get_event_state(info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), info.This(), true);
     if (!state.IsEmpty()) (void)initialize_legacy_event(info, state);
 }
 
 void event_composed_path_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "Event", "composedPath");
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
     auto state = get_event_state(isolate, context, info.This(), true);
@@ -232,16 +239,18 @@ void event_composed_path_callback(const v8::FunctionCallbackInfo<v8::Value>& inf
 void ui_event_extra_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
-    auto state = get_event_state(isolate, context, info.This(), true, true);
-    if (state.IsEmpty()) return;
     v8::String::Utf8Value field(isolate, info.Data());
     if (*field == nullptr) return;
+    NativeApiPropertyTrace tracing(info, "UIEvent", *field, AccessOperation::kGet);
+    auto state = get_event_state(isolate, context, info.This(), true, true);
+    if (state.IsEmpty()) return;
     if (std::strcmp(*field, "sourceCapabilities") == 0) { info.GetReturnValue().Set(v8::Null(isolate)); return; }
     v8::Local<v8::Value> value;
     if (state_field(isolate, context, state, *field, &value)) info.GetReturnValue().Set(value);
 }
 
 void ui_event_init_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "UIEvent", "initUIEvent");
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
     auto state = get_event_state(isolate, context, info.This(), true, true);
@@ -355,6 +364,7 @@ bool event_is_immediately_stopped(v8::Isolate* isolate,
 // propagation to LATER targets only; remaining listeners on the current target
 // still run.
 void stop_propagation_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "Event", "stopPropagation");
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     (void)info.This()->SetPrivate(context, event_stopped_key(isolate),
@@ -366,6 +376,7 @@ void stop_propagation_callback(const v8::FunctionCallbackInfo<v8::Value>& info) 
 // bubbling checks correct without touching every call site.
 void stop_immediate_propagation_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "Event", "stopImmediatePropagation");
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     (void)info.This()->SetPrivate(context, event_stopped_key(isolate),
@@ -379,6 +390,11 @@ void stop_immediate_propagation_callback(
 // dispatchEvent return value).
 void prevent_default_callback(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "Event", "preventDefault");
+    apply_prevent_default(info);
+}
+
+void apply_prevent_default(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     if (event_in_passive_listener(isolate, context, info.This())) {

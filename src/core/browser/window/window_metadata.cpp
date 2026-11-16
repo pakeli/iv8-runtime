@@ -18,6 +18,7 @@
 #include "iv8/web_method.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
+#include "window_trace_support.h"
 
 namespace iv8 {
 
@@ -31,8 +32,7 @@ void window_name_getter(v8::Local<v8::Name>,
     v8::Isolate* isolate = info.GetIsolate();
     auto* page = static_cast<PageState*>(
         info.Data().As<v8::External>()->Value(kWindowNameTag));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", "name", AccessOperation::kGet);
+    const std::uint64_t seq = window_trace_record(isolate, "name", AccessOperation::kGet);
     AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8_string(isolate, page->window_name()));
 }
@@ -43,8 +43,7 @@ void window_name_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     auto* page = static_cast<PageState*>(
         info.Data().As<v8::External>()->Value(kWindowNameTag));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", "name", AccessOperation::kSet);
+    const std::uint64_t seq = window_trace_record(isolate, "name", AccessOperation::kSet);
     AccessPropertySetCompletion completion(isolate, seq, info, value);
     v8::Local<v8::String> str;
     if (!value->ToString(context).ToLocal(&str)) {
@@ -62,8 +61,7 @@ void window_status_getter(v8::Local<v8::Name>,
     v8::Isolate* isolate = info.GetIsolate();
     auto* page = static_cast<PageState*>(
         info.Data().As<v8::External>()->Value(kWindowNameTag));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", "status", AccessOperation::kGet);
+    const std::uint64_t seq = window_trace_record(isolate, "status", AccessOperation::kGet);
     AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(v8_string(isolate, page->window_status()));
 }
@@ -74,8 +72,7 @@ void window_status_setter(v8::Local<v8::Name>, v8::Local<v8::Value> value,
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     auto* page = static_cast<PageState*>(
         info.Data().As<v8::External>()->Value(kWindowNameTag));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", "status", AccessOperation::kSet);
+    const std::uint64_t seq = window_trace_record(isolate, "status", AccessOperation::kSet);
     AccessPropertySetCompletion completion(isolate, seq, info, value);
     v8::Local<v8::String> str;
     if (!value->ToString(context).ToLocal(&str)) {
@@ -101,9 +98,7 @@ void window_alias_getter(v8::Local<v8::Name> property,
     }
     v8::String::Utf8Value utf8(isolate, property);
     const std::string name(*utf8 != nullptr ? *utf8 : "");
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", name.c_str(),
-        AccessOperation::kGet);
+    const std::uint64_t seq = window_trace_record(isolate, name.c_str(), AccessOperation::kGet);
     AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(page->window_alias_value(
         isolate, isolate->GetCurrentContext(), name));
@@ -120,9 +115,7 @@ void window_alias_setter(v8::Local<v8::Name> property,
     }
     v8::String::Utf8Value utf8(isolate, property);
     const std::string name(*utf8 != nullptr ? *utf8 : "");
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", name.c_str(),
-        AccessOperation::kSet);
+    const std::uint64_t seq = window_trace_record(isolate, name.c_str(), AccessOperation::kSet);
     AccessPropertySetCompletion completion(isolate, seq, info, value);
     page->set_window_alias(isolate, name, value);
 }
@@ -244,9 +237,7 @@ void window_metadata_getter(v8::Local<v8::Name> property,
         return;
     }
     const std::string name(*utf8, static_cast<std::size_t>(utf8.length()));
-    const std::uint64_t seq = access_trace_record(
-        isolate, page, "window", "window", name.c_str(),
-        AccessOperation::kGet);
+    const std::uint64_t seq = window_trace_record(isolate, name.c_str(), AccessOperation::kGet);
     AccessPropertyCompletion completion(isolate, seq, info);
     info.GetReturnValue().Set(page->window_metadata_value(isolate, name));
 }

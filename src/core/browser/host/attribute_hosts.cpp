@@ -10,9 +10,12 @@
 #include <utility>
 #include <vector>
 
+#include "iv8/access_summary.h"
 #include "iv8/web_interface.h"
 #include "../dom/html_parser.h"
 #include "../internal/common.h"
+#include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 #include "document_host.h"
 
 namespace iv8::browser {
@@ -182,6 +185,7 @@ public:
     NamedNodeMapHost(DocumentHost* owner, DomNode* element) : AttributeObjectHost(owner, Kind::Map, element) {}
     std::string prototype_key() const override { return "NamedNodeMap"; }
     std::string trace_object_type() const override { return "named_node_map"; }
+    std::string trace_label() const override { return "NamedNodeMap"; }
     std::vector<std::string> property_names() const override { return {"length"}; }
     std::vector<std::string> method_names() const override {
         return {"item", "getNamedItem", "getNamedItemNS", "setNamedItem", "setNamedItemNS", "removeNamedItem", "removeNamedItemNS"};
@@ -200,6 +204,7 @@ public:
     DatasetHost(DocumentHost* owner, DomNode* element) : AttributeObjectHost(owner, Kind::Dataset, element) {}
     std::string prototype_key() const override { return "DOMStringMap"; }
     std::string trace_object_type() const override { return "dom_string_map"; }
+    std::string trace_label() const override { return "DOMStringMap"; }
     std::vector<std::string> property_names() const override { return {}; }
     std::vector<std::string> method_names() const override { return {}; }
     v8::Local<v8::Value> get_property(v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&) override { return v8::Undefined(isolate); }
@@ -499,11 +504,55 @@ std::string property_name(v8::Isolate* isolate, v8::Local<v8::Name> property) {
     return *text == nullptr ? "" : std::string(*text, static_cast<std::size_t>(text.length()));
 }
 
+std::uint64_t attribute_record(v8::Isolate* isolate, AttributeObjectHost* host,
+    const std::string& member, AccessOperation operation) {
+    return host == nullptr ? 0 : access_trace_record(isolate, host,
+        host->trace_object_type().c_str(), host->trace_label().c_str(), member.c_str(), operation);
+}
+
+void attribute_missing(v8::Isolate* isolate, AttributeObjectHost* host,
+    v8::Local<v8::Object> holder, v8::Local<v8::Name> property, const std::string& member) {
+    auto* trace = access_trace_from_isolate(isolate);
+    if (trace == nullptr || !trace->enabled() || host == nullptr) return;
+    auto context = isolate->GetCurrentContext();
+    auto current = holder;
+    for (int depth = 0; depth < 1000; ++depth) {
+        if (current->IsProxy() || current->HasRealNamedProperty(context, property).FromMaybe(true)) return;
+        auto parent = current->GetPrototype();
+        if (!parent->IsObject()) {
+            (void)trace->record(host, host->trace_object_type(), host->trace_label(), member,
+                AccessOperation::kGetProbe, "missing");
+            return;
+        }
+        current = parent.As<v8::Object>();
+        if (host_object_backing(current) != nullptr) return;
+    }
+}
+
+void attribute_returned(v8::Isolate* isolate, std::uint64_t sequence,
+    v8::Local<v8::Value> value) {
+    if (sequence == 0) return;
+    try {
+        AccessCompletion completion;
+        completion.outcome = "returned";
+        completion.return_summary = access_value_summary(isolate, value);
+        if (auto* trace = access_trace_from_isolate(isolate)) trace->complete(sequence, std::move(completion));
+    } catch (...) {
+        // Completion metadata must not change the underlying DOM operation.
+    }
+}
+
 v8::Intercepted attribute_named_get(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value>& info) {
     if (!property->IsString()) return v8::Intercepted::kNo;
     auto* host = callback_host(info.Holder());
-    const auto attribute = dynamic_attribute(host, property_name(info.GetIsolate(), property));
-    if (!attribute) return v8::Intercepted::kNo;
+    const auto member = property_name(info.GetIsolate(), property);
+    const auto attribute = dynamic_attribute(host, member);
+    if (!attribute) {
+        attribute_missing(info.GetIsolate(), host, info.Holder(), property, member);
+        return v8::Intercepted::kNo;
+    }
+    const auto sequence = attribute_record(info.GetIsolate(), host, member, AccessOperation::kGet);
+    AccessPropertyCompletion completion(info.GetIsolate(), sequence, info);
     info.GetReturnValue().Set(host->kind == AttributeObjectHost::Kind::Dataset
         ? v8_string(info.GetIsolate(), attribute_value(attribute))
         : wrap_attr(info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), host->document, attribute));
@@ -534,41 +583,58 @@ v8::Intercepted attribute_named_set(v8::Local<v8::Name> property, v8::Local<v8::
     const v8::PropertyCallbackInfo<v8::Boolean>& info) {
     if (!property->IsString()) return v8::Intercepted::kNo;
     auto* host = callback_host(info.Holder());
+    const auto member = property_name(info.GetIsolate(), property);
     if (host->kind == AttributeObjectHost::Kind::Dataset) {
+        const auto sequence = attribute_record(info.GetIsolate(), host, member, AccessOperation::kSet);
+        AccessPropertySetCompletion completion(info.GetIsolate(), sequence, info, value);
         info.GetReturnValue().Set(set_dataset(info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), host,
-            property_name(info.GetIsolate(), property), value));
+            member, value));
         return v8::Intercepted::kYes;
     }
-    if (!dynamic_attribute(host, property_name(info.GetIsolate(), property))) return v8::Intercepted::kNo;
+    if (!dynamic_attribute(host, member)) return v8::Intercepted::kNo;
+    const auto sequence = attribute_record(info.GetIsolate(), host, member, AccessOperation::kSet);
+    AccessPropertySetCompletion completion(info.GetIsolate(), sequence, info, value);
     info.GetReturnValue().Set(false); return v8::Intercepted::kYes;
 }
 
 v8::Intercepted attribute_named_delete(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Boolean>& info) {
     if (!property->IsString()) return v8::Intercepted::kNo;
     auto* host = callback_host(info.Holder());
-    const auto attribute = dynamic_attribute(host, property_name(info.GetIsolate(), property));
+    const auto member = property_name(info.GetIsolate(), property);
+    const auto sequence = attribute_record(info.GetIsolate(), host, member, AccessOperation::kDelete);
+    const auto attribute = dynamic_attribute(host, member);
     if (!attribute) return v8::Intercepted::kNo;
     if (host->kind == AttributeObjectHost::Kind::Dataset)
         remove_attribute(info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), host->document, attribute);
-    info.GetReturnValue().Set(true); return v8::Intercepted::kYes;
+    info.GetReturnValue().Set(true);
+    attribute_returned(info.GetIsolate(), sequence, v8::True(info.GetIsolate()));
+    return v8::Intercepted::kYes;
 }
 
 v8::Intercepted attribute_named_define(v8::Local<v8::Name> property, const v8::PropertyDescriptor& descriptor,
     const v8::PropertyCallbackInfo<v8::Boolean>& info) {
     if (!property->IsString()) return v8::Intercepted::kNo;
     auto* host = callback_host(info.Holder());
+    const auto member = property_name(info.GetIsolate(), property);
+    const auto sequence = attribute_record(info.GetIsolate(), host, member, AccessOperation::kDefineProperty);
     if (host->kind == AttributeObjectHost::Kind::Dataset) {
+        const auto value = descriptor.has_value() ? descriptor.value()
+            : v8::Local<v8::Value>(v8::Undefined(info.GetIsolate()));
+        AccessPropertySetCompletion completion(info.GetIsolate(), sequence, info, value);
         if (descriptor.has_get() || descriptor.has_set()) { info.GetReturnValue().Set(false); return v8::Intercepted::kYes; }
         info.GetReturnValue().Set(set_dataset(info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), host,
-            property_name(info.GetIsolate(), property), descriptor.has_value() ? descriptor.value() : v8::Local<v8::Value>(v8::Undefined(info.GetIsolate()))));
+            member, value));
         return v8::Intercepted::kYes;
     }
-    if (!dynamic_attribute(host, property_name(info.GetIsolate(), property))) return v8::Intercepted::kNo;
-    info.GetReturnValue().Set(false); return v8::Intercepted::kYes;
+    if (!dynamic_attribute(host, member)) return v8::Intercepted::kNo;
+    info.GetReturnValue().Set(false);
+    attribute_returned(info.GetIsolate(), sequence, v8::False(info.GetIsolate()));
+    return v8::Intercepted::kYes;
 }
 
 void attribute_named_enumerate(const v8::PropertyCallbackInfo<v8::Array>& info) {
     auto* host = callback_host(info.Holder()); ensure_metadata(host->element);
+    (void)attribute_record(info.GetIsolate(), host, "", AccessOperation::kOwnKeys);
     std::vector<std::string> names;
     for (const auto& attribute : host->element->attribute_nodes) {
         const auto name = host->kind == AttributeObjectHost::Kind::Dataset ? dataset_key(attribute) : std::optional(attribute->qualified_name);
@@ -585,7 +651,14 @@ v8::Intercepted attribute_index_get(std::uint32_t index, const v8::PropertyCallb
     if (host->kind == AttributeObjectHost::Kind::Dataset)
         return attribute_named_get(v8_string(info.GetIsolate(), std::to_string(index)).As<v8::Name>(), info);
     ensure_metadata(host->element);
-    if (index >= host->element->attribute_nodes.size()) return v8::Intercepted::kNo;
+    const auto member = std::to_string(index);
+    if (index >= host->element->attribute_nodes.size()) {
+        attribute_missing(info.GetIsolate(), host, info.Holder(),
+            v8_string(info.GetIsolate(), member).As<v8::Name>(), member);
+        return v8::Intercepted::kNo;
+    }
+    const auto sequence = attribute_record(info.GetIsolate(), host, member, AccessOperation::kGet);
+    AccessPropertyCompletion completion(info.GetIsolate(), sequence, info);
     info.GetReturnValue().Set(wrap_attr(info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), host->document, host->element->attribute_nodes[index]));
     return v8::Intercepted::kYes;
 }
@@ -662,6 +735,18 @@ void install_attribute_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> c
     install_host_interface(isolate, context, &attribute);
     install_host_interface(isolate, context, &map);
     install_host_interface(isolate, context, &dataset);
+    auto prototype = web_interface_prototype(isolate, context, "NamedNodeMap");
+    if (prototype.IsEmpty()) return;
+    for (const auto& member : map.method_names()) {
+        v8::Local<v8::String> key;
+        v8::Local<v8::Value> function;
+        if (!v8::String::NewFromUtf8(isolate, member.c_str()).ToLocal(&key) ||
+            !prototype->Get(context, key).ToLocal(&function)) return;
+        const auto attributes = prototype->GetPropertyAttributes(context, key);
+        if (attributes.IsNothing() || !install_traced_api_data_property(isolate, context,
+                prototype, member, function, native_api_identity(isolate, prototype),
+                "host_object", "NamedNodeMap.prototype", attributes.FromJust())) return;
+    }
 }
 
 bool handle_document_attribute_method(v8::Isolate* isolate, v8::Local<v8::Context> context,

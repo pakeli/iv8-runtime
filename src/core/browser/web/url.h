@@ -26,6 +26,8 @@ extern void url_constructor(const v8::FunctionCallbackInfo<v8::Value>& info);
 
 extern void url_to_href(const v8::FunctionCallbackInfo<v8::Value>& info);
 
+extern void url_to_json(const v8::FunctionCallbackInfo<v8::Value>& info);
+
 extern v8::Local<v8::Private> usp_private_key(v8::Isolate* isolate);
 
 extern std::string usp_read_state(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Object> self);

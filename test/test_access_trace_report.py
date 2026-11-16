@@ -35,16 +35,20 @@ def test_report_aggregates_accesses_missing_candidates_and_is_non_destructive():
         assert report["trace"]["enabled"] is True
         assert report["trace"]["dropped_events"] == 0
         assert report["trace"]["filter_object_types"] is None
-        assert report["events"]["count"] == 4
+        assert report["events"]["count"] == 7
         assert report["events"]["by_operation"] == {
-            "get": 2, "get_probe": 1, "call": 1}
+            "get": 5, "get_probe": 1, "call": 1}
         assert report["events"]["by_object_type"] == {
-            "navigator": 3, "host_probe": 1}
+            "window": 3, "navigator": 3, "host_probe": 1}
         accesses = {
             (entry["object_type"], entry["member"], entry["operation"]): entry
             for entry in report["accesses"]
         }
         user_agent = accesses[("navigator", "userAgent", "get")]
+        navigator_entry = accesses[("window", "navigator", "get")]
+        assert navigator_entry["count"] == 3
+        assert navigator_entry["outcomes"] == {"returned": 3}
+        assert navigator_entry["object_id"] != user_agent["object_id"]
         assert user_agent["count"] == 2
         assert user_agent["first_seq"] < user_agent["last_seq"]
         assert user_agent["first_resource_name"] == "report.js"
@@ -72,9 +76,9 @@ def test_report_aggregates_accesses_missing_candidates_and_is_non_destructive():
         assert "not_covered" in report["coverage"]
 
         # Default is a non-destructive read.
-        assert len(page.read_access_trace(clear=False)["events"]) == 4
+        assert len(page.read_access_trace(clear=False)["events"]) == 7
         cleared = page.access_trace_report(clear=True)
-        assert cleared["events"]["count"] == 4
+        assert cleared["events"]["count"] == 7
         assert page.read_access_trace(clear=False)["events"] == []
 
 
@@ -123,8 +127,9 @@ def test_report_warnings_for_recording_filter_capacity_and_empty_logs():
         page.start_access_trace(max_events=1)
         page.eval("navigator.userAgent; screen.width;", name="capacity.js")
         capped = page.access_trace_report()
-        assert capped["trace"]["dropped_events"] == 1
+        assert capped["trace"]["dropped_events"] == 3
         assert capped["events"]["count"] == 1
+        assert capped["events"]["by_object_type"] == {"window": 1}
         assert {warning["code"] for warning in capped["warnings"]} == {
             "capacity_exceeded"}
 

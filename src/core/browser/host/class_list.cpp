@@ -6,10 +6,12 @@
 #include <utility>
 #include <vector>
 
+#include "iv8/access_summary.h"
 #include "iv8/web_method.h"
 #include "../dom/dom_query.h"
 #include "../dom/selector_match.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 #include "document_host.h"
 
 namespace iv8::browser {
@@ -80,6 +82,9 @@ void class_list_contains(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (binding == nullptr) {
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "contains", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "DOMTokenList", "contains");
     std::string token;
     if (!class_list_token(isolate, context, info[0], &token)) {
         return;
@@ -97,6 +102,9 @@ void class_list_add(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (binding == nullptr) {
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "add", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "DOMTokenList", "add");
     const std::string old_name = binding->node->class_name;
     const bool old_has_class = binding->node->has_class;
     std::vector<std::string> tokens;
@@ -128,6 +136,9 @@ void class_list_remove(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (binding == nullptr) {
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "remove", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "DOMTokenList", "remove");
     const std::string old_name = binding->node->class_name;
     const bool old_has_class = binding->node->has_class;
     std::vector<std::string> tokens;
@@ -160,6 +171,9 @@ void class_list_toggle(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (binding == nullptr) {
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "toggle", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "DOMTokenList", "toggle");
     std::string token;
     if (!class_list_token(isolate, context, info[0], &token)) {
         return;
@@ -191,6 +205,9 @@ void class_list_replace(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (binding == nullptr) {
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "replace", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "DOMTokenList", "replace");
     std::string old_token;
     std::string new_token;
     if (!class_list_token(isolate, context, info[0], &old_token) ||
@@ -224,6 +241,9 @@ void class_list_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (binding == nullptr) {
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "item", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "DOMTokenList", "item");
     v8::Local<v8::Uint32> index_value;
     if (!info[0]->ToUint32(context).ToLocal(&index_value)) {
         return;
@@ -245,6 +265,8 @@ void class_list_length_getter(v8::Local<v8::Name> property,
     if (binding == nullptr) {
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "length", AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, sequence, info);
     info.GetReturnValue().Set(v8::Integer::NewFromUnsigned(
         isolate, static_cast<unsigned>(binding->node->classes.size())));
 }
@@ -257,6 +279,8 @@ void class_list_value_getter(v8::Local<v8::Name> property,
     if (binding == nullptr) {
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "value", AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, sequence, info);
     info.GetReturnValue().Set(v8_string(isolate, binding->node->class_name));
 }
 
@@ -271,6 +295,8 @@ void class_list_value_setter(v8::Local<v8::Name> property,
         info.GetReturnValue().Set(false);
         return;
     }
+    const auto sequence = access_trace_record(isolate, binding, "host_object", "DOMTokenList", "value", AccessOperation::kSet);
+    AccessPropertySetCompletion completion(isolate, sequence, info, value);
     v8::Local<v8::String> str;
     if (!value->ToString(context).ToLocal(&str)) {
         info.GetReturnValue().Set(false);
@@ -306,7 +332,8 @@ v8::Local<v8::Value> make_class_list(v8::Isolate* isolate,
             v8::FunctionTemplate::New(isolate, callback, data)
                 ->GetFunction(context)
                 .ToLocalChecked();
-        (void)list->Set(context, v8_string(isolate, name), fn);
+        (void)install_traced_api_data_property(isolate, context, list, name, fn,
+            binding, "host_object", "DOMTokenList");
     };
     add_method("contains", &class_list_contains);
     add_method("add", &class_list_add);

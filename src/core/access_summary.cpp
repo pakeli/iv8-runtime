@@ -268,8 +268,11 @@ AccessCallCompletion::~AccessCallCompletion() noexcept {
                                      *try_catch_, completion_);
         } else {
             completion_.outcome = "returned";
-            completion_.return_summary = access_value_summary(
-                isolate_, info_->GetReturnValue().Get());
+            auto returned = info_->GetReturnValue().Get();
+            // A constructor's primitive/implicit return yields the allocated
+            // receiver, while an explicit object replaces it (normal JS rules).
+            if (info_->IsConstructCall() && !returned->IsObject()) returned = info_->This();
+            completion_.return_summary = access_value_summary(isolate_, returned);
         }
         if (trace != nullptr) {
             trace->complete(seq_, std::move(completion_));
@@ -336,6 +339,15 @@ AccessPropertySetCompletion::AccessPropertySetCompletion(
     v8::Isolate* isolate, std::uint64_t seq,
     const v8::PropertyCallbackInfo<void>& /*info*/,
     v8::Local<v8::Value> value)
+    : AccessPropertySetCompletion(isolate, seq, value) {}
+
+AccessPropertySetCompletion::AccessPropertySetCompletion(v8::Isolate* isolate,
+    std::uint64_t seq, const v8::PropertyCallbackInfo<v8::Boolean>&,
+    v8::Local<v8::Value> value)
+    : AccessPropertySetCompletion(isolate, seq, value) {}
+
+AccessPropertySetCompletion::AccessPropertySetCompletion(v8::Isolate* isolate,
+    std::uint64_t seq, v8::Local<v8::Value> value)
     : isolate_(isolate), seq_(seq) {
     if (seq_ == 0) {
         return;

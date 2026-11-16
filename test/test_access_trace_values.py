@@ -189,10 +189,17 @@ def test_native_callbacks_have_summaries_and_probes_do_not():
         page.start_access_trace()
         page.eval("performance.now(); navigator.notThere;", name="probe.js")
         events = _events(page)
-        performance = [event for event in events
-                       if event["object_type"] == "performance"][0]
-        probe = [event for event in events
-                 if event["operation"] == "get_probe"][0]
+        assert [(event["object_type"], event["member"], event["operation"])
+                for event in events] == [
+            ("window", "performance", "get"),
+            ("performance", "now", "get"),
+            ("performance", "now", "call"),
+            ("window", "navigator", "get"),
+            ("navigator", "notThere", "get_probe"),
+        ]
+        method_reference, performance, probe = events[1], events[2], events[4]
+        assert method_reference["value_summary"] == "function"
+        assert method_reference["object_id"] == performance["object_id"]
         assert performance["outcome"] == "returned"
         assert performance["argument_count"] == 0
         assert performance["argument_summaries"] == []

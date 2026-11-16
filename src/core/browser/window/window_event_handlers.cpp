@@ -16,6 +16,7 @@
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
 #include "../window/window_event_target.h"
+#include "window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -95,6 +96,9 @@ void window_event_handler_function_getter(
     if (!function_handler_data(info, &target, &name)) {
         return;
     }
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(),
+        window_trace_record(info.GetIsolate(), name.c_str(), AccessOperation::kGet),
+        info, AccessOperation::kGet);
     info.GetReturnValue().Set(target->get_event_handler(info.GetIsolate(), name));
 }
 
@@ -105,6 +109,9 @@ void window_event_handler_function_setter(
     if (!function_handler_data(info, &target, &name)) {
         return;
     }
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(),
+        window_trace_record(info.GetIsolate(), name.c_str(), AccessOperation::kSet),
+        info, AccessOperation::kSet);
     v8::Local<v8::Value> value = info.Length() > 0
         ? info[0] : v8::Local<v8::Value>(v8::Undefined(info.GetIsolate()));
     target->set_event_handler(info.GetIsolate(), name, value);

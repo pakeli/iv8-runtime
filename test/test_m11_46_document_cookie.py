@@ -132,11 +132,13 @@ def test_cookie_is_a_writable_traced_document_property():
         events = page.read_access_trace()["events"]
         assert [(event["object_type"], event["member"], event["operation"])
                 for event in events] == [
+            ("window", "document", "get"),
             ("document", "cookie", "set"),
+            ("window", "document", "get"),
             ("document", "cookie", "get"),
         ]
-        assert events[0]["outcome"] == "returned"
-        assert events[1]["value_summary"] == "string:3:a=1"
+        assert events[1]["outcome"] == "returned"
+        assert events[3]["value_summary"] == "string:3:a=1"
 
 
 @on_only
@@ -187,7 +189,8 @@ def test_cookie_coercion_failure_preserves_jar_and_trace_exception():
         assert info.value.message == "cookie coercion"
         events = page.read_access_trace()["events"]
         assert [(event["member"], event["operation"], event["outcome"])
-                for event in events] == [("cookie", "set", "threw")]
+                for event in events] == [("document", "get", "returned"),
+                                         ("cookie", "set", "threw")]
         assert page.eval("document.cookie") == "session=kept"
 
 

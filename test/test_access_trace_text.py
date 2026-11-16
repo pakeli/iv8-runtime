@@ -200,11 +200,19 @@ def test_native_cookie_user_workflow_and_raw_compatibility():
     with iv8.Page() as page:
         page.start_access_trace()
         page.eval("document.cookie; document.cookie = 'a=1'; document.cookie")
-        expected = 'GET document.cookie -> ""\nSET document.cookie = "a=1"\nGET document.cookie -> "a=1"'
+        expected = '\n'.join([
+            'GET window.document -> <HostObject>',
+            'GET document.cookie -> ""',
+            'GET window.document -> <HostObject>',
+            'SET document.cookie = "a=1"',
+            'GET window.document -> <HostObject>',
+            'GET document.cookie -> "a=1"',
+        ])
         assert page.read_access_trace(clear=False, format="text") == expected
-        assert page.access_trace_report()["events"]["count"] == 3
+        assert page.access_trace_report()["events"]["count"] == 6
         raw = page.read_access_trace(clear=False)
-        assert raw["events"][0]["value_summary"] == "string:0:"
+        assert raw["events"][0]["value_summary"] == "host_object"
+        assert raw["events"][1]["value_summary"] == "string:0:"
         assert page.read_access_trace(format="text") == expected
         assert page.read_access_trace()["events"] == []
 
@@ -216,6 +224,7 @@ def test_native_calls_missing_and_method_reference():
         page.eval("hostProbe.add(2, 3); hostProbe.echo(null); document.notThere; hostProbe.echo;")
         assert page.read_access_trace(format="text").splitlines() == [
             "CALL hostProbe.add(2, 3) -> 5", "CALL hostProbe.echo(null) -> null",
+            "GET window.document -> <HostObject>",
             "GET document.notThere -> <missing>", "METHOD hostProbe.echo",
         ]
 
@@ -258,7 +267,8 @@ def test_native_capacity_and_dispose():
         page.start_access_trace(max_events=1)
         page.eval("document.cookie; document.cookie;")
         assert page.read_access_trace(format="text").splitlines() == [
-            'GET document.cookie -> ""', 'WARNING: 1 trace event(s) dropped (capacity 1).',
+            'GET window.document -> <HostObject>',
+            'WARNING: 3 trace event(s) dropped (capacity 1).',
         ]
     finally:
         page.dispose()

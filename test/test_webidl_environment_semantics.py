@@ -195,7 +195,12 @@ def test_descriptor_queries_do_not_invoke_idl_getters():
             Object.getOwnPropertyNames(document), Object.keys(document)];
         })()""") == [True, "get userAgent", 0, True, True, [], ["location"], ["location"]]
         events = page.read_access_trace()["events"]
-        assert not [event for event in events if event["operation"] == "get"]
+        gets = [event for event in events if event["operation"] == "get"]
+        assert [(event["object_type"], event["member"]) for event in gets] == [
+            ("window", "navigator"), ("window", "Navigator"),
+            ("window", "navigator"), ("window", "document"),
+            ("window", "document"),
+        ]
 
 
 def test_unavailable_execution_is_explicit():

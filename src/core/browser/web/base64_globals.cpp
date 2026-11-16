@@ -5,8 +5,11 @@
 #include <cstdint>
 #include <string>
 
+#include "iv8/access_summary.h"
 #include "iv8/base64.h"
 #include "../internal/common.h"
+#include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -18,6 +21,9 @@ namespace iv8::browser {
 // ArrayBuffer API / streaming / auto UTF-8.
 void btoa_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "btoa", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "btoa");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::String> str;
     if (!info[0]->ToString(context).ToLocal(&str)) {
@@ -44,6 +50,9 @@ void btoa_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void atob_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "atob", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "atob");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::String> str;
     if (!info[0]->ToString(context).ToLocal(&str)) {

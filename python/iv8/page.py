@@ -20,14 +20,17 @@ The public API shape is identical in both build modes: when V8 is linked,
 """
 
 from collections.abc import Mapping
+from contextlib import contextmanager
 from copy import deepcopy
 import math
 import re
+import sys
+import threading
 from urllib.parse import urljoin
 
 from . import _core
 from ._trace_format import format_access_trace
-from .errors import JSContextDisposedError, JSError
+from .errors import JSContextBusyError, JSContextDisposedError, JSError
 
 __all__ = ["Page"]
 
@@ -529,6 +532,55 @@ class Page:
         # M9-1 DevTools: lazily created by devtools_url() (None => never enabled,
         # so the Inspector + local server are never started; zero runtime impact).
         self._devtools = None
+        # Automatic tracing is opt-in through load(mode="debug"). A default
+        # page retains the existing manually controlled tracing behavior.
+        self._debug_trace = False
+        # Keep native execution, mode changes and the subsequent trace drain in
+        # one operation. Native execution alone releases its guard before the
+        # Python emitter runs, allowing a second thread to start otherwise.
+        self._execution_lock = threading.RLock()
+
+    @contextmanager
+    def _execution_scope(self):
+        execution_lock = getattr(self, "_execution_lock", None)
+        if execution_lock is None:
+            yield
+            return
+        if not execution_lock.acquire(blocking=False):
+            raise JSContextBusyError("Page is already executing")
+        try:
+            yield
+        finally:
+            execution_lock.release()
+
+    def _emit_debug_trace(self) -> None:
+        try:
+            report = self._native.read_access_trace(True)
+            text = format_access_trace(report)
+            if text:
+                print(text, flush=True)
+        except Exception as error:
+            # Diagnostics must not replace a script's result or original error.
+            try:
+                print(f"WARNING: could not output iv8 access trace: {error}",
+                      file=sys.stderr)
+            except Exception:
+                pass
+
+    def _run_with_debug_trace(self, operation, *arguments):
+        with self._execution_scope():
+            if not getattr(self, "_debug_trace", False):
+                return operation(*arguments)
+            try:
+                result = operation(*arguments)
+            except (JSContextBusyError, JSContextDisposedError):
+                # Rejected calls must not consume another execution's events.
+                raise
+            except BaseException:
+                self._emit_debug_trace()
+                raise
+            self._emit_debug_trace()
+            return result
 
     @property
     def disposed(self) -> bool:
@@ -560,7 +612,7 @@ class Page:
             raise TypeError("name must be a str")
         if not isinstance(to_py, bool):
             raise TypeError("to_py must be a bool")
-        return self._native.eval(source, to_py, name)
+        return self._run_with_debug_trace(self._native.eval, source, to_py, name)
 
     def run_timers(self) -> None:
         """Manually pump timers: fire every currently-scheduled ``setTimeout`` /
@@ -574,7 +626,7 @@ class Page:
         callback is swallowed; the page/context stays usable. Raises
         ``JSContextDisposedError`` after ``dispose()``.
         """
-        self._native.run_timers()
+        self._run_with_debug_trace(self._native.run_timers)
 
     def run_jobs(self) -> None:
         """Manually pump jobs: drain the pending microtask queue.
@@ -585,7 +637,7 @@ class Page:
         animation-frame callbacks, or idle callbacks — those have their own
         pumps. Raises ``JSContextDisposedError`` after ``dispose()``.
         """
-        self._native.run_jobs()
+        self._run_with_debug_trace(self._native.run_jobs)
 
     @property
     def event_loop_time_ms(self) -> int:
@@ -607,7 +659,7 @@ class Page:
         idle round. A microtask checkpoint follows the task. Does not advance the
         virtual clock. Returns ``True`` if a task ran.
         """
-        return self._native.tick()
+        return self._run_with_debug_trace(self._native.tick)
 
     def advance(self, ms: int, *, max_steps: int = 10_000) -> bool:
         """Advance the virtual clock by ``ms`` and run due work.
@@ -633,7 +685,7 @@ class Page:
         if (isinstance(max_steps, bool) or not isinstance(max_steps, int) or
                 max_steps <= 0 or max_steps > 4_294_967_295):
             raise TypeError("max_steps must be a positive int")
-        return self._native.advance(ms, max_steps)
+        return self._run_with_debug_trace(self._native.advance, ms, max_steps)
 
     def run_until_idle(self, *, max_steps: int = 1_000) -> bool:
         """Run timers, animation frames, idle callbacks, and microtasks until idle.
@@ -648,7 +700,7 @@ class Page:
         if (isinstance(max_steps, bool) or not isinstance(max_steps, int) or
                 max_steps <= 0 or max_steps > 4_294_967_295):
             raise TypeError("max_steps must be a positive int")
-        return self._native.run_until_idle(max_steps)
+        return self._run_with_debug_trace(self._native.run_until_idle, max_steps)
 
     def run_animation_frame(self) -> None:
         """Manually pump **one** animation frame: run the ``requestAnimationFrame``
@@ -677,7 +729,7 @@ class Page:
         page/context stays usable. Raises ``JSContextDisposedError`` after
         ``dispose()``.
         """
-        self._native.run_animation_frame()
+        self._run_with_debug_trace(self._native.run_animation_frame)
 
     def run_idle_callbacks(self) -> None:
         """Manually pump **one** idle round: run the ``requestIdleCallback``
@@ -717,10 +769,21 @@ class Page:
         exception raised by a callback is swallowed; the page/context stays usable.
         Raises ``JSContextDisposedError`` after ``dispose()``.
         """
-        self._native.run_idle_callbacks()
+        self._run_with_debug_trace(self._native.run_idle_callbacks)
 
-    def load(self, html: str, base_url: str, scripts=None, resources=None) -> None:
+    def load(self, html: str, base_url: str, scripts=None, resources=None, *,
+             mode: str | None = None) -> None:
         """Refresh the page state from static HTML and a base URL.
+
+        ``mode="debug"`` automatically records browser API accesses and prints
+        readable trace lines after load, eval and each event-loop pump, including
+        failed scripts. Output consumes the trace buffer. ``mode="prod"`` stops
+        and clears tracing and disables automatic output. ``mode=None`` (the
+        default) preserves current behavior, including debug across reloads and
+        the existing manual start/read workflow. A fresh page is not traced.
+        Debug starts after native setup and before any user script; it uses
+        ``sys.maxsize`` as the per-call capacity and drains between calls.
+        Existing native monitoring coverage limits still apply.
 
         Replaces the current page state: the JS context is rebuilt (globals reset)
         and ``location`` is re-derived from ``base_url``. ``html`` is captured as
@@ -786,6 +849,11 @@ class Page:
             raise TypeError("html must be a str")
         if not isinstance(base_url, str):
             raise TypeError("base_url must be a str")
+        if mode is not None:
+            if not isinstance(mode, str):
+                raise TypeError("mode must be None or a str")
+            if mode not in ("debug", "prod"):
+                raise ValueError("mode must be 'debug', 'prod', or None")
         # Validate scripts + resources before touching page state or the lifecycle
         # (bad input must neither reload the page nor enter "loading").
         normalized = _normalize_scripts(scripts)
@@ -794,8 +862,23 @@ class Page:
         # returns to "complete" once everything below succeeds — so a failure
         # (script JSError, missing resource, or a disposed/busy context) leaves
         # ready_state "loading" until a later successful load.
-        self._ready_state = "loading"
-        self._native.load(html, base_url)
+        with self._execution_scope():
+            self._ready_state = "loading"
+            self._native.load(html, base_url)
+            debug = mode == "debug" or (mode is None and self._debug_trace)
+            if mode is not None or debug:
+                # Configure only after a successful native load. This leaves
+                # old trace state intact on a busy/disposed rejection and
+                # excludes native installation accesses from the new log.
+                self._native.stop_access_trace()
+                self._native.read_access_trace(True)
+                if debug:
+                    self._native.start_access_trace(sys.maxsize, None)
+                self._debug_trace = debug
+            self._run_with_debug_trace(self._execute_loaded_scripts, base_url,
+                                       normalized, resource_map)
+
+    def _execute_loaded_scripts(self, base_url, normalized, resource_map) -> None:
         # M3-5: run the document's own scripts first, in HTML document order
         # (inline + external interleaved). A `<script src>` is resolved against
         # base_url and looked up in the host-provided resources
@@ -1163,7 +1246,8 @@ class Page:
                     seen.add(object_type)
                     deduped.append(object_type)
             object_types = deduped
-        self._native.start_access_trace(max_events, object_types)
+        with self._execution_scope():
+            self._native.start_access_trace(max_events, object_types)
 
     def stop_access_trace(self) -> None:
         """Stop recording new access events while retaining the current log.
@@ -1171,7 +1255,8 @@ class Page:
         A later :meth:`start_access_trace` begins a new session. Raises
         ``JSContextDisposedError`` after ``dispose()``.
         """
-        self._native.stop_access_trace()
+        with self._execution_scope():
+            self._native.stop_access_trace()
 
     def capture_async_errors(self, enabled: bool = True) -> None:
         """Opt into bounded callback/rejection diagnostics; scheduling is unchanged.
@@ -1243,7 +1328,8 @@ class Page:
             raise TypeError("format must be a str")
         if format not in ("raw", "text"):
             raise ValueError("format must be 'raw' or 'text'")
-        report = self._native.read_access_trace(clear)
+        with self._execution_scope():
+            report = self._native.read_access_trace(clear)
         return format_access_trace(report) if format == "text" else report
 
     def access_trace_report(self, *, clear: bool = False,
@@ -1399,10 +1485,11 @@ class Page:
         """Release the page's context-owned native resources. Idempotent."""
         # M9-1: stop the DevTools server first (best-effort) so its port is freed;
         # the native Inspector is torn down with the context by dispose() below.
-        if self._devtools is not None:
-            self._devtools.shutdown()
-            self._devtools = None
-        self._native.dispose()
+        with self._execution_scope():
+            if self._devtools is not None:
+                self._devtools.shutdown()
+                self._devtools = None
+            self._native.dispose()
 
     def __enter__(self) -> "Page":
         if self._native.disposed:

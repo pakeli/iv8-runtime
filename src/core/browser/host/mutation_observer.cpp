@@ -11,6 +11,7 @@
 #include "../dom/selector_match.h"
 #include "../internal/trace_hooks.h"
 #include "document_host.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -318,6 +319,9 @@ MutationObserverState* mo_state_from_this(
 
 void mutation_observer_constructor(
     const v8::FunctionCallbackInfo<v8::Value>& info) {
+    const auto sequence = window_trace_record(info.GetIsolate(), "MutationObserver", AccessOperation::kCall);
+    AccessCallCompletion completion(info.GetIsolate(), sequence, info);
+    watch_record(info.GetIsolate(), "window", "MutationObserver");
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     if (!info.IsConstructCall()) {
@@ -348,6 +352,7 @@ void mutation_observer_constructor(
 }
 
 void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "MutationObserver", "observe");
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     MutationObserverState* state = mo_state_from_this(info);
@@ -500,6 +505,7 @@ void mo_observe(const v8::FunctionCallbackInfo<v8::Value>& info) {
 }
 
 void mo_disconnect(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "MutationObserver", "disconnect");
     MutationObserverState* state = mo_state_from_this(info);
     if (state == nullptr) {
         throw_mo_type_error(info.GetIsolate(), "Illegal invocation");
@@ -511,6 +517,7 @@ void mo_disconnect(const v8::FunctionCallbackInfo<v8::Value>& info) {
 }
 
 void mo_take_records(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    NativeApiCallTrace tracing(info, "MutationObserver", "takeRecords");
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     MutationObserverState* state = mo_state_from_this(info);

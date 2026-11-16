@@ -40,18 +40,25 @@ def test_nested_connection_orientation_and_time_origin_reads():
         observed = [(event["object_type"], event["label"], event["member"],
                      event["operation"]) for event in events]
         assert observed == [
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "connection", "get"),
             ("connection", "navigator.connection", "effectiveType", "get"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "connection", "get"),
             ("connection", "navigator.connection", "rtt", "get"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "connection", "get"),
             ("connection", "navigator.connection", "downlink", "get"),
+            ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "connection", "get"),
             ("connection", "navigator.connection", "saveData", "get"),
+            ("window", "window", "screen", "get"),
             ("screen", "screen", "orientation", "get"),
             ("orientation", "screen.orientation", "type", "get"),
+            ("window", "window", "screen", "get"),
             ("screen", "screen", "orientation", "get"),
             ("orientation", "screen.orientation", "angle", "get"),
+            ("window", "window", "performance", "get"),
             ("performance", "performance", "timeOrigin", "get"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)

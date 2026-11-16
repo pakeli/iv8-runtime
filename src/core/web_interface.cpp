@@ -7,6 +7,9 @@
 #include <utility>
 
 #include "iv8/web_method.h"
+#include "iv8/access_summary.h"
+#include "browser/window/window_trace_support.h"
+#include "browser/internal/trace_hooks.h"
 #include "browser/host/event_handler_names.h"
 
 namespace iv8 {
@@ -52,6 +55,9 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto context = isolate->GetCurrentContext();
     v8::String::Utf8Value text(isolate, info.Data());
     const std::string name(*text != nullptr ? *text : "");
+    const auto sequence = browser::window_trace_record(isolate, name.c_str(), AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    browser::watch_record(isolate, "window", name);
     const bool constructible = name == "Document" || name == "EventTarget" ||
         name == "Text" || name == "Comment" || name == "DocumentFragment" ||
         name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser";
@@ -223,10 +229,11 @@ v8::Local<v8::Object> web_interface_prototype(
     if (!constructor->DefineOwnProperty(context, string(isolate, "prototype"), prototype,
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum | v8::DontDelete))
             .FromMaybe(false) ||
-        !prototype->DefineOwnProperty(context, string(isolate, "constructor"), constructor,
-            v8::DontEnum).FromMaybe(false)) return {};
-    if (expose_global && !context->Global()->DefineOwnProperty(context, string(isolate, name),
-            constructor, v8::DontEnum).FromMaybe(false)) return {};
+        !browser::install_traced_api_data_property(isolate, context, prototype, "constructor", constructor,
+            browser::native_api_identity(isolate, prototype), "host_object", name + ".prototype",
+            v8::DontEnum)) return {};
+    if (expose_global && !browser::install_traced_window_data_property(isolate, context,
+            context->Global(), name, constructor, v8::DontEnum)) return {};
     if (name == "Node") {
         static const std::pair<const char*, int> constants[] = {
             {"ELEMENT_NODE", 1}, {"ATTRIBUTE_NODE", 2}, {"TEXT_NODE", 3},
@@ -238,10 +245,10 @@ v8::Local<v8::Object> web_interface_prototype(
             {"DOCUMENT_POSITION_CONTAINED_BY", 16}, {"DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC", 32}};
         for (const auto& [member, value] : constants) {
             for (auto target : {v8::Local<v8::Object>(constructor), prototype}) {
-                if (!target->DefineOwnProperty(context, string(isolate, member),
-                        v8::Integer::New(isolate, value),
-                        static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))
-                        .FromMaybe(false)) return {};
+                if (!browser::install_traced_api_data_property(isolate, context, target, member,
+                        v8::Integer::New(isolate, value), browser::native_api_identity(isolate, target),
+                        "host_object", target == prototype ? "Node.prototype" : "Node",
+                        static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))) return {};
             }
         }
     }

@@ -6,13 +6,14 @@
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
 // Step 5g: a matchMedia result. The JS bootstrap still owns the bounded query
 // evaluator and the matchMedia function; it calls a temporary native factory
 // that maps (query, matches) to a cached HostObject backing and creates a fresh
-// JS wrapper per call. `onchange` stays a plain per-wrapper own property.
+// JS wrapper per call. `onchange` retains its per-wrapper own data descriptor.
 constexpr v8::ExternalPointerTypeTag kMediaQueryFactoryTag =
     v8::kExternalPointerTypeTagDefault;
 
@@ -36,13 +37,9 @@ void make_media_query_list_callback(
     }
     const bool matches = info.Length() >= 2 && info[1]->BooleanValue(isolate);
     HostObject* host = page->media_query_list_host(media, matches);
-    const std::uint64_t seq = access_trace_record(
-        isolate, host, "media_query_list", "matchMedia", "matchMedia",
-        AccessOperation::kCall);
-    AccessCallCompletion completion(isolate, seq, info);
     v8::Local<v8::Object> list = make_host_object(isolate, context, host);
-    (void)list->Set(context, v8_string(isolate, "onchange").As<v8::String>(),
-                    v8::Null(isolate));
+    (void)install_traced_api_data_property(isolate, context, list, "onchange",
+        v8::Null(isolate), host, "media_query_list", "matchMedia");
     info.GetReturnValue().Set(list);
 }
 

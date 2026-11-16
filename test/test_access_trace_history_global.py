@@ -15,8 +15,10 @@ def test_exact_history_entry_read_survives_stop_and_formats_as_text():
         assert value.context_alive
         page.stop_access_trace()
         report = page.read_access_trace(format='text')
-        assert 'window.history' in report
-        assert report.startswith('GET window.history')
+        assert report.splitlines() == [
+            'GET window.window -> <Object>',
+            'GET window.history -> <HostObject>',
+        ]
 
 
 def test_history_parent_and_child_reads_have_distinct_completed_events():
@@ -25,13 +27,16 @@ def test_history_parent_and_child_reads_have_distinct_completed_events():
         assert page.eval('window.history.length', name='history-entry.js') == 1
         events = page.read_access_trace()['events']
         assert [(event['object_type'], event['label'], event['member'], event['operation']) for event in events] == [
+            ('window', 'window', 'window', 'get'),
             ('window', 'window', 'history', 'get'),
             ('history', 'history', 'length', 'get'),
         ]
-        assert events[0]['value_summary'] == 'host_object'
+        assert events[0]['value_summary'] == 'object'
+        assert events[1]['value_summary'] == 'host_object'
         assert all(event['outcome'] == 'returned' for event in events)
         assert all(event['resource_name'] == 'history-entry.js' for event in events)
-        assert events[0]['object_id'] != events[1]['object_id']
+        assert events[0]['object_id'] == events[1]['object_id']
+        assert events[1]['object_id'] != events[2]['object_id']
 
 
 def test_history_entry_filter_and_call_only_watch_contract():
@@ -39,7 +44,9 @@ def test_history_entry_filter_and_call_only_watch_contract():
         page.watch_apis(['window.history'])
         page.start_access_trace(object_types=['window'])
         assert page.eval('window.history.length') == 1
-        assert [(event['member'], event['operation']) for event in page.read_access_trace()['events']] == [('history', 'get')]
+        assert [(event['member'], event['operation']) for event in page.read_access_trace()['events']] == [
+            ('window', 'get'), ('history', 'get'),
+        ]
         assert page.read_watch_api_hits() == []
         page.start_access_trace(object_types=['history'])
         assert page.eval('window.history.length') == 1
@@ -61,9 +68,10 @@ def test_history_entry_shape_identity_and_receiver_exception_are_preserved():
             page.eval("Object.getOwnPropertyDescriptor(window, 'history').get.call({})")
         assert caught.value.name == 'TypeError'
         events = page.read_access_trace()['events']
-        assert len(events) == 1
-        assert events[0]['member'] == 'history' and events[0]['outcome'] == 'threw'
-        assert events[0]['exception_name'] == 'TypeError'
+        assert [(event['member'], event['operation'], event['outcome']) for event in events] == [
+            ('window', 'get', 'returned'), ('history', 'get', 'threw'),
+        ]
+        assert events[1]['exception_name'] == 'TypeError'
 
 
 def test_history_entry_trace_uses_new_generation_and_stops_recording():

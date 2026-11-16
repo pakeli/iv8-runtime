@@ -45,17 +45,40 @@ def test_performance_crypto_storage_calls_are_traced():
         observed = [(event["object_type"], event["member"], event["operation"])
                     for event in events]
         assert observed == [
+            ("window", "performance", "get"),
+            ("performance", "now", "get"),
             ("performance", "now", "call"),
+            ("window", "performance", "get"),
+            ("performance", "mark", "get"),
             ("performance", "mark", "call"),
+            ("window", "performance", "get"),
+            ("performance", "measure", "get"),
             ("performance", "measure", "call"),
+            ("window", "crypto", "get"),
+            ("crypto", "getRandomValues", "get"),
             ("crypto", "getRandomValues", "call"),
+            ("window", "crypto", "get"),
+            ("crypto", "randomUUID", "get"),
             ("crypto", "randomUUID", "call"),
+            ("window", "localStorage", "get"),
+            ("host_object", "setItem", "get"),
             ("storage", "setItem", "call"),
+            ("window", "localStorage", "get"),
+            ("host_object", "getItem", "get"),
             ("storage", "getItem", "call"),
+            ("window", "localStorage", "get"),
+            ("host_object", "removeItem", "get"),
             ("storage", "removeItem", "call"),
+            ("window", "localStorage", "get"),
             ("storage", "length", "get"),
+            ("window", "localStorage", "get"),
+            ("host_object", "key", "get"),
             ("storage", "key", "call"),
+            ("window", "localStorage", "get"),
+            ("host_object", "clear", "get"),
             ("storage", "clear", "call"),
+            ("window", "sessionStorage", "get"),
+            ("host_object", "setItem", "get"),
             ("storage", "setItem", "call"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)
@@ -79,8 +102,8 @@ def test_object_type_filter_applies_to_native_bom_calls():
         page.eval("performance.now(); crypto.randomUUID(); localStorage.clear();",
                   name="probe.js")
         events = _events(page)
-        assert [(event["object_type"], event["member"]) for event in events] == [
-            ("performance", "now")]
+        assert [(event["object_type"], event["member"], event["operation"]) for event in events] == [
+            ("performance", "now", "get"), ("performance", "now", "call")]
 
 
 @on_only
@@ -94,7 +117,8 @@ def test_native_bom_calls_across_generation_keep_configuration():
         page.eval("performance.now();", name="probe.js")
         events = [event for event in _events(page)
                   if event["object_type"] == "performance"
-                  and event["member"] == "now"]
+                  and event["member"] == "now"
+                  and event["operation"] == "call"]
         assert len(events) == 2
         assert events[0]["generation"] == 2
         assert events[1]["generation"] == 3
@@ -111,6 +135,8 @@ def test_time_origin_and_storage_length_reads():
         events = _events(page)
         assert [(event["object_type"], event["member"], event["operation"])
                 for event in events] == [
+            ("window", "performance", "get"),
             ("performance", "timeOrigin", "get"),
+            ("window", "localStorage", "get"),
             ("storage", "length", "get"),
         ]

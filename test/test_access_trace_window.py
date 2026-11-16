@@ -42,9 +42,9 @@ def test_window_metadata_reads_are_traced():
         events = page.read_access_trace()["events"]
         names = [event["member"] for event in events]
         assert names == [
-            "innerWidth", "innerHeight", "outerWidth", "devicePixelRatio",
+            "innerWidth", "window", "innerHeight", "outerWidth", "devicePixelRatio",
             "screenX", "screenLeft", "screenTop", "length",
-            "isSecureContext", "origin", "crossOriginIsolated", "closed",
+            "isSecureContext", "window", "origin", "crossOriginIsolated", "closed",
             "frameElement",
         ]
         assert all(event["object_type"] == "window" for event in events)
@@ -64,7 +64,7 @@ def test_window_name_get_and_set_are_traced():
                          name="probe.js") == "hello"
         events = page.read_access_trace()["events"]
         assert [(event["member"], event["operation"]) for event in events] == [
-            ("name", "set"), ("name", "get")]
+            ("window", "get"), ("name", "set"), ("window", "get"), ("name", "get")]
 
 
 @on_only
@@ -90,7 +90,7 @@ def test_window_filter_and_generation():
         page.eval("innerWidth; navigator.userAgent;", name="probe.js")
         events = page.read_access_trace(clear=False)["events"]
         assert [(event["object_type"], event["member"]) for event in events] == [
-            ("window", "innerWidth")]
+            ("window", "innerWidth"), ("window", "navigator")]
         first_id = events[0]["object_id"]
 
         page.load(HTML, BASE)

@@ -1,11 +1,42 @@
 # Decision Log
 
-Last reviewed: `2026-11-15`
+Last reviewed: `2026-11-16`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
 
 ## Confirmed Decisions
+
+### Submit the monitoring candidate and build V8-linked wheels (`2026-11-16`)
+
+The user requests a PR and V8 build for this version. Include the already-tested
+ENV-MON-01 native expansion and History entry fix with the Python debug/prod
+convenience. All three installed-wheel gates now include the same 23 modules /
+482 tests; the full suite remains required in each release lane. Keep the V8 pin
+and cache keys unchanged, reuse matching monoliths, and rebuild extensions and
+wheels. Build-source pins, macOS helper restoration and actual results belong in
+`docs/monitoring_release_report.md`. PR submission/building does not authorize
+merging, version-tag publication or shared SDK replacement, and does not close
+the independently reproduced API coverage gaps.
+
+### Configure automatic API logs through Page.load mode (`2026-11-16`)
+
+The user requests `mode="debug"` to monitor and `mode="prod"` to disable
+monitoring, without manual start/read calls. Add a keyword-only mode on the
+Python Page facade. Debug starts an unfiltered session after native setup and
+before user scripts, emits readable stdout at execution boundaries, and drains
+its buffer. Its per-call ceiling is `sys.maxsize`; prod stops/clears access
+tracing. Omission preserves existing manual control and an active debug mode.
+Separate watch/Inspector/console settings are not changed by this parameter.
+
+A per-Page nonblocking execution guard includes automatic output, full load
+transitions and trace controls/reads, preventing another thread from consuming
+an unfinished native completion. Ordinary output errors preserve JS results and
+errors; Python interrupts keep their normal control behavior. This usability
+change does not close the API coverage audit's prototype, receiver-validation,
+symbol/query or returned-object gaps. Scope and current local evidence:
+`docs/page_monitoring_modes.md` / `docs/page_monitoring_modes_report.md`.
+Release verification and shared SDK replacement remain separate.
 
 ### Trace the reported window.history parent read (`2026-11-15`)
 

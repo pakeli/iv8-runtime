@@ -6,10 +6,12 @@
 #include <utility>
 #include <vector>
 
+#include "iv8/access_summary.h"
 #include "iv8/web_method.h"
 #include "../dom/dom_query.h"
 #include "../dom/selector_match.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 #include "document_host.h"
 
 namespace iv8::browser {
@@ -45,12 +47,71 @@ LiveCollectionBinding* collection_binding(v8::Local<v8::Object> object) {
     return static_cast<LiveCollectionBinding*>(object->GetAlignedPointerFromInternalField(0, v8::kEmbedderDataTypeTagDefault));
 }
 
+namespace {
+
+const char* collection_label(v8::Local<v8::Object> object) {
+    return object->InternalFieldCount() == 2 && object->GetInternalField(1).As<v8::Value>()->IsTrue()
+        ? "HTMLAllCollection" : "HTMLCollection";
+}
+
+void collection_missing(v8::Isolate* isolate, LiveCollectionBinding* binding,
+                         v8::Local<v8::Object> object, const std::string& member) {
+    auto* trace = access_trace_from_isolate(isolate);
+    if (trace != nullptr) (void)trace->record(binding, "host_object",
+        collection_label(object), member, AccessOperation::kGetProbe, "missing");
+}
+
+std::uint64_t collection_method_property_record(v8::Isolate* isolate,
+    v8::Local<v8::Object> receiver, v8::Local<v8::Array> data,
+    const char* member, AccessOperation operation) {
+    if (auto* binding = collection_binding(receiver)) {
+        return access_trace_record(isolate, binding, "host_object",
+            collection_label(receiver), member, operation);
+    }
+    v8::Local<v8::Value> label;
+    if (!data->Get(isolate->GetCurrentContext(), 1).ToLocal(&label) || !label->IsString()) return 0;
+    v8::String::Utf8Value text(isolate, label);
+    return *text == nullptr ? 0 : native_api_trace_record(isolate, receiver, *text, member, operation);
+}
+
+void collection_method_getter(v8::Local<v8::Name> property,
+    const v8::PropertyCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    auto data = info.Data().As<v8::Array>();
+    v8::String::Utf8Value member(isolate, property);
+    const auto sequence = *member == nullptr ? 0 : collection_method_property_record(
+        isolate, info.Holder(), data, *member, AccessOperation::kGet);
+    AccessPropertyCompletion completion(isolate, sequence, info);
+    v8::Local<v8::Value> value;
+    if (data->Get(isolate->GetCurrentContext(), 0).ToLocal(&value)) info.GetReturnValue().Set(value);
+}
+
+void collection_method_setter(v8::Local<v8::Name> property,
+    v8::Local<v8::Value> value, const v8::PropertyCallbackInfo<void>& info) {
+    auto isolate = info.GetIsolate();
+    auto data = info.Data().As<v8::Array>();
+    v8::String::Utf8Value member(isolate, property);
+    const auto sequence = *member == nullptr ? 0 : collection_method_property_record(
+        isolate, info.Holder(), data, *member, AccessOperation::kSet);
+    AccessPropertySetCompletion completion(isolate, sequence, info, value);
+    (void)data->CreateDataProperty(isolate->GetCurrentContext(), 0, value);
+}
+
+}  // namespace
+
 v8::Intercepted collection_index(std::uint32_t index,
     const v8::PropertyCallbackInfo<v8::Value>& info) {
     auto binding = collection_binding(info.Holder());
     if (binding == nullptr) return v8::Intercepted::kNo;
     auto nodes = binding->document->collection_nodes(*binding);
-    if (index >= nodes.size()) return v8::Intercepted::kNo;
+    const auto member = std::to_string(index);
+    if (index >= nodes.size()) {
+        collection_missing(info.GetIsolate(), binding, info.Holder(), member);
+        return v8::Intercepted::kNo;
+    }
+    const auto sequence = access_trace_record(info.GetIsolate(), binding, "host_object",
+        collection_label(info.Holder()), member.c_str(), AccessOperation::kGet);
+    AccessPropertyCompletion completion(info.GetIsolate(), sequence, info);
     info.GetReturnValue().Set(binding->document->wrap_node(info.GetIsolate(),
         info.GetIsolate()->GetCurrentContext(), nodes[index]));
     return v8::Intercepted::kYes;
@@ -59,7 +120,11 @@ v8::Intercepted collection_index(std::uint32_t index,
 v8::Intercepted collection_index_query(std::uint32_t index,
     const v8::PropertyCallbackInfo<v8::Integer>& info) {
     auto binding = collection_binding(info.Holder());
-    if (binding == nullptr || index >= binding->document->collection_nodes(*binding).size())
+    if (binding == nullptr) return v8::Intercepted::kNo;
+    const auto member = std::to_string(index);
+    (void)access_trace_record(info.GetIsolate(), binding, "host_object",
+        collection_label(info.Holder()), member.c_str(), AccessOperation::kHas);
+    if (index >= binding->document->collection_nodes(*binding).size())
         return v8::Intercepted::kNo;
     info.GetReturnValue().Set(static_cast<int>(v8::ReadOnly));
     return v8::Intercepted::kYes;
@@ -68,6 +133,8 @@ v8::Intercepted collection_index_query(std::uint32_t index,
 void collection_indices(const v8::PropertyCallbackInfo<v8::Array>& info) {
     auto binding = collection_binding(info.Holder());
     if (binding == nullptr) return;
+    (void)access_trace_record(info.GetIsolate(), binding, "host_object",
+        collection_label(info.Holder()), "", AccessOperation::kOwnKeys);
     auto nodes = binding->document->collection_nodes(*binding);
     auto array = v8::Array::New(info.GetIsolate(), static_cast<int>(nodes.size()));
     for (std::uint32_t index = 0; index < nodes.size(); ++index)
@@ -92,8 +159,15 @@ v8::Intercepted collection_name(v8::Local<v8::Name> name,
     auto binding = collection_binding(info.Holder());
     if (binding == nullptr) return v8::Intercepted::kNo;
     v8::String::Utf8Value text(info.GetIsolate(), name);
-    auto node = collection_named(binding, *text != nullptr ? *text : "");
-    if (node == nullptr) return v8::Intercepted::kNo;
+    const std::string member = *text != nullptr ? *text : "";
+    auto node = collection_named(binding, member);
+    if (node == nullptr) {
+        collection_missing(info.GetIsolate(), binding, info.Holder(), member);
+        return v8::Intercepted::kNo;
+    }
+    const auto sequence = access_trace_record(info.GetIsolate(), binding, "host_object",
+        collection_label(info.Holder()), member.c_str(), AccessOperation::kGet);
+    AccessPropertyCompletion completion(info.GetIsolate(), sequence, info);
     info.GetReturnValue().Set(binding->document->wrap_node(info.GetIsolate(),
         info.GetIsolate()->GetCurrentContext(), node));
     return v8::Intercepted::kYes;
@@ -101,6 +175,9 @@ v8::Intercepted collection_name(v8::Local<v8::Name> name,
 
 void collection_length(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto binding = collection_binding(info.This());
+    const auto sequence = binding == nullptr ? 0 : access_trace_record(info.GetIsolate(),
+        binding, "host_object", collection_label(info.This()), "length", AccessOperation::kGet);
+    AccessFunctionPropertyCompletion completion(info.GetIsolate(), sequence, info, AccessOperation::kGet);
     if (binding == nullptr) {
         info.GetIsolate()->ThrowException(v8::Exception::TypeError(
             v8::String::NewFromUtf8Literal(info.GetIsolate(), "Illegal invocation")));
@@ -114,6 +191,11 @@ void collection_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
     auto binding = collection_binding(info.This());
+    const char* member = info.Data()->IsTrue() ? "namedItem" : "item";
+    const auto sequence = binding == nullptr ? 0 : access_trace_record(isolate, binding,
+        "host_object", collection_label(info.This()), member, AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, collection_label(info.This()), member);
     if (binding == nullptr) {
         isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8Literal(isolate, "Illegal invocation")));
         return;
@@ -140,6 +222,10 @@ void all_collection_call(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
     auto binding = static_cast<LiveCollectionBinding*>(info.Data().As<v8::External>()->Value(v8::kExternalPointerTypeTagDefault));
+    const auto sequence = access_trace_record(isolate, binding, "host_object",
+        "HTMLAllCollection", "[[Call]]", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "HTMLAllCollection", "[[Call]]");
     if (info.Length() == 0) { info.GetReturnValue().Set(v8::Null(isolate)); return; }
     v8::Local<v8::String> value;
     if (!info[0]->ToString(context).ToLocal(&value)) return;
@@ -169,6 +255,7 @@ v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
     v8::Local<v8::Object> object;
     if (!object_template->NewInstance(context).ToLocal(&object)) return v8::Object::New(isolate);
     object->SetAlignedPointerInInternalField(0, raw, v8::kEmbedderDataTypeTagDefault);
+    object->SetInternalField(1, v8::Boolean::New(isolate, all));
     auto cache_key = v8::Private::ForApi(isolate, v8::String::NewFromUtf8Literal(isolate,
         "iv8.collection.prototypes"));
     v8::Local<v8::Value> cached;
@@ -190,7 +277,12 @@ v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
             v8::Local<v8::Function> method;
             if (!v8::Function::New(context, &collection_item,
                     v8::Boolean::New(isolate, std::string(name) == "namedItem")).ToLocal(&method)) return object;
-            (void)prototype->Set(context, v8_string(isolate, name), method);
+            auto data = v8::Array::New(isolate, 2);
+            if (!data->CreateDataProperty(context, 0, method).FromMaybe(false) ||
+                !data->CreateDataProperty(context, 1, v8_string(isolate,
+                    all ? "HTMLAllCollection.prototype" : "HTMLCollection.prototype")).FromMaybe(false)) return object;
+            (void)prototype->SetNativeDataProperty(context, v8_string(isolate, name).As<v8::String>(),
+                &collection_method_getter, &collection_method_setter, data);
         }
         (void)prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
             class_name, static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
