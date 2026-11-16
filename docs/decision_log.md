@@ -7,6 +7,18 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Validate origin filtering with local macOS fallback (`2026-11-16`)
+
+Source `4c777f78` / tree `6184c309a03437de7bb13774a0bdf8008ba198cf`
+passes Linux and Windows hosted Python 3.11–3.14 builds: 522 focused each,
+full Linux 2812/2 and Windows 2810/4. GitHub's macOS arm64 capacity failure
+prevented its runner from executing any source, so the same four-version gate
+and full suite are built/run locally (each 522 focused and 2812/2). These are
+local fallback validations, not successful hosted macOS jobs; keep `aa72e50`
+as the last fully hosted release matrix. All 12 wheels are collected/verified,
+helper workflow restored with original bytes, and shared SDK remains untouched.
+Exact source/run/artifact/local/failure evidence: `docs/access_trace_origins_report.md`.
+
 ### Record user API use while excluding runtime housekeeping (`2026-11-16`)
 
 The user approves native origin filtering: empty debug loads must be silent,

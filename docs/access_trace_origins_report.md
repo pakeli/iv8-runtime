@@ -1,10 +1,11 @@
 # User-origin tracing acceptance report
 
-Date: `2026-11-16`. **Implemented and locally accepted; release verification pending.**
+Date: `2026-11-16`. **Implemented; Linux/Windows hosted and macOS local fallback validation passed. Hosted macOS did not execute.**
 
-Boundary: [access_trace_origins.md](access_trace_origins.md). The previous
-release-verified source remains `aa72e50` in [PR #32](https://github.com/pakeli/iv8-runtime/pull/32)
-until this repair completes its release lanes. Shared deployment remains BIND-01.
+Boundary: [access_trace_origins.md](access_trace_origins.md). The latest fully hosted
+release-verified source remains `aa72e50` in [PR #32](https://github.com/pakeli/iv8-runtime/pull/32).
+This repair is source `4c777f78e535d54a003a297c029d9fc87ce20950`, tree
+`6184c309a03437de7bb13774a0bdf8008ba198cf`, validated as detailed below. Shared deployment remains BIND-01.
 
 ## Implemented behavior
 
@@ -49,10 +50,76 @@ Build, gate, full logs and per-source/native hashes are under ignored
 
 ## Release and limits
 
-The fix is being added to the existing PR #32 and its V8-linked builds. Exact
-source/tree/run/artifact IDs and final platform counts will be recorded after
-completion; local acceptance alone is not release verification. V8 remains pinned
+The fix is included in existing PR #32. V8 remains pinned
 to 15.0.245.19; no kernel/browser surface expansion, SDK install or version tag
 is part of the repair. The separate prototype/invalid-receiver/symbol/query/
 returned-object coverage gaps remain open: user-only logs do not imply complete
 browser API coverage.
+
+
+## Cross-platform build validation
+
+Fixed source `4c777f78e535d54a003a297c029d9fc87ce20950` /
+tree `6184c309a03437de7bb13774a0bdf8008ba198cf` is used for all rows below.
+The V8 pin/build scripts and cache keys are unchanged; existing matching engine
+monoliths are reused and the host extension/wheels rebuilt. No merge or tag is
+published. Windows has two additional Unix-only skips.
+
+| Platform | Python | Execution | Focused | Full suite | Run / artifact or local receipt |
+|---|---|---|---:|---|---|
+| linux x64 | 3.11 | GitHub Actions | 522 passed | 2812 passed, 2 skipped | 43862858961 / 14224368133 |
+| linux x64 | 3.12 | GitHub Actions | 522 passed | 2812 passed, 2 skipped | 43862858961 / 14224368133 |
+| linux x64 | 3.13 | GitHub Actions | 522 passed | 2812 passed, 2 skipped | 43862858961 / 14224368133 |
+| linux x64 | 3.14 | GitHub Actions | 522 passed | 2812 passed, 2 skipped | 43862858961 / 14224368133 |
+| windows x64 | 3.11 | GitHub Actions | 522 passed | 2810 passed, 4 skipped | 43862861011 / 14223713152 |
+| windows x64 | 3.12 | GitHub Actions | 522 passed | 2810 passed, 4 skipped | 43862861011 / 14224097713 |
+| windows x64 | 3.13 | GitHub Actions | 522 passed | 2810 passed, 4 skipped | 43862861011 / 14224686975 |
+| windows x64 | 3.14 | GitHub Actions | 522 passed | 2810 passed, 4 skipped | 43862861011 / 14224172724 |
+| macOS arm64 | 3.11 | local fallback | 522 passed | 2812 passed, 2 skipped | `macos/local/cp311/verification.json` |
+| macOS arm64 | 3.12 | local fallback | 522 passed | 2812 passed, 2 skipped | `macos/local/cp312/verification.json` |
+| macOS arm64 | 3.13 | local fallback | 522 passed | 2812 passed, 2 skipped | `macos/local/cp313/verification.json` |
+| macOS arm64 | 3.14 | local fallback | 522 passed | 2812 passed, 2 skipped | `macos/local/cp314/verification.json` |
+
+Hosted runs: [Linux 43862858961](https://github.com/pakeli/iv8-runtime/actions/runs/43862858961),
+[Windows 43862861011](https://github.com/pakeli/iv8-runtime/actions/runs/43862861011).
+Both succeeded on the first attempt; all five remote ZIP digests, wheel CRC/tags
+and native hashes are verified. Required source V8 checks
+[43862742750](https://github.com/pakeli/iv8-runtime/actions/runs/43862742750) and
+[43862731339](https://github.com/pakeli/iv8-runtime/actions/runs/43862731339)
+also pass. Branch protection is unchanged.
+
+### macOS runner failure and local fallback
+
+[Hosted macOS 43862864018](https://github.com/pakeli/iv8-runtime/actions/runs/43862864018)
+failed before acquiring a runner. GitHub reports:
+"The job was not acquired by Runner of type hosted even after multiple attempts".
+The build job was cancelled without a checkout, cache restore, compilation or
+test execution; wheel/publish jobs were skipped and no hosted artifacts exist.
+This is recorded as an infrastructure failure, not a passing hosted lane.
+
+The same source, fixed V8 15.0.245.19 / commit
+`209c9cea0db17d8caf23e9d2c7de08c351609744`, macOS arm64 deployment target 11.0,
+24-module gate and full suite were then built/run with the existing isolated
+local Python 3.11.18, 3.12.4, 3.13.5 and 3.14.8 environments. No dependency or
+shared SDK install/upgrade was performed. Per-lane receipts include actual
+commands, compiler/source/log/native/wheel hashes and isolated imports. cp311's
+initial sandbox-only localhost bind failures are retained separately; its
+identical localhost-enabled full rerun passes 2812/2. cp313 reuses the identical
+source-hash-verified local acceptance build above. All four local wheels pass
+CRC, cp311–cp314/macosx_11_0_arm64 tags and Mach-O arm64 verification.
+
+The temporary helper driver `880861a3511fcf5a3f7c575790401bc468a51d74` pinned
+both checkout sites to the source. After hosted capacity failure, blob-guarded
+restore `0edc2009fa8e301deee74b18dbb4a7376201997e` restores original workflow blob
+`eb730d3e77a17d4d527e67646475385cebb2428c`; a fresh connector read verifies original
+bytes. SHA-256: `c8f8a0a3dce3c34f7c887724fe17ab70ec7f387abe4d10314db80332be6c9a05`.
+No helper change is merged into the PR.
+
+### Artifacts
+
+All 12 verified wheels are retained under
+`data/access-trace-origins-2026-11-16/release/wheels/{linux,windows,macos}/`.
+The combined `wheel-manifest.json`, `SHA256SUMS`, `release-receipt.json`, raw CI
+logs/artifact metadata and local/failure/restore receipts are in the parent
+release directory. macOS local wheels have no invented hosted run/artifact IDs.
+Shared SDK deployment remains BIND-01; no wheel is installed into that SDK.
