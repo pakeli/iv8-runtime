@@ -1606,6 +1606,7 @@ py::dict PageState::read_access_trace(bool clear) {
         record["object_type"] = event.object_type;
         record["label"] = event.label;
         record["member"] = event.member;
+        if (!event.member_kind.empty()) record["member_kind"] = event.member_kind;
         record["operation"] = event.operation;
         record["phase"] = event.phase;
         if (!event.resolution.empty()) {

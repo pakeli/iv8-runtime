@@ -266,8 +266,10 @@ bool install_shell(v8::Isolate* isolate, v8::Local<v8::Context> context,
         // ObjectTemplate may supply an intermediate template prototype. Web IDL
         // namespaces and the Chrome namespace directly inherit Object.prototype.
         if (!object->SetPrototype(context, v8::Object::New(isolate)->GetPrototype()).FromMaybe(false)) return false;
-        if (spec.name != "chrome" && !object->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-                v8_string(isolate, spec.name), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum)).FromMaybe(false)) return false;
+        if (spec.name != "chrome" && !install_traced_api_named_data_property(isolate, context, object,
+                v8::Symbol::GetToStringTag(isolate), v8_string(isolate, spec.name), host,
+                "window_shell", host->global_name(),
+                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))) return false;
         for (const auto& property : spec.properties) {
             auto data = v8::Array::New(isolate, 2);
             if (!data->Set(context, 0, v8::External::New(isolate, host, v8::kExternalPointerTypeTagDefault)).FromMaybe(false) ||

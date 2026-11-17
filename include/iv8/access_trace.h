@@ -39,6 +39,7 @@ struct AccessEvent {
     std::string object_type;
     std::string label;
     std::string member;
+    std::string member_kind;  // optional "symbol" for observed well-known Symbol keys
     std::string operation;   // get | set | call | get_probe | get_method |
                              // has | delete | own_keys |
                              // get_own_property_descriptor | define_property
@@ -156,7 +157,8 @@ public:
     std::uint64_t record(const void* identity, std::string_view object_type,
                          std::string_view label, std::string_view member,
                          AccessOperation operation,
-                         std::string_view resolution = {}) noexcept;
+                         std::string_view resolution = {},
+                         std::string_view member_kind = {}) noexcept;
 
     // Promote the immediately preceding get_method event for this host/member
     // to a call event. Returns the promoted event's seq, or 0 when the last

@@ -224,6 +224,23 @@ constructor rejection before apply entry produces no fabricated call event.
 No new Python watch API is added. Boundary/evidence: `docs/to_string_monitoring.md`
 and `docs/to_string_monitoring_report.md`.
 
+## Native Symbol.toStringTag reads — TAG-MON-01 (`2026-11-17`)
+
+Existing browser tag definitions use native data callbacks without changing their
+values/data descriptors/flags/owners. Direct/Reflect.get reads record a completed
+GET with member `Symbol.toStringTag`, optional `member_kind="symbol"`, and native
+defining-owner identity. Text uses `[Symbol.toStringTag]`; identically named
+strings remain quoted string keys. CSS delegates its tag key once to the native
+prototype hook. Native descriptor materialization keeps the existing data-hook
+semantics. No missing tags or other Symbol/iterator coverage is introduced.
+
+Ordinary Object.prototype.toString native tag lookup stays runtime-origin;
+actual user getter/trap reads and native-bound callbacks remain observable.
+Dynamic Proxy-handler accessors or unknown/deep metadata take conservative user
+attribution and can retain an extra GET, without additional getter/trap calls.
+Boundary/evidence: `docs/symbol_to_string_tag_monitoring.md` /
+`docs/symbol_to_string_tag_monitoring_report.md`.
+
 ## 4. Public API and report
 
 ```python
@@ -257,7 +274,7 @@ report = page.read_access_trace(clear=True)
 Event shape:
 
 ```text
-seq, generation, object_id, object_type, label, member,
+seq, generation, object_id, object_type, label, member, member_kind?,
 operation, phase, resolution?, resource_name, source_kind,
 outcome?, value_summary?, argument_count?, argument_summaries?,
 return_summary?, receiver_summary?, receiver_label?, exception_name?, exception_message?,

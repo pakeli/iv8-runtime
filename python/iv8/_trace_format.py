@@ -85,6 +85,8 @@ def _path(event):
     label = event.get("label") or event.get("object_type") or "<unknown>"
     path = _inline(label)
     member = event.get("member", "")
+    if event.get("member_kind") == "symbol" and member == "Symbol.toStringTag":
+        return path + "[Symbol.toStringTag]"
     if event.get("operation") == "own_keys":
         return path
     if _IDENTIFIER.fullmatch(member):

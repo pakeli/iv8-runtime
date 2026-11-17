@@ -284,8 +284,10 @@ v8::Local<v8::Object> DocumentHost::live_collection(v8::Isolate* isolate,
             (void)prototype->SetNativeDataProperty(context, v8_string(isolate, name).As<v8::String>(),
                 &collection_method_getter, &collection_method_setter, data);
         }
-        (void)prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-            class_name, static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
+        (void)install_traced_api_named_data_property(isolate, context, prototype,
+            v8::Symbol::GetToStringTag(isolate), class_name, native_api_identity(isolate, prototype),
+            "host_object", all ? "HTMLAllCollection.prototype" : "HTMLCollection.prototype",
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum));
         v8::Local<v8::Value> iterator;
         if (v8::Array::New(isolate)->Get(context, v8::Symbol::GetIterator(isolate)).ToLocal(&iterator))
             (void)prototype->DefineOwnProperty(context, v8::Symbol::GetIterator(isolate), iterator, v8::DontEnum);

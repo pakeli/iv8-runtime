@@ -31,6 +31,24 @@ def _report(*events, dropped=0):
     }
 
 
+def test_well_known_symbol_member_is_distinct_from_identically_named_strings():
+    symbol = _event(label="HTMLDocument.prototype", member="Symbol.toStringTag",
+                    member_kind="symbol", value_summary="string:12:HTMLDocument")
+    assert format_access_trace(_report(symbol)) == 'GET HTMLDocument.prototype[Symbol.toStringTag] -> "HTMLDocument"'
+    string = dict(symbol)
+    del string["member_kind"]
+    assert format_access_trace(_report(string)) == 'GET HTMLDocument.prototype["Symbol.toStringTag"] -> "HTMLDocument"'
+    string["member"] = "[Symbol.toStringTag]"
+    assert format_access_trace(_report(string)) == 'GET HTMLDocument.prototype["[Symbol.toStringTag]"] -> "HTMLDocument"'
+
+
+def test_unknown_symbol_member_text_is_not_interpreted_as_source():
+    event = _event(member='Symbol.toStringTag]\\nforged', member_kind="symbol")
+    rendered = format_access_trace(_report(event))
+    assert rendered.startswith('GET document["')
+    assert len(rendered.splitlines()) == 1
+
+
 @pytest.mark.parametrize("summary,expected", [
     ("string:0:", '""'),
     ("string:3:a:b", '"a:b"'),

@@ -47,7 +47,8 @@ std::string trace_member_name(v8::Isolate* isolate, v8::Local<v8::Name> name) {
 }
 
 std::uint64_t data_trace_record(v8::Isolate* isolate, v8::Local<v8::Array> data,
-    v8::Local<v8::Object> receiver, const char* member, AccessOperation operation) {
+    v8::Local<v8::Object> receiver, const char* member, AccessOperation operation,
+    bool tag_symbol = false) {
     if (data->Length() == 1) return window_trace_record(isolate, member, operation);
     auto* trace = access_trace_from_isolate(isolate);
     if (trace == nullptr || !trace->enabled()) return 0;
@@ -66,16 +67,17 @@ std::uint64_t data_trace_record(v8::Isolate* isolate, v8::Local<v8::Array> data,
         }
     }
     return trace->record(native_identity,
-        *type_text, *label_text, member, operation);
+        *type_text, *label_text, member, operation, {}, tag_symbol ? "symbol" : "");
 }
 
 void window_data_getter(v8::Local<v8::Name> property,
                          const v8::PropertyCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
-    const auto member = trace_member_name(isolate, property);
+    const bool tag_symbol = property == v8::Symbol::GetToStringTag(isolate);
+    const auto member = tag_symbol ? std::string("Symbol.toStringTag") : trace_member_name(isolate, property);
     const auto sequence = data_trace_record(isolate, info.Data().As<v8::Array>(),
-        info.Holder(), member.c_str(), AccessOperation::kGet);
+        info.Holder(), member.c_str(), AccessOperation::kGet, tag_symbol);
     AccessPropertyCompletion completion(isolate, sequence, info);
     v8::Local<v8::Value> value;
     if (info.Data().As<v8::Array>()->Get(context, 0).ToLocal(&value)) {
@@ -88,9 +90,10 @@ void window_data_setter(v8::Local<v8::Name> property,
                          const v8::PropertyCallbackInfo<void>& info) {
     auto isolate = info.GetIsolate();
     auto context = isolate->GetCurrentContext();
-    const auto member = trace_member_name(isolate, property);
+    const bool tag_symbol = property == v8::Symbol::GetToStringTag(isolate);
+    const auto member = tag_symbol ? std::string("Symbol.toStringTag") : trace_member_name(isolate, property);
     const auto sequence = data_trace_record(isolate, info.Data().As<v8::Array>(),
-        info.Holder(), member.c_str(), AccessOperation::kSet);
+        info.Holder(), member.c_str(), AccessOperation::kSet, tag_symbol);
     AccessPropertySetCompletion completion(isolate, sequence, info, value);
     if (!info.Data().As<v8::Array>()->CreateDataProperty(context, 0, value).FromMaybe(false)) return;
 }

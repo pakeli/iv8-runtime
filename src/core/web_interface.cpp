@@ -221,9 +221,10 @@ v8::Local<v8::Object> web_interface_prototype(
         if (parent_prototype.IsEmpty() ||
             !prototype->SetPrototype(context, parent_prototype).FromMaybe(false)) return {};
     }
-    if (!prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-            string(isolate, name), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))
-            .FromMaybe(false)) return {};
+    if (!browser::install_traced_api_named_data_property(isolate, context, prototype,
+            v8::Symbol::GetToStringTag(isolate), string(isolate, name),
+            browser::native_api_identity(isolate, prototype), "host_object", name + ".prototype",
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))) return {};
     if (name == "WindowProperties" || name == "StyleMedia") return prototype;
     v8::Local<v8::Function> constructor;
     const int length = name == "Worker" ? 1 : 0;
@@ -279,9 +280,10 @@ bool replace_window_properties_prototype(v8::Isolate* isolate,
     const auto registry_slot = v8::Private::ForApi(isolate,
         v8::String::NewFromUtf8Literal(isolate, "iv8.webidl.prototype.WindowProperties"));
     return prototype->SetPrototype(context, parent).FromMaybe(false) &&
-        prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-            v8::String::NewFromUtf8Literal(isolate, "WindowProperties"),
-            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum)).FromMaybe(false) &&
+        browser::install_traced_api_named_data_property(isolate, context, prototype,
+            v8::Symbol::GetToStringTag(isolate), v8::String::NewFromUtf8Literal(isolate, "WindowProperties"),
+            browser::native_api_identity(isolate, prototype), "host_object", "WindowProperties.prototype",
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum)) &&
         window->SetPrototype(context, prototype).FromMaybe(false) &&
         context->Global()->SetPrivate(context, registry_slot, prototype).FromMaybe(false);
 }

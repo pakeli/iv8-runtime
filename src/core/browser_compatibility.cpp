@@ -14,6 +14,7 @@ namespace {
 constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall, dataProperty, withUser) {
   'use strict';
   const runtimeField = (object, name) => withUser(object, name);
+  const stringTagKey = Symbol.toStringTag;
   const styles = new WeakMap(), elements = new WeakMap(), traceTargets = new WeakMap();
   const traceTargetOf = WeakMap.prototype.get.bind(traceTargets);
   const rememberTraceTarget = WeakMap.prototype.set.bind(traceTargets);
@@ -104,8 +105,9 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       }
     }
   const prototype = CSSStyleDeclaration.prototype;
+  defineData(prototype, stringTagKey, 'CSSStyleDeclaration', false, false,
+    true, 'CSSStyleDeclaration.prototype', prototype);
   Object.defineProperties(prototype, {
-    [Symbol.toStringTag]: {value: 'CSSStyleDeclaration', configurable: true},
     cssText: {enumerable: true, configurable: true,
       get() {
       const traceToken = beginStyleProperty('get', this, 'cssText', arguments);
@@ -235,7 +237,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     elements.set(target, element); rememberTraceTarget(target, target);
     const proxy = new Proxy(target, {
       get(target, key, receiver) {
-        if (isStyleMethod(key)) {
+        if (isStyleMethod(key) || key === stringTagKey) {
           return withUser(() => Reflect.get(target, key, receiver), true);
         }
       const traceToken = beginTrace('get', target, 'CSSStyleDeclaration', key, []);
@@ -342,7 +344,7 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     const battery = Object.create(null), listeners = new Map();
     for (const [name, value] of Object.entries({charging: true, chargingTime: 0,
         dischargingTime: Infinity, level: 1})) defineData(battery, name, value, false, true, false, 'BatteryManager', battery);
-    Object.defineProperty(battery, Symbol.toStringTag, {value: 'BatteryManager'});
+    defineData(battery, stringTagKey, 'BatteryManager', false, false, false, 'BatteryManager', battery);
     Object.assign(battery, {
       addEventListener(type, callback) {
       const traceToken = beginTrace('call', battery, 'BatteryManager', 'addEventListener', arguments);
@@ -407,7 +409,8 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
     });
   }
   const quota = Object.create(null);
-  Object.defineProperty(quota, Symbol.toStringTag, {value: 'DeprecatedStorageQuota'});
+  defineData(quota, stringTagKey, 'DeprecatedStorageQuota', false, false, false,
+    'DeprecatedStorageQuota', quota);
   Object.assign(quota, {
     queryUsageAndQuota(success, failure) {
       const traceToken = beginTrace('call', quota, 'DeprecatedStorageQuota', 'queryUsageAndQuota', arguments);

@@ -152,7 +152,7 @@ AccessTrace::OriginScope::~OriginScope() noexcept {
 std::uint64_t AccessTrace::record(
     const void* identity, std::string_view object_type,
     std::string_view label, std::string_view member, AccessOperation operation,
-    std::string_view resolution) noexcept {
+    std::string_view resolution, std::string_view member_kind) noexcept {
     if (identity == nullptr || !enabled_.load(std::memory_order_acquire)) {
         return 0;
     }
@@ -195,6 +195,7 @@ std::uint64_t AccessTrace::record(
         event.object_type = std::string(object_type);
         event.label = std::string(label);
         event.member = std::string(member);
+        event.member_kind = std::string(member_kind);
         event.operation = operation_name(operation);
         event.phase = "enter";
         event.resolution = resolution;

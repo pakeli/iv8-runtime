@@ -7,6 +7,22 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Observe existing runtime-defined Symbol.toStringTag values (`2026-11-17`)
+
+The user selects direct and Reflect.get tag-read monitoring before iterator work.
+Use native data callbacks at all existing definition sites; preserve values,
+flags, owners and key order rather than adding missing tags or browser APIs.
+Canonical member plus member_kind="symbol" distinguishes Symbols from strings.
+CSS delegates the tag key once using a captured Symbol. Object stringification
+uses runtime scope for original data reads; safe descriptor/engine metadata
+preserves JS and native-bound user reentry. Unknown dynamic handler metadata is
+conservative and can retain extra GETs without re-running a getter/trap.
+Language intrinsics, missing/user Symbol paths and iterator work stay separate.
+Fresh CP311 acceptance: 34 new cases, 167 focused, 823 gate and 3049 passed /
+2 skipped full. Update PR #32 without full-release or SDK-replacement claims.
+Boundary/report: `docs/symbol_to_string_tag_monitoring.md` /
+`docs/symbol_to_string_tag_monitoring_report.md`.
+
 ### Make intrinsic stringifier receivers explicit in logs (`2026-11-17`)
 
 The user identifies ambiguous toString text and approves receiver metadata.

@@ -23,6 +23,122 @@ constexpr int kObjectObserver = 3;
 constexpr int kFunctionIdentity = 4;
 constexpr int kObjectIdentity = 5;
 
+enum class PropertyKind { kAbsent, kData, kAccessor, kProxy, kUnknown };
+struct SafeProperty {
+    PropertyKind kind = PropertyKind::kUnknown;
+    v8::Local<v8::Value> value;
+};
+
+SafeProperty find_real_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Object> holder, v8::Local<v8::Name> name) {
+    for (int depth = 0; depth < 128; ++depth) {
+        if (holder->IsProxy()) return {PropertyKind::kProxy, holder};
+        const auto own = holder->HasRealNamedProperty(context, name);
+        if (own.IsNothing()) return {};
+        if (own.FromJust()) {
+            v8::Local<v8::Value> descriptor_value, value;
+            if (!holder->GetOwnPropertyDescriptor(context, name).ToLocal(&descriptor_value) ||
+                !descriptor_value->IsObject()) return {};
+            auto descriptor = descriptor_value.As<v8::Object>();
+            const auto data = descriptor->HasOwnProperty(context,
+                v8::String::NewFromUtf8Literal(isolate, "value"));
+            if (data.IsNothing()) return {};
+            if (!descriptor->Get(context, data.FromJust()
+                    ? v8::String::NewFromUtf8Literal(isolate, "value")
+                    : v8::String::NewFromUtf8Literal(isolate, "get")).ToLocal(&value)) return {};
+            return {data.FromJust() ? PropertyKind::kData : PropertyKind::kAccessor, value};
+        }
+        // Runtime named/indexed interceptors handle strings, not this Symbol.
+        // A string trap lookup on an intercepted handler is less determinate.
+        if (name->IsString() && (holder->HasNamedLookupInterceptor() ||
+                holder->HasIndexedLookupInterceptor())) return {};
+        auto parent = holder->GetPrototype();
+        if (!parent->IsObject()) return {PropertyKind::kAbsent, {}};
+        holder = parent.As<v8::Object>();
+    }
+    return {};
+}
+
+bool native_callable(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Value> value, int depth) {
+    if (depth > 128) return true;
+    if (value->IsProxy()) {
+        auto proxy = value.As<v8::Proxy>();
+        auto handler = proxy->GetHandler();
+        if (!handler->IsObject()) return false;  // revoked; no callback can run
+        const auto trap = find_real_property(isolate, context, handler.As<v8::Object>(),
+            v8::String::NewFromUtf8Literal(isolate, "apply"));
+        if (trap.kind == PropertyKind::kAbsent ||
+            (trap.kind == PropertyKind::kData && trap.value->IsNullOrUndefined()) ||
+            (trap.kind == PropertyKind::kAccessor && trap.value->IsUndefined()))
+            return native_callable(isolate, context, proxy->GetTarget(), depth + 1);
+        if (trap.kind == PropertyKind::kData)
+            return native_callable(isolate, context, trap.value, depth + 1);
+        return true;  // dynamic trap getter/Proxy: never execute it diagnostically
+    }
+    if (value->IsFunction()) return value.As<v8::Function>()->ScriptId() <= 0;
+    return value->IsObject() && value.As<v8::Object>()->IsCallable();
+}
+
+bool tag_needs_native_reentry(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Object> receiver, int depth = 0) {
+    if (depth > 128) return true;
+    const auto property = find_real_property(isolate, context, receiver,
+        v8::Symbol::GetToStringTag(isolate));
+    if (property.kind == PropertyKind::kAbsent || property.kind == PropertyKind::kData) return false;
+    if (property.kind == PropertyKind::kAccessor)
+        return native_callable(isolate, context, property.value, depth + 1);
+    if (property.kind != PropertyKind::kProxy) return true;
+    auto proxy = property.value.As<v8::Proxy>();
+    auto handler = proxy->GetHandler();
+    if (!handler->IsObject()) return false;
+    const auto trap = find_real_property(isolate, context, handler.As<v8::Object>(),
+        v8::String::NewFromUtf8Literal(isolate, "get"));
+    if (trap.kind == PropertyKind::kAbsent ||
+        (trap.kind == PropertyKind::kData && trap.value->IsNullOrUndefined()) ||
+        (trap.kind == PropertyKind::kAccessor && trap.value->IsUndefined())) {
+        auto target = proxy->GetTarget();
+        return target->IsObject() && tag_needs_native_reentry(isolate, context,
+            target.As<v8::Object>(), depth + 1);
+    }
+    if (trap.kind == PropertyKind::kData) {
+        const auto* trace = access_trace_from_isolate(isolate);
+        if (!trap.value->IsProxy() && trap.value->IsFunction() && trace != nullptr &&
+            trace->runtime_script(trap.value.As<v8::Function>()->ScriptId())) {
+            // The CSS facade's registered runtime get trap forwards this
+            // Symbol with Reflect.get. A user native/bound accessor behind
+            // that facade still needs attribution without a new user frame.
+            auto target = proxy->GetTarget();
+            return target->IsObject() && tag_needs_native_reentry(isolate, context,
+                target.As<v8::Object>(), depth + 1);
+        }
+        return native_callable(isolate, context, trap.value, depth + 1);
+    }
+    return true;  // a getter for handler.get may itself return a native trap
+}
+
+bool preserve_native_tag_callback(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, v8::Local<v8::Value> receiver) {
+    if (receiver->IsNullOrUndefined()) return false;
+    v8::TryCatch diagnostic(isolate);
+    bool preserve = true;
+    try {
+        // Boxing is diagnostic only. The original builtin still receives raw
+        // null/undefined/primitives, never this temporary receiver object.
+        v8::Local<v8::Object> object;
+        if (receiver->ToObject(context).ToLocal(&object))
+            preserve = tag_needs_native_reentry(isolate, context, object);
+    } catch (...) {
+        // Unknown metadata retains user attribution without running user code.
+    }
+    if (diagnostic.HasCaught()) {
+        preserve = true;
+        if (!diagnostic.CanContinue()) diagnostic.ReThrow();
+        else diagnostic.Reset();
+    }
+    return preserve;
+}
+
 void capture_call_inputs(v8::Isolate* isolate, v8::Local<v8::Context> context,
     v8::Local<v8::Value> receiver, v8::Local<v8::Array> arguments,
     AccessCompletion& completion) {
@@ -60,7 +176,6 @@ void to_string_apply(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
     auto* trace = access_trace_from_isolate(isolate);
     const bool tracing = trace != nullptr && trace->enabled();
-    const bool user_call = tracing && trace->user_entry();
     std::uint64_t sequence = 0;
     if (tracing) {
         v8::Local<v8::Value> identity;
@@ -88,11 +203,12 @@ void to_string_apply(const v8::FunctionCallbackInfo<v8::Value>& info) {
             break;
         }
     }
-    bool user_operation = user_call;
-    if (tracing && !function_call && !user_operation && receiver->IsObject()) {
-        user_operation = runtime_api_field_has_user_accessor(isolate, context,
-            receiver.As<v8::Object>(), v8::Symbol::GetToStringTag(isolate), false, false);
-    }
+    // Native tag data reads are builtin housekeeping. Plain JS getters/traps
+    // add a user frame naturally; only frame-less native/bound callbacks need
+    // explicit user attribution around the original operation.
+    const bool user_operation = tracing && !function_call &&
+        preserve_native_tag_callback(isolate, context, receiver);
+    if (isolate->IsExecutionTerminating()) return;
     std::optional<v8::TryCatch> invocation;
     if (sequence != 0) invocation.emplace(isolate);
     v8::Local<v8::Value> result;

@@ -38,7 +38,7 @@ filters, and compared actual entries with valid-operation controls. It found:
 | Invalid native receivers | Closed for generic method/IDL accessor callbacks by `docs/generic_binding_monitoring_report.md`; independent callback families remain separate |
 | Returned browser structures | MutationRecord nine own data fields are now covered by `docs/mutation_record_monitoring_report.md`; independent array length/index, other arrays and value dictionaries remain open |
 | Intrinsic toString calls | TOSTRING-MON-01 covers Function/Object.prototype.toString CALLs, cached aliases and strict receiver behavior; Inspector/Proxy interposition limits are explicit in `docs/to_string_monitoring.md` |
-| Symbol and structural queries | Some `Symbol.toStringTag` / `Symbol.iterator`, `in`, cached query wrappers and non-HostObject query targets are silent |
+| Symbol and structural queries | TAG-MON-01 covers existing runtime browser-data `Symbol.toStringTag` reads; language-intrinsic/user/missing-Symbol paths, `Symbol.iterator`, `in`, cached query wrappers and non-HostObject query targets remain separate |
 | Readonly write attempts | Engine-ignored/rejected attempts can have no set event |
 | Manual trace retention | The manual 10,000-event default drops later events; native installation can consume that budget if tracing was enabled before load |
 
