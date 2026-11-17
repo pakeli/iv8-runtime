@@ -235,6 +235,15 @@ v8::Maybe<bool> set_runtime_api_field(v8::Isolate* isolate,
     return object->Set(context, key, value);
 }
 
+bool is_native_event(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                     v8::Local<v8::Value> value) {
+    if (!value->IsObject() || value->IsProxy()) return false;
+    auto state = get_event_state(isolate, context, value.As<v8::Object>(), false);
+    v8::Local<v8::Value> brand;
+    return !state.IsEmpty() &&
+        state_field(isolate, context, state, "brand", &brand) && brand->IsTrue();
+}
+
 bool initialize_event_state(v8::Isolate* isolate, v8::Local<v8::Context> context,
                             v8::Local<v8::Object> event, bool composed) {
     return !create_event_state(isolate, context, event, true, composed).IsEmpty() &&

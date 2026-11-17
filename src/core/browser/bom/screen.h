@@ -28,6 +28,12 @@ public:
 
     std::vector<std::string> method_names() const override { return event_method_names(); }
 
+    void release_v8_handles() noexcept override {
+        EventTargetHost::release_v8_handles();
+        orientation_.release_v8_handles();
+        orientation_object_.Reset();
+    }
+
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
                                       v8::Local<v8::Context> context,
                                       const std::string& name) override {
@@ -61,7 +67,11 @@ public:
         // M11-35: deterministic orientation derived from the reported screen
         // dimensions. Step 5 exposes it as a nested HostObject.
         if (name == "orientation") {
-            return make_host_object(isolate, context, &orientation_);
+            if (orientation_object_.IsEmpty()) {
+                orientation_object_.Reset(isolate,
+                    make_host_object(isolate, context, &orientation_));
+            }
+            return orientation_object_.Get(isolate);
         }
         return v8::Undefined(isolate);
     }
@@ -77,6 +87,7 @@ public:
 private:
     const HostEnvironment* environment_;
     ScreenOrientationHost orientation_;
+    v8::Global<v8::Object> orientation_object_;
 };
 
 }  // namespace iv8::browser

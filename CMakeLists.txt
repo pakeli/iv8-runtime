@@ -98,6 +98,7 @@ if(IV8_LINK_V8)
       src/core/browser/bom/web_storage.cpp
       src/core/browser/bom/navigator_parts.cpp
       src/core/browser/bom/navigator_identity.cpp
+      src/core/browser/bom/navigator_capabilities.cpp
       src/core/browser/bom/media_query.cpp
       src/core/browser/web/performance.cpp
       src/core/browser/web/structured_clone.cpp

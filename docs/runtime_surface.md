@@ -1,6 +1,10 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest implemented/local acceptance (`2026-11-17`): TAG-MON-01 native Symbol.toStringTag reads; full release pending.** Existing interface/collection/namespace/CSS/Battery/Quota tag definitions now record direct and Reflect.get reads through native data hooks, preserving values/data flags/owners/key order. Optional `member_kind="symbol"` makes real `[Symbol.toStringTag]` distinct from same-named strings. Ordinary object-toString tag lookup stays quiet; actual JS/native-bound callback reads retain provenance. Unknown dynamic Proxy metadata uses conservative attribution and can retain an extra GET, without extra getter/trap calls. **34 new cases**, **167 focused passed**, **823 release-focused passed**, full fresh-installed macOS arm64 / Python 3.11 wheel **3049 passed, 2 skipped**. PR #32 updated; no shared SDK replacement. Boundary/evidence: `docs/symbol_to_string_tag_monitoring.md` / `docs/symbol_to_string_tag_monitoring_report.md`.
+**Current user direction (`2026-11-17`): complete BOM environment first; defer further Symbol.iterator monitoring.** Continue Navigator and existing BOM subobjects under `docs/bom_coverage_plan.md`. BOM-01 selects offline getGamepads/scheduling and connection/orientation/viewport native event foundations; boundary: `docs/bom_01_capabilities.md`. Existing monitoring regressions stay protected. This priority change does not mark remaining API observation or cross-platform release/deployment complete.
+
+**Latest implemented/local acceptance (`2026-11-17`): BOM-01 offline Navigator capabilities and BOM event foundations; full release pending.** Native getGamepads returns the captured fresh eight-null snapshot; stable Scheduling/isInputPending preserves dictionary conversion and the no-trusted-input profile. Connection/orientation/viewport have eager native interfaces, synthetic EventTarget support and handler slots; orientation lock rejects a Promise without a device backend. Nested identity and teardown are preserved. Fixed presence: Navigator **32/70**, connection **8/9**, orientation **8/9**, viewport **13/14**. Fresh macOS arm64/Python 3.11 installed-wheel acceptance: **94 new tests**, **917 release-focused passed**, full **3143 passed, 2 skipped**. The user now authorizes updating PR #32 and V8-linked release builds; progress is tracked in `docs/bom_01_release_report.md`. Full release remains pending and shared deployment stays BIND-01. Boundary/report/delta: `docs/bom_01_capabilities.md`, `docs/bom_01_capabilities_report.md`, `docs/bom_01_api_delta.json`.
+
+**Previous implemented/local acceptance (`2026-11-17`): TAG-MON-01 native Symbol.toStringTag reads; full release pending.** Existing interface/collection/namespace/CSS/Battery/Quota tag definitions now record direct and Reflect.get reads through native data hooks, preserving values/data flags/owners/key order. Optional `member_kind="symbol"` makes real `[Symbol.toStringTag]` distinct from same-named strings. Ordinary object-toString tag lookup stays quiet; actual JS/native-bound callback reads retain provenance. Unknown dynamic Proxy metadata uses conservative attribution and can retain an extra GET, without extra getter/trap calls. **34 new cases**, **167 focused passed**, **823 release-focused passed**, full fresh-installed macOS arm64 / Python 3.11 wheel **3049 passed, 2 skipped**. PR #32 updated; no shared SDK replacement. Boundary/evidence: `docs/symbol_to_string_tag_monitoring.md` / `docs/symbol_to_string_tag_monitoring_report.md`.
 
 **Previous local acceptance (`2026-11-17`): toString receiver metadata and explicit text invocation; full release pending.** Intrinsic CALL entries now carry raw `receiver_summary` and optional direct native-host `receiver_label`, captured before observer mapping. Text normalizes `.call(this, ...extraArgs)` to avoid confusing entrypoint and receiver; actual argument counts are unchanged. No function name/tag/constructor getters or user-Proxy unwrapping are used; saved reports without receiver fields retain their old text. **41 new cases**, **133 focused passed**, **789 release-focused passed**, full fresh-installed macOS arm64 / Python 3.11 wheel **3015 passed, 2 skipped**. PR #32 updated; no shared SDK replacement. Boundary/evidence: `docs/to_string_monitoring.md` / `docs/to_string_receivers_report.md`.
 
@@ -443,6 +447,16 @@ Installed per generation by `install_page`:
   NotSupportedError, invalid MIME types throw TypeError. XMLSerializer and full
   XML/HTML5 parsing remain outside this batch. See `docs/presence_02_dom.md`.
 
+- **BOM-01 offline capabilities and event foundations** — native
+  `navigator.getGamepads()` returns a fresh eight-null-slot array matching the
+  captured no-device Chrome profile. Stable `navigator.scheduling` exposes native
+  `Scheduling.isInputPending(options)` with dictionary conversion and false
+  results without trusted input. NetworkInformation, ScreenOrientation and
+  VisualViewport have shared native interfaces and synthetic EventTarget support;
+  onscrollend and orientation lock/unlock complete the selected name slice.
+  Device execution and Observable-dependent when remain separate. See
+  `docs/bom_01_capabilities.md` / `docs/bom_01_capabilities_report.md`.
+
 - **PRES-01 BOM/event additions (previous local acceptance; combined release verified)** —
   Navigator `appVersion` / `deviceMemory` / `userAgentData` / `userActivation`;
   UAData values come from caller configuration or declared-UA derivation, with
@@ -494,8 +508,9 @@ Installed per generation by `install_page`:
   `productSub`, and M11-35 `maxTouchPoints` / `pdfViewerEnabled` / `doNotTrack` /
   `connection`) and `location` (`href` / `origin` / `protocol` / `host` /
   `hostname` / `port` / `pathname` / `search` / `hash` / `toString()`) — metadata remains read-only;
-  `navigator.connection` is a fresh read-only `{effectiveType, rtt, downlink,
-  saveData}` object with no events; `location` still derives from the base URL
+  `navigator.connection` is a stable native NetworkInformation with configured
+  `effectiveType` / `rtt` / `downlink` / `saveData`, onchange and synthetic
+  EventTarget dispatch under BOM-01; `location` still derives from the base URL
   with assign/replace/reload recording offline intents. The compatibility repair
   also adds prototype webdriver, sendBeacon refusal, a secure-context deterministic
   getBattery Promise and bounded webkitPersistentStorage callbacks; see its contract;
@@ -506,7 +521,9 @@ Installed per generation by `install_page`:
   configured via `Page(environment=...)`; M11-35 adds mutable `window.name`,
   read-only `window.length` (0), `screenLeft` / `screenTop`, and
   `isSecureContext` derived from the base URL. `screen.orientation` is a
-  read-only `{type, angle}` derived from width/height with no events or lock;
+  stable native ScreenOrientation with read-only `type` / `angle` derived from
+  width/height, onchange and synthetic EventTarget dispatch. BOM-01 adds
+  `lock` (validated rejected Promise; no device backend) and no-op `unlock`;
   these dimensions feed no layout engine (see the M11-50 scroll stubs below).
   M11-39 adds
   the single-context browsing metadata: replaceable `window.parent` / `frames`,
@@ -515,10 +532,10 @@ Installed per generation by `install_page`:
   M11-52 below);
 - **visual viewport + window flags** (M11-41) — read-only
   `visualViewport` (`width` / `height` from `innerWidth` / `innerHeight`,
-  zero offsets, `scale=1`) with no-op listeners and no scroll/zoom/resize
-  events; the access-trace step 5d now backs it with a HostObject (same values
-  and read/write behavior, documented prototype/descriptor differences); see
-  `docs/host_access_trace.md`. Read-only `window.origin`,
+  zero offsets, `scale=1`). BOM-01 supplies a native VisualViewport prototype,
+  EventTarget listeners/synthetic dispatch and onresize/onscroll/onscrollend
+  handler slots. No device-generated scroll/zoom/resize events or layout changes
+  are introduced; see `docs/bom_01_capabilities.md`. Read-only `window.origin`,
   `crossOriginIsolated` (`false`), `closed` (`false`), and `frameElement`
   (`null`). The window `parent`/`top`/`frames`/`opener` aliases are traced
   accessors under step 5i with unchanged replaceable/read-only behavior;
@@ -875,6 +892,7 @@ clock.
 | PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release verification in `docs/bom_release_report.md` | `docs/presence_02_dom.md` / report |
 | PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release verification in `docs/bom_release_report.md` | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
+| BOM-01 | Offline Navigator capability queries and native connection/orientation/viewport event foundations; local acceptance and release status tracked separately | `docs/bom_01_capabilities.md`, `docs/bom_01_capabilities_report.md` |
 | TAG-MON-01 | Existing runtime Symbol.toStringTag direct/Reflect.get reads; native data shape retained, dynamic-Proxy provenance limits explicit | `docs/symbol_to_string_tag_monitoring.md`, `docs/symbol_to_string_tag_monitoring_report.md` |
 | TOSTRING-MON-01 | Function/Object.prototype.toString CALL monitoring; raw receivers, cached calls, native interposer limits explicit | `docs/to_string_monitoring.md`, `docs/to_string_monitoring_report.md` |
 | XHR-01 | Native XMLHttpRequest / EventTarget / Upload shape and monitoring; inert send/request methods, no transport | `docs/xml_http_request_shape.md`, `docs/xml_http_request_shape_report.md` |

@@ -1,5 +1,11 @@
 # Host Access Trace
 
+BOM-01 (`2026-11-17`) adds native getGamepads/Scheduling entries and upgrades
+connection/orientation/visualViewport to shared native EventTarget interfaces.
+Its boundary overrides historical no-op viewport/event and fresh-wrapper shape
+descriptions below; see `docs/bom_01_capabilities.md` and its report. Iterator
+monitoring remains deferred by user direction.
+
 MutationRecord delta (`2026-11-16`): its nine existing own data fields record
 GET/SET with host_object / MutationRecord attribution and one generation-owned
 identity per record. Cached fields and observer callbacks are covered; record

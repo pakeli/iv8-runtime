@@ -32,6 +32,8 @@ std::string_view parent_interface(std::string_view name) {
         {"Node", "EventTarget"}, {"CharacterData", "Node"},
         {"Text", "CharacterData"}, {"Comment", "CharacterData"},
         {"DocumentFragment", "Node"}, {"Screen", "EventTarget"},
+        {"NetworkInformation", "EventTarget"}, {"ScreenOrientation", "EventTarget"},
+        {"VisualViewport", "EventTarget"},
         {"CookieStore", "EventTarget"}, {"Navigation", "EventTarget"},
         {"DocumentPictureInPicture", "EventTarget"}, {"SpeechSynthesis", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
@@ -309,7 +311,8 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "HTMLElement", "HTMLDivElement", "HTMLFormElement", "HTMLScriptElement",
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
             "XMLHttpRequest", "XMLHttpRequestUpload", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
-            "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser"}) {
+            "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser", "Scheduling",
+            "NetworkInformation", "ScreenOrientation", "VisualViewport"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }
     for (const auto& [tag, name] : html_interfaces()) {

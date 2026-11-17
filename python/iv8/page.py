@@ -1174,14 +1174,14 @@ class Page:
         (``innerWidth`` / geometry / flags plus ``window.name``), reads of the
         nested ``navigator.connection`` / ``screen.orientation`` HostObjects plus
         ``performance.timeOrigin``, static ``visualViewport`` metadata,
-        writable ``onresize``/``onscroll``, no-op event methods, and missing
-        probes, ``navigator.storage`` parent reads plus manager method calls,
+        writable ``onresize``/``onscroll``/``onscrollend``, synthetic EventTarget
+        methods, and missing probes, ``navigator.storage`` parent reads plus manager method calls,
         ``navigator.permissions`` query calls plus PermissionStatus
         name/state/method accesses, matchMedia result calls/gets/method calls,
         legacy navigator plugins/mimeTypes/javaEnabled accesses, and window
-        parent/top/frames/opener get/set events. The visual viewport and
-        matchMedia results are host objects, so they use the template prototype
-        and writable/configurable no-op methods; the storage/permissions
+        parent/top/frames/opener get/set events. BOM-01 gives the visual viewport a native VisualViewport/EventTarget
+        prototype and working synthetic dispatch. MatchMedia retains its existing
+        template prototype and writable/configurable no-op methods; the storage/permissions
         managers and PermissionStatus objects keep their plain-object shapes.
 
         WIN-MON-01 covers the 49 PRES-03 Window entries, their native property

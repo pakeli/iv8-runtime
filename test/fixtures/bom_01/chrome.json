@@ -1,0 +1,830 @@
+{
+  "captured_at": "2026-11-17T13:04:31.196729+00:00",
+  "browser": "Google Chrome 157.0.8103.79",
+  "os": "Darwin",
+  "architecture": "arm64",
+  "url": "http://127.0.0.1:53481/reference",
+  "flags": [
+    "--headless=new",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--disable-features=OptimizationHints,MediaRouter",
+    "--no-pings",
+    "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+    "--user-data-dir=<temporary-profile>",
+    "--dump-dom",
+    "--virtual-time-budget=3000"
+  ],
+  "probe_sha256": "727b09233ffa178bc6d627bb685a0cf980fc835ccc400fbe57c83ff35a5220d7",
+  "requests": [
+    "/reference",
+    "/favicon.ico"
+  ],
+  "result": {
+    "secure": true,
+    "shape": {
+      "Scheduling": {
+        "constructor": {
+          "name": "Scheduling",
+          "length": 0,
+          "source": "function Scheduling() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "parent": "Object",
+        "samePrototype": true,
+        "tag": "[object Scheduling]",
+        "own": [],
+        "members": {
+          "isInputPending": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "method": {
+              "name": "isInputPending",
+              "length": 0,
+              "source": "function isInputPending() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "method": {
+              "name": "Scheduling",
+              "length": 0,
+              "source": "function Scheduling() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Scheduling"
+          }
+        },
+        "inheritedEventMethods": [
+          false,
+          false,
+          false
+        ]
+      },
+      "NetworkInformation": {
+        "constructor": {
+          "name": "NetworkInformation",
+          "length": 0,
+          "source": "function NetworkInformation() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "parent": "EventTarget",
+        "samePrototype": true,
+        "tag": "[object NetworkInformation]",
+        "own": [],
+        "members": {
+          "onchange": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onchange",
+              "length": 0,
+              "source": "function get onchange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onchange",
+              "length": 1,
+              "source": "function set onchange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "effectiveType": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get effectiveType",
+              "length": 0,
+              "source": "function get effectiveType() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "rtt": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get rtt",
+              "length": 0,
+              "source": "function get rtt() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "downlink": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get downlink",
+              "length": 0,
+              "source": "function get downlink() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "saveData": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get saveData",
+              "length": 0,
+              "source": "function get saveData() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "method": {
+              "name": "NetworkInformation",
+              "length": 0,
+              "source": "function NetworkInformation() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "NetworkInformation"
+          }
+        },
+        "inheritedEventMethods": [
+          true,
+          true,
+          true
+        ]
+      },
+      "ScreenOrientation": {
+        "constructor": {
+          "name": "ScreenOrientation",
+          "length": 0,
+          "source": "function ScreenOrientation() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "parent": "EventTarget",
+        "samePrototype": true,
+        "tag": "[object ScreenOrientation]",
+        "own": [],
+        "members": {
+          "angle": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get angle",
+              "length": 0,
+              "source": "function get angle() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "type": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get type",
+              "length": 0,
+              "source": "function get type() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "onchange": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onchange",
+              "length": 0,
+              "source": "function get onchange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onchange",
+              "length": 1,
+              "source": "function set onchange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "lock": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "method": {
+              "name": "lock",
+              "length": 1,
+              "source": "function lock() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "unlock": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "method": {
+              "name": "unlock",
+              "length": 0,
+              "source": "function unlock() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "method": {
+              "name": "ScreenOrientation",
+              "length": 0,
+              "source": "function ScreenOrientation() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "ScreenOrientation"
+          }
+        },
+        "inheritedEventMethods": [
+          true,
+          true,
+          true
+        ]
+      },
+      "VisualViewport": {
+        "constructor": {
+          "name": "VisualViewport",
+          "length": 0,
+          "source": "function VisualViewport() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "parent": "EventTarget",
+        "samePrototype": true,
+        "tag": "[object VisualViewport]",
+        "own": [],
+        "members": {
+          "offsetLeft": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get offsetLeft",
+              "length": 0,
+              "source": "function get offsetLeft() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "offsetTop": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get offsetTop",
+              "length": 0,
+              "source": "function get offsetTop() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "pageLeft": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get pageLeft",
+              "length": 0,
+              "source": "function get pageLeft() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "pageTop": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get pageTop",
+              "length": 0,
+              "source": "function get pageTop() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "width": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get width",
+              "length": 0,
+              "source": "function get width() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "height": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get height",
+              "length": 0,
+              "source": "function get height() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "scale": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get scale",
+              "length": 0,
+              "source": "function get scale() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "onresize": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onresize",
+              "length": 0,
+              "source": "function get onresize() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onresize",
+              "length": 1,
+              "source": "function set onresize() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "onscroll": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onscroll",
+              "length": 0,
+              "source": "function get onscroll() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onscroll",
+              "length": 1,
+              "source": "function set onscroll() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "onscrollend": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onscrollend",
+              "length": 0,
+              "source": "function get onscrollend() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onscrollend",
+              "length": 1,
+              "source": "function set onscrollend() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "method": {
+              "name": "VisualViewport",
+              "length": 0,
+              "source": "function VisualViewport() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "VisualViewport"
+          }
+        },
+        "inheritedEventMethods": [
+          true,
+          true,
+          true
+        ]
+      },
+      "Navigator": {
+        "getGamepads": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "method": {
+            "name": "getGamepads",
+            "length": 0,
+            "source": "function getGamepads() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        },
+        "scheduling": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get scheduling",
+            "length": 0,
+            "source": "function get scheduling() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        }
+      }
+    },
+    "capabilities": {
+      "gamepads": {
+        "array": true,
+        "value": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "frozen": false,
+        "fresh": true,
+        "wrongReceiver": {
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal invocation"
+          }
+        },
+        "ignoredArgument": {
+          "value": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      },
+      "scheduling": {
+        "stable": true,
+        "results": [
+          {
+            "value": false
+          },
+          {
+            "value": false
+          },
+          {
+            "value": false
+          },
+          {
+            "value": false
+          },
+          {
+            "value": false
+          },
+          {
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'isInputPending' on 'Scheduling': The provided value is not of type 'IsInputPendingOptions'."
+            }
+          },
+          {
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'isInputPending' on 'Scheduling': The provided value is not of type 'IsInputPendingOptions'."
+            }
+          },
+          {
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'isInputPending' on 'Scheduling': The provided value is not of type 'IsInputPendingOptions'."
+            }
+          }
+        ],
+        "options": [
+          "read"
+        ],
+        "wrongReceiver": {
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal invocation"
+          }
+        },
+        "getterWrongReceiver": {
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal invocation"
+          }
+        }
+      }
+    },
+    "events": {
+      "NetworkInformation": {
+        "seen": [
+          [
+            "listener",
+            true,
+            true,
+            true,
+            2
+          ],
+          [
+            "handler",
+            true,
+            true,
+            true,
+            2
+          ],
+          [
+            "handler",
+            true,
+            true,
+            true,
+            2
+          ]
+        ],
+        "returned": false,
+        "returnedSecond": true,
+        "handlerAfterPrimitive": null,
+        "finalState": [
+          true,
+          0,
+          0
+        ],
+        "invalidDispatch": {
+          "error": {
+            "name": "TypeError",
+            "message": "Failed to execute 'dispatchEvent' on 'EventTarget': parameter 1 is not of type 'Event'."
+          }
+        },
+        "invalidReceiver": {
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal invocation"
+          }
+        }
+      },
+      "ScreenOrientation": {
+        "seen": [
+          [
+            "listener",
+            true,
+            true,
+            true,
+            2
+          ],
+          [
+            "handler",
+            true,
+            true,
+            true,
+            2
+          ],
+          [
+            "handler",
+            true,
+            true,
+            true,
+            2
+          ]
+        ],
+        "returned": false,
+        "returnedSecond": true,
+        "handlerAfterPrimitive": null,
+        "finalState": [
+          true,
+          0,
+          0
+        ],
+        "invalidDispatch": {
+          "error": {
+            "name": "TypeError",
+            "message": "Failed to execute 'dispatchEvent' on 'EventTarget': parameter 1 is not of type 'Event'."
+          }
+        },
+        "invalidReceiver": {
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal invocation"
+          }
+        }
+      },
+      "VisualViewport": {
+        "seen": [
+          [
+            "listener",
+            true,
+            true,
+            true,
+            2
+          ],
+          [
+            "handler",
+            true,
+            true,
+            true,
+            2
+          ],
+          [
+            "handler",
+            true,
+            true,
+            true,
+            2
+          ]
+        ],
+        "returned": false,
+        "returnedSecond": true,
+        "handlerAfterPrimitive": null,
+        "finalState": [
+          true,
+          0,
+          0
+        ],
+        "invalidDispatch": {
+          "error": {
+            "name": "TypeError",
+            "message": "Failed to execute 'dispatchEvent' on 'EventTarget': parameter 1 is not of type 'Event'."
+          }
+        },
+        "invalidReceiver": {
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal invocation"
+          }
+        }
+      }
+    },
+    "orientation": {
+      "stable": true,
+      "connectionStable": true,
+      "portrait": {
+        "promise": true,
+        "error": {
+          "name": "NotSupportedError",
+          "message": "screen.orientation.lock() is not available on this device."
+        }
+      },
+      "landscape": {
+        "promise": true,
+        "error": {
+          "name": "NotSupportedError",
+          "message": "screen.orientation.lock() is not available on this device."
+        }
+      },
+      "any": {
+        "promise": true,
+        "error": {
+          "name": "NotSupportedError",
+          "message": "screen.orientation.lock() is not available on this device."
+        }
+      },
+      "natural": {
+        "promise": true,
+        "error": {
+          "name": "NotSupportedError",
+          "message": "screen.orientation.lock() is not available on this device."
+        }
+      },
+      "portrait-primary": {
+        "promise": true,
+        "error": {
+          "name": "NotSupportedError",
+          "message": "screen.orientation.lock() is not available on this device."
+        }
+      },
+      "bad": {
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'lock' on 'ScreenOrientation': The provided value 'bad' is not a valid enum value of type OrientationLockType."
+        }
+      },
+      "null": {
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'lock' on 'ScreenOrientation': The provided value 'null' is not a valid enum value of type OrientationLockType."
+        }
+      },
+      "undefined": {
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'lock' on 'ScreenOrientation': The provided value 'undefined' is not a valid enum value of type OrientationLockType."
+        }
+      },
+      "noArgument": {
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'lock' on 'ScreenOrientation': 1 argument required, but only 0 present."
+        }
+      },
+      "wrongReceiver": {
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'lock' on 'ScreenOrientation': Illegal invocation"
+        }
+      },
+      "unlock": {
+        "value": "undefined"
+      },
+      "unlockWrongReceiver": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        }
+      }
+    }
+  }
+}

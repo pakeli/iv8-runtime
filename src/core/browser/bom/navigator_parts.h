@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "../internal/common.h"
+#include "../host/event_target.h"
 #include "iv8/page_state.h"
 #include "iv8/host_object.h"
 #include "iv8/access_summary.h"
@@ -58,25 +59,43 @@ extern void permissions_query_callback(const v8::FunctionCallbackInfo<v8::Value>
 
 extern v8::Local<v8::Object> make_permissions_object(v8::Isolate* isolate, v8::Local<v8::Context> context);
 
+// Declare the selected nested interfaces before user scripts inspect their
+// prototypes. The temporary hosts are declarations only, never stored in JS.
+bool install_bom_event_interfaces(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const HostEnvironment* environment);
+
+// The selected BOM targets require a native Event argument; other historical
+// EventTarget hosts retain their existing bounded dispatch contract.
+bool validate_bom_event_dispatch(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const std::string& name,
+    const v8::FunctionCallbackInfo<v8::Value>& arguments);
+
 // Step 5: nested connection metadata. HostObject-backed so reads, missing
 // probes, and object identity use the normal access-trace channel.
-class ConnectionHost : public HostObject {
+class ConnectionHost : public EventTargetHost {
 public:
     explicit ConnectionHost(const HostEnvironment* environment)
         : environment_(environment) {}
 
     std::string global_name() const override { return std::string(); }
+    std::string prototype_key() const override { return "NetworkInformation"; }
     std::string trace_object_type() const override { return "connection"; }
     std::string trace_label() const override { return "navigator.connection"; }
 
     std::vector<std::string> property_names() const override {
-        return {"effectiveType", "rtt", "downlink", "saveData"};
+        return {"onchange", "effectiveType", "rtt", "downlink", "saveData"};
     }
-    std::vector<std::string> method_names() const override { return {}; }
+    std::vector<std::string> method_names() const override { return event_method_names(); }
+    std::vector<std::string> writable_property_names() const override { return {"onchange"}; }
+    void set_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+                      const std::string& name, v8::Local<v8::Value> value) override {
+        if (name == "onchange") set_event_handler(isolate, name, value);
+    }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
                                       v8::Local<v8::Context>,
                                       const std::string& name) override {
+        if (name == "onchange") return get_event_handler(isolate, name);
         if (name == "effectiveType") {
             return v8_string(isolate,
                              environment_->connection_effective_type);
@@ -94,33 +113,43 @@ public:
     }
 
     v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
-        const v8::FunctionCallbackInfo<v8::Value>&) override {
-        return v8::Undefined(isolate);
-    }
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& arguments) override;
 
 private:
     const HostEnvironment* environment_;
 };
 
 // Step 5: nested screen orientation metadata.
-class ScreenOrientationHost : public HostObject {
+class ScreenOrientationHost : public EventTargetHost {
 public:
     explicit ScreenOrientationHost(const HostEnvironment* environment)
         : environment_(environment) {}
 
     std::string global_name() const override { return std::string(); }
+    std::string prototype_key() const override { return "ScreenOrientation"; }
     std::string trace_object_type() const override { return "orientation"; }
     std::string trace_label() const override { return "screen.orientation"; }
 
     std::vector<std::string> property_names() const override {
-        return {"type", "angle"};
+        return {"angle", "type", "onchange"};
     }
-    std::vector<std::string> method_names() const override { return {}; }
+    std::vector<std::string> method_names() const override {
+        auto names = event_method_names();
+        names.insert(names.end(), {"lock", "unlock"});
+        return names;
+    }
+    std::vector<std::string> writable_property_names() const override { return {"onchange"}; }
+    void set_property(v8::Isolate* isolate, v8::Local<v8::Context>,
+                      const std::string& name, v8::Local<v8::Value> value) override {
+        if (name == "onchange") set_event_handler(isolate, name, value);
+    }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
                                       v8::Local<v8::Context>,
                                       const std::string& name) override {
+        if (name == "onchange") return get_event_handler(isolate, name);
         const bool landscape =
             environment_->screen_width >= environment_->screen_height;
         if (name == "type") {
@@ -134,10 +163,9 @@ public:
     }
 
     v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string&,
-        const v8::FunctionCallbackInfo<v8::Value>&) override {
-        return v8::Undefined(isolate);
-    }
+        v8::Isolate* isolate, v8::Local<v8::Context> context,
+        const std::string& name,
+        const v8::FunctionCallbackInfo<v8::Value>& arguments) override;
 
 private:
     const HostEnvironment* environment_;

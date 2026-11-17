@@ -7,6 +7,31 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Submit BOM-01 and build V8-linked release wheels (`2026-11-17`)
+
+The user requests PR submission and V8 builds after local BOM-01 acceptance.
+Update the existing PR #32 and validate one fixed source across Linux/Windows/
+macOS, Python 3.11–3.14. Reuse matching pinned engine caches and rebuild native
+extensions/wheels; record cache outcomes distinctly from real engine builds.
+Preserve source-pinned temporary macOS helper restoration and record any runner
+capacity failures without treating them as green. No merge, tag publication or
+shared SDK installation is implied. Evidence: `docs/bom_01_release_report.md`.
+
+### Prioritize BOM completion and defer iterator monitoring (`2026-11-17`)
+
+The user explicitly places further Symbol.iterator monitoring on hold and selects
+BOM environment completion next. Follow the existing BOM-first queue: retain
+Window/Location/History behavior, extend low-dependency Navigator capabilities
+and existing BOM subobjects before device/service subsystems or further DOM
+work. BOM-01 selects getGamepads, Scheduling.isInputPending and the
+connection/orientation/viewport event foundations against a new Chrome reference.
+No trusted input, real device control, network execution or M1 expansion is
+implied. Boundary: `docs/bom_01_capabilities.md`; local verification and remaining
+coverage are tracked in `docs/bom_01_capabilities_report.md`. Local CPython3.11
+installed-wheel acceptance passes 94 new tests, the 917-test combined gate, and
+3143 passed / 2 skipped full suite. The candidate remains uncommitted and has no
+new release-matrix, remote PR or shared-deployment claim.
+
 ### Observe existing runtime-defined Symbol.toStringTag values (`2026-11-17`)
 
 The user selects direct and Reflect.get tag-read monitoring before iterator work.

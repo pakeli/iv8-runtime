@@ -62,6 +62,7 @@ def test_visual_viewport_reads_are_traced():
 def test_visual_viewport_method_calls_and_writable_handlers():
     with iv8.Page(environment=ENV) as page:
         _load(page)
+        page.eval("globalThis.viewport_resize_event = new Event('resize');")
         page.start_access_trace()
         assert page.eval(
             """
@@ -71,7 +72,7 @@ def test_visual_viewport_method_calls_and_writable_handlers():
               const result = [
                 String(visualViewport.addEventListener('resize', handler)),
                 String(visualViewport.removeEventListener('resize', handler)),
-                String(visualViewport.dispatchEvent({type: 'resize'})),
+                String(visualViewport.dispatchEvent(viewport_resize_event)),
                 typeof visualViewport.onresize,
                 visualViewport.onresize === handler,
                 visualViewport.onscroll === null
@@ -80,7 +81,7 @@ def test_visual_viewport_method_calls_and_writable_handlers():
             })();
             """,
             name="probe.js"
-        ) == "undefined|undefined|false|function|true|true"
+        ) == "undefined|undefined|true|function|true|true"
         events = _events(page)
         assert [(event["member"], event["operation"]) for event in events] == [
             ("visualViewport", "get"),
@@ -130,37 +131,36 @@ def test_visual_viewport_read_only_and_missing_probe_behavior():
             ("missing", "get_probe", "missing"),
         ]
 
-        # Converting the plain JS object into a HostObject keeps the values and
-        # read-only/writable behavior but intentionally changes the prototype
-        # (host-object instances have an intermediate template prototype) and
-        # makes the no-op event methods writable/configurable like other host
-        # methods. The read-only metadata descriptors keep their data shape.
+        # BOM-01 moves the static values/handlers onto their native defining
+        # interface and shares EventTarget methods, retaining read-only values.
         page.start_access_trace()
         descriptor = page.eval(
             """
             (() => {
               const width = Object.getOwnPropertyDescriptor(
-                  visualViewport, 'width');
+                  VisualViewport.prototype, 'width');
               const onresize = Object.getOwnPropertyDescriptor(
-                  visualViewport, 'onresize');
+                  VisualViewport.prototype, 'onresize');
               const add = Object.getOwnPropertyDescriptor(
-                  visualViewport, 'addEventListener');
+                  EventTarget.prototype, 'addEventListener');
               return [
-                width.value, width.writable, width.enumerable,
-                width.configurable, String(onresize.value),
-                onresize.writable, onresize.enumerable, onresize.configurable,
+                width.get.call(visualViewport), typeof width.get,
+                width.set === undefined, width.enumerable, width.configurable,
+                typeof onresize.get, typeof onresize.set,
+                onresize.enumerable, onresize.configurable,
                 typeof add.value, add.writable, add.enumerable,
                 add.configurable,
-                Object.getPrototypeOf(visualViewport) === Object.prototype,
+                Object.getPrototypeOf(visualViewport) === VisualViewport.prototype,
                 Object.getPrototypeOf(
-                    Object.getPrototypeOf(visualViewport)) === Object.prototype
+                    Object.getPrototypeOf(visualViewport)) === EventTarget.prototype,
+                !Object.hasOwn(visualViewport, 'width')
               ].join('|');
             })();
             """,
             name="probe.js"
         )
-        assert descriptor == ("1024|false|true|false|null|true|true|false|"
-                              "function|true|true|true|false|true")
+        assert descriptor == ("1024|function|true|true|true|function|function|true|true|"
+                              "function|true|true|true|true|true|true")
 
         page.start_access_trace()
         with pytest.raises(iv8.JSError):

@@ -34,6 +34,7 @@
 #include "browser/host/document_host.h"
 #include "browser/bom/screen.h"
 #include "browser/bom/navigator_identity.h"
+#include "browser/bom/navigator_capabilities.h"
 #include "browser/window/window_event_target.h"
 #include "browser/window/window_functions.h"
 #include "browser/window/window_presence_functions.h"
@@ -1923,6 +1924,8 @@ void PageState::install_page(const std::string& base_url,
             if (!install_xml_http_request_interfaces(isolate, context,
                     window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
             install_navigator_identity_interfaces(isolate, context, &environment_);
+            if (!install_navigator_capability_interfaces(isolate, context) ||
+                !install_bom_event_interfaces(isolate, context, &environment_)) return;
             install_dom_parser_interface(isolate, context, this);
             install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());

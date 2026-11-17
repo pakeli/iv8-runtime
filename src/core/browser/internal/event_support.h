@@ -60,6 +60,10 @@ extern bool event_default_prevented(v8::Isolate* isolate, v8::Local<v8::Context>
 
 // New Event/UIEvent state is kept in V8 private slots, owned by the generation.
 // Existing public own fields remain on the historical dispatch path.
+// Read the native brand without consulting public properties or unwrapping a
+// Proxy. Selected Web IDL hosts use this before their bounded dispatch path.
+bool is_native_event(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                     v8::Local<v8::Value> value);
 bool initialize_event_state(v8::Isolate* isolate, v8::Local<v8::Context> context,
                             v8::Local<v8::Object> event, bool composed);
 bool initialize_ui_event_state(v8::Isolate* isolate, v8::Local<v8::Context> context,
