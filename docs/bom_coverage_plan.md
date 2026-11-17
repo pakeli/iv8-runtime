@@ -83,6 +83,11 @@ History state/URL updates execute.
 
 ## Development cadence
 
+User-selected build order (`2026-11-17`): local macOS arm64 wheels and installed
+Python 3.11–3.14 acceptance come first, then Linux/Windows release builds. Hosted
+macOS runner acquisition is supplementary and its infrastructure failures stay
+explicit; do not wait for that queue before producing local Mac wheels.
+
 Keep coverage-first delivery and native prototype ownership together. Capture
 browser version/conditions, test meaningful read/call/state behavior, protect
 existing History/named/DOM/PRES regressions and run one local full suite per

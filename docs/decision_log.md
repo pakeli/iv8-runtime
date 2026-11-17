@@ -7,6 +7,20 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Validate macOS wheels before other release platforms (`2026-11-17`)
+
+The user requires future builds to prioritize macOS wheels. Both recent hosted
+macOS attempts failed during runner acquisition, with zero source/build/test
+steps and explicit arm64 capacity annotations. Build and validate the four
+Python 3.11–3.14 wheels first in the existing local arm64 environments, then
+dispatch Linux/Windows. Hosted macOS remains supplementary while capacity is
+unreliable; distinguish its result from local validation. Keep fixed-source,
+matching pinned V8, isolated installed-wheel gate/full-suite and artifact-hash
+checks. This changes execution order, not platform requirements or SDK deployment.
+Evidence: `docs/bom_01_release_report.md`. Fixed source 6839c9a passes
+917 gate tests in every lane; full Linux/local Mac is 3143/2, Windows 3141/4.
+Five hosted artifact ZIPs and all 12 wheels are collected and verified.
+
 ### Submit BOM-01 and build V8-linked release wheels (`2026-11-17`)
 
 The user requests PR submission and V8 builds after local BOM-01 acceptance.
@@ -29,8 +43,9 @@ No trusted input, real device control, network execution or M1 expansion is
 implied. Boundary: `docs/bom_01_capabilities.md`; local verification and remaining
 coverage are tracked in `docs/bom_01_capabilities_report.md`. Local CPython3.11
 installed-wheel acceptance passes 94 new tests, the 917-test combined gate, and
-3143 passed / 2 skipped full suite. The candidate remains uncommitted and has no
-new release-matrix, remote PR or shared-deployment claim.
+3143 passed / 2 skipped full suite. The later submission/build decision above
+records commit 6839c9a, PR #32 and Linux/Windows hosted plus local Mac validation;
+shared deployment remains unchanged.
 
 ### Observe existing runtime-defined Symbol.toStringTag values (`2026-11-17`)
 

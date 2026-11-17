@@ -1,7 +1,7 @@
 # BOM-01 local acceptance report
 
-Date: `2026-11-17`. **Implemented and locally accepted; full cross-platform
-release verification pending.** Boundary: `docs/bom_01_capabilities.md`.
+Date: `2026-11-17`. **Implemented and locally accepted; later Linux/Windows
+hosted and macOS local fallback validation passed. Hosted Mac did not execute.** Boundary: `docs/bom_01_capabilities.md`.
 The user prioritizes BOM completion and defers further Symbol.iterator monitoring.
 
 ## Delivered behavior
@@ -65,14 +65,16 @@ wheel ABI tag and ZIP CRC are checked.
   Event/Proxy rejection with zero extra getters/traps, lock conversion identity
   and Promise channels, and cleanup across 20 reloads with idempotent disposal.
 
-The candidate is an uncommitted change set based on source
+Initial local acceptance used an uncommitted change set based on source
 `889cbaacda107bc895d6d3aca20d64c555dd0305` (base tree
-`e05edfa69529da22add74a90dc91949ee8b2da27`). Exact candidate source-file hashes,
+`e05edfa69529da22add74a90dc91949ee8b2da27`), subsequently committed as
+`6839c9ab4fec026cedf24b4de351c81c6e7d92e6`. Exact local candidate source-file hashes,
 tracked-diff hash, native/wheel hashes and test metadata are recorded in
 `data/bom-01-2026-11-17/source-receipt.json`; build/install/focused/gate/full logs
 are in the same ignored directory. Local validation ID:
-`bom-01-2026-11-17/local-macos-cp311`. There is no hosted run/artifact ID for this
-batch. All three release gate definitions include both new test modules.
+`bom-01-2026-11-17/local-macos-cp311`. This initial local validation has no hosted run/artifact ID. Subsequent
+release run/artifact identities are recorded in `docs/bom_01_release_report.md`.
+All three release gate definitions include both new test modules.
 
 Wheel SHA-256:
 `310befdec7f717c53a823321cf4866d8feb5380f583a72f9ed8e445794f69379`.
@@ -93,6 +95,7 @@ DOMException branding. Ordinary event source locations/stacks, Promise
 settlement and broader API monitoring gaps remain separate.
 
 The subsequent user request authorizes submitting this batch to PR #32 and
-V8-linked release builds. The 12-lane matrix is not yet verified; progress is
-tracked separately in `docs/bom_01_release_report.md`. No version publication
+V8-linked release builds. All 12 lanes subsequently pass (eight hosted, four
+local Mac fallback); the failed hosted Mac attempt is not marked green. Source,
+runs and artifacts are recorded separately in `docs/bom_01_release_report.md`. No version publication
 or shared SDK replacement is included; shared deployment remains BIND-01.
