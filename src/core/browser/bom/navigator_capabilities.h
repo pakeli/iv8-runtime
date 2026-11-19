@@ -17,6 +17,11 @@ bool install_navigator_capability_interfaces(v8::Isolate* isolate,
 v8::Local<v8::Value> empty_gamepad_snapshot(v8::Isolate* isolate,
     v8::Local<v8::Context> context);
 
+// A secure, top-level Page has no installed-app/manifest backend. Each call
+// creates its own Promise and asynchronously supplies a new empty snapshot.
+v8::Local<v8::Value> empty_related_applications(v8::Isolate* isolate,
+    v8::Local<v8::Context> context);
+
 class SchedulingHost : public HostObject {
 public:
     std::string global_name() const override { return {}; }

@@ -662,14 +662,16 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
             key, AccessOperation::kCall, legacy_owner);
         AccessCallCompletion completion(isolate, sequence, info);
         if (!isolate->IsExecutionTerminating()) {
-            // This Promise-returning operation reports receiver failures as
-            // rejections too. Trace the synchronous Promise return only.
-            if (interface_name == "ScreenOrientation" && key == "lock") {
-                browser::watch_record(isolate, "screen.orientation", key);
+            // These selected Promise-returning operations report receiver
+            // failures as rejections. Trace only their synchronous Promise return.
+            if ((interface_name == "ScreenOrientation" && key == "lock") ||
+                (interface_name == "Navigator" && key == "getInstalledRelatedApps")) {
+                browser::watch_record(isolate,
+                    interface_name == "Navigator" ? "navigator" : "screen.orientation", key);
                 v8::Local<v8::Promise::Resolver> resolver;
                 if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||
                     !resolver->Reject(context, v8::Exception::TypeError(v8str(isolate,
-                        "Failed to execute 'lock' on 'ScreenOrientation': Illegal invocation")))
+                        "Failed to execute '" + key + "' on '" + interface_name + "': Illegal invocation")))
                         .FromMaybe(false)) return;
                 info.GetReturnValue().Set(resolver->GetPromise());
                 return;

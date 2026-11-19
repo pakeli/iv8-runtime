@@ -1,0 +1,66 @@
+{
+  "browser": "Google Chrome 157.0.8103.80",
+  "captured_at_utc": "2026-11-19T14:03:31.498Z",
+  "execution": {
+    "os": "darwin 25.5.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:56494/reference",
+    "network": "Only local fixture document; external DNS disabled; no manifest or installed related apps configured; no trusted activation",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 15-second bounded local result polling; no virtual-time budget",
+    "probe_completion_bound_ms": 2000
+  },
+  "probe_sha256": "6fe8b23165e6ff3a18d92815d1838c24226128661396098504fe427b04f7b36f",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "reads": 1,
+    "status": "rejected",
+    "sameSentinel": true,
+    "synchronousThrow": false,
+    "order": [
+      "after call",
+      "then lookup",
+      "rejected"
+    ],
+    "promise": true,
+    "error": {
+      "name": null,
+      "message": null
+    },
+    "elapsedMs": 11.200000047683716
+  }
+}

@@ -1,5 +1,7 @@
 # iv8-runtime Runtime Surface Index
 
+**Latest implemented/local Mac acceptance (`2026-11-19`): BOM-02 Navigator related-app inspection and vibration.** Native getInstalledRelatedApps is exposed in the existing secure top-level profile and delivers fresh empty results through a private Page task; native vibrate follows Chrome-derived argument conversion and returns false without trusted activation. Navigator secure-reference membership is **34/70**. All local macOS arm64 Python 3.11–3.14 wheels pass the **36-module / 1107-test gate** and full **3333 passed, 2 skipped**; **190 new tests** cover behavior/shape/monitoring. Source matches a frozen 431-file manifest. Generated noncallable-hook object labels retain explicit metadata-pollution profile differences; no extra getter/trap calls or changed user-exception identities. PR #32 is merged as the baseline; work is on `codex/bom-02-navigator`. Linux/Windows verification follows Mac acceptance. Boundary/report/delta: `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md`, `docs/bom_02_api_delta.json`.
+
 **Build order (`2026-11-17`, user direction): macOS wheels first.** Build and validate Python 3.11–3.14 wheels in the existing local macOS arm64 environments before dispatching Linux/Windows release builds. Hosted macOS is supplementary while runner capacity is unreliable; preserve its actual result separately. Reuse only matching pinned V8 caches, rebuild the extension/wheels, and record source/ABI/hash/test evidence.
 
 **Current user direction (`2026-11-17`): complete BOM environment first; defer further Symbol.iterator monitoring.** Continue Navigator and existing BOM subobjects under `docs/bom_coverage_plan.md`. BOM-01 selects offline getGamepads/scheduling and connection/orientation/viewport native event foundations; boundary: `docs/bom_01_capabilities.md`. Existing monitoring regressions stay protected. This priority change does not mark remaining API observation or cross-platform release/deployment complete.
@@ -449,6 +451,13 @@ Installed per generation by `install_page`:
   NotSupportedError, invalid MIME types throw TypeError. XMLSerializer and full
   XML/HTML5 parsing remain outside this batch. See `docs/presence_02_dom.md`.
 
+- **BOM-02 Navigator continuation (local Mac matrix accepted; Linux/Windows pending)** —
+  native getInstalledRelatedApps in the existing secure-context profile,
+  fresh empty related-app results delivered as a private Page task; native
+  vibrate conversion with the no-trusted-activation result. API shape and
+  observable conversion follow Chrome 157.0.8103.80. See
+  `docs/bom_02_navigator.md` / `docs/bom_02_navigator_report.md`.
+
 - **BOM-01 offline capabilities and event foundations** — native
   `navigator.getGamepads()` returns a fresh eight-null-slot array matching the
   captured no-device Chrome profile. Stable `navigator.scheduling` exposes native
@@ -894,6 +903,7 @@ clock.
 | PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release verification in `docs/bom_release_report.md` | `docs/presence_02_dom.md` / report |
 | PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release verification in `docs/bom_release_report.md` | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
+| BOM-02 | Secure related-app inspection and native vibration argument conversion in the offline/inactive Page profile; local and release evidence tracked separately | `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md` |
 | BOM-01 | Offline Navigator capability queries and native connection/orientation/viewport event foundations; local acceptance and release status tracked separately | `docs/bom_01_capabilities.md`, `docs/bom_01_capabilities_report.md` |
 | TAG-MON-01 | Existing runtime Symbol.toStringTag direct/Reflect.get reads; native data shape retained, dynamic-Proxy provenance limits explicit | `docs/symbol_to_string_tag_monitoring.md`, `docs/symbol_to_string_tag_monitoring_report.md` |
 | TOSTRING-MON-01 | Function/Object.prototype.toString CALL monitoring; raw receivers, cached calls, native interposer limits explicit | `docs/to_string_monitoring.md`, `docs/to_string_monitoring_report.md` |

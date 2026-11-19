@@ -1,5 +1,7 @@
 # Next Tasks
 
+**Latest implemented/local Mac acceptance (`2026-11-19`): BOM-02 Navigator related-app inspection and vibration.** Native getInstalledRelatedApps is exposed in the existing secure top-level profile and delivers fresh empty results through a private Page task; native vibrate follows Chrome-derived argument conversion and returns false without trusted activation. Navigator secure-reference membership is **34/70**. All local macOS arm64 Python 3.11–3.14 wheels pass the **36-module / 1107-test gate** and full **3333 passed, 2 skipped**; **190 new tests** cover behavior/shape/monitoring. Source matches a frozen 431-file manifest. Generated noncallable-hook object labels retain explicit metadata-pollution profile differences; no extra getter/trap calls or changed user-exception identities. PR #32 is merged as the baseline; work is on `codex/bom-02-navigator`. Linux/Windows verification follows Mac acceptance. Boundary/report/delta: `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md`, `docs/bom_02_api_delta.json`.
+
 **Build order (`2026-11-17`, user direction): macOS wheels first.** Build and validate Python 3.11–3.14 wheels in the existing local macOS arm64 environments before dispatching Linux/Windows release builds. Hosted macOS is supplementary while runner capacity is unreliable; preserve its actual result separately. Reuse only matching pinned V8 caches, rebuild the extension/wheels, and record source/ABI/hash/test evidence.
 
 **Current user direction (`2026-11-17`): complete BOM environment first; defer further Symbol.iterator monitoring.** Continue Navigator and existing BOM subobjects under `docs/bom_coverage_plan.md`. BOM-01 selects offline getGamepads/scheduling and connection/orientation/viewport native event foundations; boundary: `docs/bom_01_capabilities.md`. Existing monitoring regressions stay protected. This priority change does not mark remaining API observation or cross-platform release/deployment complete.
@@ -102,7 +104,7 @@ Contract, artifact IDs, source/driver restoration and remaining limits:
 `docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
 numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-17`
+Last reviewed: `2026-11-19`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.

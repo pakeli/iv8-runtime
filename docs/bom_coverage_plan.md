@@ -6,16 +6,21 @@ previously suggested Web-data batch move behind this queue. Preserve the locally
 accepted PRES-01/PRES-02 implementation and its regressions.
 
 Latest user direction (`2026-11-17`): BOM environment completion takes
-priority over further Symbol.iterator monitoring. The selected batch is
-BOM-01, covering low-dependency Navigator capabilities and the existing
+priority over further Symbol.iterator monitoring.
+BOM-01 completed low-dependency Navigator capabilities and the existing
 connection/orientation/viewport event foundations. Its boundary and local
 acceptance are tracked in `docs/bom_01_capabilities.md` and
 `docs/bom_01_capabilities_report.md`.
 
+BOM-02 is authorized on `2026-11-19`: native related-app inspection and
+vibration in the declared offline/inactive profile. Its boundary, local
+acceptance and release status are in `docs/bom_02_navigator.md` /
+`docs/bom_02_navigator_report.md`. PR #32 is merged as the BOM-01 baseline.
+
 ## Current measured baseline
 
 Counts use the fixed Chrome 157 inventory plus the PRES-01/PRES-02/PRES-03
-deltas plus BOM-01 for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
+deltas plus BOM-01/BOM-02 for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
 evidence and the name/behavior distinction: `docs/presence_03_report.md`.
 
 The subsequent WIN-MON-01 closes scoped monitoring gaps for these entries:
@@ -29,7 +34,7 @@ does not add API names or backend execution. Its combined release is verified in
 | Window ordinary properties/methods | 128 | 128 | 0 |
 | Window on* handlers | 125 | 125 | 0 |
 | Location | 15 | 15 | 0 |
-| Navigator | 70 | 32 | 38 |
+| Navigator (secure context) | 70 | 34 | 36 |
 | navigator.connection | 9 | 8 | 1 |
 | screen.orientation | 9 | 8 | 1 |
 | visualViewport | 14 | 13 | 1 |
@@ -58,10 +63,11 @@ History state/URL updates execute.
    getGamepads and Scheduling/isInputPending cover the explicit no-device/no-input
    profile; connection/orientation/viewport expose native shared EventTarget
    foundations, with synthetic dispatch, handlers and bounded lock/unlock.
-   The fixed inventory now leaves 38 Navigator names and the three
-   Observable-dependent when entries; see `docs/bom_01_api_delta.json`.
-   Next select a bounded Navigator family (for example installed-related-app
-   inspection or vibration pattern conversion) against browser evidence. Empty
+   BOM-02 subsequently adds secure getInstalledRelatedApps and native vibrate
+   conversion, leaving 36 Navigator names in the fixed secure inventory and the
+   three Observable-dependent when entries; see `docs/bom_02_api_delta.json`.
+   Further Navigator families follow concrete offline samples and new browser
+   evidence (for example the existing legacy storage capability family). Empty
    device lists/inactive input remain explicit profile states. The three
    EventTarget when methods depend on Observable and stay deferred.
    Clipboard, geolocation, media/devices, service workers, GPU/XR and

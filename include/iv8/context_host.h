@@ -83,7 +83,8 @@ public:
     // setInterval host functions WHILE the operation guard is already held (they
     // run during eval), so these take no guard themselves.
     std::int64_t register_timer(v8::Local<v8::Function> callback,
-                                std::int32_t delay, bool repeating);
+                                std::int32_t delay, bool repeating,
+                                bool user_cancelable = true);
     // Cancel a timer by id (clearTimeout / clearInterval); also guard-free.
     void clear_timer(std::int64_t id);
     // Manual pump: fire every currently-scheduled timer once, ordered by
@@ -242,6 +243,9 @@ private:
         v8::Global<v8::Function> callback;
         std::int32_t delay = 0;
         bool repeating = false;
+        // BOM-02 uses the existing task queue for related-app result delivery.
+        // Its internal entry is not a user timer and cannot be cleared by JS.
+        bool user_cancelable = true;
         std::uint64_t seq = 0;
         // M11-29: virtual due time; unused by the legacy run_timers() path.
         std::int64_t due_ms = 0;

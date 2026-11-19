@@ -1890,7 +1890,8 @@ void PageState::install_page(const std::string& base_url,
     host_objects_.push_back(std::make_unique<ConsoleHost>());  // M2-2 console
     // M2-3 navigator + M11-1 screen, both sourced from the Page-level environment_
     // (which outlives generations), so every load() reports identical values.
-    host_objects_.push_back(std::make_unique<NavigatorHost>(&environment_));
+    host_objects_.push_back(std::make_unique<NavigatorHost>(
+        &environment_, is_secure_context_url(base_url)));
     host_objects_.push_back(std::make_unique<ScreenHost>(&environment_));  // M11-1
     host_objects_.push_back(  // M2-3 location, sourced from this page's base URL
         std::make_unique<LocationHost>(decompose_url(base_url), this));
