@@ -1,0 +1,2 @@
+# Browser reference receipts hash the exact script bytes sent to Chrome.
+test/fixtures/bom_02/*.js text eol=lf
