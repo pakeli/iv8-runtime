@@ -13,6 +13,7 @@
 #include "iv8/page_state.h"
 #include "iv8/host_object.h"
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/web_interface.h"
 #include "iv8/browser_compatibility.h"
 #include "iv8/dom_url.h"
@@ -51,7 +52,9 @@ public:
     void set_property(v8::Isolate* isolate, v8::Local<v8::Context> context,
                       const std::string& name, v8::Local<v8::Value> value) override {
         v8::Local<v8::String> text;
-        if (!value->ToString(context).ToLocal(&text)) return;
+        if (!access_user_operation(isolate, [&] {
+                return value->ToString(context);
+            }).ToLocal(&text)) return;
         v8::String::Utf8Value utf8(isolate, text);
         const std::string input(*utf8 != nullptr ? *utf8 : "");
         auto resolved = resolve_dom_url(input, parts_.href);
@@ -96,7 +99,9 @@ public:
                 return v8::Undefined(isolate);
             }
             v8::Local<v8::String> input;
-            if (!args[0]->ToString(context).ToLocal(&input)) return v8::Undefined(isolate);
+            if (!access_user_operation(isolate, [&] {
+                    return args[0]->ToString(context);
+                }).ToLocal(&input)) return v8::Undefined(isolate);
             v8::String::Utf8Value utf8(isolate, input);
             auto url = resolve_dom_url(*utf8 != nullptr ? *utf8 : "", parts_.href);
             if (!url.valid) {

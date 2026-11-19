@@ -3,9 +3,11 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -34,11 +36,56 @@ StorageStore* storage_receiver(v8::Isolate* isolate,
         data.As<v8::External>()->Value(kStorageTag));
 }
 
+namespace {
+
+StorageStore* traced_storage_receiver(
+    const v8::FunctionCallbackInfo<v8::Value>& info,
+    const char* member, AccessOperation operation) {
+    auto isolate = info.GetIsolate();
+    v8::TryCatch receiver_error(isolate);
+    auto* store = storage_receiver(isolate, info.This());
+    if (store != nullptr) return store;
+
+    // Valid operations retain the original StorageStore identity below. Only
+    // this rejected receiver path needs a separate receiver token and event.
+    const auto sequence = native_api_trace_record(isolate, info.This(),
+        "Storage", member, operation);
+    auto runtime = access_runtime_scope(isolate);
+    if (sequence != 0) {
+        try {
+            AccessCompletion completion;
+            if (operation == AccessOperation::kCall) {
+                completion.argument_count = static_cast<std::uint64_t>(info.Length());
+                completion.argument_summaries = access_argument_summaries(isolate, info);
+            }
+            if (receiver_error.HasCaught()) {
+                completion.outcome = "threw";
+                access_capture_exception(isolate, isolate->GetCurrentContext(),
+                    receiver_error, completion);
+            } else {
+                completion.outcome = "returned";
+                if (operation == AccessOperation::kCall) completion.return_summary = "undefined";
+                else completion.value_summary = "undefined";
+            }
+            if (auto* trace = access_trace_from_isolate(isolate))
+                trace->complete(sequence, std::move(completion));
+        } catch (...) {
+            // Diagnostic allocation must never replace the receiver failure.
+        }
+    }
+    if (receiver_error.HasCaught()) (void)receiver_error.ReThrow();
+    return nullptr;
+}
+
+}  // namespace
+
 std::string storage_string_arg(v8::Isolate* isolate,
                                v8::Local<v8::Context> context,
                                v8::Local<v8::Value> value) {
     v8::Local<v8::String> str;
-    if (!value->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return value->ToString(context);
+        }).ToLocal(&str)) {
         return std::string();
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -57,8 +104,9 @@ StorageStore::iterator storage_find(StorageStore* store,
 
 void storage_get_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "Storage", "getItem");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    StorageStore* store = storage_receiver(isolate, info.This());
+    StorageStore* store = traced_storage_receiver(info, "getItem", AccessOperation::kCall);
     if (store == nullptr) {
         return;
     }
@@ -77,8 +125,9 @@ void storage_get_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void storage_set_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "Storage", "setItem");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    StorageStore* store = storage_receiver(isolate, info.This());
+    StorageStore* store = traced_storage_receiver(info, "setItem", AccessOperation::kCall);
     if (store == nullptr) {
         return;
     }
@@ -98,8 +147,9 @@ void storage_set_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void storage_remove_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "Storage", "removeItem");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    StorageStore* store = storage_receiver(isolate, info.This());
+    StorageStore* store = traced_storage_receiver(info, "removeItem", AccessOperation::kCall);
     if (store == nullptr) {
         return;
     }
@@ -116,7 +166,8 @@ void storage_remove_item(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void storage_clear(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
-    StorageStore* store = storage_receiver(isolate, info.This());
+    watch_record(isolate, "Storage", "clear");
+    StorageStore* store = traced_storage_receiver(info, "clear", AccessOperation::kCall);
     if (store != nullptr) {
         const std::uint64_t seq = access_trace_record(
             isolate, store, "storage", "storage", "clear",
@@ -128,8 +179,9 @@ void storage_clear(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    watch_record(isolate, "Storage", "key");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
-    StorageStore* store = storage_receiver(isolate, info.This());
+    StorageStore* store = traced_storage_receiver(info, "key", AccessOperation::kCall);
     if (store == nullptr) {
         return;
     }
@@ -138,7 +190,9 @@ void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
         AccessOperation::kCall);
     AccessCallCompletion completion(isolate, seq, info);
     v8::Local<v8::Uint32> index_value;
-    if (!info[0]->ToUint32(context).ToLocal(&index_value)) {
+    if (!access_user_operation(isolate, [&] {
+            return info[0]->ToUint32(context);
+        }).ToLocal(&index_value)) {
         return;
     }
     const std::uint32_t index = index_value->Value();
@@ -152,9 +206,10 @@ void storage_key(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void storage_length_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
-    auto* store = storage_receiver(isolate, info.This());
+    auto* store = traced_storage_receiver(info, "length", AccessOperation::kGet);
     if (store == nullptr) return;
     const auto seq = access_trace_record(isolate, store, "storage", "storage", "length", AccessOperation::kGet);
+    auto runtime = access_runtime_scope(isolate);
     auto result = v8::Integer::NewFromUnsigned(isolate, static_cast<unsigned>(store->size()));
     if (seq != 0) {
         AccessCompletion completion;

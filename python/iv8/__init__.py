@@ -1131,8 +1131,9 @@ see ``docs/host_access_trace_workflow.md`` and ``docs/host_access_trace.md``.
 
 ``Page.read_access_trace(clear=True, format="text")`` adds an opt-in readable
 log, such as ``GET document.cookie -> ""``. The default ``format="raw"`` keeps
-the existing dictionary. Text uses captured summaries only, explicitly marking
-truncation, type-only values, and missing metadata; it never executes JS.
+the existing dictionary. New captures retain full strings and all arguments.
+Text explicitly marks legacy truncation, type-only objects and missing metadata;
+it never executes JS.
 See ``docs/access_trace_text.md`` for the presentation contract.
 
 ``JSContext``, ``JSContextDisposedError``, ``JSContextBusyError``,

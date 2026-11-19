@@ -34,9 +34,16 @@ def test_window_alias_defaults_are_traced():
         events = _events(page)
         assert [(event["object_type"], event["label"], event["member"],
                  event["operation"]) for event in events] == [
+            ("window", "window", "window", "get"),
             ("window", "window", "parent", "get"),
+            ("window", "window", "window", "get"),
+            ("window", "window", "window", "get"),
             ("window", "window", "top", "get"),
+            ("window", "window", "window", "get"),
+            ("window", "window", "window", "get"),
             ("window", "window", "frames", "get"),
+            ("window", "window", "window", "get"),
+            ("window", "window", "window", "get"),
             ("window", "window", "opener", "get"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)
@@ -63,15 +70,20 @@ def test_window_aliases_keep_replaceable_and_read_only_behavior():
         ) == "true|true|true|true"
         assert [(event["member"], event["operation"])
                 for event in _events(page)] == [
-            ("parent", "set"), ("frames", "set"), ("opener", "set"),
-            ("parent", "get"), ("frames", "get"), ("opener", "get"),
-            ("top", "get"),
+            ("window", "get"), ("parent", "set"),
+            ("window", "get"), ("frames", "set"),
+            ("window", "get"), ("opener", "set"),
+            ("window", "get"),
+            ("window", "get"), ("parent", "get"),
+            ("window", "get"), ("frames", "get"),
+            ("window", "get"), ("opener", "get"),
+            ("window", "get"), ("top", "get"), ("window", "get"),
         ]
 
         page.start_access_trace()
         with pytest.raises(iv8.JSError):
             page.eval("'use strict'; window.top = {};", name="probe.js")
-        assert _events(page) == []
+        assert [(event["member"], event["operation"]) for event in _events(page)] == [("window", "get")]
 
 
 @on_only
@@ -96,7 +108,8 @@ def test_window_alias_descriptor_shape():
         ) == "true|true|true|true|true|false|true|false"
         assert [(event["member"], event["operation"])
                 for event in _events(page)] == [
-            ("parent", "get"), ("top", "get")]
+            ("window", "get"), ("window", "get"),
+            ("window", "get"), ("window", "get")]
 
 
 @on_only
@@ -107,7 +120,7 @@ def test_window_alias_filter_and_generation():
         page.eval("window.parent = null; window.parent;", name="probe.js")
         events = _events(page)
         assert [(event["member"], event["operation"]) for event in events] == [
-            ("parent", "set"), ("parent", "get")]
+            ("window", "get"), ("parent", "set"), ("window", "get"), ("parent", "get")]
         first_id = events[1]["object_id"]
         assert events[0]["generation"] == 2
 
@@ -122,11 +135,16 @@ def test_window_alias_filter_and_generation():
         ]
         assert [(event["generation"], event["member"], event["operation"])
                 for event in events] == [
+            (2, "window", "get"),
             (2, "parent", "set"),
+            (2, "window", "get"),
             (2, "parent", "get"),
+            (3, "window", "get"),
             (3, "parent", "get"),
+            (3, "window", "get"),
+            (3, "window", "get"),
             (3, "opener", "get"),
         ]
-        assert events[1]["object_id"] == first_id
-        assert events[2]["object_id"] != first_id
-        assert events[2]["object_id"] == events[3]["object_id"]
+        assert {event["object_id"] for event in events[:4]} == {first_id}
+        assert len({event["object_id"] for event in events[4:]}) == 1
+        assert events[4]["object_id"] != first_id

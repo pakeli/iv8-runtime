@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "iv8/access_origin.h"
 #include "iv8/host_object.h"
 #include "event_handlers.h"
 #include "../internal/common.h"
@@ -102,10 +103,11 @@ public:
                                 v8::Local<v8::Context> context,
                                 v8::Local<v8::Object> event,
                                 v8::Local<v8::Object> receiver) {
+        auto runtime_origin = access_runtime_scope(isolate);
         if (!begin_event_dispatch(isolate, context, event, {receiver})) {
             return;
         }
-        (void)event->Set(context, v8_string(isolate, "target"), receiver);
+        (void)set_runtime_api_field(isolate, context, event, "target", receiver);
         if (event_is_stopped(isolate, context, event)) {
             finish_dispatch(isolate, context, event);
             return;
@@ -135,9 +137,10 @@ public:
     // Dispatch is over: eventPhase returns to NONE.
     void finish_dispatch(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          v8::Local<v8::Object> event) {
-        (void)event->Set(context, v8_string(isolate, "eventPhase"),
+        auto runtime_origin = access_runtime_scope(isolate);
+        (void)set_runtime_api_field(isolate, context, event, "eventPhase",
                          v8::Integer::New(isolate, 0));
-        (void)event->Set(context, v8_string(isolate, "currentTarget"),
+        (void)set_runtime_api_field(isolate, context, event, "currentTarget",
                          v8::Null(isolate));
         end_event_dispatch(isolate, context, event);
     }
@@ -146,14 +149,15 @@ public:
     // from C++ (no JS caller). Single target, at-target phase, no bubbling.
     void dispatch_native(v8::Isolate* isolate, v8::Local<v8::Context> context,
                          const std::string& type, v8::Local<v8::Object> receiver) {
+        auto runtime_origin = access_runtime_scope(isolate);
         v8::Local<v8::Object> event;
         if (!create_runtime_event(isolate, context, type).ToLocal(&event)) return;
         if (!begin_event_dispatch(isolate, context, event, {receiver})) {
             return;
         }
-        (void)event->Set(context, v8_string(isolate, "type"),
+        (void)set_runtime_api_field(isolate, context, event, "type",
                          v8_string(isolate, type));
-        (void)event->Set(context, v8_string(isolate, "target"), receiver);
+        (void)set_runtime_api_field(isolate, context, event, "target", receiver);
         fire_target_at(isolate, context, event, receiver);
         finish_dispatch(isolate, context, event);
     }
@@ -204,7 +208,7 @@ private:
             return std::string();
         }
         v8::Local<v8::String> str;
-        if (!args[index]->ToString(context).ToLocal(&str)) {
+        if (!access_user_operation(isolate, [&] { return args[index]->ToString(context); }).ToLocal(&str)) {
             return std::string();
         }
         v8::String::Utf8Value utf8(isolate, str);
@@ -228,7 +232,7 @@ private:
                                      v8::Local<v8::Object> options,
                                      const char* name) {
         v8::Local<v8::Value> value;
-        if (!options->Get(context, v8_string(isolate, name)).ToLocal(&value)) {
+        if (!access_user_operation(isolate, [&] { return options->Get(context, v8_string(isolate, name)); }).ToLocal(&value)) {
             return false;
         }
         return value->BooleanValue(isolate);
@@ -311,16 +315,17 @@ private:
                     v8::Local<v8::Object> event,
                     v8::Local<v8::Value> receiver, int phase,
                     bool include_capture, bool include_bubble) {
-        (void)event->Set(context, v8_string(isolate, "currentTarget"),
+        auto runtime_origin = access_runtime_scope(isolate);
+        (void)set_runtime_api_field(isolate, context, event, "currentTarget",
                          receiver);
-        (void)event->Set(context, v8_string(isolate, "eventPhase"),
+        (void)set_runtime_api_field(isolate, context, event, "eventPhase",
                          v8::Integer::New(isolate, phase));
 
         std::string type;
         v8::Local<v8::Value> type_value;
-        if (event->Get(context, v8_string(isolate, "type")).ToLocal(&type_value)) {
+        if (get_runtime_api_field(isolate, context, event, "type").ToLocal(&type_value)) {
             v8::Local<v8::String> str;
-            if (type_value->ToString(context).ToLocal(&str)) {
+            if (access_user_operation(isolate, [&] { return type_value->ToString(context); }).ToLocal(&str)) {
                 v8::String::Utf8Value utf8(isolate, str);
                 if (*utf8 != nullptr) {
                     type.assign(*utf8, static_cast<std::size_t>(utf8.length()));
@@ -357,7 +362,9 @@ private:
                                               listener.passive);
                 WindowEventScope current_event(isolate, context, event);
                 v8::TryCatch try_catch(isolate);
-                (void)listener.callback->Call(context, receiver, 1, &event_arg);
+                (void)access_user_operation(isolate, [&] {
+                    return listener.callback->Call(context, receiver, 1, &event_arg);
+                });
                 if (try_catch.HasCaught()) {
                     state_from_isolate(isolate)->record_async_error(isolate, context, try_catch, "listener");
                     try_catch.Reset();  // one listener's error never stops the rest

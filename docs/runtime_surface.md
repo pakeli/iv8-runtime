@@ -1,13 +1,41 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest release verified (`2026-11-15`): combined PRES-01/PRES-02/PRES-03 and WIN-MON-01.** Build source `40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff` (tree `b7d518ecc9ab46a30812622041bd48f3c28ab1aa`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Each lane passes the combined **257-test focused gate**; full Linux/macOS are **2547 passed, 2 skipped**, Windows **2545 passed, 4 skipped**. Runs: Linux `43704599952`, Windows `43704600017`, macOS `43704687043`. Fixed V8 15.0.245.19 caches are reused; the host extension/wheels are rebuilt. Required V8 checks pass, macOS source pins/restore are verified, and branch protection is unchanged. **Latest shared SDK deployment remains BIND-01**; no environment installation or version-tag publication was performed. Source/run/artifact evidence and limits: `docs/bom_release_report.md`.
+**Build order (`2026-11-17`, user direction): macOS wheels first.** Build and validate Python 3.11–3.14 wheels in the existing local macOS arm64 environments before dispatching Linux/Windows release builds. Hosted macOS is supplementary while runner capacity is unreliable; preserve its actual result separately. Reuse only matching pinned V8 caches, rebuild the extension/wheels, and record source/ABI/hash/test evidence.
+
+**Current user direction (`2026-11-17`): complete BOM environment first; defer further Symbol.iterator monitoring.** Continue Navigator and existing BOM subobjects under `docs/bom_coverage_plan.md`. BOM-01 selects offline getGamepads/scheduling and connection/orientation/viewport native event foundations; boundary: `docs/bom_01_capabilities.md`. Existing monitoring regressions stay protected. This priority change does not mark remaining API observation or cross-platform release/deployment complete.
+
+**Latest implemented/validated candidate (`2026-11-17`): BOM-01, source `6839c9ab4fec026cedf24b4de351c81c6e7d92e6` / tree `7d5f85f379b0f797b8512f8d318aa104183b4975`.** PR #32 includes native getGamepads/Scheduling and connection/orientation/viewport event foundations. All 12 Python 3.11–3.14 lanes pass the **917-test gate**: Linux/Windows are hosted; macOS arm64 uses local fallback after hosted runner acquisition failed before any code executed. Full Linux/macOS: **3143 passed, 2 skipped**; Windows: **3141 passed, 4 skipped**. Both source V8 CI checks pass **83 audit / 917 gate / 3143 passed, 2 skipped**; merge-snapshot identity remains separate. No merge, tag or shared SDK replacement. Hosted Mac failure stays explicit, and the latest fully hosted release matrix remains aa72e50. Scope/evidence: `docs/bom_01_capabilities.md`, `docs/bom_01_capabilities_report.md`, `docs/bom_01_release_report.md`.
+
+**Previous implemented/local acceptance (`2026-11-17`): TAG-MON-01 native Symbol.toStringTag reads; full release pending.** Existing interface/collection/namespace/CSS/Battery/Quota tag definitions now record direct and Reflect.get reads through native data hooks, preserving values/data flags/owners/key order. Optional `member_kind="symbol"` makes real `[Symbol.toStringTag]` distinct from same-named strings. Ordinary object-toString tag lookup stays quiet; actual JS/native-bound callback reads retain provenance. Unknown dynamic Proxy metadata uses conservative attribution and can retain an extra GET, without extra getter/trap calls. **34 new cases**, **167 focused passed**, **823 release-focused passed**, full fresh-installed macOS arm64 / Python 3.11 wheel **3049 passed, 2 skipped**. PR #32 updated; no shared SDK replacement. Boundary/evidence: `docs/symbol_to_string_tag_monitoring.md` / `docs/symbol_to_string_tag_monitoring_report.md`.
+
+**Previous local acceptance (`2026-11-17`): toString receiver metadata and explicit text invocation; full release pending.** Intrinsic CALL entries now carry raw `receiver_summary` and optional direct native-host `receiver_label`, captured before observer mapping. Text normalizes `.call(this, ...extraArgs)` to avoid confusing entrypoint and receiver; actual argument counts are unchanged. No function name/tag/constructor getters or user-Proxy unwrapping are used; saved reports without receiver fields retain their old text. **41 new cases**, **133 focused passed**, **789 release-focused passed**, full fresh-installed macOS arm64 / Python 3.11 wheel **3015 passed, 2 skipped**. PR #32 updated; no shared SDK replacement. Boundary/evidence: `docs/to_string_monitoring.md` / `docs/to_string_receivers_report.md`.
+
+**Previous local acceptance (`2026-11-17`): TOSTRING-MON-01 intrinsic detection calls; full release pending.** Function.prototype.toString and Object.prototype.toString now emit completed host_object CALL entries, including cached/direct/call/apply/bind/Reflect.apply forms, full source strings and synchronous failures. Original V8 algorithms preserve strict receivers, user Proxy behavior and getter/error identity. Native Proxy interposers preserve standard JS shape; Inspector/internal-kind and pristine cross-Realm transparency are explicitly not claimed. **35 new cases**, **748 release-focused passed**, full installed macOS arm64/Python 3.11 wheel **2974 passed, 2 skipped**. PR #32 updated; shared SDK remains BIND-01. Boundary/evidence: `docs/to_string_monitoring.md` / `docs/to_string_monitoring_report.md`.
+
+**Previous local acceptance (`2026-11-16`): complete trace strings and arguments; full release pending.** Script URLs and other string GET/SET/argument/return values are retained completely, including values beyond 4096 bytes; all argument positions are logged. Debug and manual text/raw reads share this capture, prod stays silent. A full-string coverage marker preserves saved legacy truncation semantics, including ambiguous literal ellipses. Objects remain type-only, exception/event limits remain unchanged, and no extra user getter/coercion runs. **6 new cases**, **154 focused passed**, **713 release-focused passed**, full macOS arm64/Python 3.13 **2939 passed, 2 skipped**. PR #32 is updated; shared SDK remains BIND-01. Boundary/evidence: `docs/access_trace_text.md` / `docs/full_trace_values_report.md`.
+
+**Previous local acceptance (`2026-11-16`): XHR-01 native interface shape and monitoring; full release pending.** Native XMLHttpRequest now constructs with a stable Upload and browser-derived EventTarget inheritance, constants, descriptors, native functions and eager prototype order. Request methods are inert placeholders: `send` returns undefined and debug prints safe parameters; prod stays silent. No HTTP, state transitions, responses or automatic transfer events. **62 new tests**, **643 release-focused passed**, full macOS arm64/Python 3.13 **2933 passed, 2 skipped**. This slice updates PR #32; shared SDK remains BIND-01. Scope/evidence: `docs/xml_http_request_shape.md` / `docs/xml_http_request_shape_report.md`.
+
+**Previous local acceptance (`2026-11-16`): MutationRecord field tracing; release pending.** The nine existing plain-object record fields now record completed GET/SET entries with per-record generation identity, including cached-before-start and async delivery. Original values/data flags/node/array identity and initialization setter behavior are preserved; internal materialization stays quiet. **23 new tests**, **581 release-focused passed**, full macOS arm64/Python 3.13 **2871 passed, 2 skipped**. This slice updates PR #32 without new browser APIs or SDK replacement. Array length/index, Symbol/reflection and other returned objects remain open. Boundary/report: `docs/mutation_record_monitoring.md` / `docs/mutation_record_monitoring_report.md`.
+
+**Previous local acceptance (`2026-11-16`): generic binding references and receiver rejections; release pending.** Direct generic prototype method references now record completed GETs on their defining prototypes, while canonical instance METHOD/CALL identity and folding stay unchanged. Generic native method/getter/setter brand failures record failed CALL/GET/SET before the original Illegal invocation without parameter coercion. **36 new tests**, **558 release-focused passed**, full macOS arm64/Python 3.13 **2848 passed, 2 skipped**. Existing origin filtering and native shapes remain intact. This batch updates PR #32; prior release/fallback records below remain their verified fixed sources. Symbol/query, independent callback and returned-structure gaps remain separate, and shared SDK stays BIND-01. Boundary/report: `docs/generic_binding_monitoring.md` / `docs/generic_binding_monitoring_report.md`.
+
+**Latest implemented/validated candidate (`2026-11-16`): user-origin tracing, source `4c777f78e535d54a003a297c029d9fc87ce20950` / tree `6184c309a03437de7bb13774a0bdf8008ba198cf`.** Empty debug loads are silent and `window.location.href` prints exactly three gets. **40 origin tests** are included in the **24-module / 522-test gate**. Linux/Windows hosted builds pass Python 3.11–3.14; macOS arm64 passes the same four-version build/installed-wheel gate/full suite locally after GitHub failed to acquire a macOS runner. Full Linux/macOS are **2812 passed, 2 skipped**, Windows **2810 passed, 4 skipped**. All 12 wheels are collected and verified. The hosted macOS attempt did not execute code and is not green; the last fully hosted release matrix remains `aa72e50` below. PR #32 remains unmerged; shared SDK deployment stays BIND-01 and strict API coverage gaps remain open. Scope/results/fallback evidence: `docs/access_trace_origins.md` / `docs/access_trace_origins_report.md`.
+
+**Latest release-verified candidate (`2026-11-16`): ENV-MON-01 + Page debug/prod modes, PR #32.** Fixed build source `aa72e50f29bd2d1f472bad87a4038eb09086854b` (tree `3f07dc72a09b78f97f74924ecd3f15b2cb0624cd`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Every lane passes the **482-test focused gate**; full Linux/macOS are **2772 passed, 2 skipped**, Windows **2770 passed, 4 skipped**. Runs: Linux `43822383750`, Windows `43822388334`, macOS `43822440892`. Matching V8 15.0.245.19 engine caches were reused and extensions/wheels rebuilt. All 9 artifact archives and 12 wheels are downloaded and SHA-256/CRC/tag verified; the temporary macOS helper is restored and its original bytes verified. **Strict API-use observation remains incomplete**: documented prototype, invalid-receiver, symbol/query and returned-object gaps stay open. PR remains unmerged, with no tag publication or shared SDK replacement; deployed SDK remains BIND-01. Full evidence: `docs/monitoring_release_report.md`.
+
+**Previous local acceptance (`2026-11-16`): Page load monitoring modes; now included in the verified candidate above.** `Page.load(..., mode="debug")` starts unfiltered access tracing before user scripts and automatically prints/consumes readable logs after load, eval and every event-loop pump. `mode="prod"` stops/clears access tracing; omission preserves existing manual use and active debug across reloads. A per-Page guard covers execution, output and mode/trace controls so competing threads cannot drain unfinished completion metadata. Debug uses `sys.maxsize` as the per-call ceiling instead of the manual 10,000-event default. macOS arm64/Python 3.13 acceptance: **57 new mode tests**, **328 focused passed**, full **2772 passed, 2 skipped**. This Python usability layer relies on the existing local ENV-MON-01 native candidate; the API coverage audit's prototype/invalid-receiver/symbol/query/returned-object gaps remain open. The user now authorizes a PR and V8-linked release builds; progress/source evidence is tracked in `docs/monitoring_release_report.md`. Shared SDK replacement remains outside this request. Boundary/report: `docs/page_monitoring_modes.md` / `docs/page_monitoring_modes_report.md`.
+
+**Previous local acceptance (`2026-11-15`): History parent-entry tracing; release pending.** The user reproduction `start_access_trace(); eval("window.history"); stop; read(format="text")` exposed an untraced native global getter. The fix records Window/history/get and its safe return/exception completion without changing History behavior or getter shape. Local macOS arm64/Python 3.13 checks pass **94 focused** and **2552 passed, 2 skipped** full-suite tests. This is a new local fix beyond the combined release below; shared SDK and release artifacts are unchanged. Scope/evidence: `docs/history_entry_monitoring.md`.
+
+**Previous release verified (`2026-11-15`): combined PRES-01/PRES-02/PRES-03 and WIN-MON-01.** Build source `40d1c1f5bd9c3a9d40f9ac9ba3e6930437dfddff` (tree `b7d518ecc9ab46a30812622041bd48f3c28ab1aa`) passes all 12 V8-linked release lanes, Python 3.11–3.14 on Linux x64, Windows x64 and macOS arm64. Each lane passes the combined **257-test focused gate**; full Linux/macOS are **2547 passed, 2 skipped**, Windows **2545 passed, 4 skipped**. Runs: Linux `43704599952`, Windows `43704600017`, macOS `43704687043`. Fixed V8 15.0.245.19 caches are reused; the host extension/wheels are rebuilt. Required V8 checks pass, macOS source pins/restore are verified, and branch protection is unchanged. **Latest shared SDK deployment remains BIND-01**; no environment installation or version-tag publication was performed. Source/run/artifact evidence and limits: `docs/bom_release_report.md`.
 
 **Current queue (`2026-11-15`): BOM first.** Window/Location/Navigator/History
 coverage and related BOM objects take precedence over further DOM nodes and the
 proposed Web-data batch. This changes no runtime exposure. Counts and selected
 candidate families: `docs/bom_coverage_plan.md`.
 
-**Latest implemented, now release-verified in the combined build (`2026-11-15`): WIN-MON-01.** The
+**Previous Window monitoring batch, release-verified in the combined build (`2026-11-15`): WIN-MON-01.** The
 mapped PRES-03 Window names now enter structured native get/get_method and
 supported set tracing. All 22 callable globals enter both watch_apis and
 structured calls with safe argument/return summaries and synchronous exception
@@ -256,7 +284,7 @@ milestone.
 | `advance(ms, max_steps=10000)` | M11-29, M11-30 | bounded virtual-time window over timers, frames, idle, and microtasks |
 | `run_until_idle(max_steps=1000)` | M11-29, M11-30 | auto-advance through timers/frames/idle until all queues are empty |
 | `event_loop_time_ms` | M11-29, M11-30 | read-only per-generation virtual clock advanced by timer/frame due times; reset by `load()` |
-| `load(html, base_url, scripts=None, resources=None)` | M2-5, M3-1, M3-5 | static load model — no network, no navigation, no history |
+| `load(html, base_url, scripts=None, resources=None, *, mode=None)` | M2-5, M3-1, M3-5; monitoring modes | static load model; `debug` automatically records and prints access traces, `prod` disables/clears them, omission preserves the current manual/debug behavior; see `docs/page_monitoring_modes.md` |
 | `ready_state` | M3-2 | Python lifecycle (`"loading"` / `"complete"`), distinct from JS `document.readyState` |
 | `Page(environment=None)` | M11-1, M11-17, M11-24..M11-27, M11-35, PRES-01 local candidate | optional read-only host-environment baseline; accepts the flat 39-key form or nested `navigator` / `screen` / `window` sections |
 | `get_default_environment()` | M11-1 | static; returns a fresh flat `dict` copy of the default template |
@@ -329,8 +357,8 @@ Shared semantics across the five watch channels:
   overhead.
 
 The **host access trace** is a separate, later channel, not part of the five
-watch channels above: it is default-off, has no `break_on_hit`, records every
-entered generic `HostObject` getter/setter/method trampoline (subject to an
+watch channels above: it is default-off, has no `break_on_hit`, records user-origin
+generic `HostObject` getter/setter/method entries (subject to an
 optional object-type filter), records `get_probe`/`resolution: "missing"` for
 absent HostObject string keys, records performance/crypto/Storage native callback
 calls plus Storage `length` reads, records the traced window metadata accessors
@@ -421,6 +449,16 @@ Installed per generation by `install_page`:
   NotSupportedError, invalid MIME types throw TypeError. XMLSerializer and full
   XML/HTML5 parsing remain outside this batch. See `docs/presence_02_dom.md`.
 
+- **BOM-01 offline capabilities and event foundations** — native
+  `navigator.getGamepads()` returns a fresh eight-null-slot array matching the
+  captured no-device Chrome profile. Stable `navigator.scheduling` exposes native
+  `Scheduling.isInputPending(options)` with dictionary conversion and false
+  results without trusted input. NetworkInformation, ScreenOrientation and
+  VisualViewport have shared native interfaces and synthetic EventTarget support;
+  onscrollend and orientation lock/unlock complete the selected name slice.
+  Device execution and Observable-dependent when remain separate. See
+  `docs/bom_01_capabilities.md` / `docs/bom_01_capabilities_report.md`.
+
 - **PRES-01 BOM/event additions (previous local acceptance; combined release verified)** —
   Navigator `appVersion` / `deviceMemory` / `userAgentData` / `userActivation`;
   UAData values come from caller configuration or declared-UA derivation, with
@@ -472,8 +510,9 @@ Installed per generation by `install_page`:
   `productSub`, and M11-35 `maxTouchPoints` / `pdfViewerEnabled` / `doNotTrack` /
   `connection`) and `location` (`href` / `origin` / `protocol` / `host` /
   `hostname` / `port` / `pathname` / `search` / `hash` / `toString()`) — metadata remains read-only;
-  `navigator.connection` is a fresh read-only `{effectiveType, rtt, downlink,
-  saveData}` object with no events; `location` still derives from the base URL
+  `navigator.connection` is a stable native NetworkInformation with configured
+  `effectiveType` / `rtt` / `downlink` / `saveData`, onchange and synthetic
+  EventTarget dispatch under BOM-01; `location` still derives from the base URL
   with assign/replace/reload recording offline intents. The compatibility repair
   also adds prototype webdriver, sendBeacon refusal, a secure-context deterministic
   getBattery Promise and bounded webkitPersistentStorage callbacks; see its contract;
@@ -484,7 +523,9 @@ Installed per generation by `install_page`:
   configured via `Page(environment=...)`; M11-35 adds mutable `window.name`,
   read-only `window.length` (0), `screenLeft` / `screenTop`, and
   `isSecureContext` derived from the base URL. `screen.orientation` is a
-  read-only `{type, angle}` derived from width/height with no events or lock;
+  stable native ScreenOrientation with read-only `type` / `angle` derived from
+  width/height, onchange and synthetic EventTarget dispatch. BOM-01 adds
+  `lock` (validated rejected Promise; no device backend) and no-op `unlock`;
   these dimensions feed no layout engine (see the M11-50 scroll stubs below).
   M11-39 adds
   the single-context browsing metadata: replaceable `window.parent` / `frames`,
@@ -493,10 +534,10 @@ Installed per generation by `install_page`:
   M11-52 below);
 - **visual viewport + window flags** (M11-41) — read-only
   `visualViewport` (`width` / `height` from `innerWidth` / `innerHeight`,
-  zero offsets, `scale=1`) with no-op listeners and no scroll/zoom/resize
-  events; the access-trace step 5d now backs it with a HostObject (same values
-  and read/write behavior, documented prototype/descriptor differences); see
-  `docs/host_access_trace.md`. Read-only `window.origin`,
+  zero offsets, `scale=1`). BOM-01 supplies a native VisualViewport prototype,
+  EventTarget listeners/synthetic dispatch and onresize/onscroll/onscrollend
+  handler slots. No device-generated scroll/zoom/resize events or layout changes
+  are introduced; see `docs/bom_01_capabilities.md`. Read-only `window.origin`,
   `crossOriginIsolated` (`false`), `closed` (`false`), and `frameElement`
   (`null`). The window `parent`/`top`/`frames`/`opener` aliases are traced
   accessors under step 5i with unchanged replaceable/read-only behavior;
@@ -581,7 +622,7 @@ Installed per generation by `install_page`:
   `attributeFilter`), are queued in mutation order, and are delivered only by
   `Page.run_jobs()`; element, Text/Comment, DocumentFragment, and document
   targets are accepted. M11-48 activates `characterData` /
-  `characterDataOldValue`; records are plain objects (no `MutationRecord`
+  `characterDataOldValue`; record fields have native GET/SET monitoring while records remain plain objects (no `MutationRecord`
   global); observer state is per generation;
 - **event subclasses** (M11-6) — `CustomEvent` (`detail`), `MouseEvent`
   (`clientX` / `clientY` / `button` / `buttons`), `KeyboardEvent` (`key` /
@@ -732,7 +773,7 @@ Installed per generation by `install_page`:
   `createAttributeNS` / `getElementsByTagNameNS` / `importNode` / `adoptNode` and
   inherited root/normalization/position helpers in its local candidate. Earlier
   release verification is recorded above; PRES-02 local acceptance is recorded
-  above and release acceptance remains pending.
+  above; PRES-02 is included in the verified combined PRES/WIN build.
 - **elements** — the minimal node surface (`tagName` / `nodeName` / `nodeType` /
   `nodeValue` (null) / `id` / `className` / live `textContent` / `parentNode` /
   `childNodes` / `children`), connectivity and structural navigation
@@ -799,8 +840,12 @@ the milestone summary before assuming any wider behavior.
 Execution exclusions include HTTP/WebSocket transport, automatic resource
 loading, executed history traversal/cross-document navigation, JavaScript→Python callbacks, a Python-side
 DOM or event API (`Page.document`), CDATA/doctype nodes, layout and geometry.
-The Web IDL repair provides explicit offline fetch rejection and XHR/Worker
-constructor failure. BIND-01's shared release SDK retains the historical withdrawn
+The Web IDL repair provides explicit offline fetch rejection and Worker
+constructor failure. XHR-01 supersedes the earlier XHR constructor failure with
+a native shape/monitoring host and inert request-method placeholders; `send`
+prints safe arguments through debug tracing and returns undefined. XHR state
+transitions, HTTP, response delivery and automatic transfer events remain absent
+(`docs/xml_http_request_shape.md`). BIND-01's shared release SDK retains the historical withdrawn
 `open` profile. The user-authorized PRES-03 candidate exposes native `open` with
 explicit NotSupportedError; actual Window opening remains unavailable. Live tag/class collections
 and offline navigation intents are available. `iv8` also exports no browser symbol at module level —
@@ -849,6 +894,10 @@ clock.
 | PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release verification in `docs/bom_release_report.md` | `docs/presence_02_dom.md` / report |
 | PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release verification in `docs/bom_release_report.md` | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
+| BOM-01 | Offline Navigator capability queries and native connection/orientation/viewport event foundations; local acceptance and release status tracked separately | `docs/bom_01_capabilities.md`, `docs/bom_01_capabilities_report.md` |
+| TAG-MON-01 | Existing runtime Symbol.toStringTag direct/Reflect.get reads; native data shape retained, dynamic-Proxy provenance limits explicit | `docs/symbol_to_string_tag_monitoring.md`, `docs/symbol_to_string_tag_monitoring_report.md` |
+| TOSTRING-MON-01 | Function/Object.prototype.toString CALL monitoring; raw receivers, cached calls, native interposer limits explicit | `docs/to_string_monitoring.md`, `docs/to_string_monitoring_report.md` |
+| XHR-01 | Native XMLHttpRequest / EventTarget / Upload shape and monitoring; inert send/request methods, no transport | `docs/xml_http_request_shape.md`, `docs/xml_http_request_shape_report.md` |
 | M2 | `Page`, globals, timers, load model, minimal document/element, targeted mutation | `docs/m2_1_*` … `docs/m2_8_*` |
 | M3 | Scripts, lifecycle, events, ready-state, `currentScript`, attributes, script types | `docs/m3_summary.md` |
 | M4-A | Query collections, `createElement`, tree editing, attribute writes, subtree queries, connectivity, bubbling | `docs/m4_a_summary.md` |

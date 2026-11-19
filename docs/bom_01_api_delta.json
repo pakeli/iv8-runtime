@@ -1,0 +1,107 @@
+{
+  "date": "2026-11-17",
+  "base_source": "889cbaacda107bc895d6d3aca20d64c555dd0305",
+  "fixed_presence_reference": "docs/browser_api_inventory.json (Chrome 157.0.8103.51)",
+  "behavior_reference": "test/fixtures/bom_01/chrome.json (Chrome 157.0.8103.79)",
+  "scope": "BOM-01 offline Navigator capabilities and synthetic BOM events; presence is not device/backend implementation.",
+  "objects": {
+    "navigator": {
+      "reference_count": 70,
+      "before_present": 30,
+      "after_present": 32,
+      "added": [
+        "getGamepads",
+        "scheduling"
+      ],
+      "remaining_missing": [
+        "bluetooth",
+        "canShare",
+        "clearAppBadge",
+        "clipboard",
+        "cpuPerformance",
+        "credentials",
+        "devicePosture",
+        "geolocation",
+        "getInstalledRelatedApps",
+        "getUserMedia",
+        "gpu",
+        "hid",
+        "ink",
+        "keyboard",
+        "locks",
+        "login",
+        "managed",
+        "mediaCapabilities",
+        "mediaDevices",
+        "mediaSession",
+        "presentation",
+        "registerProtocolHandler",
+        "requestMIDIAccess",
+        "requestMediaKeySystemAccess",
+        "serial",
+        "serviceWorker",
+        "setAppBadge",
+        "share",
+        "storageBuckets",
+        "unregisterProtocolHandler",
+        "usb",
+        "vibrate",
+        "virtualKeyboard",
+        "wakeLock",
+        "webkitGetUserMedia",
+        "webkitTemporaryStorage",
+        "windowControlsOverlay",
+        "xr"
+      ]
+    },
+    "navigator.connection": {
+      "reference_count": 9,
+      "before_present": 4,
+      "after_present": 8,
+      "added": [
+        "addEventListener",
+        "dispatchEvent",
+        "onchange",
+        "removeEventListener"
+      ],
+      "remaining_missing": [
+        "when"
+      ]
+    },
+    "screen.orientation": {
+      "reference_count": 9,
+      "before_present": 2,
+      "after_present": 8,
+      "added": [
+        "addEventListener",
+        "dispatchEvent",
+        "lock",
+        "onchange",
+        "removeEventListener",
+        "unlock"
+      ],
+      "remaining_missing": [
+        "when"
+      ]
+    },
+    "visualViewport": {
+      "reference_count": 14,
+      "before_present": 12,
+      "after_present": 13,
+      "added": [
+        "onscrollend"
+      ],
+      "remaining_missing": [
+        "when"
+      ]
+    }
+  },
+  "new_global_interfaces": [
+    "Scheduling",
+    "NetworkInformation",
+    "ScreenOrientation",
+    "VisualViewport"
+  ],
+  "iterator_monitoring": "deferred by user direction",
+  "shared_sdk_replaced": false
+}

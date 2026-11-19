@@ -7,7 +7,11 @@
 #include <cstring>
 #include <string>
 
+#include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "../internal/common.h"
+#include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -21,6 +25,9 @@ namespace iv8::browser {
 // prototype). Requires a construct call.
 void text_encoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "TextEncoder", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "TextEncoder");
     if (!info.IsConstructCall()) {
         isolate->ThrowException(v8::Exception::TypeError(
             v8::String::NewFromUtf8Literal(
@@ -31,9 +38,14 @@ void text_encoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // encoder.encode(input) -> Uint8Array of String(input) as UTF-8 (encode("") -> []).
 void text_encoder_encode(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "TextEncoder", "encode", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "TextEncoder", "encode");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::String> str;
-    if (!info[0]->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return info[0]->ToString(context);
+        }).ToLocal(&str)) {
         return;  // a throwing ToString already scheduled the exception
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -52,6 +64,9 @@ void text_encoder_encode(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // but do NOT change behaviour this phase (decode stays lenient UTF-8). Requires new.
 void text_decoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "TextDecoder", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "TextDecoder");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     if (!info.IsConstructCall()) {
         isolate->ThrowException(v8::Exception::TypeError(
@@ -62,7 +77,9 @@ void text_decoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> label = info[0];
     if (!label->IsUndefined()) {
         v8::Local<v8::String> str;
-        if (!label->ToString(context).ToLocal(&str)) {
+        if (!access_user_operation(isolate, [&] {
+                return label->ToString(context);
+            }).ToLocal(&str)) {
             return;  // ToString threw
         }
         v8::String::Utf8Value utf8(isolate, str);
@@ -85,20 +102,23 @@ void text_decoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (info.Length() > 1 && info[1]->IsObject()) {
         v8::Local<v8::Object> opts = info[1].As<v8::Object>();
         v8::Local<v8::Value> v;
-        if (opts->Get(context, v8_string(isolate, "fatal")).ToLocal(&v)) {
+        if (access_user_operation(isolate, [&] {
+                return opts->Get(context, v8_string(isolate, "fatal"));
+            }).ToLocal(&v)) {
             fatal = v->BooleanValue(isolate);
         }
-        if (opts->Get(context, v8_string(isolate, "ignoreBOM")).ToLocal(&v)) {
+        if (access_user_operation(isolate, [&] {
+                return opts->Get(context, v8_string(isolate, "ignoreBOM"));
+            }).ToLocal(&v)) {
             ignore_bom = v->BooleanValue(isolate);
         }
     }
     v8::Local<v8::Object> self = info.This();
-    (void)self->DefineOwnProperty(
-        context, v8::String::NewFromUtf8Literal(isolate, "fatal"),
-        v8::Boolean::New(isolate, fatal), v8::ReadOnly);
-    (void)self->DefineOwnProperty(
-        context, v8::String::NewFromUtf8Literal(isolate, "ignoreBOM"),
-        v8::Boolean::New(isolate, ignore_bom), v8::ReadOnly);
+    const void* identity = native_api_identity(isolate, self);
+    (void)install_traced_api_data_property(isolate, context, self, "fatal",
+        v8::Boolean::New(isolate, fatal), identity, "host_object", "TextDecoder", v8::ReadOnly);
+    (void)install_traced_api_data_property(isolate, context, self, "ignoreBOM",
+        v8::Boolean::New(isolate, ignore_bom), identity, "host_object", "TextDecoder", v8::ReadOnly);
 }
 
 // decoder.decode(input?) -> String. undefined/absent -> ""; an ArrayBuffer or any
@@ -106,6 +126,9 @@ void text_decoder_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
 // stripping); any other argument -> TypeError.
 void text_decoder_decode(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "TextDecoder", "decode", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "TextDecoder", "decode");
     v8::Local<v8::Value> input = info[0];
     if (input->IsUndefined()) {
         info.GetReturnValue().Set(v8::String::Empty(isolate));

@@ -5,10 +5,17 @@ Navigator and History, then related BOM objects. Further DOM node work and the
 previously suggested Web-data batch move behind this queue. Preserve the locally
 accepted PRES-01/PRES-02 implementation and its regressions.
 
+Latest user direction (`2026-11-17`): BOM environment completion takes
+priority over further Symbol.iterator monitoring. The selected batch is
+BOM-01, covering low-dependency Navigator capabilities and the existing
+connection/orientation/viewport event foundations. Its boundary and local
+acceptance are tracked in `docs/bom_01_capabilities.md` and
+`docs/bom_01_capabilities_report.md`.
+
 ## Current measured baseline
 
 Counts use the fixed Chrome 157 inventory plus the PRES-01/PRES-02/PRES-03
-deltas for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
+deltas plus BOM-01 for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
 evidence and the name/behavior distinction: `docs/presence_03_report.md`.
 
 The subsequent WIN-MON-01 closes scoped monitoring gaps for these entries:
@@ -22,11 +29,16 @@ does not add API names or backend execution. Its combined release is verified in
 | Window ordinary properties/methods | 128 | 128 | 0 |
 | Window on* handlers | 125 | 125 | 0 |
 | Location | 15 | 15 | 0 |
-| Navigator | 70 | 30 | 40 |
+| Navigator | 70 | 32 | 38 |
+| navigator.connection | 9 | 8 | 1 |
+| screen.orientation | 9 | 8 | 1 |
+| visualViewport | 14 | 13 | 1 |
 | History | 8 | 8 | 0 |
 
-Window's global interface-entry category is separate: 106 present and 821
-missing out of 927. Those entries include DOM, graphics, device and other Web
+Window's global interface-entry category is separate. The PRES-03 baseline
+recorded 106 present and 821 missing out of 927; that is a historical count,
+preceding XHR-01 and BOM-01. BOM-01 adds the four explicit global interfaces
+listed in `docs/bom_01_api_delta.json`. Those entries include DOM, graphics, device and other Web
 interfaces; exposing a constructor on Window does not make that API a BOM
 priority. The user explicitly approved all 49 ordinary missing names in PRES-03;
 their presence is complete, with backend/fidelity limits recorded separately.
@@ -42,13 +54,16 @@ History state/URL updates execute.
    explicitly. The user approves native open presence with unsupported window
    creation. Additional execution/fidelity follows concrete needs rather than
    being claimed by the presence count. The 821 interface entries remain excluded.
-2. **Next: Navigator and existing BOM subobjects.** Select low-dependency capability
-   inspection first, then connection/orientation/viewport event surfaces and
-   configuration-backed metadata. Candidate families include getGamepads and
-   scheduling; choose the concrete API set after checking real-browser profile
-   behavior. Empty device lists/inactive input must be explicit profile states,
-   not claims of device execution. Connection listener/dispatch/onchange gaps can
-   reuse EventTarget; its when method depends on Observable and stays deferred.
+2. **Navigator and existing BOM subobjects — BOM-01 locally accepted.** Native
+   getGamepads and Scheduling/isInputPending cover the explicit no-device/no-input
+   profile; connection/orientation/viewport expose native shared EventTarget
+   foundations, with synthetic dispatch, handlers and bounded lock/unlock.
+   The fixed inventory now leaves 38 Navigator names and the three
+   Observable-dependent when entries; see `docs/bom_01_api_delta.json`.
+   Next select a bounded Navigator family (for example installed-related-app
+   inspection or vibration pattern conversion) against browser evidence. Empty
+   device lists/inactive input remain explicit profile states. The three
+   EventTarget when methods depend on Observable and stay deferred.
    Clipboard, geolocation, media/devices, service workers, GPU/XR and
    other execution systems are separate bounded families, not arbitrary empty
    success objects.
@@ -67,6 +82,11 @@ History state/URL updates execute.
    API can be included in that API's boundary; it does not restart the DOM queue.
 
 ## Development cadence
+
+User-selected build order (`2026-11-17`): local macOS arm64 wheels and installed
+Python 3.11–3.14 acceptance come first, then Linux/Windows release builds. Hosted
+macOS runner acquisition is supplementary and its infrastructure failures stay
+explicit; do not wait for that queue before producing local Mac wheels.
 
 Keep coverage-first delivery and native prototype ownership together. Capture
 browser version/conditions, test meaningful read/call/state behavior, protect

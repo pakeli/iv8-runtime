@@ -7,6 +7,9 @@
 #include <utility>
 
 #include "iv8/web_method.h"
+#include "iv8/access_summary.h"
+#include "browser/window/window_trace_support.h"
+#include "browser/internal/trace_hooks.h"
 #include "browser/host/event_handler_names.h"
 
 namespace iv8 {
@@ -29,10 +32,13 @@ std::string_view parent_interface(std::string_view name) {
         {"Node", "EventTarget"}, {"CharacterData", "Node"},
         {"Text", "CharacterData"}, {"Comment", "CharacterData"},
         {"DocumentFragment", "Node"}, {"Screen", "EventTarget"},
+        {"NetworkInformation", "EventTarget"}, {"ScreenOrientation", "EventTarget"},
+        {"VisualViewport", "EventTarget"},
         {"CookieStore", "EventTarget"}, {"Navigation", "EventTarget"},
         {"DocumentPictureInPicture", "EventTarget"}, {"SpeechSynthesis", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
-        {"XMLHttpRequest", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
+        {"XMLHttpRequest", "XMLHttpRequestEventTarget"},
+        {"XMLHttpRequestUpload", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
         {"UIEvent", "Event"}, {"CustomEvent", "Event"}, {"MessageEvent", "Event"},
         {"MouseEvent", "UIEvent"}, {"KeyboardEvent", "UIEvent"}, {"FocusEvent", "UIEvent"},
     };
@@ -52,6 +58,9 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto context = isolate->GetCurrentContext();
     v8::String::Utf8Value text(isolate, info.Data());
     const std::string name(*text != nullptr ? *text : "");
+    const auto sequence = browser::window_trace_record(isolate, name.c_str(), AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    browser::watch_record(isolate, "window", name);
     const bool constructible = name == "Document" || name == "EventTarget" ||
         name == "Text" || name == "Comment" || name == "DocumentFragment" ||
         name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser";
@@ -70,9 +79,10 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> factory;
     if (!context->Global()->GetPrivate(context, registry_key(isolate, "factory"))
             .ToLocal(&factory) || !factory->IsFunction()) return;
-    auto arguments = v8::Array::New(isolate, info.Length());
-    for (int index = 0; index < info.Length(); ++index) {
-        if (!arguments->Set(context, index, info[index]).FromMaybe(false)) return;
+    const int argument_count = name == "XMLHttpRequest" ? 0 : info.Length();
+    auto arguments = v8::Array::New(isolate, argument_count);
+    for (int index = 0; index < argument_count; ++index) {
+        if (!arguments->CreateDataProperty(context, index, info[index]).FromMaybe(false)) return;
     }
     v8::Local<v8::Value> factory_arguments[] = {info.Data(), arguments};
     v8::Local<v8::Value> result;
@@ -158,6 +168,9 @@ std::string html_element_interface(std::string_view tag) {
 
 std::string web_member_interface(const std::string& name,
                                   std::string_view member, bool method) {
+    if (!method && web_interface_inherits(name, "XMLHttpRequestEventTarget") &&
+        member_in(member, {"onloadstart", "onprogress", "onabort", "onerror",
+            "onload", "ontimeout", "onloadend"})) return "XMLHttpRequestEventTarget";
     if (web_interface_inherits(name, "EventTarget") && method &&
         member_in(member, {"addEventListener", "removeEventListener", "dispatchEvent"}))
         return "EventTarget";
@@ -210,9 +223,10 @@ v8::Local<v8::Object> web_interface_prototype(
         if (parent_prototype.IsEmpty() ||
             !prototype->SetPrototype(context, parent_prototype).FromMaybe(false)) return {};
     }
-    if (!prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-            string(isolate, name), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))
-            .FromMaybe(false)) return {};
+    if (!browser::install_traced_api_named_data_property(isolate, context, prototype,
+            v8::Symbol::GetToStringTag(isolate), string(isolate, name),
+            browser::native_api_identity(isolate, prototype), "host_object", name + ".prototype",
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))) return {};
     if (name == "WindowProperties" || name == "StyleMedia") return prototype;
     v8::Local<v8::Function> constructor;
     const int length = name == "Worker" ? 1 : 0;
@@ -223,10 +237,11 @@ v8::Local<v8::Object> web_interface_prototype(
     if (!constructor->DefineOwnProperty(context, string(isolate, "prototype"), prototype,
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum | v8::DontDelete))
             .FromMaybe(false) ||
-        !prototype->DefineOwnProperty(context, string(isolate, "constructor"), constructor,
-            v8::DontEnum).FromMaybe(false)) return {};
-    if (expose_global && !context->Global()->DefineOwnProperty(context, string(isolate, name),
-            constructor, v8::DontEnum).FromMaybe(false)) return {};
+        !browser::install_traced_api_data_property(isolate, context, prototype, "constructor", constructor,
+            browser::native_api_identity(isolate, prototype), "host_object", name + ".prototype",
+            v8::DontEnum)) return {};
+    if (expose_global && !browser::install_traced_window_data_property(isolate, context,
+            context->Global(), name, constructor, v8::DontEnum)) return {};
     if (name == "Node") {
         static const std::pair<const char*, int> constants[] = {
             {"ELEMENT_NODE", 1}, {"ATTRIBUTE_NODE", 2}, {"TEXT_NODE", 3},
@@ -238,10 +253,10 @@ v8::Local<v8::Object> web_interface_prototype(
             {"DOCUMENT_POSITION_CONTAINED_BY", 16}, {"DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC", 32}};
         for (const auto& [member, value] : constants) {
             for (auto target : {v8::Local<v8::Object>(constructor), prototype}) {
-                if (!target->DefineOwnProperty(context, string(isolate, member),
-                        v8::Integer::New(isolate, value),
-                        static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))
-                        .FromMaybe(false)) return {};
+                if (!browser::install_traced_api_data_property(isolate, context, target, member,
+                        v8::Integer::New(isolate, value), browser::native_api_identity(isolate, target),
+                        "host_object", target == prototype ? "Node.prototype" : "Node",
+                        static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))) return {};
             }
         }
     }
@@ -267,9 +282,10 @@ bool replace_window_properties_prototype(v8::Isolate* isolate,
     const auto registry_slot = v8::Private::ForApi(isolate,
         v8::String::NewFromUtf8Literal(isolate, "iv8.webidl.prototype.WindowProperties"));
     return prototype->SetPrototype(context, parent).FromMaybe(false) &&
-        prototype->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-            v8::String::NewFromUtf8Literal(isolate, "WindowProperties"),
-            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum)).FromMaybe(false) &&
+        browser::install_traced_api_named_data_property(isolate, context, prototype,
+            v8::Symbol::GetToStringTag(isolate), v8::String::NewFromUtf8Literal(isolate, "WindowProperties"),
+            browser::native_api_identity(isolate, prototype), "host_object", "WindowProperties.prototype",
+            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum)) &&
         window->SetPrototype(context, prototype).FromMaybe(false) &&
         context->Global()->SetPrivate(context, registry_slot, prototype).FromMaybe(false);
 }
@@ -294,8 +310,9 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "Navigator", "Screen", "Location", "EventTarget", "Node", "Element",
             "HTMLElement", "HTMLDivElement", "HTMLFormElement", "HTMLScriptElement",
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
-            "XMLHttpRequest", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
-            "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser"}) {
+            "XMLHttpRequest", "XMLHttpRequestUpload", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
+            "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser", "Scheduling",
+            "NetworkInformation", "ScreenOrientation", "VisualViewport"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }
     for (const auto& [tag, name] : html_interfaces()) {

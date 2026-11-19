@@ -1,5 +1,31 @@
 # Host Access Trace
 
+BOM-01 (`2026-11-17`) adds native getGamepads/Scheduling entries and upgrades
+connection/orientation/visualViewport to shared native EventTarget interfaces.
+Its boundary overrides historical no-op viewport/event and fresh-wrapper shape
+descriptions below; see `docs/bom_01_capabilities.md` and its report. Iterator
+monitoring remains deferred by user direction.
+
+MutationRecord delta (`2026-11-16`): its nine existing own data fields record
+GET/SET with host_object / MutationRecord attribution and one generation-owned
+identity per record. Cached fields and observer callbacks are covered; record
+materialization is internal, and arrays remain unchanged. See
+`docs/mutation_record_monitoring.md` for current limits/status.
+
+Generic binding delta (`2026-11-16`): defining-prototype method references record
+GET with host_object / <Interface>.prototype attribution. Generic receiver-brand
+rejections record failed CALL/GET/SET without executing host code or converting
+arguments. Valid instance get_method/call folding is unchanged; see
+`docs/generic_binding_monitoring.md` for the bounded contract and release status.
+
+Current origin contract (`2026-11-16`): tracing records user JavaScript API
+entries, including callbacks/accessors/coercions, and excludes runtime setup,
+native implementation forwarding, descriptor materialization and synthetic
+event/state maintenance before buffer accounting. Raw/manual and automatic
+debug logs share this gate. Historical foundation evidence below is retained;
+the origin delta and its current verification status are defined in
+`docs/access_trace_origins.md` / `docs/access_trace_origins_report.md`.
+
 Status: **VERIFIED — HostObject get/set/call + missing-property probes + native
 BOM callback calls + window/nested metadata + static visualViewport + navigator
 storage/permissions managers + matchMedia results + legacy navigator metadata +
@@ -110,7 +136,7 @@ enter event after dispatch; it does not create a second event or change `seq`.
 | `navigator.javaEnabled()` | records a navigator `get` plus `call`; returns `false` |
 | `hostProbe.answer` / `element.textContent` reads | record `get` with `value_summary` and `outcome` |
 | `element.textContent = 'x'` | records `set` with the assigned `value_summary` |
-| `hostProbe.add(2, 3)` | records one `call` (the immediately preceding method read is folded); includes `argument_count`, up to 8 `argument_summaries`, `return_summary`, and `outcome` |
+| `hostProbe.add(2, 3)` | records one `call` (the immediately preceding method read is folded); includes `argument_count`, all `argument_summaries`, `return_summary`, and `outcome` |
 | method read, other trace event, then call | keeps the `get_method` and adds a separate `call` |
 | assignment to `hostProbe.echo` | records `set`; a non-function override read is an ordinary read, not `get_method` |
 | method that throws | records `call` with `outcome: "threw"` (no return summary), exception still propagates |
@@ -180,6 +206,47 @@ listed as not covered.
   `#document-fragment`. Labels must not be built by reading JS `id`, text,
   attributes, or other properties.
 
+## Intrinsic toString calls — TOSTRING-MON-01 (`2026-11-17`)
+
+The Page bootstrap installs native call observers for Function.prototype.toString
+and Object.prototype.toString before user scripts, including aliases cached
+before tracing starts. Each actual invocation records a host_object CALL with
+fixed Function.prototype/Object.prototype label, member toString, real extra
+arguments, full string result or safe synchronous exception completion. The
+`2026-11-17` receiver repair adds `receiver_summary` plus optional native-host
+`receiver_label`, captured before internal observer mapping. Text normalizes
+`.call(this, ...extraArgs)` so the entrypoint is not mistaken for the receiver.
+No name/constructor/tag getter is used for labels; user Proxies are not unwrapped.
+Argument counts still exclude this; old reports without these fields keep their
+previous view. Evidence: `docs/to_string_receivers_report.md`. Internal
+runtime calls stay silent; actual user tag getters/traps retain provenance.
+
+The original V8 builtins compute results; native Proxy apply interposers preserve
+strict raw receivers. Only the two private monitor entries are mapped to their
+originals when V8 generates native function source; user Proxies are untouched.
+Inspector can expose the interposers' Proxy internals, and pristine cross-Realm
+transparency is not claimed. Replacements/deletions retain normal semantics;
+constructor rejection before apply entry produces no fabricated call event.
+No new Python watch API is added. Boundary/evidence: `docs/to_string_monitoring.md`
+and `docs/to_string_monitoring_report.md`.
+
+## Native Symbol.toStringTag reads — TAG-MON-01 (`2026-11-17`)
+
+Existing browser tag definitions use native data callbacks without changing their
+values/data descriptors/flags/owners. Direct/Reflect.get reads record a completed
+GET with member `Symbol.toStringTag`, optional `member_kind="symbol"`, and native
+defining-owner identity. Text uses `[Symbol.toStringTag]`; identically named
+strings remain quoted string keys. CSS delegates its tag key once to the native
+prototype hook. Native descriptor materialization keeps the existing data-hook
+semantics. No missing tags or other Symbol/iterator coverage is introduced.
+
+Ordinary Object.prototype.toString native tag lookup stays runtime-origin;
+actual user getter/trap reads and native-bound callbacks remain observable.
+Dynamic Proxy-handler accessors or unknown/deep metadata take conservative user
+attribution and can retain an extra GET, without additional getter/trap calls.
+Boundary/evidence: `docs/symbol_to_string_tag_monitoring.md` /
+`docs/symbol_to_string_tag_monitoring_report.md`.
+
 ## 4. Public API and report
 
 ```python
@@ -199,6 +266,10 @@ report = page.read_access_trace(clear=True)
 - `max_events` is a positive integer; `bool` is invalid. `object_types` is
   `None` or a list of supported object-type strings; duplicates are deduped and
   unknown types raise `ValueError`. An empty list is valid and records nothing.
+- XHR-01 adds `xml_http_request` and `xml_http_request_upload` filter types;
+  constructor entries retain Window attribution and defining-prototype/constants
+  retain host_object attribution. Request methods are inert placeholders; see
+  `docs/xml_http_request_shape.md`.
 - Capacity is earliest-N: once full, later events are dropped and
   `dropped_events` increments. Filtered-out events do not increment drops.
 - `seq` starts at 1 for each `start()` and increments only for retained events.
@@ -209,10 +280,10 @@ report = page.read_access_trace(clear=True)
 Event shape:
 
 ```text
-seq, generation, object_id, object_type, label, member,
+seq, generation, object_id, object_type, label, member, member_kind?,
 operation, phase, resolution?, resource_name, source_kind,
 outcome?, value_summary?, argument_count?, argument_summaries?,
-return_summary?, exception_name?, exception_message?,
+return_summary?, receiver_summary?, receiver_label?, exception_name?, exception_message?,
 exception_stack?, exception_location?
 ```
 
@@ -231,8 +302,11 @@ exception_stack?, exception_location?
   - `value_summary`: for traced getters and setters when `outcome` is
     `"returned"`;
   - `argument_count`: full argument count for traced calls and query wrappers;
-  - `argument_summaries`: first up to 8 argument summaries;
+  - `argument_summaries`: all argument summaries (older reports may retain eight);
   - `return_summary`: for traced calls and query wrappers that return;
+  - optional `receiver_summary` / `receiver_label`: raw this for intrinsic
+    toString calls; labels use only direct native HostObject metadata, and
+    neither field adds an argument to `argument_count`;
   - `exception_name`, `exception_message`, `exception_location`,
     `exception_stack`: safe synchronous exception metadata when a traced entry
     throws.
@@ -504,12 +578,12 @@ serialization are not used):
 | `undefined` / `null` | The primitive value. |
 | `boolean:true` / `boolean:false` | Boolean primitive. |
 | `number:<value>` | Number formatted with `%.17g` (including `nan`/`inf`). |
-| `string:<utf8-byte-length>:<content>` | UTF-8 string. Content is capped at 64 bytes (rounded down to a complete UTF-8 sequence); longer content gets a trailing `...`. If the source is over 4096 bytes, content is omitted and only the length plus `...` is stored. `\`, newline, CR, tab, and other control bytes are escaped. |
+| `string:<utf8-byte-length>:<content>` | Complete UTF-8 string content since `2026-11-16`; the previous 64-byte preview and 4096-byte omission are removed. New reports mark `coverage.string_capture` as `"full"`; old reports retain legacy decoding. `\`, newline, CR, tab, and other control bytes are escaped. |
 | `bigint` / `symbol` | Primitive type only; no value/description conversion. |
 | `function` / `array` / `host_object` / `object` | Type-only summary. |
 
-`call` arguments are summarized for the first 8 positions; `argument_count`
-always carries the full count. `outcome` is `"returned"` when no exception was
+`call` arguments are summarized for every position; `argument_count`
+carries the full count. Older reports may retain only the first eight arguments. `outcome` is `"returned"` when no exception was
 pending after dispatch and `"threw"` otherwise. Completion is attached by the
 recorded `seq`, so a nested host access during the implementation cannot steal
 it. Summaries are best-effort: allocation failure leaves the enter event intact.
@@ -654,7 +728,7 @@ also apply to the traced native callbacks and getters:
 - window metadata/name/alias getters and setters;
 - the explicit query wrappers in §4.14.
 
-Calls carry `argument_count`, up to eight `argument_summaries`, and a
+Calls carry `argument_count`, all `argument_summaries`, and a
 `return_summary` when they return; getters and setters carry `value_summary`.
 All summaries use the primitive/type-only rules in §4.11 and never execute user
 `toString`/`valueOf` or property Gets. A traced callback that throws records
@@ -695,10 +769,10 @@ JS-visible surface. The exact report shape and recommended run workflow are in
   slice).
 - `html_script` — inline/external HTML script execution through
   `PageState::run_html_script`.
-- `internal` — generation bootstrap during `install_page`. The current fixed
-  bootstrap reads `window.innerWidth` / `innerHeight` once for the static media
-  evaluator, so those two `get` events appear with `source_kind: "internal"` on
-  every load.
+- `internal` — retained as a source-kind value for historical compatibility;
+  the current user-origin gate excludes generation bootstrap before recording,
+  including its viewport reads. User accesses in lifecycle callbacks remain
+  observable.
 - `unknown` — timer/microtask/rAF/idle callbacks, lifecycle/event dispatch after
   the originating eval, DevTools evaluation, and `to_py` result conversion.
 
@@ -850,8 +924,8 @@ Coverage in this slice:
 - window parent/top/frames/opener get/set events preserve replaceable,
   read-only, delete, and lexical-declaration behavior across loads;
 - generic HostObject get/set/call completion records returned/threw outcomes,
-  primitive value and return summaries, 8-argument summaries with full counts,
-  UTF-8-safe string truncation, and nested-completion attachment by seq;
+  primitive value and return summaries, complete argument lists and UTF-8
+  strings, legacy truncated-report rendering, and nested-completion attachment by seq;
 - method references record `get_method`; adjacent calls fold into one `call`,
   intervening accesses keep both, method identity/override/descriptor behavior
   and non-function override reads are covered;

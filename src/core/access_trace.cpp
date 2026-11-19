@@ -1,9 +1,11 @@
 #include "iv8/access_trace.h"
 
 #include <algorithm>
+#include <limits>
 #include <utility>
 
 #include "iv8/context_host.h"
+#include "iv8/v8_headers.h"
 
 namespace iv8 {
 
@@ -71,18 +73,90 @@ void AccessTrace::begin_generation(std::uint64_t generation) noexcept {
         object_ids_.clear();
         current_resource_.clear();
         current_source_kind_ = "unknown";
+        origin_isolate_ = nullptr;
+        runtime_script_ids_.clear();
+        origin_ = {};
     } catch (...) {
         // Lifecycle setup must never throw.
     }
 }
 
+void AccessTrace::bind_isolate(v8::Isolate* isolate) noexcept {
+    origin_isolate_ = isolate;
+}
+
+void AccessTrace::register_runtime_script(int script_id) {
+    runtime_script_ids_.insert(script_id);
+}
+
+int AccessTrace::user_stack_depth() noexcept {
+    if (origin_isolate_ == nullptr) return 0;
+    int frame_limit = 32;
+    for (;;) {
+        const auto stack = v8::StackTrace::CurrentStackTrace(origin_isolate_,
+            frame_limit, v8::StackTrace::kScriptId);
+        if (stack.IsEmpty()) return -1;
+        if (stack->GetFrameCount() < frame_limit) {
+            int depth = 0;
+            for (int index = 0; index < stack->GetFrameCount(); ++index) {
+                const int script_id = stack->GetFrame(origin_isolate_, index)->GetScriptId();
+                if (script_id > 0 && !runtime_script_ids_.contains(script_id)) ++depth;
+            }
+            return depth;
+        }
+        if (frame_limit > std::numeric_limits<int>::max() / 2) return -1;
+        frame_limit *= 2;
+    }
+}
+
+bool AccessTrace::user_entry() noexcept {
+    if (origin_isolate_ == nullptr) return true;  // standalone trace stores
+    const int current_script = v8::StackTrace::CurrentScriptId(origin_isolate_);
+    if (!origin_.runtime_bridge && runtime_script_ids_.contains(current_script)) return false;
+    if (origin_.runtime_depth < 0) return origin_.user_entry || current_script > 0;
+    const int depth = user_stack_depth();
+    // Failed diagnostics must not silently hide a user's API use.
+    return depth < 0 || depth > origin_.runtime_depth;
+}
+
+AccessTrace::OriginMark AccessTrace::enter_origin(
+    v8::Isolate* isolate, AccessOriginKind kind) noexcept {
+    const auto previous = origin_;
+    if (isolate != origin_isolate_) return previous;
+    if (kind == AccessOriginKind::kRuntime) {
+        origin_ = {user_stack_depth(), false, false};
+    } else if (kind == AccessOriginKind::kUser) {
+        origin_ = {-1, true, true};
+    } else {
+        origin_.runtime_bridge = true;
+    }
+    return previous;
+}
+
+void AccessTrace::restore_origin(OriginMark mark) noexcept {
+    origin_ = mark;
+}
+
+AccessTrace::OriginScope::OriginScope(AccessTrace* trace, v8::Isolate* isolate,
+                                     AccessOriginKind kind) noexcept {
+    if (trace != nullptr && trace->enabled()) {
+        trace_ = trace;
+        previous_ = trace->enter_origin(isolate, kind);
+    }
+}
+
+AccessTrace::OriginScope::~OriginScope() noexcept {
+    if (trace_ != nullptr) trace_->restore_origin(previous_);
+}
+
 std::uint64_t AccessTrace::record(
     const void* identity, std::string_view object_type,
     std::string_view label, std::string_view member, AccessOperation operation,
-    std::string_view resolution) noexcept {
+    std::string_view resolution, std::string_view member_kind) noexcept {
     if (identity == nullptr || !enabled_.load(std::memory_order_acquire)) {
         return 0;
     }
+    if (!user_entry()) return 0;
     try {
         std::lock_guard<std::mutex> lock(mutex_);
         if (!enabled_.load(std::memory_order_relaxed)) {
@@ -121,6 +195,7 @@ std::uint64_t AccessTrace::record(
         event.object_type = std::string(object_type);
         event.label = std::string(label);
         event.member = std::string(member);
+        event.member_kind = std::string(member_kind);
         event.operation = operation_name(operation);
         event.phase = "enter";
         event.resolution = resolution;
@@ -145,6 +220,7 @@ std::uint64_t AccessTrace::promote_last_method_read(
     if (identity == nullptr || !enabled_.load(std::memory_order_acquire)) {
         return 0;
     }
+    if (!user_entry()) return 0;
     try {
         std::lock_guard<std::mutex> lock(mutex_);
         if (events_.empty()) {
@@ -186,6 +262,8 @@ void AccessTrace::complete(std::uint64_t seq,
             it->argument_count = completion.argument_count;
             it->argument_summaries = std::move(completion.argument_summaries);
             it->return_summary = std::move(completion.return_summary);
+            it->receiver_summary = std::move(completion.receiver_summary);
+            it->receiver_label = std::move(completion.receiver_label);
             it->exception_name = std::move(completion.exception_name);
             it->exception_message = std::move(completion.exception_message);
             it->exception_stack = std::move(completion.exception_stack);
@@ -227,6 +305,12 @@ AccessTrace::SourceScope::SourceScope(AccessTrace* trace, std::string resource,
         previous_source_kind_ = std::move(trace_->current_source_kind_);
         trace_->current_resource_ = std::move(resource);
         trace_->current_source_kind_ = std::move(source_kind);
+        previous_origin_ = trace_->origin_;
+        // Runtime bootstrap is scoped separately from target eval/HTML scripts.
+        // Capturing stack metadata is done before/after recording, never under
+        // the event-store lock.
+        trace_->origin_ = trace_->current_source_kind_ == "internal"
+            ? OriginMark{0, false, false} : OriginMark{-1, true, false};
         active_ = true;
     } catch (...) {
         active_ = false;
@@ -241,6 +325,7 @@ AccessTrace::SourceScope::~SourceScope() noexcept {
         std::lock_guard<std::mutex> lock(trace_->mutex_);
         trace_->current_resource_ = std::move(previous_resource_);
         trace_->current_source_kind_ = std::move(previous_source_kind_);
+        trace_->origin_ = previous_origin_;
     } catch (...) {
         // Destructors must not throw during eval unwinding.
     }
@@ -253,6 +338,7 @@ const std::vector<std::string>& AccessTrace::supported_object_types() {
         "location", "media_query_list", "named_node_map", "navigator", "navigator_ua_data", "orientation",
         "performance", "permission_status", "permissions", "screen",
         "storage", "storage_manager", "text", "user_activation", "visual_viewport", "window", "window_shell",
+        "xml_http_request", "xml_http_request_upload",
     };
     return types;
 }

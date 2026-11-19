@@ -46,6 +46,7 @@ private:
     const v8::FunctionCallbackInfo<v8::Value>* info_ = nullptr;
     std::optional<v8::TryCatch> try_catch_;
     AccessCompletion completion_;
+    AccessTrace::OriginScope runtime_origin_;
 };
 
 // RAII completion for a recorded native property getter.
@@ -64,6 +65,7 @@ private:
     const v8::PropertyCallbackInfo<v8::Value>* info_ = nullptr;
     std::optional<v8::TryCatch> try_catch_;
     AccessCompletion completion_;
+    AccessTrace::OriginScope runtime_origin_;
 };
 
 // RAII completion for a recorded native property setter.
@@ -73,16 +75,21 @@ public:
         v8::Isolate* isolate, std::uint64_t seq,
         const v8::PropertyCallbackInfo<void>& info,
         v8::Local<v8::Value> value);
+    AccessPropertySetCompletion(v8::Isolate* isolate, std::uint64_t seq,
+        const v8::PropertyCallbackInfo<v8::Boolean>& info, v8::Local<v8::Value> value);
     ~AccessPropertySetCompletion() noexcept;
 
     AccessPropertySetCompletion(const AccessPropertySetCompletion&) = delete;
     AccessPropertySetCompletion& operator=(const AccessPropertySetCompletion&) = delete;
 
 private:
+    AccessPropertySetCompletion(v8::Isolate* isolate, std::uint64_t seq,
+        v8::Local<v8::Value> value);
     v8::Isolate* isolate_ = nullptr;
     std::uint64_t seq_ = 0;
     std::optional<v8::TryCatch> try_catch_;
     AccessCompletion completion_;
+    AccessTrace::OriginScope runtime_origin_;
 };
 
 // Web IDL accessors created as native Functions use FunctionCallbackInfo while
@@ -103,6 +110,7 @@ private:
     AccessOperation operation_;
     std::optional<v8::TryCatch> try_catch_;
     AccessCompletion completion_;
+    AccessTrace::OriginScope runtime_origin_;
 };
 
 }  // namespace iv8

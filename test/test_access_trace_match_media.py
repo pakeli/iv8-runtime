@@ -44,16 +44,20 @@ def test_match_media_result_reads_and_method_calls_are_traced():
         events = _events(page)
         assert [(event["object_type"], event["label"], event["member"],
                  event["operation"]) for event in events] == [
-            ("media_query_list", "matchMedia", "matchMedia", "call"),
+            ("window", "window", "matchMedia", "get"),
+            ("window", "window", "matchMedia", "call"),
+            ("window", "window", "m", "get_probe"),
             ("media_query_list", "matchMedia", "media", "get"),
             ("media_query_list", "matchMedia", "matches", "get"),
+            ("media_query_list", "matchMedia", "onchange", "get"),
             ("media_query_list", "matchMedia", "addEventListener", "call"),
             ("media_query_list", "matchMedia", "removeListener", "call"),
             ("media_query_list", "matchMedia", "dispatchEvent", "call"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)
         assert all(event["resource_name"] == "probe.js" for event in events)
-        assert len({event["object_id"] for event in events}) == 1
+        assert len({event["object_id"] for event in events if event["object_type"] == "window"}) == 1
+        assert len({event["object_id"] for event in events if event["object_type"] == "media_query_list"}) == 1
 
 
 @on_only
@@ -81,18 +85,18 @@ def test_match_media_identity_cache_independence_and_missing_probe():
 
         events = _events(page)
         calls = [event for event in events
-                 if event["member"] == "matchMedia"]
+                 if event["object_type"] == "window" and event["member"] == "matchMedia"
+                 and event["operation"] == "call"]
         assert len(calls) == 3
         assert calls[0]["object_id"] == calls[1]["object_id"]
-        assert calls[0]["object_id"] != calls[2]["object_id"]
+        assert calls[0]["object_id"] == calls[2]["object_id"]
         gets = [event for event in events
                 if event["member"] == "media"]
         assert len(gets) == 3
         assert gets[0]["object_id"] == gets[1]["object_id"]
-        assert gets[0]["object_id"] == calls[0]["object_id"]
-        assert gets[2]["object_id"] == calls[2]["object_id"]
+        assert gets[0]["object_id"] != gets[2]["object_id"]
         probes = [event for event in events
-                  if event["operation"] == "get_probe"]
+                  if event["object_type"] == "media_query_list" and event["operation"] == "get_probe"]
         assert [(event["member"], event["resolution"]) for event in probes] == [
             ("missing", "missing")]
 
@@ -136,7 +140,6 @@ def test_match_media_shape_and_filter_generation():
                   name="probe.js")
         events = _events(page)
         assert [(event["object_type"], event["member"]) for event in events] == [
-            ("media_query_list", "matchMedia"),
             ("media_query_list", "media"),
         ]
         first_id = events[0]["object_id"]
@@ -150,5 +153,5 @@ def test_match_media_shape_and_filter_generation():
             and event["source_kind"] == "eval"
         ]
         assert [(event["generation"], event["member"]) for event in events] == [
-            (2, "matchMedia"), (2, "media"), (3, "matchMedia"), (3, "media")]
-        assert events[2]["object_id"] != first_id
+            (2, "media"), (3, "media")]
+        assert events[1]["object_id"] != first_id

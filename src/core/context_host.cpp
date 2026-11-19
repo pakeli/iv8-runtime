@@ -8,11 +8,13 @@
 #include <vector>
 
 #include "iv8/access_trace.h"
+#include "iv8/access_origin.h"
 #include "iv8/engine_runtime.h"
 #include "iv8/js_exception.h"
 #include "iv8/js_value.h"
 #include "iv8/value_converter.h"
 #include "iv8/watch_registry.h"
+#include "browser/window/window_trace_support.h"
 
 namespace py = pybind11;
 
@@ -208,6 +210,7 @@ void ContextState::run_timers() {
         {
             py::gil_scoped_release release_gil;
             v8::Local<v8::Value> recv = context->Global();
+            auto user_origin = access_user_scope(isolate);
             (void)callback->Call(context, recv, 0, nullptr);
         }
         if (try_catch.HasCaught()) {
@@ -259,6 +262,7 @@ void ContextState::fire_timer_locked(v8::Isolate* isolate,
     {
         py::gil_scoped_release release_gil;
         v8::Local<v8::Value> recv = context->Global();
+        auto user_origin = access_user_scope(isolate);
         (void)callback->Call(context, recv, 0, nullptr);
     }
     if (try_catch.HasCaught()) {
@@ -269,6 +273,7 @@ void ContextState::fire_timer_locked(v8::Isolate* isolate,
 
 void ContextState::drain_microtasks_locked(v8::Isolate* isolate) {
     py::gil_scoped_release release_gil;
+    auto user_origin = access_user_scope(isolate);
     isolate->PerformMicrotaskCheckpoint();
 }
 
@@ -512,6 +517,7 @@ void ContextState::fire_animation_frame_locked(
             // do not advance the clock, so they pass the unchanged current time.
             v8::Local<v8::Value> argv[1] = {
                 v8::Number::New(isolate, static_cast<double>(virtual_now_ms_))};
+            auto user_origin = access_user_scope(isolate);
             (void)callback->Call(context, recv, 1, argv);
         }
         if (try_catch.HasCaught()) {
@@ -551,6 +557,7 @@ constexpr double kIdleBudgetMs = 50.0;
 // IdleDeadline.timeRemaining() -> Number. Deterministic: always the full budget, and
 // it does not decrease while a callback runs (nothing measures elapsed time here).
 void idle_deadline_time_remaining(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    browser::NativeApiCallTrace tracing(info, "IdleDeadline", "timeRemaining");
     info.GetReturnValue().Set(
         v8::Number::New(info.GetIsolate(), kIdleBudgetMs));
 }
@@ -609,23 +616,22 @@ void ContextState::fire_idle_round_locked(
         // (ReadOnly|DontDelete), so a JS write is a no-op in sloppy mode / a
         // TypeError in strict mode.
         v8::Local<v8::Object> deadline = v8::Object::New(isolate);
-        (void)deadline->DefineOwnProperty(
-            context, v8::String::NewFromUtf8Literal(isolate, "didTimeout"),
-            v8::False(isolate),
-            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
-        v8::Local<v8::Function> time_remaining =
-            v8::Function::New(context, &idle_deadline_time_remaining)
-                .ToLocalChecked();
-        (void)deadline->DefineOwnProperty(
-            context, v8::String::NewFromUtf8Literal(isolate, "timeRemaining"),
-            time_remaining,
-            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+        const void* deadline_identity = browser::native_api_identity(isolate, deadline);
+        v8::Local<v8::Function> time_remaining;
+        if (!v8::Function::New(context, &idle_deadline_time_remaining).ToLocal(&time_remaining) ||
+            !browser::install_traced_api_data_property(isolate, context, deadline,
+                "didTimeout", v8::False(isolate), deadline_identity, "host_object", "IdleDeadline",
+                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete)) ||
+            !browser::install_traced_api_data_property(isolate, context, deadline,
+                "timeRemaining", time_remaining, deadline_identity, "host_object", "IdleDeadline",
+                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))) return;
 
         v8::TryCatch try_catch(isolate);
         {
             py::gil_scoped_release release_gil;
             v8::Local<v8::Value> recv = context->Global();
             v8::Local<v8::Value> argv[1] = {deadline};
+            auto user_origin = access_user_scope(isolate);
             (void)callback->Call(context, recv, 1, argv);
         }
         if (try_catch.HasCaught()) {
@@ -658,6 +664,7 @@ void ContextState::run_jobs() {
     v8::Local<v8::Context> context = context_.Get(isolate);
     v8::Context::Scope context_scope(context);
     py::gil_scoped_release release_gil;
+    auto user_origin = access_user_scope(isolate);
     isolate->PerformMicrotaskCheckpoint();
 }
 

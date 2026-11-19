@@ -3,9 +3,11 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -37,7 +39,9 @@ std::string performance_arg_string(
     }
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::String> str;
-    if (!info[index]->ToString(isolate->GetCurrentContext()).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] {
+            return info[index]->ToString(isolate->GetCurrentContext());
+        }).ToLocal(&str)) {
         return std::string();
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -50,10 +54,10 @@ v8::Local<v8::Value> make_performance_entry(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
     const PerformanceEntryRecord& entry) {
     v8::Local<v8::Object> object = v8::Object::New(isolate);
+    const void* identity = native_api_identity(isolate, object);
     const auto define = [&](const char* key, v8::Local<v8::Value> value) {
-        (void)object->DefineOwnProperty(
-            context,
-            v8::String::NewFromUtf8(isolate, key).ToLocalChecked(), value,
+        (void)install_traced_api_data_property(isolate, context, object, key, value,
+            identity, "host_object", "PerformanceEntry",
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
     };
     define("name", v8_string(isolate, entry.name));
@@ -121,8 +125,10 @@ v8::Local<v8::Array> performance_entries_array(
     for (const PerformanceEntryRecord& entry : store->entries) {
         if ((type.empty() || entry.entry_type == type) &&
             (name.empty() || entry.name == name)) {
-            (void)array->Set(context, index++,
-                             make_performance_entry(isolate, context, entry));
+            const auto value = make_performance_entry(isolate, context, entry);
+            (void)access_user_operation(isolate, [&] {
+                return array->Set(context, index++, value);
+            });
         }
     }
     return array;

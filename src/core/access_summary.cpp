@@ -12,37 +12,20 @@ namespace {
 
 // Only primitive/type inspection is performed here: no toString/valueOf,
 // property Get, or other user code can run while producing metadata.
-constexpr int kMaxSummaryBytes = 64;
-constexpr int kMaxConvertedStringBytes = 4096;
-constexpr int kMaxArgumentSummaries = 8;
 constexpr int kMaxExceptionBytes = 4096;
 
 std::string summarize_string(v8::Isolate* isolate,
                              v8::Local<v8::String> value) {
     const int utf8_length = value->Utf8Length(isolate);
     std::string summary = "string:" + std::to_string(utf8_length) + ":";
-    if (utf8_length > kMaxConvertedStringBytes) {
-        summary += "...";
-        return summary;
-    }
     v8::String::Utf8Value utf8(isolate, value);
     if (*utf8 == nullptr) {
         summary += "...";
         return summary;
     }
     const std::size_t length = static_cast<std::size_t>(utf8.length());
-    std::size_t cut =
-        std::min(length, static_cast<std::size_t>(kMaxSummaryBytes));
-    if (cut < length) {
-        // Do not split a UTF-8 continuation byte; Python must receive valid
-        // UTF-8 from the report.
-        while (cut > 0 &&
-               (static_cast<unsigned char>((*utf8)[cut]) & 0xC0) == 0x80) {
-            --cut;
-        }
-    }
     const auto* bytes = reinterpret_cast<const unsigned char*>(*utf8);
-    for (std::size_t i = 0; i < cut; ++i) {
+    for (std::size_t i = 0; i < length; ++i) {
         const unsigned char c = bytes[i];
         switch (c) {
             case '\\':
@@ -67,9 +50,6 @@ std::string summarize_string(v8::Isolate* isolate,
                 }
                 break;
         }
-    }
-    if (cut < length) {
-        summary += "...";
     }
     return summary;
 }
@@ -179,7 +159,7 @@ std::string access_value_summary(v8::Isolate* isolate,
 
 std::vector<std::string> access_argument_summaries(
     v8::Isolate* isolate, const v8::FunctionCallbackInfo<v8::Value>& info) {
-    const int count = std::min(info.Length(), kMaxArgumentSummaries);
+    const int count = info.Length();
     std::vector<std::string> summaries;
     summaries.reserve(static_cast<std::size_t>(count));
     for (int i = 0; i < count; ++i) {
@@ -240,7 +220,8 @@ void access_capture_exception(v8::Isolate* isolate,
 AccessCallCompletion::AccessCallCompletion(
     v8::Isolate* isolate, std::uint64_t seq,
     const v8::FunctionCallbackInfo<v8::Value>& info)
-    : isolate_(isolate), seq_(seq), info_(&info) {
+    : isolate_(isolate), seq_(seq), info_(&info),
+      runtime_origin_(access_trace_from_isolate(isolate), isolate, AccessOriginKind::kRuntime) {
     if (seq_ == 0) {
         return;
     }
@@ -268,8 +249,11 @@ AccessCallCompletion::~AccessCallCompletion() noexcept {
                                      *try_catch_, completion_);
         } else {
             completion_.outcome = "returned";
-            completion_.return_summary = access_value_summary(
-                isolate_, info_->GetReturnValue().Get());
+            auto returned = info_->GetReturnValue().Get();
+            // A constructor's primitive/implicit return yields the allocated
+            // receiver, while an explicit object replaces it (normal JS rules).
+            if (info_->IsConstructCall() && !returned->IsObject()) returned = info_->This();
+            completion_.return_summary = access_value_summary(isolate_, returned);
         }
         if (trace != nullptr) {
             trace->complete(seq_, std::move(completion_));
@@ -289,7 +273,8 @@ AccessCallCompletion::~AccessCallCompletion() noexcept {
 AccessPropertyCompletion::AccessPropertyCompletion(
     v8::Isolate* isolate, std::uint64_t seq,
     const v8::PropertyCallbackInfo<v8::Value>& info)
-    : isolate_(isolate), seq_(seq), info_(&info) {
+    : isolate_(isolate), seq_(seq), info_(&info),
+      runtime_origin_(access_trace_from_isolate(isolate), isolate, AccessOriginKind::kRuntime) {
     if (seq_ == 0) {
         return;
     }
@@ -336,7 +321,17 @@ AccessPropertySetCompletion::AccessPropertySetCompletion(
     v8::Isolate* isolate, std::uint64_t seq,
     const v8::PropertyCallbackInfo<void>& /*info*/,
     v8::Local<v8::Value> value)
-    : isolate_(isolate), seq_(seq) {
+    : AccessPropertySetCompletion(isolate, seq, value) {}
+
+AccessPropertySetCompletion::AccessPropertySetCompletion(v8::Isolate* isolate,
+    std::uint64_t seq, const v8::PropertyCallbackInfo<v8::Boolean>&,
+    v8::Local<v8::Value> value)
+    : AccessPropertySetCompletion(isolate, seq, value) {}
+
+AccessPropertySetCompletion::AccessPropertySetCompletion(v8::Isolate* isolate,
+    std::uint64_t seq, v8::Local<v8::Value> value)
+    : isolate_(isolate), seq_(seq),
+      runtime_origin_(access_trace_from_isolate(isolate), isolate, AccessOriginKind::kRuntime) {
     if (seq_ == 0) {
         return;
     }
@@ -381,7 +376,8 @@ AccessPropertySetCompletion::~AccessPropertySetCompletion() noexcept {
 AccessFunctionPropertyCompletion::AccessFunctionPropertyCompletion(
     v8::Isolate* isolate, std::uint64_t seq,
     const v8::FunctionCallbackInfo<v8::Value>& info, AccessOperation operation)
-    : isolate_(isolate), seq_(seq), info_(&info), operation_(operation) {
+    : isolate_(isolate), seq_(seq), info_(&info), operation_(operation),
+      runtime_origin_(access_trace_from_isolate(isolate), isolate, AccessOriginKind::kRuntime) {
     if (seq_ == 0) return;
     try {
         try_catch_.emplace(isolate);

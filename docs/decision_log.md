@@ -1,11 +1,235 @@
 # Decision Log
 
-Last reviewed: `2026-11-15`
+Last reviewed: `2026-11-17`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
 
 ## Confirmed Decisions
+
+### Validate macOS wheels before other release platforms (`2026-11-17`)
+
+The user requires future builds to prioritize macOS wheels. Both recent hosted
+macOS attempts failed during runner acquisition, with zero source/build/test
+steps and explicit arm64 capacity annotations. Build and validate the four
+Python 3.11–3.14 wheels first in the existing local arm64 environments, then
+dispatch Linux/Windows. Hosted macOS remains supplementary while capacity is
+unreliable; distinguish its result from local validation. Keep fixed-source,
+matching pinned V8, isolated installed-wheel gate/full-suite and artifact-hash
+checks. This changes execution order, not platform requirements or SDK deployment.
+Evidence: `docs/bom_01_release_report.md`. Fixed source 6839c9a passes
+917 gate tests in every lane; full Linux/local Mac is 3143/2, Windows 3141/4.
+Five hosted artifact ZIPs and all 12 wheels are collected and verified.
+
+### Submit BOM-01 and build V8-linked release wheels (`2026-11-17`)
+
+The user requests PR submission and V8 builds after local BOM-01 acceptance.
+Update the existing PR #32 and validate one fixed source across Linux/Windows/
+macOS, Python 3.11–3.14. Reuse matching pinned engine caches and rebuild native
+extensions/wheels; record cache outcomes distinctly from real engine builds.
+Preserve source-pinned temporary macOS helper restoration and record any runner
+capacity failures without treating them as green. No merge, tag publication or
+shared SDK installation is implied. Evidence: `docs/bom_01_release_report.md`.
+
+### Prioritize BOM completion and defer iterator monitoring (`2026-11-17`)
+
+The user explicitly places further Symbol.iterator monitoring on hold and selects
+BOM environment completion next. Follow the existing BOM-first queue: retain
+Window/Location/History behavior, extend low-dependency Navigator capabilities
+and existing BOM subobjects before device/service subsystems or further DOM
+work. BOM-01 selects getGamepads, Scheduling.isInputPending and the
+connection/orientation/viewport event foundations against a new Chrome reference.
+No trusted input, real device control, network execution or M1 expansion is
+implied. Boundary: `docs/bom_01_capabilities.md`; local verification and remaining
+coverage are tracked in `docs/bom_01_capabilities_report.md`. Local CPython3.11
+installed-wheel acceptance passes 94 new tests, the 917-test combined gate, and
+3143 passed / 2 skipped full suite. The later submission/build decision above
+records commit 6839c9a, PR #32 and Linux/Windows hosted plus local Mac validation;
+shared deployment remains unchanged.
+
+### Observe existing runtime-defined Symbol.toStringTag values (`2026-11-17`)
+
+The user selects direct and Reflect.get tag-read monitoring before iterator work.
+Use native data callbacks at all existing definition sites; preserve values,
+flags, owners and key order rather than adding missing tags or browser APIs.
+Canonical member plus member_kind="symbol" distinguishes Symbols from strings.
+CSS delegates the tag key once using a captured Symbol. Object stringification
+uses runtime scope for original data reads; safe descriptor/engine metadata
+preserves JS and native-bound user reentry. Unknown dynamic handler metadata is
+conservative and can retain extra GETs without re-running a getter/trap.
+Language intrinsics, missing/user Symbol paths and iterator work stay separate.
+Fresh CP311 acceptance: 34 new cases, 167 focused, 823 gate and 3049 passed /
+2 skipped full. Update PR #32 without full-release or SDK-replacement claims.
+Boundary/report: `docs/symbol_to_string_tag_monitoring.md` /
+`docs/symbol_to_string_tag_monitoring_report.md`.
+
+### Make intrinsic stringifier receivers explicit in logs (`2026-11-17`)
+
+The user identifies ambiguous toString text and approves receiver metadata.
+Capture raw receiver_summary before internal observer mapping and receiver_label
+only from a direct native HostObject's C++ trace_label. Do not read JS
+name/constructor/tag, unwrap user Proxies or introduce receiver IDs. Keep this
+separate from actual extra-argument counts. Text normalizes .call(this,...),
+quotes unsafe native labels and preserves the old view when fields are absent.
+Original algorithms, throws and diagnostic safety remain unchanged. Fresh CP311
+installed-wheel acceptance: 41 new cases, 133 focused, 789 gate and
+3015 passed / 2 skipped full suite. Update PR #32 without a full release or SDK
+replacement claim. Boundary/report: `docs/to_string_monitoring.md` /
+`docs/to_string_receivers_report.md`.
+
+### Observe intrinsic method/object stringification calls (`2026-11-17`)
+
+The user explicitly requests Function.prototype.toString and
+Object.prototype.toString detection monitoring. Install native Proxy apply
+observers before user scripts; preserve raw null/undefined/primitive receivers
+and delegate original V8 algorithms. Only two internal observers map to their
+original targets during function-source generation; user Proxies stay untouched.
+Reuse host_object CALL schema with actual extra arguments and safe completion,
+fixed owner tokens and user accessor provenance. No M9 watch API is added.
+Inspector Proxy internals/pristine cross-Realm transparency remain explicit
+limits, not an unchanged builtin-kind claim. Local CPython3.11 installed-wheel
+acceptance: 35 new cases, 748 focused and 2974 passed / 2 skipped full suite.
+Update PR #32; full release/deployment stays separate. Boundary/report:
+`docs/to_string_monitoring.md` / `docs/to_string_monitoring_report.md`.
+
+### Retain complete logged string values and argument lists (`2026-11-16`)
+
+The user reports truncated script.src URLs. Remove the native 64-byte preview,
+4096-byte omission and eight-argument caps for captured API values. Preserve full
+summaries through the script/bootstrap bridge. New reports carry
+`coverage.string_capture="full"` to distinguish actual trailing ellipses from
+ambiguous saved legacy previews; absent-marker reports keep old formatting.
+Objects stay type-only without extra property reads; exception diagnostics and
+event limits remain separate. Local acceptance: six new cases, 154 focused,
+713 release gate and 2939 passed / 2 skipped full. Update PR #32 without SDK
+installation or a full release claim. Boundary/evidence: `docs/access_trace_text.md`
+and `docs/full_trace_values_report.md`.
+
+### Add XHR native shape and monitoring with an inert send (`2026-11-16`)
+
+The user selects XMLHttpRequest interface shape and monitoring only and asks for
+send to print its parameters. Implement native request/upload EventTargets and
+eager browser-derived interface surfaces; request methods are explicit no-ops,
+not an HTTP backend or state machine. Debug uses existing safe CALL summaries;
+prod stays silent. Preserve native identities, receiver checks and config/user
+coercion tracing. Secure-only extra methods follow the captured browser origin
+profile. Local acceptance: 62 new tests, 643 focused and 2933 passed / 2 skipped
+full suite. Update PR #32; full release and shared SDK deployment remain separate.
+Boundary/report: `docs/xml_http_request_shape.md` /
+`docs/xml_http_request_shape_report.md`.
+
+### Observe existing MutationRecord returned fields (`2026-11-16`)
+
+The next strict-use slice monitors the nine existing plain-object MutationRecord
+fields with native data hooks, not a new MutationRecord interface or constructor.
+Perform original Set once before diagnostic own-data inspection; retain actual
+values/flags and inherited setter/error behavior. One generation token covers
+each record, including records cached before tracing. Materialization stays
+runtime-origin, user callbacks stay observable, and arrays keep current behavior.
+Local acceptance is 23 new cases, 581 focused and full 2871 passed / 2 skipped.
+The pre-existing ignored-Maybe error asymmetry is recorded, not silently fixed.
+Update PR #32; full release verification and SDK installation remain separate.
+Scope and evidence: `docs/mutation_record_monitoring.md` /
+`docs/mutation_record_monitoring_report.md`.
+
+### Trace shared prototype references and native receiver rejections (`2026-11-16`)
+
+The user requests the next two concrete monitoring gaps be repaired. At generic
+interface lazy registration, reuse native data callbacks while preserving exact
+function objects and descriptors. Return canonical functions in the instance
+interceptor to preserve its METHOD/CALL folding without prototype duplicates.
+Known binding owners give failed native entries stable identity; brand errors
+retain their original message/side effects and do not coerce arguments. Own
+Location/Document owners are generation-owned native pointers; receiver dispatch
+never uses those diagnostic owners. Local acceptance is 36 new cases, 558 focused
+and full 2848 passed / 2 skipped. Update PR #32; full release verification and
+SDK replacement remain separate. Scope: `docs/generic_binding_monitoring.md` /
+`docs/generic_binding_monitoring_report.md`.
+
+### Validate origin filtering with local macOS fallback (`2026-11-16`)
+
+Source `4c777f78` / tree `6184c309a03437de7bb13774a0bdf8008ba198cf`
+passes Linux and Windows hosted Python 3.11–3.14 builds: 522 focused each,
+full Linux 2812/2 and Windows 2810/4. GitHub's macOS arm64 capacity failure
+prevented its runner from executing any source, so the same four-version gate
+and full suite are built/run locally (each 522 focused and 2812/2). These are
+local fallback validations, not successful hosted macOS jobs; keep `aa72e50`
+as the last fully hosted release matrix. All 12 wheels are collected/verified,
+helper workflow restored with original bytes, and shared SDK remains untouched.
+Exact source/run/artifact/local/failure evidence: `docs/access_trace_origins_report.md`.
+
+### Record user API use while excluding runtime housekeeping (`2026-11-16`)
+
+The user approves native origin filtering: empty debug loads must be silent,
+location.href eval has exactly three gets, and lifecycle callbacks retain user
+API accesses. Exclude setup, synthetic events and state maintenance before store
+accounting. Native entries start runtime implementation scopes after recording;
+explicit invocation/conversion scopes retain native-bound user callbacks that
+engine stack depth cannot distinguish. Trusted script IDs, bridge token restore,
+receiver-preserving CSS forwarding and non-executing descriptor checks protect
+nested accessors and exceptions. Local acceptance is 522 focused and full
+2812 passed / 2 skipped, including 40 origin cases. Update the existing PR #32;
+retain the previous release as verified until the new matrix finishes. Scope,
+raw/manual changes and evidence: `docs/access_trace_origins.md` /
+`docs/access_trace_origins_report.md`. Other API coverage gaps and shared SDK
+replacement remain separate.
+
+### Verify the PR #32 monitoring candidate across all release lanes (`2026-11-16`)
+
+Fixed source `aa72e50` / tree `3f07dc72a09b78f97f74924ecd3f15b2cb0624cd`
+passes all 12 Python 3.11–3.14 release lanes: 482 focused each, full
+Linux/macOS 2772 passed / 2 skipped and Windows 2770 passed / 4 skipped.
+The V8 pin/cache keys and branch protection are unchanged; matching engine
+monoliths are reused and host wheels rebuilt. All nine artifact archives and
+12 wheels are downloaded and digest/CRC/tag verified. The macOS source-pinned
+helper is restored in `5baaf744` and original bytes verified by a fresh read.
+This verifies the delivered candidate, not complete browser API observation:
+the strict-use audit gaps remain open. PR stays unmerged, no tag is published,
+and shared SDK deployment remains BIND-01. Exact source/run/artifact evidence:
+`docs/monitoring_release_report.md`.
+
+### Submit the monitoring candidate and build V8-linked wheels (`2026-11-16`)
+
+The user requests a PR and V8 build for this version. Include the already-tested
+ENV-MON-01 native expansion and History entry fix with the Python debug/prod
+convenience. All three installed-wheel gates now include the same 23 modules /
+482 tests; the full suite remains required in each release lane. Keep the V8 pin
+and cache keys unchanged, reuse matching monoliths, and rebuild extensions and
+wheels. Build-source pins, macOS helper restoration and actual results belong in
+`docs/monitoring_release_report.md`. PR submission/building does not authorize
+merging, version-tag publication or shared SDK replacement, and does not close
+the independently reproduced API coverage gaps.
+
+### Configure automatic API logs through Page.load mode (`2026-11-16`)
+
+The user requests `mode="debug"` to monitor and `mode="prod"` to disable
+monitoring, without manual start/read calls. Add a keyword-only mode on the
+Python Page facade. Debug starts an unfiltered session after native setup and
+before user scripts, emits readable stdout at execution boundaries, and drains
+its buffer. Its per-call ceiling is `sys.maxsize`; prod stops/clears access
+tracing. Omission preserves existing manual control and an active debug mode.
+Separate watch/Inspector/console settings are not changed by this parameter.
+
+A per-Page nonblocking execution guard includes automatic output, full load
+transitions and trace controls/reads, preventing another thread from consuming
+an unfinished native completion. Ordinary output errors preserve JS results and
+errors; Python interrupts keep their normal control behavior. This usability
+change does not close the API coverage audit's prototype, receiver-validation,
+symbol/query or returned-object gaps. Scope and current local evidence:
+`docs/page_monitoring_modes.md` / `docs/page_monitoring_modes_report.md`.
+Release verification and shared SDK replacement remain separate.
+
+### Trace the reported window.history parent read (`2026-11-15`)
+
+The user's direct History read returned a JSValue but no log because the global
+native getter bypassed tracing, while History member getters/calls were already
+traced. Add the existing Window get/completion helpers to that getter and protect
+the exact stop/text flow, parent/child attribution, filter, brand and lifecycle
+behavior. The event uses object_type window; child accesses keep type history.
+This is a local follow-up to the combined release, without SDK replacement or
+an automatic full release matrix. It is scoped to the reported History entry;
+other unmapped old global bindings remain separate work. Evidence and status:
+`docs/history_entry_monitoring.md`.
 
 ### Submit and verify the combined V8-linked build (`2026-11-15`)
 

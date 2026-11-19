@@ -1,0 +1,413 @@
+{
+  "browser": "Google Chrome 157.0.8103.79",
+  "captured_at_utc": "2026-11-17T10:37:40.708333+00:00",
+  "execution": {
+    "os": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:57515/reference",
+    "network": "Only loopback fixture document; external DNS mapped to NOTFOUND; background networking disabled; no business-site traffic",
+    "arguments": ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--headless=new", "--disable-gpu", "--disable-background-networking", "--disable-component-update", "--disable-domain-reliability", "--disable-sync", "--metrics-recording-only", "--no-pings", "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--disable-crash-reporter", "--safebrowsing-disable-auto-update", "--disable-features=MediaRouter,OptimizationHints", "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1", "--no-proxy-server", "--lang=en-US", "--user-data-dir=<temporary-profile>", "--virtual-time-budget=1000", "--dump-dom", "http://127.0.0.1:57515/reference"]
+  },
+  "probe_sha256": "f285c2a68d96da09662942cfc05d26612b8b08f28537a075f5fae24efe2dbb9a",
+  "requests": [
+    {"method": "GET", "path": "/reference"},
+    {"method": "GET", "path": "/favicon.ico"}
+  ],
+  "result": {
+    "conditions": {"url": "http://127.0.0.1:57515/reference", "origin": "http://127.0.0.1:57515", "isSecureContext": true, "worker": false, "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"},
+    "owners": {
+      "Window.prototype": {
+        "descriptor": {"kind": "data", "value": "Window", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Window",
+        "objectToString": "[object Window]",
+        "ownKeys": ["TEMPORARY", "PERSISTENT", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "WindowProperties": {
+        "descriptor": {"kind": "data", "value": "WindowProperties", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "WindowProperties",
+        "objectToString": "[object WindowProperties]",
+        "ownKeys": ["Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "HTMLDocument.prototype": {
+        "descriptor": {"kind": "data", "value": "HTMLDocument", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "HTMLDocument",
+        "objectToString": "[object HTMLDocument]",
+        "ownKeys": ["constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "Document.prototype": {
+        "descriptor": {"kind": "data", "value": "Document", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Document",
+        "objectToString": "[object Document]",
+        "ownKeys": ["implementation", "URL", "documentURI", "compatMode", "characterSet", "charset", "inputEncoding", "contentType", "doctype", "documentElement", "xmlEncoding", "xmlVersion", "xmlStandalone", "domain", "referrer", "cookie", "lastModified", "readyState", "title", "dir", "body", "head", "images", "embeds", "plugins", "links", "forms", "scripts", "currentScript", "defaultView", "designMode", "onreadystatechange", "anchors", "applets", "fgColor", "linkColor", "vlinkColor", "alinkColor", "bgColor", "all", "scrollingElement", "onpointerlockchange", "onpointerlockerror", "hidden", "visibilityState", "wasDiscarded", "prerendering", "featurePolicy", "webkitVisibilityState", "webkitHidden", "onbeforecopy", "onbeforecut", "onbeforepaste", "onfreeze", "onprerenderingchange", "onresume", "onsearch", "onvisibilitychange", "timeline", "fullscreenEnabled", "fullscreen", "onfullscreenchange", "onfullscreenerror", "webkitIsFullScreen", "webkitCurrentFullScreenElement", "webkitFullscreenEnabled", "webkitFullscreenElement", "onwebkitfullscreenchange", "onwebkitfullscreenerror", "rootElement", "activeViewTransition", "pictureInPictureEnabled", "onabort", "onbeforeinput", "onbeforematch", "onbeforetoggle", "onblur", "oncancel", "oncanplay", "oncanplaythrough", "onchange", "onclick", "onclose", "oncommand", "oncontentvisibilityautostatechange", "oncontextlost", "oncontextmenu", "oncontextrestored", "oncuechange", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave", "ondragover", "ondragstart", "ondrop", "ondurationchange", "onemptied", "onended", "onerror", "onfocus", "onformdata", "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata", "onloadstart", "onmousedown", "onmouseenter", "onmouseleave", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onmousewheel", "onpause", "onplay", "onplaying", "onprogress", "onratechange", "onreset", "onresize", "onscroll", "onscrollend", "onsecuritypolicyviolation", "onseeked", "onseeking", "onselect", "onslotchange", "onstalled", "onsubmit", "onsuspend", "ontimeupdate", "ontoggle", "onvolumechange", "onwaiting", "onwebkitanimationend", "onwebkitanimationiteration", "onwebkitanimationstart", "onwebkittransitionend", "onwheel", "onauxclick", "ongotpointercapture", "onlostpointercapture", "onpointerdown", "onpointermove", "onpointerup", "onpointercancel", "onpointerover", "onpointerout", "onpointerenter", "onpointerleave", "onselectstart", "onselectionchange", "onanimationcancel", "onanimationend", "onanimationiteration", "onanimationstart", "ontransitionrun", "ontransitionstart", "ontransitionend", "ontransitioncancel", "onbeforexrselect", "oncopy", "oncut", "onpaste", "children", "firstElementChild", "lastElementChild", "childElementCount", "activeElement", "styleSheets", "pointerLockElement", "fullscreenElement", "adoptedStyleSheets", "pictureInPictureElement", "customElementRegistry", "fonts", "adoptNode", "append", "captureEvents", "caretPositionFromPoint", "caretRangeFromPoint", "clear", "close", "createAttribute", "createAttributeNS", "createCDATASection", "createComment", "createDocumentFragment", "createElement", "createElementNS", "createEvent", "createExpression", "createNSResolver", "createNodeIterator", "createProcessingInstruction", "createRange", "createTextNode", "createTreeWalker", "elementFromPoint", "elementsFromPoint", "evaluate", "execCommand", "exitFullscreen", "exitPictureInPicture", "exitPointerLock", "getAnimations", "getElementById", "getElementsByClassName", "getElementsByName", "getElementsByTagName", "getElementsByTagNameNS", "getSelection", "hasFocus", "hasStorageAccess", "hasUnpartitionedCookieAccess", "importNode", "moveBefore", "open", "prepend", "queryCommandEnabled", "queryCommandIndeterm", "queryCommandState", "queryCommandSupported", "queryCommandValue", "querySelector", "querySelectorAll", "releaseEvents", "replaceChildren", "requestStorageAccess", "startViewTransition", "webkitCancelFullScreen", "webkitExitFullscreen", "write", "writeln", "constructor", "fragmentDirective", "onpointerrawupdate", "browsingTopics", "hasPrivateToken", "hasRedemptionRecord", "onscrollsnapchange", "onscrollsnapchanging", "ariaNotify", "Symbol(Symbol.toStringTag)", "Symbol(Symbol.unscopables)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)", "Symbol(Symbol.unscopables)"]
+      },
+      "HTMLDivElement.prototype": {
+        "descriptor": {"kind": "data", "value": "HTMLDivElement", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "HTMLDivElement",
+        "objectToString": "[object HTMLDivElement]",
+        "ownKeys": ["align", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "Element.prototype": {
+        "descriptor": {"kind": "data", "value": "Element", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Element",
+        "objectToString": "[object Element]",
+        "ownKeys": ["namespaceURI", "prefix", "localName", "tagName", "id", "className", "classList", "slot", "attributes", "shadowRoot", "part", "assignedSlot", "innerHTML", "outerHTML", "scrollTop", "scrollLeft", "scrollWidth", "scrollHeight", "clientTop", "clientLeft", "clientWidth", "clientHeight", "onbeforecopy", "onbeforecut", "onbeforepaste", "onsearch", "elementTiming", "customElementRegistry", "onfullscreenchange", "onfullscreenerror", "onwebkitfullscreenchange", "onwebkitfullscreenerror", "activeViewTransition", "role", "ariaAtomic", "ariaAutoComplete", "ariaBusy", "ariaBrailleLabel", "ariaBrailleRoleDescription", "ariaChecked", "ariaColCount", "ariaColIndex", "ariaColSpan", "ariaCurrent", "ariaDescription", "ariaDisabled", "ariaExpanded", "ariaHasPopup", "ariaHidden", "ariaInvalid", "ariaKeyShortcuts", "ariaLabel", "ariaLevel", "ariaLive", "ariaModal", "ariaMultiLine", "ariaMultiSelectable", "ariaOrientation", "ariaPlaceholder", "ariaPosInSet", "ariaPressed", "ariaReadOnly", "ariaRelevant", "ariaRequired", "ariaRoleDescription", "ariaRowCount", "ariaRowIndex", "ariaRowSpan", "ariaSelected", "ariaSetSize", "ariaSort", "ariaValueMax", "ariaValueMin", "ariaValueNow", "ariaValueText", "children", "firstElementChild", "lastElementChild", "childElementCount", "previousElementSibling", "nextElementSibling", "after", "animate", "append", "attachShadow", "before", "checkVisibility", "closest", "computedStyleMap", "getAnimations", "getAttribute", "getAttributeNS", "getAttributeNames", "getAttributeNode", "getAttributeNodeNS", "getBoundingClientRect", "getClientRects", "getElementsByClassName", "getElementsByTagName", "getElementsByTagNameNS", "getHTML", "hasAttribute", "hasAttributeNS", "hasAttributes", "hasPointerCapture", "insertAdjacentElement", "insertAdjacentHTML", "insertAdjacentText", "matches", "moveBefore", "prepend", "querySelector", "querySelectorAll", "releasePointerCapture", "remove", "removeAttribute", "removeAttributeNS", "removeAttributeNode", "replaceChildren", "replaceWith", "requestFullscreen", "requestPointerLock", "scroll", "scrollBy", "scrollIntoView", "scrollIntoViewIfNeeded", "scrollTo", "setAttribute", "setAttributeNS", "setAttributeNode", "setAttributeNodeNS", "setHTMLUnsafe", "setPointerCapture", "startViewTransition", "toggleAttribute", "webkitMatchesSelector", "webkitRequestFullScreen", "webkitRequestFullscreen", "currentCSSZoom", "ariaColIndexText", "ariaRowIndexText", "ariaActionsElements", "ariaActiveDescendantElement", "ariaControlsElements", "ariaDescribedByElements", "ariaDetailsElements", "ariaErrorMessageElements", "ariaFlowToElements", "ariaLabelledByElements", "afterHTML", "afterHTMLUnsafe", "appendHTML", "appendHTMLUnsafe", "beforeHTML", "beforeHTMLUnsafe", "prependHTML", "prependHTMLUnsafe", "replaceWithHTML", "replaceWithHTMLUnsafe", "streamAfterHTML", "streamAfterHTMLUnsafe", "streamAppendHTML", "streamAppendHTMLUnsafe", "streamBeforeHTML", "streamBeforeHTMLUnsafe", "streamHTML", "streamHTMLUnsafe", "streamPrependHTML", "streamPrependHTMLUnsafe", "streamReplaceWithHTML", "streamReplaceWithHTMLUnsafe", "ariaNotify", "pseudo", "setHTML", "constructor", "Symbol(Symbol.toStringTag)", "Symbol(Symbol.unscopables)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)", "Symbol(Symbol.unscopables)"]
+      },
+      "EventTarget.prototype": {
+        "descriptor": {"kind": "data", "value": "EventTarget", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "EventTarget",
+        "objectToString": "[object EventTarget]",
+        "ownKeys": ["addEventListener", "dispatchEvent", "removeEventListener", "when", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "Navigator.prototype": {
+        "descriptor": {"kind": "data", "value": "Navigator", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Navigator",
+        "objectToString": "[object Navigator]",
+        "ownKeys": ["maxTouchPoints", "scheduling", "userActivation", "geolocation", "ink", "doNotTrack", "mediaCapabilities", "permissions", "webkitTemporaryStorage", "webkitPersistentStorage", "windowControlsOverlay", "hardwareConcurrency", "cookieEnabled", "appCodeName", "appName", "appVersion", "platform", "product", "productSub", "userAgent", "vendor", "vendorSub", "language", "languages", "onLine", "webdriver", "plugins", "mimeTypes", "pdfViewerEnabled", "connection", "getGamepads", "javaEnabled", "sendBeacon", "vibrate", "mediaSession", "constructor", "cpuPerformance", "bluetooth", "clipboard", "credentials", "keyboard", "managed", "mediaDevices", "serviceWorker", "virtualKeyboard", "wakeLock", "deviceMemory", "userAgentData", "locks", "storage", "gpu", "login", "devicePosture", "hid", "presentation", "serial", "usb", "xr", "storageBuckets", "canShare", "share", "clearAppBadge", "getBattery", "getUserMedia", "requestMIDIAccess", "requestMediaKeySystemAccess", "setAppBadge", "webkitGetUserMedia", "getInstalledRelatedApps", "registerProtocolHandler", "unregisterProtocolHandler", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "Screen.prototype": {
+        "descriptor": {"kind": "data", "value": "Screen", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Screen",
+        "objectToString": "[object Screen]",
+        "ownKeys": ["availWidth", "availHeight", "width", "height", "colorDepth", "pixelDepth", "availLeft", "availTop", "orientation", "constructor", "onchange", "isExtended", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "Location.prototype": {
+        "descriptor": {"kind": "data", "value": "Location", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Location",
+        "objectToString": "[object Location]",
+        "ownKeys": ["constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "XMLHttpRequest.prototype": {
+        "descriptor": {"kind": "data", "value": "XMLHttpRequest", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "XMLHttpRequest",
+        "objectToString": "[object XMLHttpRequest]",
+        "ownKeys": ["onreadystatechange", "readyState", "timeout", "withCredentials", "upload", "responseURL", "status", "statusText", "responseType", "response", "responseText", "UNSENT", "OPENED", "HEADERS_RECEIVED", "LOADING", "DONE", "abort", "getAllResponseHeaders", "getResponseHeader", "open", "overrideMimeType", "send", "setRequestHeader", "constructor", "responseXML", "setAttributionReporting", "setPrivateToken", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "XMLHttpRequestUpload.prototype": {
+        "descriptor": {"kind": "data", "value": "XMLHttpRequestUpload", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "XMLHttpRequestUpload",
+        "objectToString": "[object XMLHttpRequestUpload]",
+        "ownKeys": ["constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "Storage.prototype": {
+        "descriptor": {"kind": "data", "value": "Storage", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Storage",
+        "objectToString": "[object Storage]",
+        "ownKeys": ["length", "clear", "getItem", "key", "removeItem", "setItem", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "HTMLCollection.prototype": {
+        "descriptor": {"kind": "data", "value": "HTMLCollection", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "HTMLCollection",
+        "objectToString": "[object HTMLCollection]",
+        "ownKeys": ["length", "item", "namedItem", "constructor", "Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"]
+      },
+      "HTMLAllCollection.prototype": {
+        "descriptor": {"kind": "data", "value": "HTMLAllCollection", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "HTMLAllCollection",
+        "objectToString": "[object HTMLAllCollection]",
+        "ownKeys": ["length", "item", "namedItem", "constructor", "Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"]
+      },
+      "NamedNodeMap.prototype": {
+        "descriptor": {"kind": "data", "value": "NamedNodeMap", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "NamedNodeMap",
+        "objectToString": "[object NamedNodeMap]",
+        "ownKeys": ["length", "getNamedItem", "getNamedItemNS", "item", "removeNamedItem", "removeNamedItemNS", "setNamedItem", "setNamedItemNS", "constructor", "Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"]
+      },
+      "DOMStringMap.prototype": {
+        "descriptor": {"kind": "data", "value": "DOMStringMap", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "DOMStringMap",
+        "objectToString": "[object DOMStringMap]",
+        "ownKeys": ["constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "URL.prototype": {
+        "descriptor": {"kind": "data", "value": "URL", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "URL",
+        "objectToString": "[object URL]",
+        "ownKeys": ["origin", "protocol", "username", "password", "host", "hostname", "port", "pathname", "search", "searchParams", "hash", "href", "toJSON", "toString", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "URLSearchParams.prototype": {
+        "descriptor": {"kind": "data", "value": "URLSearchParams", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "URLSearchParams",
+        "objectToString": "[object URLSearchParams]",
+        "ownKeys": ["size", "append", "delete", "get", "getAll", "has", "set", "sort", "toString", "entries", "forEach", "keys", "values", "constructor", "Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"]
+      },
+      "Blob.prototype": {
+        "descriptor": {"kind": "data", "value": "Blob", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Blob",
+        "objectToString": "[object Blob]",
+        "ownKeys": ["size", "type", "arrayBuffer", "slice", "stream", "text", "bytes", "textStream", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "File.prototype": {
+        "descriptor": {"kind": "data", "value": "File", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "File",
+        "objectToString": "[object File]",
+        "ownKeys": ["name", "lastModified", "lastModifiedDate", "webkitRelativePath", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "Attr.prototype": {
+        "descriptor": {"kind": "data", "value": "Attr", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "Attr",
+        "objectToString": "[object Attr]",
+        "ownKeys": ["namespaceURI", "prefix", "localName", "name", "value", "ownerElement", "specified", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "MutationRecord.prototype": {
+        "descriptor": {"kind": "data", "value": "MutationRecord", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "MutationRecord",
+        "objectToString": "[object MutationRecord]",
+        "ownKeys": ["type", "target", "addedNodes", "removedNodes", "previousSibling", "nextSibling", "attributeName", "attributeNamespace", "oldValue", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "NavigatorUAData.prototype": {
+        "descriptor": {"kind": "data", "value": "NavigatorUAData", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "NavigatorUAData",
+        "objectToString": "[object NavigatorUAData]",
+        "ownKeys": ["brands", "mobile", "platform", "getHighEntropyValues", "toJSON", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "UserActivation.prototype": {
+        "descriptor": {"kind": "data", "value": "UserActivation", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "UserActivation",
+        "objectToString": "[object UserActivation]",
+        "ownKeys": ["hasBeenActive", "isActive", "constructor", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      },
+      "DOMStringList.prototype": {
+        "descriptor": {"kind": "data", "value": "DOMStringList", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "DOMStringList",
+        "objectToString": "[object DOMStringList]",
+        "ownKeys": ["length", "contains", "item", "constructor", "Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)", "Symbol(Symbol.iterator)"]
+      },
+      "CSS": {
+        "descriptor": {"kind": "data", "value": "CSS", "writable": false, "enumerable": false, "configurable": true},
+        "directValue": "CSS",
+        "objectToString": "[object CSS]",
+        "ownKeys": ["highlights", "Hz", "Q", "cap", "ch", "cm", "cqb", "cqh", "cqi", "cqmax", "cqmin", "cqw", "deg", "dpcm", "dpi", "dppx", "dvb", "dvh", "dvi", "dvmax", "dvmin", "dvw", "em", "escape", "ex", "fr", "grad", "ic", "in", "kHz", "lh", "lvb", "lvh", "lvi", "lvmax", "lvmin", "lvw", "mm", "ms", "number", "pc", "percent", "pt", "px", "rad", "rcap", "rch", "registerProperty", "rem", "rex", "ric", "rlh", "s", "supports", "svb", "svh", "svi", "svmax", "svmin", "svw", "turn", "vb", "vh", "vi", "vmax", "vmin", "vw", "x", "paintWorklet", "Symbol(Symbol.toStringTag)"],
+        "ownSymbols": ["Symbol(Symbol.toStringTag)"]
+      }
+    },
+    "objects": {
+      "window": {"available": true, "value": "Window", "objectToString": "[object Window]", "ownTag": false, "repeatedReadSame": true, "owner": "Window.prototype", "depth": 1},
+      "Window.prototype": {"available": true, "value": "Window", "objectToString": "[object Window]", "ownTag": true, "repeatedReadSame": true, "owner": "Window.prototype", "depth": 0},
+      "WindowProperties": {"available": true, "value": "WindowProperties", "objectToString": "[object WindowProperties]", "ownTag": true, "repeatedReadSame": true, "owner": "WindowProperties", "depth": 0},
+      "document": {"available": true, "value": "HTMLDocument", "objectToString": "[object HTMLDocument]", "ownTag": false, "repeatedReadSame": true, "owner": "HTMLDocument.prototype", "depth": 1},
+      "Document.prototype": {"available": true, "value": "Document", "objectToString": "[object Document]", "ownTag": true, "repeatedReadSame": true, "owner": "Document.prototype", "depth": 0},
+      "HTMLDocument.prototype": {"available": true, "value": "HTMLDocument", "objectToString": "[object HTMLDocument]", "ownTag": true, "repeatedReadSame": true, "owner": "HTMLDocument.prototype", "depth": 0},
+      "element": {"available": true, "value": "HTMLDivElement", "objectToString": "[object HTMLDivElement]", "ownTag": false, "repeatedReadSame": true, "owner": "HTMLDivElement.prototype", "depth": 1},
+      "Element.prototype": {"available": true, "value": "Element", "objectToString": "[object Element]", "ownTag": true, "repeatedReadSame": true, "owner": "Element.prototype", "depth": 0},
+      "HTMLDivElement.prototype": {"available": true, "value": "HTMLDivElement", "objectToString": "[object HTMLDivElement]", "ownTag": true, "repeatedReadSame": true, "owner": "HTMLDivElement.prototype", "depth": 0},
+      "EventTarget.prototype": {"available": true, "value": "EventTarget", "objectToString": "[object EventTarget]", "ownTag": true, "repeatedReadSame": true, "owner": "EventTarget.prototype", "depth": 0},
+      "navigator": {"available": true, "value": "Navigator", "objectToString": "[object Navigator]", "ownTag": false, "repeatedReadSame": true, "owner": "Navigator.prototype", "depth": 1},
+      "screen": {"available": true, "value": "Screen", "objectToString": "[object Screen]", "ownTag": false, "repeatedReadSame": true, "owner": "Screen.prototype", "depth": 1},
+      "location": {"available": true, "value": "Location", "objectToString": "[object Location]", "ownTag": false, "repeatedReadSame": true, "owner": "Location.prototype", "depth": 1},
+      "xhr": {"available": true, "value": "XMLHttpRequest", "objectToString": "[object XMLHttpRequest]", "ownTag": false, "repeatedReadSame": true, "owner": "XMLHttpRequest.prototype", "depth": 1},
+      "upload": {"available": true, "value": "XMLHttpRequestUpload", "objectToString": "[object XMLHttpRequestUpload]", "ownTag": false, "repeatedReadSame": true, "owner": "XMLHttpRequestUpload.prototype", "depth": 1},
+      "localStorage": {"available": true, "value": "Storage", "objectToString": "[object Storage]", "ownTag": false, "repeatedReadSame": true, "owner": "Storage.prototype", "depth": 1},
+      "sessionStorage": {"available": true, "value": "Storage", "objectToString": "[object Storage]", "ownTag": false, "repeatedReadSame": true, "owner": "Storage.prototype", "depth": 1},
+      "htmlCollection": {"available": true, "value": "HTMLCollection", "objectToString": "[object HTMLCollection]", "ownTag": false, "repeatedReadSame": true, "owner": "HTMLCollection.prototype", "depth": 1},
+      "htmlAllCollection": {"available": true, "value": "HTMLAllCollection", "objectToString": "[object HTMLAllCollection]", "ownTag": false, "repeatedReadSame": true, "owner": "HTMLAllCollection.prototype", "depth": 1},
+      "namedNodeMap": {"available": true, "value": "NamedNodeMap", "objectToString": "[object NamedNodeMap]", "ownTag": false, "repeatedReadSame": true, "owner": "NamedNodeMap.prototype", "depth": 1},
+      "domStringMap": {"available": true, "value": "DOMStringMap", "objectToString": "[object DOMStringMap]", "ownTag": false, "repeatedReadSame": true, "owner": "DOMStringMap.prototype", "depth": 1},
+      "url": {"available": true, "value": "URL", "objectToString": "[object URL]", "ownTag": false, "repeatedReadSame": true, "owner": "URL.prototype", "depth": 1},
+      "urlSearchParams": {"available": true, "value": "URLSearchParams", "objectToString": "[object URLSearchParams]", "ownTag": false, "repeatedReadSame": true, "owner": "URLSearchParams.prototype", "depth": 1},
+      "blob": {"available": true, "value": "Blob", "objectToString": "[object Blob]", "ownTag": false, "repeatedReadSame": true, "owner": "Blob.prototype", "depth": 1},
+      "file": {"available": true, "value": "File", "objectToString": "[object File]", "ownTag": false, "repeatedReadSame": true, "owner": "File.prototype", "depth": 1},
+      "attr": {"available": true, "value": "Attr", "objectToString": "[object Attr]", "ownTag": false, "repeatedReadSame": true, "owner": "Attr.prototype", "depth": 1},
+      "mutationRecord": {"available": true, "value": "MutationRecord", "objectToString": "[object MutationRecord]", "ownTag": false, "repeatedReadSame": true, "owner": "MutationRecord.prototype", "depth": 1},
+      "userAgentData": {"available": true, "value": "NavigatorUAData", "objectToString": "[object NavigatorUAData]", "ownTag": false, "repeatedReadSame": true, "owner": "NavigatorUAData.prototype", "depth": 1},
+      "userActivation": {"available": true, "value": "UserActivation", "objectToString": "[object UserActivation]", "ownTag": false, "repeatedReadSame": true, "owner": "UserActivation.prototype", "depth": 1},
+      "ancestorOrigins": {"available": true, "value": "DOMStringList", "objectToString": "[object DOMStringList]", "ownTag": false, "repeatedReadSame": true, "owner": "DOMStringList.prototype", "depth": 1},
+      "CSS": {"available": true, "value": "CSS", "objectToString": "[object CSS]", "ownTag": true, "repeatedReadSame": true, "owner": "CSS", "depth": 0}
+    },
+    "overrides": {
+      "window": {
+        "initial": "Window",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "Window",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<Window>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "Window", "objectToString": "[object Window]"}
+      },
+      "navigator": {
+        "initial": "Navigator",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "Navigator",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<Navigator>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "Navigator", "objectToString": "[object Navigator]"}
+      },
+      "element": {
+        "initial": "HTMLDivElement",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "HTMLDivElement",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<HTMLDivElement>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "HTMLDivElement", "objectToString": "[object HTMLDivElement]"}
+      },
+      "location": {
+        "initial": "Location",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "Location",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '[object Location]'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "Location", "objectToString": "[object Location]"}
+      },
+      "xhr": {
+        "initial": "XMLHttpRequest",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "XMLHttpRequest",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<XMLHttpRequest>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "XMLHttpRequest", "objectToString": "[object XMLHttpRequest]"}
+      },
+      "upload": {
+        "initial": "XMLHttpRequestUpload",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "XMLHttpRequestUpload",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<XMLHttpRequestUpload>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "XMLHttpRequestUpload", "objectToString": "[object XMLHttpRequestUpload]"}
+      },
+      "localStorage": {
+        "initial": "Storage",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "Storage",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<Storage>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "Storage", "objectToString": "[object Storage]"}
+      },
+      "htmlCollection": {
+        "initial": "HTMLCollection",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "HTMLCollection",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<HTMLCollection>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "HTMLCollection", "objectToString": "[object HTMLCollection]"}
+      },
+      "htmlAllCollection": {
+        "initial": "HTMLAllCollection",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "HTMLAllCollection",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of undefined '#<HTMLAllCollection>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "HTMLAllCollection", "objectToString": "[object HTMLAllCollection]"}
+      },
+      "namedNodeMap": {
+        "initial": "NamedNodeMap",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "NamedNodeMap",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<NamedNodeMap>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "NamedNodeMap", "objectToString": "[object NamedNodeMap]"}
+      },
+      "domStringMap": {
+        "initial": "DOMStringMap",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "DOMStringMap",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<DOMStringMap>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "DOMStringMap", "objectToString": "[object DOMStringMap]"}
+      },
+      "url": {
+        "initial": "URL",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "URL",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '[object URL]'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "URL", "objectToString": "[object URL]"}
+      },
+      "blob": {
+        "initial": "Blob",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "Blob",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<Blob>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "Blob", "objectToString": "[object Blob]"}
+      },
+      "CSS": {
+        "initial": "CSS",
+        "reflectSet": {"returned": false},
+        "afterAssignment": "CSS",
+        "strictAssignment": {"name": "TypeError", "message": "Cannot assign to read only property 'Symbol(Symbol.toStringTag)' of object '#<Object>'"},
+        "override": {"value": "OwnOverride", "ownTag": true, "objectToString": "[object OwnOverride]"},
+        "deleteOwn": true,
+        "afterDelete": {"value": "<undefined>", "objectToString": "[object Object]"}
+      }
+    },
+    "inherited": {
+      "value": "Navigator",
+      "objectToString": "[object Navigator]",
+      "reflectGetWithReceiver": "Navigator",
+      "receiverTraps": [],
+      "reflectSetWithReceiver": false,
+      "childHasOwnAfterSet": false,
+      "ownerValue": "Navigator",
+      "definedOwn": {"value": "ChildOverride", "ownerUnchanged": true},
+      "deletedOwn": true,
+      "restoredInherited": "Navigator"
+    },
+    "getter": {
+      "calls": 3,
+      "receivers": ["proxy", "child", "child"],
+      "direct": "GetterTag",
+      "inherited": "GetterTag",
+      "objectToString": "[object GetterTag]",
+      "finalCalls": 3,
+      "directThrewSame": true,
+      "toStringThrewSame": true,
+      "throwingCalls": 2,
+      "nonstringDirectSame": true,
+      "nonstringObjectToString": "[object Object]",
+      "nonstringCalls": 2,
+      "ignoredConversions": 0
+    },
+    "ownerMutation": {
+      "deleted": true,
+      "afterDelete": {"ownTag": false, "value": "<undefined>", "navigatorValue": "<undefined>", "objectToString": "[object Object]"},
+      "redefined": {
+        "descriptor": {"kind": "data", "value": "RedefinedTag", "writable": true, "enumerable": true, "configurable": true},
+        "navigatorValue": "RedefinedTag",
+        "objectToString": "[object RedefinedTag]"
+      },
+      "restored": {
+        "descriptor": {"kind": "data", "value": "Navigator", "writable": false, "enumerable": false, "configurable": true},
+        "navigatorValue": "Navigator"
+      }
+    }
+  }
+}

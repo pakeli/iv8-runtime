@@ -13,10 +13,12 @@
 #include "iv8/page_state.h"
 #include "iv8/host_object.h"
 #include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/web_interface.h"
 #include "iv8/browser_compatibility.h"
 #include "navigator_parts.h"
 #include "navigator_identity.h"
+#include "navigator_capabilities.h"
 
 namespace iv8 {
 
@@ -26,8 +28,8 @@ namespace browser {
 // M11-24/M11-27. Values come from the page's HostEnvironment, which the Python
 // facade always supplies fully resolved — this class holds no defaults and never
 // derives a value from the host OS, display, or locale, so a page is
-// deterministic and identical across Linux/Windows. Still no UA-CH /
-// userAgentData surface.
+// deterministic and identical across Linux/Windows. UA-CH values use the same
+// configured environment; capability inspection uses an offline device profile.
 class NavigatorHost : public HostObject {
 public:
     explicit NavigatorHost(const HostEnvironment* environment)
@@ -44,14 +46,17 @@ public:
                 "cookieEnabled",   "hardwareConcurrency", "appName",
                 "appCodeName",     "product",           "vendor",
                 "vendorSub",       "productSub",        "maxTouchPoints",
-                "pdfViewerEnabled", "doNotTrack",        "connection",
+                "pdfViewerEnabled", "doNotTrack",        "connection", "scheduling",
                 "storage",         "permissions",       "plugins",
                 "mimeTypes"};
     }
 
-    std::vector<std::string> method_names() const override { return {"javaEnabled"}; }
+    std::vector<std::string> method_names() const override { return {"getGamepads", "javaEnabled"}; }
 
     void release_v8_handles() noexcept override {
+        connection_.release_v8_handles();
+        connection_object_.Reset();
+        scheduling_object_.Reset();
         storage_object_.Reset();
         permissions_object_.Reset();
         plugins_object_.Reset();
@@ -92,8 +97,10 @@ public:
             v8::Local<v8::Array> array =
                 v8::Array::New(isolate, static_cast<int>(languages.size()));
             for (std::size_t i = 0; i < languages.size(); i++) {
-                (void)array->Set(context, static_cast<std::uint32_t>(i),
-                                 v8_string(isolate, languages[i]));
+                (void)access_user_operation(isolate, [&] {
+                    return array->Set(context, static_cast<std::uint32_t>(i),
+                        v8_string(isolate, languages[i]));
+                });
             }
             return array;
         }
@@ -137,7 +144,16 @@ public:
             return v8_string(isolate, environment_->do_not_track);
         }
         if (name == "connection") {
-            return make_host_object(isolate, context, &connection_);
+            if (connection_object_.IsEmpty()) {
+                connection_object_.Reset(isolate, make_host_object(isolate, context, &connection_));
+            }
+            return connection_object_.Get(isolate);
+        }
+        if (name == "scheduling") {
+            if (scheduling_object_.IsEmpty()) {
+                scheduling_object_.Reset(isolate, make_host_object(isolate, context, &scheduling_));
+            }
+            return scheduling_object_.Get(isolate);
         }
         // Step 5e: cache the plain StorageManager object so repeated reads keep
         // the same identity and the read-only method descriptors unchanged.
@@ -177,8 +193,9 @@ public:
     }
 
     v8::Local<v8::Value> call_method(
-        v8::Isolate* isolate, v8::Local<v8::Context>, const std::string& name,
+        v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
         const v8::FunctionCallbackInfo<v8::Value>&) override {
+        if (name == "getGamepads") return empty_gamepad_snapshot(isolate, context);
         if (name == "javaEnabled") return v8::False(isolate);
         return v8::Undefined(isolate);
     }
@@ -188,10 +205,13 @@ private:
     // valid for as long as this host object is installed.
     const HostEnvironment* environment_;
     ConnectionHost connection_;
+    SchedulingHost scheduling_;
     NavigatorUADataHost user_agent_data_;
     UserActivationHost user_activation_;
     v8::Global<v8::Object> user_agent_data_object_;
     v8::Global<v8::Object> user_activation_object_;
+    v8::Global<v8::Object> connection_object_;
+    v8::Global<v8::Object> scheduling_object_;
     // Step 5e/5f: per-generation cached plain navigator.storage and
     // navigator.permissions objects.
     v8::Global<v8::Object> storage_object_;

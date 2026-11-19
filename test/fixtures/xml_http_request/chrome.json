@@ -1,0 +1,4659 @@
+{
+  "browser": "Google Chrome 157.0.8103.51",
+  "captured_at_utc": "2026-11-16T14:31:58.622024+00:00",
+  "execution": {
+    "os": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:61912/reference",
+    "network": "Only loopback fixture document; external DNS mapped to NOTFOUND; background networking disabled; XHR send is called only in UNSENT invalid-state cases",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--virtual-time-budget=3000",
+      "--dump-dom",
+      "http://127.0.0.1:61912/reference"
+    ],
+    "purpose_built_browser_tool": "unavailable: no remote-debugging Chrome connection"
+  },
+  "probe_sha256": "c0594b6cef815e75ea59a59dcb6af43a5bc8b1eb8d66454265f7131cb2c931e5",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "conditions": {
+      "url": "http://127.0.0.1:61912/reference",
+      "origin": "http://127.0.0.1:61912",
+      "isSecureContext": true,
+      "worker": false,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+    },
+    "constructors": {
+      "XMLHttpRequest": {
+        "function": {
+          "name": "XMLHttpRequest",
+          "length": 0,
+          "source": "function XMLHttpRequest() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true,
+          "ownKeys": [
+            "length",
+            "name",
+            "prototype",
+            "UNSENT",
+            "OPENED",
+            "HEADERS_RECEIVED",
+            "LOADING",
+            "DONE"
+          ]
+        },
+        "globalDescriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "XMLHttpRequest",
+            "length": 0,
+            "source": "function XMLHttpRequest() { [native code] }",
+            "ownPrototype": true,
+            "constructable": true,
+            "ownKeys": [
+              "length",
+              "name",
+              "prototype",
+              "UNSENT",
+              "OPENED",
+              "HEADERS_RECEIVED",
+              "LOADING",
+              "DONE"
+            ]
+          }
+        },
+        "ownSurface": {
+          "length": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": 0
+          },
+          "name": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "XMLHttpRequest"
+          },
+          "prototype": {
+            "enumerable": false,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "tag": "[object XMLHttpRequest]"
+            }
+          },
+          "UNSENT": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 0
+          },
+          "OPENED": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 1
+          },
+          "HEADERS_RECEIVED": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 2
+          },
+          "LOADING": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 3
+          },
+          "DONE": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 4
+          }
+        },
+        "prototypeSurface": {
+          "onreadystatechange": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onreadystatechange",
+              "length": 0,
+              "source": "function get onreadystatechange() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set onreadystatechange",
+              "length": 1,
+              "source": "function set onreadystatechange() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "readyState": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get readyState",
+              "length": 0,
+              "source": "function get readyState() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": null
+          },
+          "timeout": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get timeout",
+              "length": 0,
+              "source": "function get timeout() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set timeout",
+              "length": 1,
+              "source": "function set timeout() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "withCredentials": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get withCredentials",
+              "length": 0,
+              "source": "function get withCredentials() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set withCredentials",
+              "length": 1,
+              "source": "function set withCredentials() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "upload": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get upload",
+              "length": 0,
+              "source": "function get upload() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": null
+          },
+          "responseURL": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get responseURL",
+              "length": 0,
+              "source": "function get responseURL() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": null
+          },
+          "status": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get status",
+              "length": 0,
+              "source": "function get status() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": null
+          },
+          "statusText": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get statusText",
+              "length": 0,
+              "source": "function get statusText() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": null
+          },
+          "responseType": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get responseType",
+              "length": 0,
+              "source": "function get responseType() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set responseType",
+              "length": 1,
+              "source": "function set responseType() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "response": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get response",
+              "length": 0,
+              "source": "function get response() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": null
+          },
+          "responseText": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get responseText",
+              "length": 0,
+              "source": "function get responseText() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": null
+          },
+          "UNSENT": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 0
+          },
+          "OPENED": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 1
+          },
+          "HEADERS_RECEIVED": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 2
+          },
+          "LOADING": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 3
+          },
+          "DONE": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 4
+          },
+          "abort": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "abort",
+              "length": 0,
+              "source": "function abort() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "getAllResponseHeaders": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getAllResponseHeaders",
+              "length": 0,
+              "source": "function getAllResponseHeaders() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "getResponseHeader": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getResponseHeader",
+              "length": 1,
+              "source": "function getResponseHeader() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "open": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "open",
+              "length": 2,
+              "source": "function open() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "overrideMimeType": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "overrideMimeType",
+              "length": 1,
+              "source": "function overrideMimeType() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "send": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "send",
+              "length": 0,
+              "source": "function send() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "setRequestHeader": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setRequestHeader",
+              "length": 2,
+              "source": "function setRequestHeader() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "XMLHttpRequest",
+              "length": 0,
+              "source": "function XMLHttpRequest() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "ownKeys": [
+                "length",
+                "name",
+                "prototype",
+                "UNSENT",
+                "OPENED",
+                "HEADERS_RECEIVED",
+                "LOADING",
+                "DONE"
+              ]
+            }
+          },
+          "responseXML": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get responseXML",
+              "length": 0,
+              "source": "function get responseXML() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": null
+          },
+          "setAttributionReporting": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setAttributionReporting",
+              "length": 1,
+              "source": "function setAttributionReporting() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "setPrivateToken": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setPrivateToken",
+              "length": 1,
+              "source": "function setPrivateToken() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "XMLHttpRequest"
+          }
+        },
+        "constructorParent": "XMLHttpRequestEventTarget",
+        "callWithoutNew": {
+          "name": "TypeError",
+          "message": "Failed to construct 'XMLHttpRequest': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
+        },
+        "construct": {
+          "returned": "[object XMLHttpRequest]"
+        }
+      },
+      "XMLHttpRequestEventTarget": {
+        "function": {
+          "name": "XMLHttpRequestEventTarget",
+          "length": 0,
+          "source": "function XMLHttpRequestEventTarget() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true,
+          "ownKeys": [
+            "length",
+            "name",
+            "prototype"
+          ]
+        },
+        "globalDescriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "XMLHttpRequestEventTarget",
+            "length": 0,
+            "source": "function XMLHttpRequestEventTarget() { [native code] }",
+            "ownPrototype": true,
+            "constructable": true,
+            "ownKeys": [
+              "length",
+              "name",
+              "prototype"
+            ]
+          }
+        },
+        "ownSurface": {
+          "length": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": 0
+          },
+          "name": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "XMLHttpRequestEventTarget"
+          },
+          "prototype": {
+            "enumerable": false,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "tag": "[object XMLHttpRequestEventTarget]"
+            }
+          }
+        },
+        "prototypeSurface": {
+          "onloadstart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onloadstart",
+              "length": 0,
+              "source": "function get onloadstart() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set onloadstart",
+              "length": 1,
+              "source": "function set onloadstart() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "onprogress": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onprogress",
+              "length": 0,
+              "source": "function get onprogress() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set onprogress",
+              "length": 1,
+              "source": "function set onprogress() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "onabort": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onabort",
+              "length": 0,
+              "source": "function get onabort() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set onabort",
+              "length": 1,
+              "source": "function set onabort() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "onerror": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onerror",
+              "length": 0,
+              "source": "function get onerror() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set onerror",
+              "length": 1,
+              "source": "function set onerror() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "onload": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onload",
+              "length": 0,
+              "source": "function get onload() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set onload",
+              "length": 1,
+              "source": "function set onload() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "ontimeout": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get ontimeout",
+              "length": 0,
+              "source": "function get ontimeout() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set ontimeout",
+              "length": 1,
+              "source": "function set ontimeout() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "onloadend": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onloadend",
+              "length": 0,
+              "source": "function get onloadend() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            },
+            "set": {
+              "name": "set onloadend",
+              "length": 1,
+              "source": "function set onloadend() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "ownKeys": [
+                "length",
+                "name"
+              ]
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "XMLHttpRequestEventTarget",
+              "length": 0,
+              "source": "function XMLHttpRequestEventTarget() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "ownKeys": [
+                "length",
+                "name",
+                "prototype"
+              ]
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "XMLHttpRequestEventTarget"
+          }
+        },
+        "constructorParent": "EventTarget",
+        "callWithoutNew": {
+          "name": "TypeError",
+          "message": "Illegal constructor"
+        },
+        "construct": {
+          "name": "TypeError",
+          "message": "Failed to construct 'XMLHttpRequestEventTarget': Illegal constructor"
+        }
+      },
+      "XMLHttpRequestUpload": {
+        "function": {
+          "name": "XMLHttpRequestUpload",
+          "length": 0,
+          "source": "function XMLHttpRequestUpload() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true,
+          "ownKeys": [
+            "length",
+            "name",
+            "prototype"
+          ]
+        },
+        "globalDescriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "XMLHttpRequestUpload",
+            "length": 0,
+            "source": "function XMLHttpRequestUpload() { [native code] }",
+            "ownPrototype": true,
+            "constructable": true,
+            "ownKeys": [
+              "length",
+              "name",
+              "prototype"
+            ]
+          }
+        },
+        "ownSurface": {
+          "length": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": 0
+          },
+          "name": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "XMLHttpRequestUpload"
+          },
+          "prototype": {
+            "enumerable": false,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "tag": "[object XMLHttpRequestUpload]"
+            }
+          }
+        },
+        "prototypeSurface": {
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "XMLHttpRequestUpload",
+              "length": 0,
+              "source": "function XMLHttpRequestUpload() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "ownKeys": [
+                "length",
+                "name",
+                "prototype"
+              ]
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "XMLHttpRequestUpload"
+          }
+        },
+        "constructorParent": "XMLHttpRequestEventTarget",
+        "callWithoutNew": {
+          "name": "TypeError",
+          "message": "Illegal constructor"
+        },
+        "construct": {
+          "name": "TypeError",
+          "message": "Failed to construct 'XMLHttpRequestUpload': Illegal constructor"
+        }
+      }
+    },
+    "prototypeChains": {
+      "xhr": [
+        {
+          "tag": "[object XMLHttpRequest]",
+          "ownConstructor": null,
+          "ownKeys": []
+        },
+        {
+          "tag": "[object XMLHttpRequest]",
+          "ownConstructor": "XMLHttpRequest",
+          "ownKeys": [
+            "onreadystatechange",
+            "readyState",
+            "timeout",
+            "withCredentials",
+            "upload",
+            "responseURL",
+            "status",
+            "statusText",
+            "responseType",
+            "response",
+            "responseText",
+            "UNSENT",
+            "OPENED",
+            "HEADERS_RECEIVED",
+            "LOADING",
+            "DONE",
+            "abort",
+            "getAllResponseHeaders",
+            "getResponseHeader",
+            "open",
+            "overrideMimeType",
+            "send",
+            "setRequestHeader",
+            "constructor",
+            "responseXML",
+            "setAttributionReporting",
+            "setPrivateToken",
+            "Symbol(Symbol.toStringTag)"
+          ]
+        },
+        {
+          "tag": "[object XMLHttpRequestEventTarget]",
+          "ownConstructor": "XMLHttpRequestEventTarget",
+          "ownKeys": [
+            "onloadstart",
+            "onprogress",
+            "onabort",
+            "onerror",
+            "onload",
+            "ontimeout",
+            "onloadend",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ]
+        },
+        {
+          "tag": "[object EventTarget]",
+          "ownConstructor": "EventTarget",
+          "ownKeys": [
+            "addEventListener",
+            "dispatchEvent",
+            "removeEventListener",
+            "when",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ]
+        },
+        {
+          "tag": "[object Object]",
+          "ownConstructor": "Object",
+          "ownKeys": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ]
+        }
+      ],
+      "upload": [
+        {
+          "tag": "[object XMLHttpRequestUpload]",
+          "ownConstructor": null,
+          "ownKeys": []
+        },
+        {
+          "tag": "[object XMLHttpRequestUpload]",
+          "ownConstructor": "XMLHttpRequestUpload",
+          "ownKeys": [
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ]
+        },
+        {
+          "tag": "[object XMLHttpRequestEventTarget]",
+          "ownConstructor": "XMLHttpRequestEventTarget",
+          "ownKeys": [
+            "onloadstart",
+            "onprogress",
+            "onabort",
+            "onerror",
+            "onload",
+            "ontimeout",
+            "onloadend",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ]
+        },
+        {
+          "tag": "[object EventTarget]",
+          "ownConstructor": "EventTarget",
+          "ownKeys": [
+            "addEventListener",
+            "dispatchEvent",
+            "removeEventListener",
+            "when",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ]
+        },
+        {
+          "tag": "[object Object]",
+          "ownConstructor": "Object",
+          "ownKeys": [
+            "constructor",
+            "__defineGetter__",
+            "__defineSetter__",
+            "hasOwnProperty",
+            "__lookupGetter__",
+            "__lookupSetter__",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "toString",
+            "valueOf",
+            "__proto__",
+            "toLocaleString"
+          ]
+        }
+      ]
+    },
+    "defaults": {
+      "readyState": {
+        "returned": 0
+      },
+      "timeout": {
+        "returned": 0
+      },
+      "withCredentials": {
+        "returned": false
+      },
+      "upload": {
+        "returned": "[object XMLHttpRequestUpload]"
+      },
+      "responseURL": {
+        "returned": ""
+      },
+      "status": {
+        "returned": 0
+      },
+      "statusText": {
+        "returned": ""
+      },
+      "responseType": {
+        "returned": ""
+      },
+      "response": {
+        "returned": ""
+      },
+      "responseText": {
+        "returned": ""
+      },
+      "responseXML": {
+        "returned": null
+      },
+      "onreadystatechange": {
+        "returned": null
+      },
+      "onloadstart": {
+        "returned": null
+      },
+      "onprogress": {
+        "returned": null
+      },
+      "onabort": {
+        "returned": null
+      },
+      "onerror": {
+        "returned": null
+      },
+      "onload": {
+        "returned": null
+      },
+      "ontimeout": {
+        "returned": null
+      },
+      "onloadend": {
+        "returned": null
+      }
+    },
+    "owners": {
+      "readyState": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get readyState",
+            "length": 0,
+            "source": "function get readyState() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": null
+        }
+      },
+      "timeout": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get timeout",
+            "length": 0,
+            "source": "function get timeout() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set timeout",
+            "length": 1,
+            "source": "function set timeout() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "withCredentials": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get withCredentials",
+            "length": 0,
+            "source": "function get withCredentials() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set withCredentials",
+            "length": 1,
+            "source": "function set withCredentials() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "upload": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get upload",
+            "length": 0,
+            "source": "function get upload() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": null
+        }
+      },
+      "responseURL": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get responseURL",
+            "length": 0,
+            "source": "function get responseURL() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": null
+        }
+      },
+      "status": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get status",
+            "length": 0,
+            "source": "function get status() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": null
+        }
+      },
+      "statusText": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get statusText",
+            "length": 0,
+            "source": "function get statusText() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": null
+        }
+      },
+      "responseType": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get responseType",
+            "length": 0,
+            "source": "function get responseType() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set responseType",
+            "length": 1,
+            "source": "function set responseType() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "response": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get response",
+            "length": 0,
+            "source": "function get response() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": null
+        }
+      },
+      "responseText": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get responseText",
+            "length": 0,
+            "source": "function get responseText() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": null
+        }
+      },
+      "responseXML": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get responseXML",
+            "length": 0,
+            "source": "function get responseXML() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": null
+        }
+      },
+      "onreadystatechange": {
+        "depth": 1,
+        "owner": "[object XMLHttpRequest]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onreadystatechange",
+            "length": 0,
+            "source": "function get onreadystatechange() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onreadystatechange",
+            "length": 1,
+            "source": "function set onreadystatechange() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onloadstart": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onloadstart",
+            "length": 0,
+            "source": "function get onloadstart() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onloadstart",
+            "length": 1,
+            "source": "function set onloadstart() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onprogress": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onprogress",
+            "length": 0,
+            "source": "function get onprogress() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onprogress",
+            "length": 1,
+            "source": "function set onprogress() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onabort": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onabort",
+            "length": 0,
+            "source": "function get onabort() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onabort",
+            "length": 1,
+            "source": "function set onabort() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onerror": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onerror",
+            "length": 0,
+            "source": "function get onerror() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onerror",
+            "length": 1,
+            "source": "function set onerror() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onload": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onload",
+            "length": 0,
+            "source": "function get onload() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onload",
+            "length": 1,
+            "source": "function set onload() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "ontimeout": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get ontimeout",
+            "length": 0,
+            "source": "function get ontimeout() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set ontimeout",
+            "length": 1,
+            "source": "function set ontimeout() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onloadend": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onloadend",
+            "length": 0,
+            "source": "function get onloadend() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onloadend",
+            "length": 1,
+            "source": "function set onloadend() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      }
+    },
+    "uploadOwners": {
+      "onloadstart": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onloadstart",
+            "length": 0,
+            "source": "function get onloadstart() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onloadstart",
+            "length": 1,
+            "source": "function set onloadstart() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onprogress": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onprogress",
+            "length": 0,
+            "source": "function get onprogress() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onprogress",
+            "length": 1,
+            "source": "function set onprogress() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onabort": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onabort",
+            "length": 0,
+            "source": "function get onabort() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onabort",
+            "length": 1,
+            "source": "function set onabort() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onerror": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onerror",
+            "length": 0,
+            "source": "function get onerror() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onerror",
+            "length": 1,
+            "source": "function set onerror() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onload": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onload",
+            "length": 0,
+            "source": "function get onload() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onload",
+            "length": 1,
+            "source": "function set onload() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "ontimeout": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get ontimeout",
+            "length": 0,
+            "source": "function get ontimeout() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set ontimeout",
+            "length": 1,
+            "source": "function set ontimeout() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      },
+      "onloadend": {
+        "depth": 2,
+        "owner": "[object XMLHttpRequestEventTarget]",
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get onloadend",
+            "length": 0,
+            "source": "function get onloadend() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          },
+          "set": {
+            "name": "set onloadend",
+            "length": 1,
+            "source": "function set onloadend() { [native code] }",
+            "ownPrototype": false,
+            "constructable": false,
+            "ownKeys": [
+              "length",
+              "name"
+            ]
+          }
+        }
+      }
+    },
+    "identities": {
+      "uploadSameObject": true,
+      "uploadInstance": true,
+      "uploadEventTarget": true,
+      "uploadGenericTarget": true,
+      "xhrEventTarget": true,
+      "eventTargetMethodsShared": true
+    },
+    "handlerSemantics": {
+      "xhr": {
+        "initialNull": true,
+        "assignedIdentity": true,
+        "numberClears": true,
+        "enumeratedOnInstance": false,
+        "objectClears": false
+      },
+      "upload": {
+        "initialNull": true,
+        "assignedIdentity": true,
+        "numberClears": true,
+        "enumeratedOnInstance": false,
+        "objectClears": false
+      }
+    },
+    "syntheticUpload": {
+      "events": [
+        {
+          "channel": "handler",
+          "type": "progress",
+          "target": true
+        },
+        {
+          "channel": "listener",
+          "type": "progress",
+          "target": true,
+          "currentTarget": true,
+          "eventPhase": 2,
+          "isTrusted": false
+        }
+      ],
+      "returned": false,
+      "defaultPrevented": true
+    },
+    "wrongReceivers": {
+      "methods": {
+        "open": {
+          "plain": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "prototype": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "forged": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "proxy": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          }
+        },
+        "setRequestHeader": {
+          "plain": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "prototype": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "forged": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "proxy": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          }
+        },
+        "send": {
+          "plain": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "prototype": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "forged": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "proxy": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          }
+        },
+        "abort": {
+          "plain": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "prototype": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "forged": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "proxy": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          }
+        },
+        "getResponseHeader": {
+          "plain": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "prototype": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "forged": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "proxy": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          }
+        },
+        "getAllResponseHeaders": {
+          "plain": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "prototype": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "forged": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "proxy": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          }
+        },
+        "overrideMimeType": {
+          "plain": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "prototype": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "forged": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          },
+          "proxy": {
+            "name": "TypeError",
+            "message": "Illegal invocation",
+            "argumentConversions": 0
+          }
+        }
+      },
+      "getters": {
+        "readyState": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "timeout": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "withCredentials": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "upload": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "responseURL": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "status": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "statusText": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "responseType": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "response": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "responseText": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "responseXML": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "onreadystatechange": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "onloadstart": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "onprogress": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "onabort": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "onerror": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "onload": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "ontimeout": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "onloadend": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        }
+      },
+      "setters": {
+        "timeout": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "withCredentials": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "responseType": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "onreadystatechange": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "onloadstart": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "onprogress": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "onabort": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "onerror": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "onload": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "ontimeout": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        },
+        "onloadend": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "argumentConversions": 0
+        }
+      }
+    },
+    "localErrors": {
+      "sendBeforeOpen": {
+        "name": "InvalidStateError",
+        "message": "Failed to execute 'send' on 'XMLHttpRequest': The object's state must be OPENED.",
+        "code": 11
+      },
+      "headerBeforeOpen": {
+        "name": "InvalidStateError",
+        "message": "Failed to execute 'setRequestHeader' on 'XMLHttpRequest': The object's state must be OPENED.",
+        "code": 11
+      },
+      "responseHeaderBeforeOpen": {
+        "returned": null
+      },
+      "allHeadersBeforeOpen": {
+        "returned": ""
+      },
+      "overrideMimeBeforeOpen": {
+        "returned": "<undefined>"
+      },
+      "abortBeforeOpen": {
+        "returned": 0
+      },
+      "openGetAsync": {
+        "returned": 1
+      },
+      "openGetSync": {
+        "returned": 1
+      },
+      "openInvalidMethod": {
+        "name": "SyntaxError",
+        "message": "Failed to execute 'open' on 'XMLHttpRequest': 'bad method' is not a valid HTTP method.",
+        "code": 12
+      },
+      "openForbiddenMethod": {
+        "name": "SecurityError",
+        "message": "Failed to execute 'open' on 'XMLHttpRequest': 'TRACE' HTTP method is unsupported.",
+        "code": 18
+      },
+      "openInvalidURL": {
+        "name": "SyntaxError",
+        "message": "Failed to execute 'open' on 'XMLHttpRequest': Invalid URL",
+        "code": 12
+      },
+      "openSyncNonzeroTimeout": {
+        "name": "InvalidAccessError",
+        "message": "Failed to execute 'open' on 'XMLHttpRequest': Synchronous requests must not set a timeout.",
+        "code": 15
+      },
+      "syncTimeoutSetter": {
+        "name": "InvalidAccessError",
+        "message": "Failed to set the 'timeout' property on 'XMLHttpRequest': Timeouts cannot be set for synchronous requests made from a document.",
+        "code": 15
+      },
+      "syncResponseTypeSetter": {
+        "name": "InvalidAccessError",
+        "message": "Failed to set the 'responseType' property on 'XMLHttpRequest': The response type cannot be changed for synchronous requests made from a document.",
+        "code": 15
+      },
+      "invalidResponseTypeIgnored": {
+        "returned": ""
+      },
+      "subclass": {
+        "returned": [
+          true,
+          true,
+          true
+        ]
+      }
+    }
+  },
+  "additional_profiles": {
+    "insecure": {
+      "browser": "Google Chrome 157.0.8103.51",
+      "captured_at_utc": "2026-11-16T14:37:03.326744+00:00",
+      "execution": {
+        "os": "macOS-26.5-arm64-arm-64bit-Mach-O",
+        "machine": "arm64",
+        "profile": "fresh temporary headless profile",
+        "profile_path": "<temporary-profile>",
+        "origin": "http://xhr-fixture.invalid:63604/reference",
+        "network": "Only loopback fixture document; xhr-fixture.invalid mapped to 127.0.0.1, remaining DNS mapped to NOTFOUND; background networking disabled; XHR send is called only in UNSENT invalid-state cases",
+        "arguments": [
+          "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+          "--headless=new",
+          "--disable-gpu",
+          "--disable-background-networking",
+          "--disable-component-update",
+          "--disable-domain-reliability",
+          "--disable-sync",
+          "--metrics-recording-only",
+          "--no-pings",
+          "--no-first-run",
+          "--no-default-browser-check",
+          "--disable-extensions",
+          "--disable-crash-reporter",
+          "--safebrowsing-disable-auto-update",
+          "--disable-features=MediaRouter,OptimizationHints",
+          "--host-resolver-rules=MAP xhr-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND",
+          "--no-proxy-server",
+          "--lang=en-US",
+          "--user-data-dir=<temporary-profile>",
+          "--virtual-time-budget=3000",
+          "--dump-dom",
+          "http://xhr-fixture.invalid:63604/reference"
+        ],
+        "purpose_built_browser_tool": "unavailable: no remote-debugging Chrome connection"
+      },
+      "probe_sha256": "c0594b6cef815e75ea59a59dcb6af43a5bc8b1eb8d66454265f7131cb2c931e5",
+      "requests": [
+        {
+          "method": "GET",
+          "path": "/reference"
+        }
+      ],
+      "result": {
+        "conditions": {
+          "url": "http://xhr-fixture.invalid:63604/reference",
+          "origin": "http://xhr-fixture.invalid:63604",
+          "isSecureContext": false,
+          "worker": false,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36"
+        },
+        "constructors": {
+          "XMLHttpRequest": {
+            "function": {
+              "name": "XMLHttpRequest",
+              "length": 0,
+              "source": "function XMLHttpRequest() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "ownKeys": [
+                "length",
+                "name",
+                "prototype",
+                "UNSENT",
+                "OPENED",
+                "HEADERS_RECEIVED",
+                "LOADING",
+                "DONE"
+              ]
+            },
+            "globalDescriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "XMLHttpRequest",
+                "length": 0,
+                "source": "function XMLHttpRequest() { [native code] }",
+                "ownPrototype": true,
+                "constructable": true,
+                "ownKeys": [
+                  "length",
+                  "name",
+                  "prototype",
+                  "UNSENT",
+                  "OPENED",
+                  "HEADERS_RECEIVED",
+                  "LOADING",
+                  "DONE"
+                ]
+              }
+            },
+            "ownSurface": {
+              "length": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": 0
+              },
+              "name": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": "XMLHttpRequest"
+              },
+              "prototype": {
+                "enumerable": false,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": {
+                  "tag": "[object XMLHttpRequest]"
+                }
+              },
+              "UNSENT": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 0
+              },
+              "OPENED": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 1
+              },
+              "HEADERS_RECEIVED": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 2
+              },
+              "LOADING": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 3
+              },
+              "DONE": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 4
+              }
+            },
+            "prototypeSurface": {
+              "onreadystatechange": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get onreadystatechange",
+                  "length": 0,
+                  "source": "function get onreadystatechange() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set onreadystatechange",
+                  "length": 1,
+                  "source": "function set onreadystatechange() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "readyState": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get readyState",
+                  "length": 0,
+                  "source": "function get readyState() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": null
+              },
+              "timeout": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get timeout",
+                  "length": 0,
+                  "source": "function get timeout() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set timeout",
+                  "length": 1,
+                  "source": "function set timeout() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "withCredentials": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get withCredentials",
+                  "length": 0,
+                  "source": "function get withCredentials() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set withCredentials",
+                  "length": 1,
+                  "source": "function set withCredentials() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "upload": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get upload",
+                  "length": 0,
+                  "source": "function get upload() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": null
+              },
+              "responseURL": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get responseURL",
+                  "length": 0,
+                  "source": "function get responseURL() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": null
+              },
+              "status": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get status",
+                  "length": 0,
+                  "source": "function get status() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": null
+              },
+              "statusText": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get statusText",
+                  "length": 0,
+                  "source": "function get statusText() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": null
+              },
+              "responseType": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get responseType",
+                  "length": 0,
+                  "source": "function get responseType() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set responseType",
+                  "length": 1,
+                  "source": "function set responseType() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "response": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get response",
+                  "length": 0,
+                  "source": "function get response() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": null
+              },
+              "responseText": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get responseText",
+                  "length": 0,
+                  "source": "function get responseText() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": null
+              },
+              "UNSENT": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 0
+              },
+              "OPENED": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 1
+              },
+              "HEADERS_RECEIVED": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 2
+              },
+              "LOADING": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 3
+              },
+              "DONE": {
+                "enumerable": true,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": 4
+              },
+              "abort": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "abort",
+                  "length": 0,
+                  "source": "function abort() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "getAllResponseHeaders": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "getAllResponseHeaders",
+                  "length": 0,
+                  "source": "function getAllResponseHeaders() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "getResponseHeader": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "getResponseHeader",
+                  "length": 1,
+                  "source": "function getResponseHeader() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "open": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "open",
+                  "length": 2,
+                  "source": "function open() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "overrideMimeType": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "overrideMimeType",
+                  "length": 1,
+                  "source": "function overrideMimeType() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "send": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "send",
+                  "length": 0,
+                  "source": "function send() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "setRequestHeader": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "setRequestHeader",
+                  "length": 2,
+                  "source": "function setRequestHeader() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "constructor": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "XMLHttpRequest",
+                  "length": 0,
+                  "source": "function XMLHttpRequest() { [native code] }",
+                  "ownPrototype": true,
+                  "constructable": true,
+                  "ownKeys": [
+                    "length",
+                    "name",
+                    "prototype",
+                    "UNSENT",
+                    "OPENED",
+                    "HEADERS_RECEIVED",
+                    "LOADING",
+                    "DONE"
+                  ]
+                }
+              },
+              "responseXML": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get responseXML",
+                  "length": 0,
+                  "source": "function get responseXML() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": null
+              },
+              "Symbol(Symbol.toStringTag)": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": "XMLHttpRequest"
+              }
+            },
+            "constructorParent": "XMLHttpRequestEventTarget",
+            "callWithoutNew": {
+              "name": "TypeError",
+              "message": "Failed to construct 'XMLHttpRequest': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
+            },
+            "construct": {
+              "returned": "[object XMLHttpRequest]"
+            }
+          },
+          "XMLHttpRequestEventTarget": {
+            "function": {
+              "name": "XMLHttpRequestEventTarget",
+              "length": 0,
+              "source": "function XMLHttpRequestEventTarget() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "ownKeys": [
+                "length",
+                "name",
+                "prototype"
+              ]
+            },
+            "globalDescriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "XMLHttpRequestEventTarget",
+                "length": 0,
+                "source": "function XMLHttpRequestEventTarget() { [native code] }",
+                "ownPrototype": true,
+                "constructable": true,
+                "ownKeys": [
+                  "length",
+                  "name",
+                  "prototype"
+                ]
+              }
+            },
+            "ownSurface": {
+              "length": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": 0
+              },
+              "name": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": "XMLHttpRequestEventTarget"
+              },
+              "prototype": {
+                "enumerable": false,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": {
+                  "tag": "[object XMLHttpRequestEventTarget]"
+                }
+              }
+            },
+            "prototypeSurface": {
+              "onloadstart": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get onloadstart",
+                  "length": 0,
+                  "source": "function get onloadstart() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set onloadstart",
+                  "length": 1,
+                  "source": "function set onloadstart() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "onprogress": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get onprogress",
+                  "length": 0,
+                  "source": "function get onprogress() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set onprogress",
+                  "length": 1,
+                  "source": "function set onprogress() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "onabort": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get onabort",
+                  "length": 0,
+                  "source": "function get onabort() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set onabort",
+                  "length": 1,
+                  "source": "function set onabort() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "onerror": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get onerror",
+                  "length": 0,
+                  "source": "function get onerror() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set onerror",
+                  "length": 1,
+                  "source": "function set onerror() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "onload": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get onload",
+                  "length": 0,
+                  "source": "function get onload() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set onload",
+                  "length": 1,
+                  "source": "function set onload() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "ontimeout": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get ontimeout",
+                  "length": 0,
+                  "source": "function get ontimeout() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set ontimeout",
+                  "length": 1,
+                  "source": "function set ontimeout() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "onloadend": {
+                "enumerable": true,
+                "configurable": true,
+                "kind": "accessor",
+                "get": {
+                  "name": "get onloadend",
+                  "length": 0,
+                  "source": "function get onloadend() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                },
+                "set": {
+                  "name": "set onloadend",
+                  "length": 1,
+                  "source": "function set onloadend() { [native code] }",
+                  "ownPrototype": false,
+                  "constructable": false,
+                  "ownKeys": [
+                    "length",
+                    "name"
+                  ]
+                }
+              },
+              "constructor": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "XMLHttpRequestEventTarget",
+                  "length": 0,
+                  "source": "function XMLHttpRequestEventTarget() { [native code] }",
+                  "ownPrototype": true,
+                  "constructable": true,
+                  "ownKeys": [
+                    "length",
+                    "name",
+                    "prototype"
+                  ]
+                }
+              },
+              "Symbol(Symbol.toStringTag)": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": "XMLHttpRequestEventTarget"
+              }
+            },
+            "constructorParent": "EventTarget",
+            "callWithoutNew": {
+              "name": "TypeError",
+              "message": "Illegal constructor"
+            },
+            "construct": {
+              "name": "TypeError",
+              "message": "Failed to construct 'XMLHttpRequestEventTarget': Illegal constructor"
+            }
+          },
+          "XMLHttpRequestUpload": {
+            "function": {
+              "name": "XMLHttpRequestUpload",
+              "length": 0,
+              "source": "function XMLHttpRequestUpload() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "ownKeys": [
+                "length",
+                "name",
+                "prototype"
+              ]
+            },
+            "globalDescriptor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "XMLHttpRequestUpload",
+                "length": 0,
+                "source": "function XMLHttpRequestUpload() { [native code] }",
+                "ownPrototype": true,
+                "constructable": true,
+                "ownKeys": [
+                  "length",
+                  "name",
+                  "prototype"
+                ]
+              }
+            },
+            "ownSurface": {
+              "length": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": 0
+              },
+              "name": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": "XMLHttpRequestUpload"
+              },
+              "prototype": {
+                "enumerable": false,
+                "configurable": false,
+                "kind": "data",
+                "writable": false,
+                "value": {
+                  "tag": "[object XMLHttpRequestUpload]"
+                }
+              }
+            },
+            "prototypeSurface": {
+              "constructor": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": true,
+                "value": {
+                  "name": "XMLHttpRequestUpload",
+                  "length": 0,
+                  "source": "function XMLHttpRequestUpload() { [native code] }",
+                  "ownPrototype": true,
+                  "constructable": true,
+                  "ownKeys": [
+                    "length",
+                    "name",
+                    "prototype"
+                  ]
+                }
+              },
+              "Symbol(Symbol.toStringTag)": {
+                "enumerable": false,
+                "configurable": true,
+                "kind": "data",
+                "writable": false,
+                "value": "XMLHttpRequestUpload"
+              }
+            },
+            "constructorParent": "XMLHttpRequestEventTarget",
+            "callWithoutNew": {
+              "name": "TypeError",
+              "message": "Illegal constructor"
+            },
+            "construct": {
+              "name": "TypeError",
+              "message": "Failed to construct 'XMLHttpRequestUpload': Illegal constructor"
+            }
+          }
+        },
+        "prototypeChains": {
+          "xhr": [
+            {
+              "tag": "[object XMLHttpRequest]",
+              "ownConstructor": null,
+              "ownKeys": []
+            },
+            {
+              "tag": "[object XMLHttpRequest]",
+              "ownConstructor": "XMLHttpRequest",
+              "ownKeys": [
+                "onreadystatechange",
+                "readyState",
+                "timeout",
+                "withCredentials",
+                "upload",
+                "responseURL",
+                "status",
+                "statusText",
+                "responseType",
+                "response",
+                "responseText",
+                "UNSENT",
+                "OPENED",
+                "HEADERS_RECEIVED",
+                "LOADING",
+                "DONE",
+                "abort",
+                "getAllResponseHeaders",
+                "getResponseHeader",
+                "open",
+                "overrideMimeType",
+                "send",
+                "setRequestHeader",
+                "constructor",
+                "responseXML",
+                "Symbol(Symbol.toStringTag)"
+              ]
+            },
+            {
+              "tag": "[object XMLHttpRequestEventTarget]",
+              "ownConstructor": "XMLHttpRequestEventTarget",
+              "ownKeys": [
+                "onloadstart",
+                "onprogress",
+                "onabort",
+                "onerror",
+                "onload",
+                "ontimeout",
+                "onloadend",
+                "constructor",
+                "Symbol(Symbol.toStringTag)"
+              ]
+            },
+            {
+              "tag": "[object EventTarget]",
+              "ownConstructor": "EventTarget",
+              "ownKeys": [
+                "addEventListener",
+                "dispatchEvent",
+                "removeEventListener",
+                "when",
+                "constructor",
+                "Symbol(Symbol.toStringTag)"
+              ]
+            },
+            {
+              "tag": "[object Object]",
+              "ownConstructor": "Object",
+              "ownKeys": [
+                "constructor",
+                "__defineGetter__",
+                "__defineSetter__",
+                "hasOwnProperty",
+                "__lookupGetter__",
+                "__lookupSetter__",
+                "isPrototypeOf",
+                "propertyIsEnumerable",
+                "toString",
+                "valueOf",
+                "__proto__",
+                "toLocaleString"
+              ]
+            }
+          ],
+          "upload": [
+            {
+              "tag": "[object XMLHttpRequestUpload]",
+              "ownConstructor": null,
+              "ownKeys": []
+            },
+            {
+              "tag": "[object XMLHttpRequestUpload]",
+              "ownConstructor": "XMLHttpRequestUpload",
+              "ownKeys": [
+                "constructor",
+                "Symbol(Symbol.toStringTag)"
+              ]
+            },
+            {
+              "tag": "[object XMLHttpRequestEventTarget]",
+              "ownConstructor": "XMLHttpRequestEventTarget",
+              "ownKeys": [
+                "onloadstart",
+                "onprogress",
+                "onabort",
+                "onerror",
+                "onload",
+                "ontimeout",
+                "onloadend",
+                "constructor",
+                "Symbol(Symbol.toStringTag)"
+              ]
+            },
+            {
+              "tag": "[object EventTarget]",
+              "ownConstructor": "EventTarget",
+              "ownKeys": [
+                "addEventListener",
+                "dispatchEvent",
+                "removeEventListener",
+                "when",
+                "constructor",
+                "Symbol(Symbol.toStringTag)"
+              ]
+            },
+            {
+              "tag": "[object Object]",
+              "ownConstructor": "Object",
+              "ownKeys": [
+                "constructor",
+                "__defineGetter__",
+                "__defineSetter__",
+                "hasOwnProperty",
+                "__lookupGetter__",
+                "__lookupSetter__",
+                "isPrototypeOf",
+                "propertyIsEnumerable",
+                "toString",
+                "valueOf",
+                "__proto__",
+                "toLocaleString"
+              ]
+            }
+          ]
+        },
+        "defaults": {
+          "readyState": {
+            "returned": 0
+          },
+          "timeout": {
+            "returned": 0
+          },
+          "withCredentials": {
+            "returned": false
+          },
+          "upload": {
+            "returned": "[object XMLHttpRequestUpload]"
+          },
+          "responseURL": {
+            "returned": ""
+          },
+          "status": {
+            "returned": 0
+          },
+          "statusText": {
+            "returned": ""
+          },
+          "responseType": {
+            "returned": ""
+          },
+          "response": {
+            "returned": ""
+          },
+          "responseText": {
+            "returned": ""
+          },
+          "responseXML": {
+            "returned": null
+          },
+          "onreadystatechange": {
+            "returned": null
+          },
+          "onloadstart": {
+            "returned": null
+          },
+          "onprogress": {
+            "returned": null
+          },
+          "onabort": {
+            "returned": null
+          },
+          "onerror": {
+            "returned": null
+          },
+          "onload": {
+            "returned": null
+          },
+          "ontimeout": {
+            "returned": null
+          },
+          "onloadend": {
+            "returned": null
+          }
+        },
+        "owners": {
+          "readyState": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get readyState",
+                "length": 0,
+                "source": "function get readyState() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": null
+            }
+          },
+          "timeout": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get timeout",
+                "length": 0,
+                "source": "function get timeout() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set timeout",
+                "length": 1,
+                "source": "function set timeout() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "withCredentials": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get withCredentials",
+                "length": 0,
+                "source": "function get withCredentials() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set withCredentials",
+                "length": 1,
+                "source": "function set withCredentials() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "upload": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get upload",
+                "length": 0,
+                "source": "function get upload() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": null
+            }
+          },
+          "responseURL": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get responseURL",
+                "length": 0,
+                "source": "function get responseURL() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": null
+            }
+          },
+          "status": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get status",
+                "length": 0,
+                "source": "function get status() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": null
+            }
+          },
+          "statusText": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get statusText",
+                "length": 0,
+                "source": "function get statusText() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": null
+            }
+          },
+          "responseType": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get responseType",
+                "length": 0,
+                "source": "function get responseType() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set responseType",
+                "length": 1,
+                "source": "function set responseType() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "response": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get response",
+                "length": 0,
+                "source": "function get response() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": null
+            }
+          },
+          "responseText": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get responseText",
+                "length": 0,
+                "source": "function get responseText() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": null
+            }
+          },
+          "responseXML": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get responseXML",
+                "length": 0,
+                "source": "function get responseXML() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": null
+            }
+          },
+          "onreadystatechange": {
+            "depth": 1,
+            "owner": "[object XMLHttpRequest]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onreadystatechange",
+                "length": 0,
+                "source": "function get onreadystatechange() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onreadystatechange",
+                "length": 1,
+                "source": "function set onreadystatechange() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onloadstart": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onloadstart",
+                "length": 0,
+                "source": "function get onloadstart() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onloadstart",
+                "length": 1,
+                "source": "function set onloadstart() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onprogress": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onprogress",
+                "length": 0,
+                "source": "function get onprogress() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onprogress",
+                "length": 1,
+                "source": "function set onprogress() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onabort": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onabort",
+                "length": 0,
+                "source": "function get onabort() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onabort",
+                "length": 1,
+                "source": "function set onabort() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onerror": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onerror",
+                "length": 0,
+                "source": "function get onerror() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onerror",
+                "length": 1,
+                "source": "function set onerror() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onload": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onload",
+                "length": 0,
+                "source": "function get onload() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onload",
+                "length": 1,
+                "source": "function set onload() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "ontimeout": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get ontimeout",
+                "length": 0,
+                "source": "function get ontimeout() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set ontimeout",
+                "length": 1,
+                "source": "function set ontimeout() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onloadend": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onloadend",
+                "length": 0,
+                "source": "function get onloadend() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onloadend",
+                "length": 1,
+                "source": "function set onloadend() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "uploadOwners": {
+          "onloadstart": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onloadstart",
+                "length": 0,
+                "source": "function get onloadstart() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onloadstart",
+                "length": 1,
+                "source": "function set onloadstart() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onprogress": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onprogress",
+                "length": 0,
+                "source": "function get onprogress() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onprogress",
+                "length": 1,
+                "source": "function set onprogress() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onabort": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onabort",
+                "length": 0,
+                "source": "function get onabort() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onabort",
+                "length": 1,
+                "source": "function set onabort() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onerror": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onerror",
+                "length": 0,
+                "source": "function get onerror() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onerror",
+                "length": 1,
+                "source": "function set onerror() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onload": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onload",
+                "length": 0,
+                "source": "function get onload() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onload",
+                "length": 1,
+                "source": "function set onload() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "ontimeout": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get ontimeout",
+                "length": 0,
+                "source": "function get ontimeout() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set ontimeout",
+                "length": 1,
+                "source": "function set ontimeout() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          },
+          "onloadend": {
+            "depth": 2,
+            "owner": "[object XMLHttpRequestEventTarget]",
+            "descriptor": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get onloadend",
+                "length": 0,
+                "source": "function get onloadend() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              },
+              "set": {
+                "name": "set onloadend",
+                "length": 1,
+                "source": "function set onloadend() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false,
+                "ownKeys": [
+                  "length",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "identities": {
+          "uploadSameObject": true,
+          "uploadInstance": true,
+          "uploadEventTarget": true,
+          "uploadGenericTarget": true,
+          "xhrEventTarget": true,
+          "eventTargetMethodsShared": true
+        },
+        "handlerSemantics": {
+          "xhr": {
+            "initialNull": true,
+            "assignedIdentity": true,
+            "numberClears": true,
+            "enumeratedOnInstance": false,
+            "objectClears": false
+          },
+          "upload": {
+            "initialNull": true,
+            "assignedIdentity": true,
+            "numberClears": true,
+            "enumeratedOnInstance": false,
+            "objectClears": false
+          }
+        },
+        "syntheticUpload": {
+          "events": [
+            {
+              "channel": "handler",
+              "type": "progress",
+              "target": true
+            },
+            {
+              "channel": "listener",
+              "type": "progress",
+              "target": true,
+              "currentTarget": true,
+              "eventPhase": 2,
+              "isTrusted": false
+            }
+          ],
+          "returned": false,
+          "defaultPrevented": true
+        },
+        "wrongReceivers": {
+          "methods": {
+            "open": {
+              "plain": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "prototype": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "forged": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "proxy": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              }
+            },
+            "setRequestHeader": {
+              "plain": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "prototype": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "forged": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "proxy": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              }
+            },
+            "send": {
+              "plain": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "prototype": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "forged": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "proxy": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              }
+            },
+            "abort": {
+              "plain": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "prototype": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "forged": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "proxy": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              }
+            },
+            "getResponseHeader": {
+              "plain": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "prototype": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "forged": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "proxy": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              }
+            },
+            "getAllResponseHeaders": {
+              "plain": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "prototype": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "forged": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "proxy": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              }
+            },
+            "overrideMimeType": {
+              "plain": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "prototype": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "forged": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              },
+              "proxy": {
+                "name": "TypeError",
+                "message": "Illegal invocation",
+                "argumentConversions": 0
+              }
+            }
+          },
+          "getters": {
+            "readyState": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "timeout": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "withCredentials": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "upload": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "responseURL": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "status": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "statusText": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "responseType": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "response": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "responseText": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "responseXML": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "onreadystatechange": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "onloadstart": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "onprogress": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "onabort": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "onerror": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "onload": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "ontimeout": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            },
+            "onloadend": {
+              "name": "TypeError",
+              "message": "Illegal invocation"
+            }
+          },
+          "setters": {
+            "timeout": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "withCredentials": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "responseType": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "onreadystatechange": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "onloadstart": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "onprogress": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "onabort": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "onerror": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "onload": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "ontimeout": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            },
+            "onloadend": {
+              "name": "TypeError",
+              "message": "Illegal invocation",
+              "argumentConversions": 0
+            }
+          }
+        },
+        "localErrors": {
+          "sendBeforeOpen": {
+            "name": "InvalidStateError",
+            "message": "Failed to execute 'send' on 'XMLHttpRequest': The object's state must be OPENED.",
+            "code": 11
+          },
+          "headerBeforeOpen": {
+            "name": "InvalidStateError",
+            "message": "Failed to execute 'setRequestHeader' on 'XMLHttpRequest': The object's state must be OPENED.",
+            "code": 11
+          },
+          "responseHeaderBeforeOpen": {
+            "returned": null
+          },
+          "allHeadersBeforeOpen": {
+            "returned": ""
+          },
+          "overrideMimeBeforeOpen": {
+            "returned": "<undefined>"
+          },
+          "abortBeforeOpen": {
+            "returned": 0
+          },
+          "openGetAsync": {
+            "returned": 1
+          },
+          "openGetSync": {
+            "returned": 1
+          },
+          "openInvalidMethod": {
+            "name": "SyntaxError",
+            "message": "Failed to execute 'open' on 'XMLHttpRequest': 'bad method' is not a valid HTTP method.",
+            "code": 12
+          },
+          "openForbiddenMethod": {
+            "name": "SecurityError",
+            "message": "Failed to execute 'open' on 'XMLHttpRequest': 'TRACE' HTTP method is unsupported.",
+            "code": 18
+          },
+          "openInvalidURL": {
+            "name": "SyntaxError",
+            "message": "Failed to execute 'open' on 'XMLHttpRequest': Invalid URL",
+            "code": 12
+          },
+          "openSyncNonzeroTimeout": {
+            "name": "InvalidAccessError",
+            "message": "Failed to execute 'open' on 'XMLHttpRequest': Synchronous requests must not set a timeout.",
+            "code": 15
+          },
+          "syncTimeoutSetter": {
+            "name": "InvalidAccessError",
+            "message": "Failed to set the 'timeout' property on 'XMLHttpRequest': Timeouts cannot be set for synchronous requests made from a document.",
+            "code": 15
+          },
+          "syncResponseTypeSetter": {
+            "name": "InvalidAccessError",
+            "message": "Failed to set the 'responseType' property on 'XMLHttpRequest': The response type cannot be changed for synchronous requests made from a document.",
+            "code": 15
+          },
+          "invalidResponseTypeIgnored": {
+            "returned": ""
+          },
+          "subclass": {
+            "returned": [
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      }
+    }
+  }
+}

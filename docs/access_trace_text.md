@@ -4,6 +4,26 @@ Scope approved by the log-readability request: `2026-11-04`.
 Status: **VERIFIED on real V8 — Linux x64, Windows x64, macOS arm64
 (`2026-11-04`)**. Baseline: `0cff79a` (PR #6).
 
+## Complete string capture update — `2026-11-16`
+
+The user requests complete printed URLs/strings. New native trace events retain
+complete UTF-8 string values for GET/SET, call arguments and returns, including
+strings beyond the previous 64-byte preview / 4096-byte conversion thresholds.
+All call arguments are captured; the earlier eight-argument ceiling is removed.
+Both manual raw/text reads and automatic debug output use these captured values.
+No new flag is required; prod remains silent. Control characters stay escaped,
+and object/array/function values remain type-only without property inspection,
+coercion or serialization. Exception diagnostic limits and event capacity are
+unchanged. Full payload retention increases memory/output in proportion to values.
+
+New reports carry `coverage.string_capture = "full"`. For those reports the
+renderer first checks the decoded byte length against the recorded total so
+literal trailing `...` remains literal, including long strings. Saved older
+reports with genuinely truncated or omitted previews/arguments retain their
+explicit missing-data markers; discarded old content cannot be reconstructed.
+This update is locally accepted; full release verification remains pending.
+Actual source/build/test evidence: `docs/full_trace_values_report.md`.
+
 ## Public contract
 
 ```python
@@ -26,7 +46,13 @@ CALL document.querySelector("#app") -> <HostObject>
 ```
 
 Text shows paths, attempted setter inputs, call argument summaries, captured
-values/results, missing properties, and synchronous throws. Internal IDs,
+values/results, missing properties, and synchronous throws. Calls with optional
+`receiver_summary` are normalized as `<entry>.call(<this>[, <extra args>])`.
+`receiver_label` is used only for direct native HostObject labels, with unsafe
+labels JSON-quoted. This makes toString's actual receiver explicit without
+claiming the original JS used `.call`. Argument counts still exclude this;
+reports without receiver metadata retain their previous text. See
+`docs/to_string_receivers_report.md`. Internal IDs,
 sequence/generation/source fields, and full stacks remain available in raw mode.
 Lines retain native entry order, not completion timing. Non-identifier
 property names use quoted bracket notation. Control characters
@@ -35,11 +61,10 @@ not reconstructed JS variable names or complete object paths.
 
 Do not invent values: empty string is `""`, null is `null`, undefined is
 `undefined`, type-only summaries are `<Object>`/`<Array>`/etc., and absent
-metadata is explicitly `not recorded`. Strings over the existing native
-64-byte preview bound are marked truncated, with their total UTF-8 byte length;
-an omitted preview is not displayed as an empty string. This view cannot recover
-full values or object snapshots discarded by native capture. Argument summaries
-retain the eight-argument bound and mark omitted arguments. Dropped-event
+metadata is explicitly `not recorded`. New string values and argument lists are captured completely as specified above.
+For saved older reports, truncated strings retain their recorded total UTF-8 byte
+length and omitted previews/arguments are explicitly marked. This view cannot
+recover values or object snapshots discarded by an older capture. Dropped-event
 capacity warnings remain visible. Setter summaries represent assigned inputs,
 not necessarily the post-coercion stored values.
 

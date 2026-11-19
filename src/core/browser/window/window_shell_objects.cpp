@@ -26,6 +26,8 @@ struct MethodSpec {
     bool rejected_promise = false;
 };
 
+constexpr char kNodeFilterMemberIdentity = 0;
+
 struct ShellSpec {
     std::string name;
     std::string interface_name;
@@ -243,7 +245,8 @@ bool install_methods(v8::Isolate* isolate, v8::Local<v8::Context> context,
             !data->Set(context, 2, v8::External::New(isolate, host, v8::kExternalPointerTypeTagDefault)).FromMaybe(false)) return false;
         v8::Local<v8::Function> function;
         if (!make_web_method(isolate, context, method.name, method.length, &shell_method, data).ToLocal(&function) ||
-            !target->DefineOwnProperty(context, v8_string(isolate, method.name).As<v8::String>(), function).FromMaybe(false)) return false;
+            !install_traced_api_data_property(isolate, context, target, method.name, function,
+                host, "window_shell", host->global_name())) return false;
     }
     return true;
 }
@@ -263,8 +266,10 @@ bool install_shell(v8::Isolate* isolate, v8::Local<v8::Context> context,
         // ObjectTemplate may supply an intermediate template prototype. Web IDL
         // namespaces and the Chrome namespace directly inherit Object.prototype.
         if (!object->SetPrototype(context, v8::Object::New(isolate)->GetPrototype()).FromMaybe(false)) return false;
-        if (spec.name != "chrome" && !object->DefineOwnProperty(context, v8::Symbol::GetToStringTag(isolate),
-                v8_string(isolate, spec.name), static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum)).FromMaybe(false)) return false;
+        if (spec.name != "chrome" && !install_traced_api_named_data_property(isolate, context, object,
+                v8::Symbol::GetToStringTag(isolate), v8_string(isolate, spec.name), host,
+                "window_shell", host->global_name(),
+                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))) return false;
         for (const auto& property : spec.properties) {
             auto data = v8::Array::New(isolate, 2);
             if (!data->Set(context, 0, v8::External::New(isolate, host, v8::kExternalPointerTypeTagDefault)).FromMaybe(false) ||
@@ -275,8 +280,8 @@ bool install_shell(v8::Isolate* isolate, v8::Local<v8::Context> context,
             descriptor.set_enumerable(true); descriptor.set_configurable(true);
             if (!object->DefineProperty(context, v8_string(isolate, property).As<v8::String>(), descriptor).FromMaybe(false)) return false;
         }
-        if (spec.name == "chrome" && !object->CreateDataProperty(context, v8_string(isolate, "app").As<v8::String>(),
-                host->get_property(isolate, context, "app")).FromMaybe(false)) return false;
+        if (spec.name == "chrome" && !install_traced_api_data_property(isolate, context, object,
+                "app", host->get_property(isolate, context, "app"), host, "window_shell", "chrome")) return false;
     }
     if (!install_methods(isolate, context, host, spec.namespace_object ? object : prototype)) return false;
     host->set_global_value(isolate, spec.name == "fence" ? v8::Local<v8::Value>(v8::Null(isolate)) : v8::Local<v8::Value>(object));
@@ -292,10 +297,11 @@ bool install_shell(v8::Isolate* isolate, v8::Local<v8::Context> context,
 }
 
 bool constants(v8::Isolate* isolate, v8::Local<v8::Context> context,
-    v8::Local<v8::Object> object, const std::vector<std::pair<std::string, double>>& values) {
+    v8::Local<v8::Object> object, const std::vector<std::pair<std::string, double>>& values,
+    const void* identity, const std::string& label) {
     for (const auto& [name, value] : values)
-        if (!object->DefineOwnProperty(context, v8_string(isolate, name).As<v8::String>(), v8::Number::New(isolate, value),
-                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete)).FromMaybe(false)) return false;
+        if (!install_traced_api_data_property(isolate, context, object, name, v8::Number::New(isolate, value),
+                identity, "window_shell", label, static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))) return false;
     return true;
 }
 
@@ -326,14 +332,15 @@ bool install_window_shell_objects(v8::Isolate* isolate, v8::Local<v8::Context> c
         if (!install_shell(isolate, context, owners, {name, "", {}, {}, {}, false, true, false})) return false;
         v8::Local<v8::Value> object;
         if (!context->Global()->Get(context, v8_string(isolate, name)).ToLocal(&object) || !object->IsObject() ||
-            !constants(isolate, context, object.As<v8::Object>(), values)) return false;
+            !constants(isolate, context, object.As<v8::Object>(), values,
+                host_object_backing(object), name)) return false;
     }
     v8::Local<v8::Function> node_filter;
     if (!make_web_method(isolate, context, "NodeFilter", 0, &node_filter_call).ToLocal(&node_filter) ||
         !constants(isolate, context, node_filter, {{"FILTER_ACCEPT",1},{"FILTER_REJECT",2},{"FILTER_SKIP",3},{"SHOW_ALL",4294967295.0},
             {"SHOW_ELEMENT",1},{"SHOW_ATTRIBUTE",2},{"SHOW_TEXT",4},{"SHOW_CDATA_SECTION",8},{"SHOW_ENTITY_REFERENCE",16},{"SHOW_ENTITY",32},
             {"SHOW_PROCESSING_INSTRUCTION",64},{"SHOW_COMMENT",128},{"SHOW_DOCUMENT",256},{"SHOW_DOCUMENT_TYPE",512},
-            {"SHOW_DOCUMENT_FRAGMENT",1024},{"SHOW_NOTATION",2048}}) ||
+            {"SHOW_DOCUMENT_FRAGMENT",1024},{"SHOW_NOTATION",2048}}, &kNodeFilterMemberIdentity, "NodeFilter") ||
         !install_traced_window_data_property(isolate, context, context->Global(), "NodeFilter", node_filter, v8::DontEnum)) return false;
     const std::vector<ShellSpec> specifications = {
         {"chrome","",{{"csi",0},{"loadTimes",0}},{},{},false,true},

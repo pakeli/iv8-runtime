@@ -3,9 +3,13 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_origin.h"
+#include "iv8/access_summary.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
+#include "../internal/event_support.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -14,6 +18,9 @@ namespace iv8::browser {
 // properties matching location's decomposition. Requires a construct call.
 void url_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "URL", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "URL");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     if (!info.IsConstructCall()) {
         isolate->ThrowException(v8::Exception::TypeError(
@@ -23,7 +30,7 @@ void url_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     const auto to_std = [&](v8::Local<v8::Value> v, std::string& out) -> bool {
         v8::Local<v8::String> str;
-        if (!v->ToString(context).ToLocal(&str)) {
+        if (!access_user_operation(isolate, [&] { return v->ToString(context); }).ToLocal(&str)) {
             return false;
         }
         v8::String::Utf8Value utf8(isolate, str);
@@ -49,10 +56,10 @@ void url_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     const UrlParts parts = decompose_url(href);
     v8::Local<v8::Object> self = info.This();
+    const void* identity = native_api_identity(isolate, self);
     const auto define = [&](const char* name, const std::string& value) {
-        (void)self->DefineOwnProperty(
-            context, v8::String::NewFromUtf8(isolate, name).ToLocalChecked(),
-            v8_string(isolate, value), v8::ReadOnly);
+        (void)install_traced_api_data_property(isolate, context, self, name,
+            v8_string(isolate, value), identity, "host_object", "URL", v8::ReadOnly);
     };
     define("href", parts.href);
     define("origin", parts.origin);
@@ -78,21 +85,40 @@ void url_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
             search_params = parsed;
         }
     }
-    (void)self->DefineOwnProperty(
-        context, v8::String::NewFromUtf8Literal(isolate, "searchParams"),
-        search_params, v8::ReadOnly);
+    (void)install_traced_api_data_property(isolate, context, self, "searchParams",
+        search_params, identity, "host_object", "URL", v8::ReadOnly);
 }
 
 // url.toString() / url.toJSON() — both return this.href.
-void url_to_href(const v8::FunctionCallbackInfo<v8::Value>& info) {
+namespace {
+
+void url_return_href(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     v8::Local<v8::Value> href;
-    if (info.This()->Get(context, v8_string(isolate, "href")).ToLocal(&href)) {
+    if (get_runtime_api_field(isolate, context, info.This(), "href").ToLocal(&href)) {
         info.GetReturnValue().Set(href);
     } else {
         info.GetReturnValue().Set(v8::String::Empty(isolate));
     }
+}
+
+}  // namespace
+
+void url_to_href(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URL", "toString", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URL", "toString");
+    url_return_href(info);
+}
+
+void url_to_json(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URL", "toJSON", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URL", "toJSON");
+    url_return_href(info);
 }
 
 // M8-3 URLSearchParams keeps canonical query text in its GC-managed private
@@ -125,7 +151,7 @@ void usp_write_state(v8::Isolate* isolate, v8::Local<v8::Context> context,
 std::string usp_arg_string(v8::Isolate* isolate, v8::Local<v8::Context> context,
                            v8::Local<v8::Value> v) {
     v8::Local<v8::String> str;
-    if (!v->ToString(context).ToLocal(&str)) {
+    if (!access_user_operation(isolate, [&] { return v->ToString(context); }).ToLocal(&str)) {
         return std::string();
     }
     v8::String::Utf8Value utf8(isolate, str);
@@ -139,6 +165,9 @@ std::string usp_arg_string(v8::Isolate* isolate, v8::Local<v8::Context> context,
 // dropped); any other object (record / pair-list / etc.) -> TypeError. Requires new.
 void url_search_params_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "URLSearchParams", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "URLSearchParams");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     if (!info.IsConstructCall()) {
         isolate->ThrowException(v8::Exception::TypeError(
@@ -175,6 +204,9 @@ void url_search_params_constructor(const v8::FunctionCallbackInfo<v8::Value>& in
 
 void usp_get(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URLSearchParams", "get", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URLSearchParams", "get");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
     for (const auto& p :
@@ -189,6 +221,9 @@ void usp_get(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void usp_get_all(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URLSearchParams", "getAll", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URLSearchParams", "getAll");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
     v8::Local<v8::Array> arr = v8::Array::New(isolate);
@@ -204,6 +239,9 @@ void usp_get_all(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void usp_has(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URLSearchParams", "has", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URLSearchParams", "has");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
     for (const auto& p :
@@ -218,6 +256,9 @@ void usp_has(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void usp_append(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URLSearchParams", "append", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URLSearchParams", "append");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
     const std::string value = usp_arg_string(isolate, context, info[1]);
@@ -229,6 +270,9 @@ void usp_append(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void usp_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URLSearchParams", "set", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URLSearchParams", "set");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
     const std::string value = usp_arg_string(isolate, context, info[1]);
@@ -254,6 +298,9 @@ void usp_set(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void usp_delete(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URLSearchParams", "delete", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URLSearchParams", "delete");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     const std::string name = usp_arg_string(isolate, context, info[0]);
     const auto pairs = parse_query_parameters(usp_read_state(isolate, context, info.This()));
@@ -269,6 +316,9 @@ void usp_delete(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void usp_to_string(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Isolate* isolate = info.GetIsolate();
+    const auto sequence = native_api_trace_record(isolate, info.This(), "URLSearchParams", "toString", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "URLSearchParams", "toString");
     v8::Local<v8::Context> context = isolate->GetCurrentContext();
     info.GetReturnValue().Set(
         v8_string(isolate, usp_read_state(isolate, context, info.This())));

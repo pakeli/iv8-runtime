@@ -1,4 +1,5 @@
 #include "iv8/value_converter.h"
+#include "iv8/access_origin.h"
 
 #include <cmath>
 #include <cstdint>
@@ -202,6 +203,7 @@ bool try_convert_primitive(v8::Isolate* isolate, v8::Local<v8::Context> context,
 
 py::object to_python_deep(v8::Isolate* isolate, v8::Local<v8::Context> context,
                           v8::Local<v8::Value> value) {
+    auto user_origin = access_user_scope(isolate);
     std::vector<v8::Local<v8::Object>> ancestors;
     return deep_impl(isolate, context, value, 0, ancestors);
 }

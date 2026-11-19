@@ -31,6 +31,24 @@ def _report(*events, dropped=0):
     }
 
 
+def test_well_known_symbol_member_is_distinct_from_identically_named_strings():
+    symbol = _event(label="HTMLDocument.prototype", member="Symbol.toStringTag",
+                    member_kind="symbol", value_summary="string:12:HTMLDocument")
+    assert format_access_trace(_report(symbol)) == 'GET HTMLDocument.prototype[Symbol.toStringTag] -> "HTMLDocument"'
+    string = dict(symbol)
+    del string["member_kind"]
+    assert format_access_trace(_report(string)) == 'GET HTMLDocument.prototype["Symbol.toStringTag"] -> "HTMLDocument"'
+    string["member"] = "[Symbol.toStringTag]"
+    assert format_access_trace(_report(string)) == 'GET HTMLDocument.prototype["[Symbol.toStringTag]"] -> "HTMLDocument"'
+
+
+def test_unknown_symbol_member_text_is_not_interpreted_as_source():
+    event = _event(member='Symbol.toStringTag]\\nforged', member_kind="symbol")
+    rendered = format_access_trace(_report(event))
+    assert rendered.startswith('GET document["')
+    assert len(rendered.splitlines()) == 1
+
+
 @pytest.mark.parametrize("summary,expected", [
     ("string:0:", '""'),
     ("string:3:a:b", '"a:b"'),
@@ -70,6 +88,16 @@ def test_64_byte_real_ellipsis_and_67_byte_truncation_are_distinct():
         'GET document.cookie -> "' + "a" * 64 + '" … <truncated, 67 bytes>'
 
 
+def test_full_capture_marker_disambiguates_an_identical_legacy_ellipsis_summary():
+    complete = "a" * 64 + "..."
+    event = _event(value_summary="string:67:" + complete)
+    legacy = _report(event)
+    full = copy.deepcopy(legacy)
+    full["coverage"]["string_capture"] = "full"
+    assert format_access_trace(legacy) == 'GET document.cookie -> "' + "a" * 64 + '" … <truncated, 67 bytes>'
+    assert format_access_trace(full) == "GET document.cookie -> " + json.dumps(complete)
+
+
 def test_multibyte_truncation_and_omitted_preview_are_explicit():
     assert format_access_trace(_report(_event(value_summary="string:67:" + "值" * 21 + "..."))) == \
         'GET document.cookie -> "' + "值" * 21 + '" … <truncated, 67 bytes>'
@@ -94,13 +122,17 @@ def test_paths_controls_and_values_stay_on_one_line():
         assert len(output.splitlines()) == 1
 
 
-def test_call_arguments_values_and_argument_limit():
+def test_call_arguments_and_legacy_missing_argument_marker_remain_compatible():
     event = _event(operation="call", label="hostProbe", member="add",
                    argument_count=2, argument_summaries=["number:2", "number:3"],
                    return_summary="number:5")
     assert format_access_trace(_report(event)) == "CALL hostProbe.add(2, 3) -> 5"
     event.update(argument_count=10, argument_summaries=["null"] * 8)
     assert "… <2 more arguments>" in format_access_trace(_report(event))
+    event.update(argument_count=12, argument_summaries=["number:" + str(index) for index in range(12)])
+    full = _report(event)
+    full["coverage"]["string_capture"] = "full"
+    assert format_access_trace(full) == "CALL hostProbe.add(" + ", ".join(map(str, range(12))) + ") -> 5"
     event.update(argument_count=0, argument_summaries=[])
     assert "hostProbe.add()" in format_access_trace(_report(event))
 
@@ -153,6 +185,132 @@ def test_empty_trace_and_capacity_warning():
         "WARNING: 3 trace event(s) dropped (capacity 10)."
 
 
+def _receiver_call(**changes):
+    event = _event(operation="call", label="Object.prototype", member="toString",
+                   argument_count=0, argument_summaries=[],
+                   return_summary="string:15:[object Object]")
+    event.update(changes)
+    return event
+
+
+@pytest.mark.parametrize("summary,expected", [
+    ("null", "null"), ("undefined", "undefined"),
+    ("string:0:", '""'), ("string:3:a:b", '"a:b"'),
+    (r"string:1:\n", r'"\n"'), ("number:-0", "-0"),
+    ("boolean:false", "false"), ("object", "<Object>"),
+    ("array", "<Array>"), ("function", "<Function>"),
+    ("host_object", "<HostObject>"), ("bigint", "<BigInt>"),
+    ("symbol", "<Symbol>"), (None, "<receiver not recorded>"),
+])
+def test_call_receiver_uses_captured_summary_without_inventing_extra_arguments(summary, expected):
+    event = _receiver_call(receiver_summary=summary)
+    assert format_access_trace(_report(event)) == (
+        "CALL Object.prototype.toString.call(" + expected + ') -> "[object Object]"')
+
+
+def test_named_native_host_receiver_and_extra_arguments_remain_distinct():
+    event = _receiver_call(receiver_summary="host_object", receiver_label="document",
+                           argument_count=2, argument_summaries=["number:7", "string:1:x"],
+                           return_summary="string:21:[object HTMLDocument]")
+    assert format_access_trace(_report(event)) == (
+        'CALL Object.prototype.toString.call(<HostObject: document>, 7, "x") -> "[object HTMLDocument]"')
+
+
+@pytest.mark.parametrize("label,expected", [
+    ("document", "<HostObject: document>"),
+    ("native_label$1", "<HostObject: native_label$1>"),
+    ("document node", '<HostObject: "document node">'),
+    ("document, null", '<HostObject: "document, null">'),
+    ("document>", '<HostObject: "document>">'),
+    ('document"), null', r'<HostObject: "document\"), null">'),
+    ("document\nforged", r'<HostObject: "document\nforged">'),
+    ("文档", '<HostObject: "文档">'),
+    ("document\u2028forged", r'<HostObject: "document\u2028forged">'),
+])
+def test_native_receiver_labels_are_quoted_and_cannot_add_log_lines_or_arguments(label, expected):
+    event = _receiver_call(receiver_summary="host_object", receiver_label=label)
+    text = format_access_trace(_report(event))
+    assert text == 'CALL Object.prototype.toString.call(' + expected + ') -> "[object Object]"'
+    assert len(text.splitlines()) == 1
+
+
+@pytest.mark.parametrize("summary,expected", [
+    ("object", "<Object>"), ("array", "<Array>"),
+    ("function", "<Function>"), ("null", "null"),
+])
+def test_receiver_label_does_not_name_an_arbitrary_non_host_value(summary, expected):
+    event = _receiver_call(receiver_summary=summary, receiver_label="document>, null")
+    assert format_access_trace(_report(event)) == (
+        "CALL Object.prototype.toString.call(" + expected + ') -> "[object Object]"')
+
+
+@pytest.mark.parametrize("label", ["", None])
+def test_empty_native_receiver_label_keeps_the_type_only_placeholder(label):
+    event = _receiver_call(receiver_summary="host_object", receiver_label=label)
+    assert format_access_trace(_report(event)) == (
+        'CALL Object.prototype.toString.call(<HostObject>) -> "[object Object]"')
+
+
+def test_receiver_label_without_receiver_summary_keeps_the_legacy_call_form():
+    event = _receiver_call(receiver_label="document")
+    assert format_access_trace(_report(event)) == 'CALL Object.prototype.toString() -> "[object Object]"'
+
+
+@pytest.mark.parametrize("argument_count", [None, 0, 3])
+def test_receiver_does_not_hide_missing_argument_or_return_metadata(argument_count):
+    event = _receiver_call(receiver_summary="undefined")
+    del event["argument_summaries"]
+    del event["return_summary"]
+    if argument_count is None:
+        del event["argument_count"]
+    else:
+        event["argument_count"] = argument_count
+    assert format_access_trace(_report(event)) == (
+        "CALL Object.prototype.toString.call(undefined, <arguments not recorded>) -> <return value not recorded>")
+
+
+def test_receiver_is_not_counted_as_a_legacy_omitted_extra_argument():
+    event = _receiver_call(receiver_summary="object", argument_count=10,
+                           argument_summaries=["number:" + str(index) for index in range(8)])
+    expected_arguments = ", ".join(map(str, range(8))) + ", … <2 more arguments>"
+    assert format_access_trace(_report(event)) == (
+        "CALL Object.prototype.toString.call(<Object>, " + expected_arguments + ') -> "[object Object]"')
+
+
+def test_throwing_call_keeps_the_receiver_and_escapes_the_exception_message():
+    event = _receiver_call(receiver_summary="null", outcome="threw",
+                           argument_count=1, argument_summaries=["string:1:x"],
+                           exception_name="TypeError",
+                           exception_message="Uncaught TypeError: bad\nreceiver")
+    del event["return_summary"]
+    text = format_access_trace(_report(event))
+    assert text == r'CALL Object.prototype.toString.call(null, "x") !! TypeError: bad\nreceiver'
+    assert len(text.splitlines()) == 1
+
+
+def test_receiver_strings_respect_full_capture_and_saved_legacy_encoding():
+    value = "a" * 64 + "..."
+    event = _receiver_call(receiver_summary="string:67:" + value)
+    legacy = _report(event)
+    full = copy.deepcopy(legacy)
+    full["coverage"]["string_capture"] = "full"
+    assert format_access_trace(legacy) == (
+        'CALL Object.prototype.toString.call("' + "a" * 64 +
+        '" … <truncated, 67 bytes>) -> "[object Object]"')
+    assert format_access_trace(full) == (
+        "CALL Object.prototype.toString.call(" + json.dumps(value) + ') -> "[object Object]"')
+
+
+def test_receiver_rendering_does_not_modify_the_captured_event_or_report():
+    report = _report(_receiver_call(receiver_summary="host_object", receiver_label="document node",
+                                    argument_count=1, argument_summaries=["string:1:x"]))
+    report["coverage"]["string_capture"] = "full"
+    before = copy.deepcopy(report)
+    assert format_access_trace(report) == (
+        'CALL Object.prototype.toString.call(<HostObject: "document node">, "x") -> "[object Object]"')
+    assert report == before
+
+
 class _NativeTrace:
     def __init__(self):
         self.report = _report(_event())
@@ -200,11 +358,19 @@ def test_native_cookie_user_workflow_and_raw_compatibility():
     with iv8.Page() as page:
         page.start_access_trace()
         page.eval("document.cookie; document.cookie = 'a=1'; document.cookie")
-        expected = 'GET document.cookie -> ""\nSET document.cookie = "a=1"\nGET document.cookie -> "a=1"'
+        expected = '\n'.join([
+            'GET window.document -> <HostObject>',
+            'GET document.cookie -> ""',
+            'GET window.document -> <HostObject>',
+            'SET document.cookie = "a=1"',
+            'GET window.document -> <HostObject>',
+            'GET document.cookie -> "a=1"',
+        ])
         assert page.read_access_trace(clear=False, format="text") == expected
-        assert page.access_trace_report()["events"]["count"] == 3
+        assert page.access_trace_report()["events"]["count"] == 6
         raw = page.read_access_trace(clear=False)
-        assert raw["events"][0]["value_summary"] == "string:0:"
+        assert raw["events"][0]["value_summary"] == "host_object"
+        assert raw["events"][1]["value_summary"] == "string:0:"
         assert page.read_access_trace(format="text") == expected
         assert page.read_access_trace()["events"] == []
 
@@ -216,21 +382,25 @@ def test_native_calls_missing_and_method_reference():
         page.eval("hostProbe.add(2, 3); hostProbe.echo(null); document.notThere; hostProbe.echo;")
         assert page.read_access_trace(format="text").splitlines() == [
             "CALL hostProbe.add(2, 3) -> 5", "CALL hostProbe.echo(null) -> null",
+            "GET window.document -> <HostObject>",
             "GET document.notThere -> <missing>", "METHOD hostProbe.echo",
         ]
 
 
 @on_only
-def test_native_truncation_and_real_ellipsis():
+def test_native_complete_strings_unicode_escapes_and_real_ellipsis():
     with iv8.Page() as page:
         page.start_access_trace()
-        page.eval('hostProbe.echo("a".repeat(67)); hostProbe.echo("a".repeat(61) + "...");'
-                  'hostProbe.echo("值".repeat(21) + "😀"); hostProbe.echo("x".repeat(5000));')
+        values = ["a" * 67, "a" * 64 + "...", "值" * 21 + "😀", "x" * 5000,
+                  ("汉🙂\n\t\\\0" * 600) + "..."]
+        page.eval(json.dumps(values) + ".forEach(value=>hostProbe.echo(value))")
+        assert page.read_access_trace(clear=False)["coverage"]["string_capture"] == "full"
         lines = page.read_access_trace(format="text").splitlines()
-        assert lines[0].count("<truncated, 67 bytes>") == 2
-        assert "<truncated" not in lines[1]
-        assert lines[2].count('"' + "值" * 21 + '" … <truncated, 67 bytes>') == 2
-        assert lines[3].count("<String: 5000 bytes; preview not recorded>") == 2
+        assert len(lines) == len(values)
+        for line, value in zip(lines, values):
+            argument, returned = line[len("CALL hostProbe.echo("):].split(") -> ", 1)
+            assert json.loads(argument) == json.loads(returned) == value
+            assert "<truncated" not in line and "preview not recorded" not in line
 
 
 @on_only
@@ -258,7 +428,8 @@ def test_native_capacity_and_dispose():
         page.start_access_trace(max_events=1)
         page.eval("document.cookie; document.cookie;")
         assert page.read_access_trace(format="text").splitlines() == [
-            'GET document.cookie -> ""', 'WARNING: 1 trace event(s) dropped (capacity 1).',
+            'GET window.document -> <HostObject>',
+            'WARNING: 3 trace event(s) dropped (capacity 1).',
         ]
     finally:
         page.dispose()

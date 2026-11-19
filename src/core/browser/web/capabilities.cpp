@@ -3,9 +3,12 @@
 #include <cstring>
 #include <unordered_set>
 
+#include "iv8/access_summary.h"
+#include "iv8/access_origin.h"
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "../internal/trace_hooks.h"
+#include "../window/window_trace_support.h"
 
 namespace iv8::browser {
 
@@ -13,8 +16,10 @@ v8::Local<v8::Value> unsupported_capability(v8::Isolate* isolate,
                                                  const std::string& capability) {
     auto error = v8::Exception::Error(v8_string(isolate,
         capability + " execution is unavailable in the offline Page runtime").As<v8::String>());
-    (void)error.As<v8::Object>()->Set(isolate->GetCurrentContext(),
-        v8_string(isolate, "name"), v8_string(isolate, "NotSupportedError"));
+    (void)access_user_operation(isolate, [&] {
+        return error.As<v8::Object>()->Set(isolate->GetCurrentContext(),
+            v8_string(isolate, "name"), v8_string(isolate, "NotSupportedError"));
+    });
     return error;
 }
 
@@ -29,6 +34,9 @@ void web_interface_factory(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 void offline_fetch(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
+    const auto sequence = window_trace_record(isolate, "fetch", AccessOperation::kCall);
+    AccessCallCompletion completion(isolate, sequence, info);
+    watch_record(isolate, "window", "fetch");
     auto context = isolate->GetCurrentContext();
     v8::Local<v8::Promise::Resolver> resolver;
     if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) return;

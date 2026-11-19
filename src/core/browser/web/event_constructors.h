@@ -22,6 +22,9 @@ namespace iv8 {
 namespace browser {
 
 extern void event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info);
+// Public constructor entry dispatch; internal base initialization calls retain
+// their original callbacks so one public construction is not counted twice.
+void traced_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info);
 
 void ui_event_constructor(const v8::FunctionCallbackInfo<v8::Value>& info);
 bool install_event_prototype_members(v8::Isolate* isolate,

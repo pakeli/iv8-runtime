@@ -138,8 +138,13 @@ def test_existing_native_getter_is_a_get_not_a_probe():
         page.start_access_trace()
         assert page.eval("navigator.userAgent.length > 0") is True
         events = page.read_access_trace(clear=False)["events"]
-        assert [event["operation"] for event in events] == ["get"]
-        assert events[0]["member"] == "userAgent"
+        assert [(event["object_type"], event["member"], event["operation"])
+                for event in events] == [
+            ("window", "navigator", "get"),
+            ("navigator", "userAgent", "get"),
+        ]
+        assert events[0]["value_summary"] == "host_object"
+        assert events[0]["object_id"] != events[1]["object_id"]
 
 
 @on_only

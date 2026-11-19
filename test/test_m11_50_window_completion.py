@@ -178,7 +178,9 @@ def test_scroll_and_status_reads_are_access_traced():
         ) == "ready"
         events = page.read_access_trace()["events"]
         assert [(event["member"], event["operation"])
-                for event in events] == [("status", "set"),
+                for event in events] == [("window", "get"),
+                                         ("status", "set"),
+                                         ("window", "get"),
                                          ("status", "get")]
 
 

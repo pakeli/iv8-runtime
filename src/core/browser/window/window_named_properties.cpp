@@ -1,7 +1,9 @@
 #include "window_named_properties.h"
+#include "window_trace_support.h"
 
 #include <cstddef>
 #include <string>
+#include <utility>
 
 #include "iv8/access_summary.h"
 #include "iv8/web_interface.h"
@@ -24,14 +26,25 @@ v8::Intercepted window_named_property(
         return v8::Intercepted::kNo;
     }
     v8::String::Utf8Value name(info.GetIsolate(), property);
+    if (*name == nullptr) return v8::Intercepted::kNo;
     v8::Local<v8::Value> value;
-    if (*name == nullptr || !document->window_named_property(info.GetIsolate(),
+    v8::TryCatch lookup_error(info.GetIsolate());
+    if (!document->window_named_property(info.GetIsolate(),
             info.GetIsolate()->GetCurrentContext(),
             std::string(*name, static_cast<std::size_t>(name.length()))).ToLocal(&value)) {
+        if (lookup_error.HasCaught()) {
+            const auto sequence = window_trace_record(info.GetIsolate(), *name, AccessOperation::kGet);
+            AccessCompletion completion;
+            completion.outcome = "threw";
+            access_capture_exception(info.GetIsolate(), info.GetIsolate()->GetCurrentContext(), lookup_error, completion);
+            if (auto* trace = access_trace_from_isolate(info.GetIsolate())) trace->complete(sequence, std::move(completion));
+            lookup_error.ReThrow();
+        } else {
+            window_trace_record(info.GetIsolate(), *name, AccessOperation::kGetProbe, "missing");
+        }
         return v8::Intercepted::kNo;
     }
-    const auto sequence = access_trace_record(info.GetIsolate(), document->page_state(),
-        "window", "window", *name, AccessOperation::kGet);
+    const auto sequence = window_trace_record(info.GetIsolate(), *name, AccessOperation::kGet);
     AccessPropertyCompletion completion(info.GetIsolate(), sequence, info);
     info.GetReturnValue().Set(value);
     return v8::Intercepted::kYes;

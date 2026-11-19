@@ -64,5 +64,6 @@ def test_shell_watch_hits_keep_outer_before_nested_call_order():
         ]
         calls = [event for event in page.read_access_trace()['events'] if event['operation'] == 'call']
         assert [(event['label'], event['member']) for event in calls] == [
+            ('window', 'Event'),
             ('cookieStore', 'dispatchEvent'), ('CSS', 'escape'),
         ]

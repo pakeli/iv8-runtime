@@ -11,6 +11,27 @@ global, or top-level Python export.
 
 ## 1. Purpose
 
+For automatic readable logs, select debug when loading the page:
+
+```python
+page.load(html, base_url, mode="debug")
+page.eval("navigator.userAgent")  # captured GET lines print automatically
+page.load(html, base_url, mode="prod")  # disable and clear access tracing
+```
+
+Debug also prints after HTML/host scripts and each explicit event-loop pump;
+output consumes the pending trace buffer. Omit `mode` to retain the existing
+manual workflow on a new Page, or to continue a previously chosen debug mode.
+See `docs/page_monitoring_modes.md` for lifecycle/exception semantics and local
+verification status. This convenience does not extend native trace coverage.
+
+The current user-origin layer suppresses runtime setup, synthetic event
+construction and dispatch field maintenance in both raw/manual and debug logs.
+An empty debug load is silent. User `new Event`, event-field reads, callbacks
+and input accessors/coercions remain recorded. Native descriptor materialization
+and internal API forwarding do not add duplicate user GET/SET events. Scope:
+`docs/access_trace_origins.md`.
+
 For a short per-event log, use the optional readable view:
 
 ```python
