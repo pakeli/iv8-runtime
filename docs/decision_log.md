@@ -21,7 +21,14 @@ BOM-02 preserves native shape, security exposure, precise argument conversion
 and user-origin observation. Related-app result delivery uses the existing
 host task queue with a private non-user-cancelable entry; microtasks finish
 before delivery. No new Python API or device/network backend is introduced.
-Boundary: `docs/bom_02_navigator.md`. Validate local Mac wheels first.
+Boundary: `docs/bom_02_navigator.md`. Local Mac 3.11–3.14 validation completed
+before hosted dispatch. Final 190 new tests and 1107 gate tests pass; each of the four
+Mac and four Linux lanes reports 3333/2, Windows each 3331/4. Runtime commit 1dff793
+and Windows checkout fix d97412d have identical canonical code/test/build inputs;
+Windows initially failed two raw probe hashes after CRLF conversion and is
+corrected with scoped .gitattributes. All 12 wheels are collected and verified.
+BOM-02 draft PR #33 retains explicit diagnostic-text profile limits; no shared
+SDK or version publication is performed. Evidence: `docs/bom_02_release_report.md`.
 
 ### Validate macOS wheels before other release platforms (`2026-11-17`)
 

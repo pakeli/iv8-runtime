@@ -1,7 +1,7 @@
 # BOM-02 Navigator acceptance
 
-Date: `2026-11-19`. **Implemented; all four local Mac Python lanes passed.
-Linux/Windows release verification pending.**
+Date: `2026-11-19`. **Implemented; all four local Mac Python lanes and eight hosted
+Linux/Windows lanes passed. All 12 wheel artifacts are verified in the release report.**
 Boundary: `docs/bom_02_navigator.md`.
 
 ## Baseline and browser evidence
@@ -78,3 +78,8 @@ user-thrown error identity or conversion effects. The captured ordinary cases
 still compare complete messages. Arbitrary original receiver-class diagnostic
 labels are not fully modeled. Evidence:
 `data/bom-02-2026-11-19/vibration-diagnostic-review/comparison.json`.
+
+BOM-02 is committed as 1dff793; d97412d changes only Windows probe checkout
+line endings. The full validated source/run/artifact map is in
+`docs/bom_02_release_report.md`; all 12 wheels are verified. PR #33 remains a
+draft and shared SDK deployment remains unchanged.

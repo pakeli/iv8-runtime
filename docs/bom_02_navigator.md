@@ -56,6 +56,20 @@ Argument getters, conversion and iterator reentry must retain user attribution;
 diagnostics must not trigger getters or traps. Existing filters, capacity,
 debug/prod and reload semantics remain applicable.
 
+Example with the deterministic Page pump:
+
+```python
+import iv8
+
+with iv8.Page() as page:
+    page.load("<html><body></body></html>", "https://example.test/")
+    page.eval("globalThis.appCount = -1; navigator.getInstalledRelatedApps()"
+              ".then(apps => { appCount = apps.length; });")
+    page.tick()
+    assert page.eval("appCount") == 0
+    assert page.eval("navigator.vibrate([50, 20, 50])") is False
+```
+
 Run existing pinned offline scenarios with the accepted Mac wheel before this
 batch. Record real script blockers separately from regression expectation and
 server acceptance. Add browser-derived tests for shape, valid/invalid receivers,
