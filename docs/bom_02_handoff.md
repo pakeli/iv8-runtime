@@ -1,15 +1,24 @@
-# BOM-02 paused handoff
+# BOM-02 handoff
 
 Saved on `2026-11-19` after the user's explicit request to pause and save
-progress. Stop active work here; resume only when the user requests it.
+progress. The user resumed work on `2026-11-20`; the pause no longer applies.
+
+## Resume check (`2026-11-20`)
+
+PR #33 still has the validated implementation and documentation head 13292b4.
+Its required PR V8 CI run 44545908287 completed successfully. There are no
+submitted reviews or inline review threads. The PR is now ready for review;
+it has not been merged. The following sections retain the saved pause snapshot.
+Runtime, tests and build inputs are unchanged, so existing binaries are retained.
 
 ## Completed state
 
 - Branch: `codex/bom-02-navigator`.
 - Latest pushed implementation/evidence head:
   `13292b4305928174ee912b36d60e90d7a3416109`.
-- [Draft PR #33](https://github.com/pakeli/iv8-runtime/pull/33) contains BOM-02
-  and the final validation description. It is open and has not been merged.
+- [PR #33](https://github.com/pakeli/iv8-runtime/pull/33) contains BOM-02 and the
+  final validation description. It was a draft at pause and is ready for review
+  after the resume check above. It is open and has not been merged.
 - Baseline PR #32 was merged as
   `090c604e855af0e6938c1680a2bde2234e78f11f`.
 - Native getInstalledRelatedApps and vibrate are implemented. Secure-reference
