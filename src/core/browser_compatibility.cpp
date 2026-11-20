@@ -408,59 +408,6 @@ constexpr char kBootstrap[] = R"JS((function (resolveBeacon, beginCall, endCall,
       }
     });
   }
-  const quota = Object.create(null);
-  defineData(quota, stringTagKey, 'DeprecatedStorageQuota', false, false, false,
-    'DeprecatedStorageQuota', quota);
-  Object.assign(quota, {
-    queryUsageAndQuota(success, failure) {
-      const traceToken = beginTrace('call', quota, 'DeprecatedStorageQuota', 'queryUsageAndQuota', arguments);
-      let traceResult, traceError, traceThrew = false;
-      try {
-      if (this !== quota) throw new TypeError('Illegal invocation');
-      navigatorObject.storage.estimate().then(result => { if (typeof success === 'function') withUser(() => success(result.usage, result.quota)); },
-        error => { if (typeof failure === 'function') withUser(() => failure(error)); });
-
-      } catch (error) {
-        traceThrew = true; traceError = error; throw error;
-      } finally {
-        endCall(traceToken, traceThrew ? traceError : traceResult, traceThrew);
-      }
-    },
-    requestQuota(size, success, failure) {
-      const traceToken = beginTrace('call', quota, 'DeprecatedStorageQuota', 'requestQuota', arguments);
-      let traceResult, traceError, traceThrew = false;
-      try {
-      if (this !== quota) throw new TypeError('Illegal invocation');
-      size = withUser(() => Number(size));
-      Promise.resolve().then(() => {
-        if (size === 0) { if (typeof success === 'function') withUser(() => success(0)); }
-        else if (typeof failure === 'function') {
-          const error = new Error('Persistent quota allocation is unavailable'); error.name = 'NotSupportedError'; withUser(() => failure(error));
-        }
-      });
-
-      } catch (error) {
-        traceThrew = true; traceError = error; throw error;
-      } finally {
-        endCall(traceToken, traceThrew ? traceError : traceResult, traceThrew);
-      }
-    },
-  });
-  for (const name of ['queryUsageAndQuota', 'requestQuota']) {
-    const descriptor = Object.getOwnPropertyDescriptor(quota, name);
-    defineData(quota, name, descriptor.value, true, true, true, 'DeprecatedStorageQuota', quota);
-  }
-  Object.defineProperty(navigatorPrototype, 'webkitPersistentStorage', {enumerable: true, configurable: true,
-    get() {
-      const traceToken = beginTrace('get', navigatorObject, 'navigator', 'webkitPersistentStorage', arguments);
-      let traceResult, traceError, traceThrew = false;
-      try { brand(this); return traceResult = (quota);
-      } catch (error) {
-        traceThrew = true; traceError = error; throw error;
-      } finally {
-        endCall(traceToken, traceThrew ? traceError : traceResult, traceThrew);
-      }
-    }});
   return styleFor;
 }))JS";
 

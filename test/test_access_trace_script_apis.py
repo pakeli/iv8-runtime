@@ -136,7 +136,7 @@ def test_match_media_conversion_is_once_and_entry_is_not_duplicated(page, throws
 
 
 @pytest.mark.parametrize("member", ["sendBeacon", "getBattery", "queryUsageAndQuota", "requestQuota"])
-def test_navigator_and_quota_js_entries_have_real_completed_calls(page, member):
+def test_navigator_and_quota_entries_have_real_completed_calls(page, member):
     page.eval("globalThis.nav=navigator;globalThis.quota=nav.webkitPersistentStorage")
     label = "navigator" if member in {"sendBeacon", "getBattery"} else "DeprecatedStorageQuota"
     begin(page, label + "." + member)
@@ -150,18 +150,20 @@ def test_navigator_and_quota_js_entries_have_real_completed_calls(page, member):
         page.eval("quota.queryUsageAndQuota((used,total)=>{globalThis.quotaResult=[used,total];},()=>{})", name="script-api.js")
         expected = "undefined"
     else:
-        page.eval("quota.requestQuota(1,()=>{},error=>{globalThis.quotaFailure=error.name;})", name="script-api.js")
+        page.eval("quota.requestQuota(1,value=>{globalThis.quotaGranted=value;},error=>{globalThis.quotaFailure=error.name;})", name="script-api.js")
         expected = "undefined"
     record, = records(page, label, member)
     assert record["outcome"] == "returned" and record["return_summary"] == expected
     assert watch_paths(page) == [label + "." + member]
     page.run_jobs()
+    if member in {"queryUsageAndQuota", "requestQuota"}:
+        assert page.run_until_idle()
     if member == "getBattery":
         assert page.eval("batteryResult.charging===true && batteryResult.level===1")
     elif member == "queryUsageAndQuota":
         assert json.loads(page.eval("JSON.stringify(quotaResult)")) == [0, 10 * 1024**3]
     elif member == "requestQuota":
-        assert page.eval("quotaFailure") == "NotSupportedError"
+        assert page.eval("quotaGranted===1 && typeof quotaFailure==='undefined'")
     assert records(page, label, member) == [record]
 
 

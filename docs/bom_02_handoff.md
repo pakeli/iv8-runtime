@@ -9,7 +9,10 @@ PR #33 still has the validated implementation and documentation head 13292b4.
 Its required PR V8 CI run 44545908287 completed successfully. There are no
 submitted reviews or inline review threads. The PR is now ready for review;
 it has not been merged. The following sections retain the saved pause snapshot.
-Runtime, tests and build inputs are unchanged, so existing binaries are retained.
+BOM-02 runtime, tests and build inputs are unchanged, so its existing binaries
+are retained. The resumed BOM queue now continues as BOM-03 on
+`codex/bom-03-quota`; see `docs/bom_03_legacy_quota_report.md` for its separate
+local acceptance and remaining release status.
 
 ## Completed state
 

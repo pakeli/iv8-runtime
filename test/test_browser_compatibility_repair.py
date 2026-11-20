@@ -239,12 +239,14 @@ def test_beacon_refuses_transmission_and_checks_receiver_and_scheme():
 
 
 @on_only
-def test_battery_and_deprecated_quota_use_jobs_and_defined_baselines():
+def test_battery_jobs_and_native_quota_tasks_use_defined_baselines():
     with iv8.Page() as page:
-        page.eval("globalThis.battery = null; globalThis.usage = null; globalThis.quotaError = null; navigator.getBattery().then(value => battery = value); navigator.webkitPersistentStorage.queryUsageAndQuota((used, quota) => usage=[used,quota]); navigator.webkitPersistentStorage.requestQuota(1, () => {}, error => quotaError=error.name)")
+        page.eval("globalThis.battery = null; globalThis.usage = null; globalThis.quotaGranted = null; navigator.getBattery().then(value => battery = value); navigator.webkitPersistentStorage.queryUsageAndQuota((used, quota) => usage=[used,quota]); navigator.webkitPersistentStorage.requestQuota(1, value => quotaGranted=value)")
         assert page.eval("battery === null")
         page.run_jobs()
-        assert evaluate(page, "[battery.charging, battery.level, battery.chargingTime, battery.dischargingTime === Infinity, Object.prototype.toString.call(battery), usage, quotaError]") == [True, 1, 0, True, "[object BatteryManager]", [0, 10 * 1024**3], "NotSupportedError"]
+        assert page.eval("usage === null && quotaGranted === null")
+        assert page.run_until_idle()
+        assert evaluate(page, "[battery.charging, battery.level, battery.chargingTime, battery.dischargingTime === Infinity, Object.prototype.toString.call(battery), usage, quotaGranted]") == [True, 1, 0, True, "[object BatteryManager]", [0, 10 * 1024**3], 1]
 
 
 @on_only

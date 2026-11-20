@@ -7,6 +7,7 @@
 #include "iv8/query_parameters.h"
 #include "iv8/url_parser.h"
 #include "visual_viewport.h"
+#include "legacy_quota.h"
 #include "../internal/trace_hooks.h"
 #include "../window/window_trace_support.h"
 
@@ -169,7 +170,7 @@ void storage_manager_estimate_callback(
     });
     (void)access_user_operation(isolate, [&] {
         return estimate->Set(context, v8_string(isolate, "quota"),
-            v8::Number::New(isolate, 10737418240.0));
+            v8::Number::New(isolate, kOfflineStorageQuota));
     });
     info.GetReturnValue().Set(resolved_promise(isolate, context, estimate));
 }

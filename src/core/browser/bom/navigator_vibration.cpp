@@ -8,6 +8,7 @@
 #include "iv8/access_origin.h"
 #include "../internal/common.h"
 #include "../internal/trace_hooks.h"
+#include "../internal/web_idl_primitive.h"
 
 namespace iv8::browser {
 namespace {
@@ -41,74 +42,11 @@ v8::MaybeLocal<v8::Value> user_call(v8::Isolate* isolate,
     });
 }
 
-bool noncallable_primitive_hook(v8::Isolate* isolate,
-    v8::Local<v8::Context> context, v8::Local<v8::Value> hook) {
-    // Ask V8 to format its own non-callable-hook error on an internal holder.
-    // The hook is known not callable: this cannot invoke it, inspect its fields,
-    // or repeat the original object's Symbol.toPrimitive getter.
-    std::string message = "Cannot convert object to primitive value";
-    {
-        v8::TryCatch diagnostic(isolate);
-        auto holder = v8::Object::New(isolate);
-        if (!holder->CreateDataProperty(context, v8::Symbol::GetToPrimitive(isolate), hook).FromMaybe(false))
-            return false;
-        (void)holder->NumberValue(context);
-        if (diagnostic.HasCaught()) {
-            v8::Local<v8::Value> text;
-            if (diagnostic.Exception()->IsObject() && diagnostic.Exception().As<v8::Object>()
-                    ->GetRealNamedProperty(context, v8_string(isolate, "message").As<v8::String>()).ToLocal(&text)
-                    && text->IsString()) {
-                v8::String::Utf8Value utf8(isolate, text);
-                if (*utf8 != nullptr) message.assign(*utf8, utf8.length());
-            }
-            if (!diagnostic.CanContinue()) { diagnostic.ReThrow(); return false; }
-            diagnostic.Reset();
-        }
-    }
-    // The installed intrinsic stringifier observer changes this engine's
-    // diagnostic rendering of our internal holder. Match Chrome's object slots
-    // only in this newly generated diagnostic; never rewrite a caught user
-    // exception or an identically spelled string-valued hook.
-    const std::string holder_slot = " of object '[object Object]' is not a function";
-    if (message.ends_with(holder_slot)) {
-        message.replace(message.size() - holder_slot.size(), holder_slot.size(),
-            " of object '#<Object>' is not a function");
-    }
-    const std::string object_hook_slot = "'[object Object]' returned for property 'Symbol(Symbol.toPrimitive)'";
-    if (hook->IsObject() && message.starts_with(object_hook_slot)) {
-        message.replace(0, object_hook_slot.size(),
-            "'#<Object>' returned for property 'Symbol(Symbol.toPrimitive)'");
-    }
-    return conversion_error(isolate, message);
-}
-
-bool number_primitive(v8::Isolate* isolate, v8::Local<v8::Context> context,
-    v8::Local<v8::Value> input, v8::Local<v8::Value>* primitive) {
-    if (!input->IsObject()) { *primitive = input; return true; }
-    auto object = input.As<v8::Object>();
-    v8::Local<v8::Value> exotic;
-    if (!user_get(isolate, context, object, v8::Symbol::GetToPrimitive(isolate)).ToLocal(&exotic)) return false;
-    if (!exotic->IsNullOrUndefined()) {
-        if (!callable(exotic)) return noncallable_primitive_hook(isolate, context, exotic);
-        v8::Local<v8::Value> hint[] = {v8_string(isolate, "number")};
-        if (!user_call(isolate, context, exotic, input, 1, hint).ToLocal(primitive)) return false;
-        if ((*primitive)->IsObject()) return conversion_error(isolate, "Cannot convert object to primitive value");
-        return true;
-    }
-    for (const char* name : {"valueOf", "toString"}) {
-        v8::Local<v8::Value> method;
-        if (!user_get(isolate, context, object, v8_string(isolate, name)).ToLocal(&method)) return false;
-        if (!callable(method)) continue;
-        if (!user_call(isolate, context, method, input).ToLocal(primitive)) return false;
-        if (!(*primitive)->IsObject()) return true;
-    }
-    return conversion_error(isolate, "Cannot convert object to primitive value");
-}
-
 bool pattern_number(v8::Isolate* isolate, v8::Local<v8::Context> context,
     v8::Local<v8::Value> input, bool clamp) {
     v8::Local<v8::Value> primitive;
-    if (!number_primitive(isolate, context, input, &primitive)) return false;
+    if (!web_idl_to_primitive(isolate, context, input, false,
+            "Failed to execute 'vibrate' on 'Navigator': ", &primitive)) return false;
     if (primitive->IsSymbol()) return conversion_error(isolate, "Cannot convert a Symbol value to a number");
     if (primitive->IsBigInt()) return conversion_error(isolate, "Cannot convert a BigInt value to a number");
     if (!clamp) {
