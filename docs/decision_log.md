@@ -1,11 +1,25 @@
 # Decision Log
 
-Last reviewed: `2026-11-20`
+Last reviewed: `2026-11-21`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
 
 ## Confirmed Decisions
+
+### Finish the BOM-03 release matrix on resume (`2026-11-21`)
+
+The user resumes BOM-03 work after its code, local Mac matrix and source CI are
+complete. Verify those fixed-source receipts and retain the validated Mac wheels;
+then dispatch the remaining Linux/Windows Python 3.11–3.14 release matrices on
+4cbab17. Do not rebuild Mac solely due to resumption. Record actual lane counts,
+checkouts, cache/build outcomes and downloaded artifact hashes before marking
+release validation complete. PR #34 remains stacked on unmerged PR #33; this
+step does not imply either PR merge, shared SDK deployment or version tagging.
+Evidence: `docs/bom_03_release_report.md`. Both hosted runs pass first attempt;
+each gate is 1225, full Mac/Linux 3451/2 and Windows 3449/4. Five hosted ZIPs
+and all 12 wheels are verified. PR #34 becomes ready for review; PRs remain
+unmerged and shared deployment/version publication is unchanged by this task.
 
 ### Resume with the next bounded BOM family (`2026-11-20`)
 

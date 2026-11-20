@@ -72,3 +72,8 @@ callback validation/order/this, number conversion, opaque-origin failures,
 task pumping/cancellation, exceptions, tracing and lifecycle. Update superseded
 persistent-quota/tag tests explicitly, then run the regression gate/full suite.
 Validate local Mac Python 3.11–3.14 wheels first, then Linux/Windows when releasing.
+
+Release validation completes on `2026-11-21` for source 4cbab17: four retained
+local Mac lanes and eight hosted Linux/Windows lanes, with all 12 wheel artifacts
+verified. See `docs/bom_03_release_report.md` for exact sources, runs, counts and
+artifact IDs. This completion changes no API boundary or deployment permission.

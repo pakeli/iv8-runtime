@@ -1,7 +1,7 @@
 # BOM-03 legacy quota acceptance
 
-Date: `2026-11-20`. **Implemented; all four local Mac Python lanes accepted.
-The full Linux/Windows release matrix remains pending.**
+Local acceptance: `2026-11-20`; release validation: `2026-11-21`.
+**Implemented; all 12 selected lanes and all 12 wheels validated.**
 Boundary: `docs/bom_03_legacy_quota.md`.
 
 ## Delivered behavior
@@ -99,7 +99,10 @@ generated-error diagnostic object-label limitations under modified metadata
 remain in the shared primitive conversion helper; user-thrown values are not
 rewritten. Symbol.iterator monitoring remains deferred.
 
-BOM-02 PR #33 was made ready for review on resume and remains unmerged.
-This batch is developed on `codex/bom-03-quota` above that branch. No release
-matrix, shared SDK replacement or version publication is claimed by the local
-acceptance record.
+BOM-02 PR #33 is ready for review and remains unmerged. BOM-03 PR #34 is
+also ready, stacked above it. Full Linux/Windows validation on source 4cbab17
+subsequently completes: every gate passes 1225 tests; Linux full is 3451/2,
+Windows 3449/4. The four prior Mac wheels are retained and all 12 artifacts are
+verified. Source trees, CI/run/artifact IDs and integrity checks are recorded in
+`docs/bom_03_release_report.md`. Shared SDK replacement and version publication
+are not performed.

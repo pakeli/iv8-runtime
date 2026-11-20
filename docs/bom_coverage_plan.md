@@ -20,6 +20,8 @@ acceptance and release status are in `docs/bom_02_navigator.md` /
 BOM-03 follows on `2026-11-20`: native legacy quota aliases/callbacks plus the
 required DOMError dependency. Browser evidence, acceptance and limits are in
 `docs/bom_03_legacy_quota.md` / `docs/bom_03_legacy_quota_report.md`.
+All 12 selected lanes and wheel artifacts are validated on `2026-11-21`; exact
+release evidence is in `docs/bom_03_release_report.md`.
 
 ## Current measured baseline
 
