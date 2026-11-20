@@ -1,0 +1,774 @@
+{
+  "browser": "Google Chrome 157.0.8103.80",
+  "captured_at_utc": "2026-11-19T14:01:55.556Z",
+  "execution": {
+    "os": "darwin 25.5.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://bom02-fixture.invalid:55908/reference",
+    "network": "Only local fixture document; external DNS disabled; no manifest or installed related apps configured; no trusted activation",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom02-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 15-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "4605b9c02ec028febbfe4de12b4a2073703d540684559898d6622cf3fee00cc0",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": false,
+    "origin": "http://bom02-fixture.invalid:55908",
+    "activation": {
+      "active": false,
+      "beenActive": false
+    },
+    "shape": {
+      "getInstalledRelatedApps": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "vibrate": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "writable": true,
+          "kind": "data",
+          "method": {
+            "name": "vibrate",
+            "length": 1,
+            "source": "function vibrate() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      }
+    },
+    "vibration": {
+      "missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': 1 argument required, but only 0 present.",
+          "same": false
+        },
+        "effects": []
+      },
+      "undefined": {
+        "value": false,
+        "effects": []
+      },
+      "null": {
+        "value": false,
+        "effects": []
+      },
+      "zero": {
+        "value": false,
+        "effects": []
+      },
+      "negative": {
+        "value": false,
+        "effects": []
+      },
+      "nan": {
+        "value": false,
+        "effects": []
+      },
+      "infinity": {
+        "value": false,
+        "effects": []
+      },
+      "fraction": {
+        "value": false,
+        "effects": []
+      },
+      "large": {
+        "value": false,
+        "effects": []
+      },
+      "string": {
+        "value": false,
+        "effects": []
+      },
+      "true": {
+        "value": false,
+        "effects": []
+      },
+      "symbol": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert a Symbol value to a number",
+          "same": false
+        },
+        "effects": []
+      },
+      "bigint": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert a BigInt value to a number",
+          "same": false
+        },
+        "effects": []
+      },
+      "empty_array": {
+        "value": false,
+        "effects": []
+      },
+      "pattern": {
+        "value": false,
+        "effects": []
+      },
+      "typed_array": {
+        "value": false,
+        "effects": []
+      },
+      "set": {
+        "value": false,
+        "effects": []
+      },
+      "plain_object": {
+        "value": false,
+        "effects": []
+      },
+      "object_valueof": {
+        "value": false,
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "iter_undefined": {
+        "value": false,
+        "effects": [
+          "iterator",
+          "valueOf"
+        ]
+      },
+      "iter_null": {
+        "value": false,
+        "effects": [
+          "iterator",
+          "valueOf"
+        ]
+      },
+      "iter_noncallable": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': @@iterator must be a function",
+          "same": false
+        },
+        "effects": [
+          "iterator"
+        ]
+      },
+      "iter_get_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "iterator"
+        ]
+      },
+      "number_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "sequence_symbol": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert a Symbol value to a number",
+          "same": false
+        },
+        "effects": []
+      },
+      "sequence_bigint": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert a BigInt value to a number",
+          "same": false
+        },
+        "effects": []
+      },
+      "function": {
+        "value": false,
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "iter_number": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Iterator object must be an object.",
+          "same": false
+        },
+        "effects": [
+          "call"
+        ]
+      },
+      "iter_next_number": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Expected iterator.next() to return an Object.",
+          "same": false
+        },
+        "effects": [
+          "next"
+        ]
+      },
+      "iter_done_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "next",
+          "done"
+        ]
+      },
+      "iter_value_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "next",
+          "value"
+        ]
+      },
+      "iter_element_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "next",
+          "coerce"
+        ]
+      },
+      "long_sequence": {
+        "value": false,
+        "effects": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      "iter_sequence": {
+        "value": false,
+        "effects": [
+          "iterator",
+          "iterator",
+          "call",
+          "get next",
+          "next",
+          "value",
+          "done",
+          "coerce",
+          "next"
+        ]
+      },
+      "negative_fraction": {
+        "value": false,
+        "effects": []
+      },
+      "false": {
+        "value": false,
+        "effects": []
+      },
+      "negative_infinity": {
+        "value": false,
+        "effects": []
+      },
+      "boxed_number": {
+        "value": false,
+        "effects": []
+      },
+      "boxed_string": {
+        "value": false,
+        "effects": []
+      },
+      "numeric_symbol_result": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert a Symbol value to a number",
+          "same": false
+        },
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "numeric_bigint_result": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert a BigInt value to a number",
+          "same": false
+        },
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "numeric_typeerror": {
+        "error": {
+          "name": "TypeError",
+          "message": "user numeric",
+          "same": false
+        },
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "numeric_symbol_hint": {
+        "value": false,
+        "effects": [
+          "number"
+        ]
+      },
+      "numeric_null_prototype": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert object to primitive value",
+          "same": false
+        },
+        "effects": []
+      },
+      "array_iterator_getter": {
+        "value": false,
+        "effects": []
+      },
+      "array_iterator_override": {
+        "value": false,
+        "effects": []
+      },
+      "array_iterator_number": {
+        "value": false,
+        "effects": []
+      },
+      "array_dynamic_shrink": {
+        "value": false,
+        "effects": [
+          "first"
+        ]
+      },
+      "array_dynamic_grow": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "first",
+          "second"
+        ]
+      },
+      "array_proxy": {
+        "value": false,
+        "effects": [
+          "Symbol(Symbol.iterator)",
+          "Symbol(Symbol.iterator)",
+          "length",
+          "0",
+          "length",
+          "1",
+          "length"
+        ]
+      },
+      "array_100_tail_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100
+        ]
+      },
+      "iter_next_missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Expected next() function on iterator.",
+          "same": false
+        },
+        "effects": [
+          "get next"
+        ]
+      },
+      "iter_next_noncallable": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Expected next() function on iterator.",
+          "same": false
+        },
+        "effects": []
+      },
+      "iter_next_get_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "get next"
+        ]
+      },
+      "iter_next_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "next"
+        ]
+      },
+      "iter_done_true_value_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "next",
+          "value"
+        ]
+      },
+      "iter_done_true_value_object": {
+        "value": false,
+        "effects": [
+          "next",
+          "value",
+          "done"
+        ]
+      },
+      "iter_second_get_undefined": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': The object must have a callable @@iterator property.",
+          "same": false
+        },
+        "effects": [
+          "iterator",
+          "iterator"
+        ]
+      },
+      "iter_second_get_noncallable": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': @@iterator must be a callable.",
+          "same": false
+        },
+        "effects": [
+          "iterator",
+          "iterator"
+        ]
+      },
+      "iter_second_get_throw": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "iterator",
+          "iterator"
+        ]
+      },
+      "iter_element_return_getter": {
+        "error": {
+          "name": null,
+          "message": null,
+          "same": true
+        },
+        "effects": [
+          "next",
+          "coerce"
+        ]
+      },
+      "ignored_extra": {
+        "value": false,
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "numeric_hook_noncallable": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': '17' returned for property 'Symbol(Symbol.toPrimitive)' of object '#<Object>' is not a function",
+          "same": false
+        },
+        "effects": []
+      },
+      "numeric_hook_object": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': '#<Object>' returned for property 'Symbol(Symbol.toPrimitive)' of object '#<Object>' is not a function",
+          "same": false
+        },
+        "effects": []
+      },
+      "numeric_hook_returns_object": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert object to primitive value",
+          "same": false
+        },
+        "effects": [
+          "number"
+        ]
+      },
+      "numeric_ordinary_no_primitive": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'vibrate' on 'Navigator': Cannot convert object to primitive value",
+          "same": false
+        },
+        "effects": [
+          "valueOf",
+          "toString"
+        ]
+      },
+      "typeerror_sentinel_number": {
+        "error": {
+          "name": "TypeError",
+          "message": "original TypeError sentinel",
+          "same": true
+        },
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "typeerror_sentinel_element": {
+        "error": {
+          "name": "TypeError",
+          "message": "original TypeError sentinel",
+          "same": true
+        },
+        "effects": [
+          "valueOf"
+        ]
+      },
+      "invalidReceiver": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        },
+        "effects": []
+      }
+    },
+    "related": {},
+    "vibrationSources": {
+      "missing": null,
+      "undefined": "undefined",
+      "null": "null",
+      "zero": "0",
+      "negative": "-1",
+      "nan": "NaN",
+      "infinity": "Infinity",
+      "fraction": "2.5",
+      "large": "4294967297",
+      "string": "'13'",
+      "true": "true",
+      "symbol": "Symbol('pattern')",
+      "bigint": "3n",
+      "empty_array": "[]",
+      "pattern": "[1,2,3]",
+      "typed_array": "new Uint16Array([1,2])",
+      "set": "new Set([1,2])",
+      "plain_object": "({})",
+      "object_valueof": "({valueOf(){effects.push('valueOf');return 5;}})",
+      "iter_undefined": "({get [Symbol.iterator](){effects.push('iterator');return undefined;},valueOf(){effects.push('valueOf');return 5;}})",
+      "iter_null": "({get [Symbol.iterator](){effects.push('iterator');return null;},valueOf(){effects.push('valueOf');return 5;}})",
+      "iter_noncallable": "({get [Symbol.iterator](){effects.push('iterator');return 7;},valueOf(){effects.push('valueOf');return 5;}})",
+      "iter_get_throw": "({get [Symbol.iterator](){effects.push('iterator');throw sentinel;}})",
+      "number_throw": "({valueOf(){effects.push('valueOf');throw sentinel;}})",
+      "sequence_symbol": "[Symbol('item')]",
+      "sequence_bigint": "[3n]",
+      "function": "Object.assign(function(){},{valueOf(){effects.push('valueOf');return 3;}})",
+      "iter_number": "({[Symbol.iterator](){effects.push('call');return 4;}})",
+      "iter_next_number": "({[Symbol.iterator](){return {next(){effects.push('next');return 4;},return(){effects.push('return');return {};}};}})",
+      "iter_done_throw": "({[Symbol.iterator](){return {next(){effects.push('next');return {get done(){effects.push('done');throw sentinel;}};},return(){effects.push('return');return {};}};}})",
+      "iter_value_throw": "({[Symbol.iterator](){return {next(){effects.push('next');return {done:false,get value(){effects.push('value');throw sentinel;}};},return(){effects.push('return');return {};}};}})",
+      "iter_element_throw": "({[Symbol.iterator](){return {next(){effects.push('next');return {done:false,value:{valueOf(){effects.push('coerce');throw sentinel;}}};},return(){effects.push('return');return {};}};}})",
+      "long_sequence": "Array.from({length:12},(_,index)=>({valueOf(){effects.push(index);return index;}}))",
+      "iter_sequence": "({get [Symbol.iterator](){effects.push('iterator');return function(){effects.push('call');let index=0;return {get next(){effects.push('get next');return function(){effects.push('next');return index++===0?{get done(){effects.push('done');return false;},get value(){effects.push('value');return {valueOf(){effects.push('coerce');return 1;}};}}:{done:true};};}};};}})",
+      "negative_fraction": "-2.5",
+      "false": "false",
+      "negative_infinity": "-Infinity",
+      "boxed_number": "Object(2.5)",
+      "boxed_string": "Object('12')",
+      "numeric_symbol_result": "({valueOf(){effects.push('valueOf');return Symbol('numeric');}})",
+      "numeric_bigint_result": "({valueOf(){effects.push('valueOf');return 1n;}})",
+      "numeric_typeerror": "({valueOf(){effects.push('valueOf');throw new TypeError('user numeric');}})",
+      "numeric_symbol_hint": "({[Symbol.toPrimitive](hint){effects.push(hint);return 4;}})",
+      "numeric_null_prototype": "Object.create(null)",
+      "array_iterator_getter": "(()=>{const value=[1,2];Object.defineProperty(value,Symbol.iterator,{get(){effects.push('iterator');throw sentinel;}});return value;})()",
+      "array_iterator_override": "Object.assign([1,2],{[Symbol.iterator](){effects.push('call');throw sentinel;}})",
+      "array_iterator_number": "Object.assign([1,2],{[Symbol.iterator]:17})",
+      "array_dynamic_shrink": "(()=>{const value=[{valueOf(){effects.push('first');value.length=1;return 1;}},{valueOf(){effects.push('second');throw sentinel;}}];return value;})()",
+      "array_dynamic_grow": "(()=>{const value=[{valueOf(){effects.push('first');value.push({valueOf(){effects.push('second');throw sentinel;}});return 1;}}];return value;})()",
+      "array_proxy": "new Proxy([1,2],{get(target,key,receiver){effects.push(String(key));return Reflect.get(target,key,receiver);}})",
+      "array_100_tail_throw": "Array.from({length:101},(_,index)=>({valueOf(){effects.push(index);if(index===100)throw sentinel;return index;}}))",
+      "iter_next_missing": "({[Symbol.iterator](){return {get next(){effects.push('get next');return undefined;},get return(){effects.push('get return');throw sentinel;}};}})",
+      "iter_next_noncallable": "({[Symbol.iterator](){return {next:17,get return(){effects.push('get return');throw sentinel;}};}})",
+      "iter_next_get_throw": "({[Symbol.iterator](){return {get next(){effects.push('get next');throw sentinel;},get return(){effects.push('get return');throw Error('close');}};}})",
+      "iter_next_throw": "({[Symbol.iterator](){return {next(){effects.push('next');throw sentinel;},get return(){effects.push('get return');throw Error('close');}};}})",
+      "iter_done_true_value_throw": "({[Symbol.iterator](){return {next(){effects.push('next');return {get value(){effects.push('value');throw sentinel;},get done(){effects.push('done');return true;}};},get return(){effects.push('get return');throw Error('close');}};}})",
+      "iter_done_true_value_object": "({[Symbol.iterator](){return {next(){effects.push('next');return {get value(){effects.push('value');return {valueOf(){effects.push('coerce');throw sentinel;}};},get done(){effects.push('done');return true;}};}};}})",
+      "iter_second_get_undefined": "(()=>{let reads=0;return {get [Symbol.iterator](){effects.push('iterator');if(++reads===1)return function(){};return undefined;}};})()",
+      "iter_second_get_noncallable": "(()=>{let reads=0;return {get [Symbol.iterator](){effects.push('iterator');if(++reads===1)return function(){};return 17;}};})()",
+      "iter_second_get_throw": "(()=>{let reads=0;return {get [Symbol.iterator](){effects.push('iterator');if(++reads===1)return function(){};throw sentinel;}};})()",
+      "iter_element_return_getter": "({[Symbol.iterator](){return {next(){effects.push('next');return {value:{valueOf(){effects.push('coerce');throw sentinel;}},done:false};},get return(){effects.push('get return');throw Error('close');}};}})",
+      "ignored_extra": "(()=>{const value={valueOf(){effects.push('valueOf');return 1;}};return value;})()",
+      "numeric_hook_noncallable": "({[Symbol.toPrimitive]:17})",
+      "numeric_hook_object": "({[Symbol.toPrimitive]:new Proxy({},{get(){effects.push('unexpected');throw sentinel;}})})",
+      "numeric_hook_returns_object": "({[Symbol.toPrimitive](hint){effects.push(hint);return {};}})",
+      "numeric_ordinary_no_primitive": "({valueOf(){effects.push('valueOf');return {};},toString(){effects.push('toString');return {};}})",
+      "typeerror_sentinel_number": "({valueOf(){effects.push('valueOf');throw sentinel;}})",
+      "typeerror_sentinel_element": "[{valueOf(){effects.push('valueOf');throw sentinel;}}]"
+    }
+  }
+}

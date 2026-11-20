@@ -146,12 +146,14 @@ void ContextState::with_scope(
 }
 
 std::int64_t ContextState::register_timer(v8::Local<v8::Function> callback,
-                                          std::int32_t delay, bool repeating) {
+                                          std::int32_t delay, bool repeating,
+                                          bool user_cancelable) {
     const std::int64_t id = next_timer_id_++;
     TimerEntry entry;
     entry.callback.Reset(isolate_host_->isolate(), callback);
     entry.delay = delay < 0 ? 0 : delay;
     entry.repeating = repeating;
+    entry.user_cancelable = user_cancelable;
     entry.seq = next_timer_seq_++;
     // M11-29: due time for the deterministic event-loop facade. The legacy
     // run_timers() path keeps ignoring this field.
@@ -163,7 +165,7 @@ std::int64_t ContextState::register_timer(v8::Local<v8::Function> callback,
 
 void ContextState::clear_timer(std::int64_t id) {
     auto it = timers_.find(id);
-    if (it != timers_.end()) {
+    if (it != timers_.end() && it->second.user_cancelable) {
         it->second.callback.Reset();
         timers_.erase(it);
     }

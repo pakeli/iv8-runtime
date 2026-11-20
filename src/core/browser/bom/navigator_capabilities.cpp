@@ -8,6 +8,23 @@
 
 namespace iv8::browser {
 
+namespace {
+
+void resolve_related_applications(const v8::FunctionCallbackInfo<v8::Value>& info) {
+    auto* isolate = info.GetIsolate();
+    auto context = isolate->GetCurrentContext();
+    auto runtime_origin = access_runtime_scope(isolate);
+    auto resolver = info.Data().As<v8::Promise::Resolver>();
+    // Materialize the snapshot only at delivery. Resolving an Array may read a
+    // user-defined inherited `then`; that is user work, never a diagnostic read.
+    auto applications = v8::Array::New(isolate, 0);
+    (void)access_user_operation(isolate, [&] {
+        return resolver->Resolve(context, applications);
+    });
+}
+
+}  // namespace
+
 bool install_navigator_capability_interfaces(v8::Isolate* isolate,
     v8::Local<v8::Context> context) {
     SchedulingHost scheduling;
@@ -40,6 +57,23 @@ v8::Local<v8::Value> empty_gamepad_snapshot(v8::Isolate* isolate,
             return v8::Undefined(isolate);
     }
     return snapshot;
+}
+
+v8::Local<v8::Value> empty_related_applications(v8::Isolate* isolate,
+    v8::Local<v8::Context> context) {
+    watch_record(isolate, "navigator", "getInstalledRelatedApps");
+    v8::Local<v8::Promise::Resolver> resolver;
+    if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) return v8::Undefined(isolate);
+    // Resolve on the existing event-loop task queue, after the preceding
+    // microtask checkpoint has drained completely. The private callback is not
+    // cancelable through the public timer APIs and is released with the context.
+    auto* state = state_from_isolate(isolate);
+    if (state == nullptr) return v8::Undefined(isolate);
+    v8::Local<v8::Function> delivery;
+    if (!v8::Function::New(context, &resolve_related_applications, resolver,
+            0, v8::ConstructorBehavior::kThrow).ToLocal(&delivery)) return v8::Undefined(isolate);
+    (void)state->register_timer(delivery, 0, false, false);
+    return resolver->GetPromise();
 }
 
 v8::Local<v8::Value> SchedulingHost::get_property(v8::Isolate* isolate,

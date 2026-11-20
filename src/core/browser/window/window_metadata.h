@@ -1,8 +1,14 @@
 #pragma once
 
+#include <string>
+
 #include "iv8/v8_headers.h"
 
 namespace iv8 {
+
+// Shared native secure-context profile; determine exposure at generation setup,
+// independently of a script's replacements for the public isSecureContext slot.
+bool is_secure_context_url(const std::string& base_url);
 
 extern const v8::ExternalPointerTypeTag kWindowNameTag;
 

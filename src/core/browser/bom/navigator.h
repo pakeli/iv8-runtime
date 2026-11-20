@@ -19,6 +19,7 @@
 #include "navigator_parts.h"
 #include "navigator_identity.h"
 #include "navigator_capabilities.h"
+#include "navigator_vibration.h"
 
 namespace iv8 {
 
@@ -32,8 +33,9 @@ namespace browser {
 // configured environment; capability inspection uses an offline device profile.
 class NavigatorHost : public HostObject {
 public:
-    explicit NavigatorHost(const HostEnvironment* environment)
-        : environment_(environment), connection_(environment), user_agent_data_(environment) {}
+    NavigatorHost(const HostEnvironment* environment, bool secure_context)
+        : environment_(environment), secure_context_(secure_context),
+          connection_(environment), user_agent_data_(environment) {}
 
     std::string global_name() const override { return "navigator"; }
     std::string prototype_key() const override { return "Navigator"; }
@@ -51,7 +53,11 @@ public:
                 "mimeTypes"};
     }
 
-    std::vector<std::string> method_names() const override { return {"getGamepads", "javaEnabled"}; }
+    std::vector<std::string> method_names() const override {
+        std::vector<std::string> names = {"getGamepads", "javaEnabled", "vibrate"};
+        if (secure_context_) names.emplace_back("getInstalledRelatedApps");
+        return names;
+    }
 
     void release_v8_handles() noexcept override {
         connection_.release_v8_handles();
@@ -194,8 +200,10 @@ public:
 
     v8::Local<v8::Value> call_method(
         v8::Isolate* isolate, v8::Local<v8::Context> context, const std::string& name,
-        const v8::FunctionCallbackInfo<v8::Value>&) override {
+        const v8::FunctionCallbackInfo<v8::Value>& arguments) override {
         if (name == "getGamepads") return empty_gamepad_snapshot(isolate, context);
+        if (name == "getInstalledRelatedApps") return empty_related_applications(isolate, context);
+        if (name == "vibrate") return navigator_vibrate(isolate, context, arguments);
         if (name == "javaEnabled") return v8::False(isolate);
         return v8::Undefined(isolate);
     }
@@ -204,6 +212,7 @@ private:
     // Owned by PageState (outlives every generation), so this raw pointer stays
     // valid for as long as this host object is installed.
     const HostEnvironment* environment_;
+    const bool secure_context_;
     ConnectionHost connection_;
     SchedulingHost scheduling_;
     NavigatorUADataHost user_agent_data_;
