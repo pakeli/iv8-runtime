@@ -20,6 +20,7 @@
 #include "navigator_identity.h"
 #include "navigator_capabilities.h"
 #include "navigator_vibration.h"
+#include "legacy_quota.h"
 
 namespace iv8 {
 
@@ -33,9 +34,10 @@ namespace browser {
 // configured environment; capability inspection uses an offline device profile.
 class NavigatorHost : public HostObject {
 public:
-    NavigatorHost(const HostEnvironment* environment, bool secure_context)
+    NavigatorHost(const HostEnvironment* environment, bool secure_context,
+        PageState* owner, const std::string& base_url)
         : environment_(environment), secure_context_(secure_context),
-          connection_(environment), user_agent_data_(environment) {}
+          connection_(environment), user_agent_data_(environment), quota_(owner, base_url) {}
 
     std::string global_name() const override { return "navigator"; }
     std::string prototype_key() const override { return "Navigator"; }
@@ -50,7 +52,7 @@ public:
                 "vendorSub",       "productSub",        "maxTouchPoints",
                 "pdfViewerEnabled", "doNotTrack",        "connection", "scheduling",
                 "storage",         "permissions",       "plugins",
-                "mimeTypes"};
+                "mimeTypes", "webkitTemporaryStorage", "webkitPersistentStorage"};
     }
 
     std::vector<std::string> method_names() const override {
@@ -69,6 +71,7 @@ public:
         mime_types_object_.Reset();
         user_agent_data_object_.Reset();
         user_activation_object_.Reset();
+        quota_object_.Reset();
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -76,6 +79,10 @@ public:
                                       const std::string& name) override {
         if (name == "userAgent") {
             return v8_string(isolate, environment_->user_agent);
+        }
+        if (name == "webkitTemporaryStorage" || name == "webkitPersistentStorage") {
+            if (quota_object_.IsEmpty()) quota_object_.Reset(isolate, make_host_object(isolate, context, &quota_));
+            return quota_object_.Get(isolate);
         }
         if (name == "appVersion") return v8_string(isolate, environment_->app_version);
         if (name == "deviceMemory") return v8::Number::New(isolate, environment_->device_memory);
@@ -217,6 +224,8 @@ private:
     SchedulingHost scheduling_;
     NavigatorUADataHost user_agent_data_;
     UserActivationHost user_activation_;
+    LegacyQuotaHost quota_;
+    v8::Global<v8::Object> quota_object_;
     v8::Global<v8::Object> user_agent_data_object_;
     v8::Global<v8::Object> user_activation_object_;
     v8::Global<v8::Object> connection_object_;

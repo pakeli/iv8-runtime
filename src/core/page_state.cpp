@@ -35,6 +35,7 @@
 #include "browser/bom/screen.h"
 #include "browser/bom/navigator_identity.h"
 #include "browser/bom/navigator_capabilities.h"
+#include "browser/bom/legacy_quota.h"
 #include "browser/window/window_event_target.h"
 #include "browser/window/window_functions.h"
 #include "browser/window/window_presence_functions.h"
@@ -1788,8 +1789,18 @@ v8::Local<v8::Value> PageState::parse_html_document(v8::Isolate* isolate,
     return object;
 }
 
+v8::Local<v8::Value> PageState::create_dom_error(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const std::u16string& name,
+    const std::u16string& message) {
+    auto error = std::make_unique<DOMErrorHost>(name, message);
+    auto object = make_host_object(isolate, context, error.get());
+    host_objects_.push_back(std::move(error));
+    return object;
+}
+
 v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Array> arguments) {
+    if (name == "DOMError") return construct_dom_error(isolate, context, this, arguments);
     if (name == "XMLHttpRequest") {
         auto upload = std::make_unique<XMLHttpRequestUploadHost>();
         auto upload_object = make_host_object(isolate, context, upload.get());
@@ -1891,7 +1902,7 @@ void PageState::install_page(const std::string& base_url,
     // M2-3 navigator + M11-1 screen, both sourced from the Page-level environment_
     // (which outlives generations), so every load() reports identical values.
     host_objects_.push_back(std::make_unique<NavigatorHost>(
-        &environment_, is_secure_context_url(base_url)));
+        &environment_, is_secure_context_url(base_url), this, base_url));
     host_objects_.push_back(std::make_unique<ScreenHost>(&environment_));  // M11-1
     host_objects_.push_back(  // M2-3 location, sourced from this page's base URL
         std::make_unique<LocationHost>(decompose_url(base_url), this));
@@ -1927,6 +1938,7 @@ void PageState::install_page(const std::string& base_url,
             install_navigator_identity_interfaces(isolate, context, &environment_);
             if (!install_navigator_capability_interfaces(isolate, context) ||
                 !install_bom_event_interfaces(isolate, context, &environment_)) return;
+            if (!install_legacy_quota_interfaces(isolate, context, this)) return;
             install_dom_parser_interface(isolate, context, this);
             install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());

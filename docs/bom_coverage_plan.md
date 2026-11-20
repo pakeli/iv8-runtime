@@ -17,10 +17,14 @@ vibration in the declared offline/inactive profile. Its boundary, local
 acceptance and release status are in `docs/bom_02_navigator.md` /
 `docs/bom_02_navigator_report.md`. PR #32 is merged as the BOM-01 baseline.
 
+BOM-03 follows on `2026-11-20`: native legacy quota aliases/callbacks plus the
+required DOMError dependency. Browser evidence, acceptance and limits are in
+`docs/bom_03_legacy_quota.md` / `docs/bom_03_legacy_quota_report.md`.
+
 ## Current measured baseline
 
 Counts use the fixed Chrome 157 inventory plus the PRES-01/PRES-02/PRES-03
-deltas plus BOM-01/BOM-02 for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
+deltas plus BOM-01/BOM-02/BOM-03 for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
 evidence and the name/behavior distinction: `docs/presence_03_report.md`.
 
 The subsequent WIN-MON-01 closes scoped monitoring gaps for these entries:
@@ -34,7 +38,7 @@ does not add API names or backend execution. Its combined release is verified in
 | Window ordinary properties/methods | 128 | 128 | 0 |
 | Window on* handlers | 125 | 125 | 0 |
 | Location | 15 | 15 | 0 |
-| Navigator (secure context) | 70 | 34 | 36 |
+| Navigator (secure context) | 70 | 35 | 35 |
 | navigator.connection | 9 | 8 | 1 |
 | screen.orientation | 9 | 8 | 1 |
 | visualViewport | 14 | 13 | 1 |
@@ -66,8 +70,9 @@ History state/URL updates execute.
    BOM-02 subsequently adds secure getInstalledRelatedApps and native vibrate
    conversion, leaving 36 Navigator names in the fixed secure inventory and the
    three Observable-dependent when entries; see `docs/bom_02_api_delta.json`.
-   Further Navigator families follow concrete offline samples and new browser
-   evidence (for example the existing legacy storage capability family). Empty
+   BOM-03 then adds webkitTemporaryStorage and restores native shared quota
+   behavior, leaving 35 Navigator names in that secure inventory. Further
+   Navigator families follow concrete offline samples and new browser evidence. Empty
    device lists/inactive input remain explicit profile states. The three
    EventTarget when methods depend on Observable and stay deferred.
    Clipboard, geolocation, media/devices, service workers, GPU/XR and

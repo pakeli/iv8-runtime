@@ -1,6 +1,8 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest implemented/validated candidate (`2026-11-19`): BOM-02.** Native secure getInstalledRelatedApps and inactive-profile vibrate raise Navigator secure-reference membership to **34/70**. Local Mac Python 3.11–3.14 wheels are validated before hosted Linux/Windows; all 12 selected lanes pass the **36-module / 1107-test gate**. Full Mac/Linux: **3333 passed, 2 skipped**; Windows: **3331 passed, 4 skipped**. There are **190 new tests**. Runtime code is `1dff793c5349206976dcb575d761c8331732da6e` / tree `3f7e18f50a7e17abf9fed27be7e57cc0aec6f01f`; Windows uses checkout-fix `d97412dcd97df4ababba40fa55b1c7c92888b3b4` / tree `57ad2e7f7a3c059c34cdc7fa8b2e8baa8a267d78`, differing only by .gitattributes with all 431 canonical runtime/test/build/workflow inputs unchanged. Both commits pass V8 source CI; all five remote ZIPs and 12 wheels are collected and verified. Generated diagnostic object-label differences under modified prototype metadata remain explicit. Baseline PR #32 is merged; BOM-02 is draft PR #33. Shared SDK remains BIND-01. Boundary/report/delta/release evidence: `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md`, `docs/bom_02_api_delta.json`, `docs/bom_02_release_report.md`.
+**Latest implemented/local acceptance (`2026-11-20`): BOM-03 native legacy quota.** Navigator.webkitTemporaryStorage and webkitPersistentStorage share one native DeprecatedStorageQuota; native callbacks follow browser-derived conversion, task timing and opaque-origin error channels. Required DOMError construction/name/message accessors are included. Original quota watch selectors and native aliases are covered. Navigator secure-reference presence is **35/70**. All four local Mac CPython 3.11–3.14 wheels pass the **37-module / 1225-test gate** and full **3451 passed, 2 skipped**; there are **118 new tests**. Wheel CRC/ABI/native hashes and all 442 frozen inputs are verified. The full Linux/Windows release matrix remains pending. BOM-02 PR #33 is ready for review. Boundary/report/delta: `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md`, `docs/bom_03_api_delta.json`.
+
+**Previous implemented/validated candidate (`2026-11-19`): BOM-02.** Native secure getInstalledRelatedApps and inactive-profile vibrate raise Navigator secure-reference membership to **34/70**. Local Mac Python 3.11–3.14 wheels are validated before hosted Linux/Windows; all 12 selected lanes pass the **36-module / 1107-test gate**. Full Mac/Linux: **3333 passed, 2 skipped**; Windows: **3331 passed, 4 skipped**. There are **190 new tests**. Runtime code is `1dff793c5349206976dcb575d761c8331732da6e` / tree `3f7e18f50a7e17abf9fed27be7e57cc0aec6f01f`; Windows uses checkout-fix `d97412dcd97df4ababba40fa55b1c7c92888b3b4` / tree `57ad2e7f7a3c059c34cdc7fa8b2e8baa8a267d78`, differing only by .gitattributes with all 431 canonical runtime/test/build/workflow inputs unchanged. Both commits pass V8 source CI; all five remote ZIPs and 12 wheels are collected and verified. Generated diagnostic object-label differences under modified prototype metadata remain explicit. Baseline PR #32 is merged; BOM-02 is draft PR #33. Shared SDK remains BIND-01. Boundary/report/delta/release evidence: `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md`, `docs/bom_02_api_delta.json`, `docs/bom_02_release_report.md`.
 
 **Build order (`2026-11-17`, user direction): macOS wheels first.** Build and validate Python 3.11–3.14 wheels in the existing local macOS arm64 environments before dispatching Linux/Windows release builds. Hosted macOS is supplementary while runner capacity is unreliable; preserve its actual result separately. Reuse only matching pinned V8 caches, rebuild the extension/wheels, and record source/ABI/hash/test evidence.
 
@@ -450,6 +452,13 @@ Installed per generation by `install_page`:
   scripts and resources do not execute/load. Other valid XML MIME types throw
   NotSupportedError, invalid MIME types throw TypeError. XMLSerializer and full
   XML/HTML5 parsing remain outside this batch. See `docs/presence_02_dom.md`.
+
+- **BOM-03 legacy quota (local acceptance; release pending)** — native shared
+  webkitTemporaryStorage/webkitPersistentStorage getters, private
+  DeprecatedStorageQuota methods, deterministic quota values and task/synchronous
+  opaque error delivery. The required native DOMError constructor and accessors
+  are included. This supersedes the old bootstrap quota shape/job/failure profile.
+  See `docs/bom_03_legacy_quota.md` / `docs/bom_03_legacy_quota_report.md`.
 
 - **BOM-02 Navigator continuation (local Mac and hosted Linux/Windows validated)** —
   native getInstalledRelatedApps in the existing secure-context profile,
@@ -903,6 +912,7 @@ clock.
 | PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release verification in `docs/bom_release_report.md` | `docs/presence_02_dom.md` / report |
 | PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release verification in `docs/bom_release_report.md` | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
+| BOM-03 | Native legacy quota aliases, callbacks and required DOMError dependency; local acceptance and release status separated | `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md` |
 | BOM-02 | Secure related-app inspection and native vibration argument conversion in the offline/inactive Page profile; local and release evidence tracked separately | `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md` |
 | BOM-01 | Offline Navigator capability queries and native connection/orientation/viewport event foundations; local acceptance and release status tracked separately | `docs/bom_01_capabilities.md`, `docs/bom_01_capabilities_report.md` |
 | TAG-MON-01 | Existing runtime Symbol.toStringTag direct/Reflect.get reads; native data shape retained, dynamic-Proxy provenance limits explicit | `docs/symbol_to_string_tag_monitoring.md`, `docs/symbol_to_string_tag_monitoring_report.md` |

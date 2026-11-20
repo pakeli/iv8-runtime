@@ -1,0 +1,862 @@
+{
+  "browser": "Google Chrome 157.0.8103.80",
+  "captured_at_utc": "2026-11-20T10:32:13.581Z",
+  "execution": {
+    "os": "darwin 25.5.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "about:blank",
+    "network": "Only local or opaque fixture document; external DNS disabled; quota queries do not allocate storage; no filesystem writes or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 15-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "eaa49ccd9bc4b30297a1fb4b8a9efcf66fbfdb1360d4eab146b071a3f0188bf5",
+  "requests": [],
+  "result": {
+    "secure": false,
+    "origin": "null",
+    "shape": {
+      "webkitTemporaryStorage": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get webkitTemporaryStorage",
+            "length": 0,
+            "source": "function get webkitTemporaryStorage() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        }
+      },
+      "webkitPersistentStorage": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get webkitPersistentStorage",
+            "length": 0,
+            "source": "function get webkitPersistentStorage() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        }
+      },
+      "quota": {
+        "sameAliases": true,
+        "stable": true,
+        "tag": "[object DeprecatedStorageQuota]",
+        "ownKeys": [],
+        "prototypeKeys": [
+          "queryUsageAndQuota",
+          "requestQuota",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "prototypeParentIsObject": true,
+        "globalType": "undefined",
+        "constructorIsObject": true,
+        "methods": {
+          "queryUsageAndQuota": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "queryUsageAndQuota",
+              "length": 1,
+              "source": "function queryUsageAndQuota() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "requestQuota": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "requestQuota",
+              "length": 1,
+              "source": "function requestQuota() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          }
+        },
+        "tagDescriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": false,
+          "value": "DeprecatedStorageQuota"
+        }
+      },
+      "domError": {
+        "globalType": "function",
+        "constructor": {
+          "name": "DOMError",
+          "length": 1,
+          "source": "function DOMError() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "ownKeys": [],
+        "prototypeKeys": [
+          "name",
+          "message",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "prototypeParentIsObject": true,
+        "constructorParentIsFunction": true,
+        "instanceOfError": false,
+        "tag": "[object DOMError]",
+        "name": "CustomError",
+        "message": "custom message",
+        "members": {
+          "name": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get name",
+              "length": 0,
+              "source": "function get name() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "message": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get message",
+              "length": 0,
+              "source": "function get message() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "DOMError",
+              "length": 1,
+              "source": "function DOMError() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          }
+        },
+        "tagDescriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": false,
+          "value": "DOMError"
+        },
+        "reflectConstruct": {
+          "prototypeReads": 1,
+          "prototypeMatches": true,
+          "name": "CustomError",
+          "message": ""
+        }
+      }
+    },
+    "calls": {
+      "query_ok": {
+        "returned": "undefined",
+        "effects": [
+          "after call",
+          "microtask",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotSupportedError",
+              "message": "The implementation did not support the requested type of object or operation."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          }
+        ]
+      },
+      "request_zero": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_small": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_negative": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "query_missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryUsageAndQuota' on 'DeprecatedStorageQuota': 1 argument required, but only 0 present.",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "query_null": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryUsageAndQuota' on 'DeprecatedStorageQuota': parameter 1 is not of type 'Function'.",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "query_undefined": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryUsageAndQuota' on 'DeprecatedStorageQuota': parameter 1 is not of type 'Function'.",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "query_object": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryUsageAndQuota' on 'DeprecatedStorageQuota': parameter 1 is not of type 'Function'.",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "query_bad_error": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryUsageAndQuota' on 'DeprecatedStorageQuota': parameter 2 is not of type 'Function'.",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "query_null_error": {
+        "returned": "undefined",
+        "timeout": true,
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestQuota' on 'DeprecatedStorageQuota': 1 argument required, but only 0 present.",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_no_callbacks": {
+        "returned": "undefined",
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_null_callbacks": {
+        "returned": "undefined",
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_bad_callback": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestQuota' on 'DeprecatedStorageQuota': parameter 2 is not of type 'Function'.",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_bad_error": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestQuota' on 'DeprecatedStorageQuota': parameter 3 is not of type 'Function'.",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_symbol": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestQuota' on 'DeprecatedStorageQuota': Cannot convert a Symbol value to a number",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_bigint": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestQuota' on 'DeprecatedStorageQuota': Cannot convert a BigInt value to a number",
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_nan": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_inf": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_fraction": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_wrap": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_string": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_convert": {
+        "returned": "undefined",
+        "effects": [
+          "valueOf",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_negative_fraction": {
+        "returned": "undefined",
+        "effects": [
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_primitive": {
+        "returned": "undefined",
+        "effects": [
+          "number",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "AbortError",
+              "message": "The user aborted a request."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          },
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_object_symbol": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestQuota' on 'DeprecatedStorageQuota': Cannot convert a Symbol value to a number",
+          "same": false
+        },
+        "effects": [
+          "valueOf",
+          "after call",
+          "microtask"
+        ]
+      },
+      "query_proxy_callback": {
+        "returned": "undefined",
+        "effects": [
+          "after call",
+          "microtask",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotSupportedError",
+              "message": "The implementation did not support the requested type of object or operation."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          }
+        ]
+      },
+      "query_html_dda": {
+        "returned": "undefined",
+        "effects": [
+          "after call",
+          "microtask",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotSupportedError",
+              "message": "The implementation did not support the requested type of object or operation."
+            },
+            "tag": "[object DOMError]",
+            "instanceOfError": false,
+            "domError": true,
+            "ownKeys": []
+          }
+        ]
+      },
+      "request_throw": {
+        "error": {
+          "same": true
+        },
+        "effects": [
+          "valueOf",
+          "after call",
+          "microtask"
+        ]
+      },
+      "request_conversion_before_callback": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestQuota' on 'DeprecatedStorageQuota': parameter 2 is not of type 'Function'.",
+          "same": false
+        },
+        "effects": [
+          "valueOf",
+          "after call",
+          "microtask"
+        ]
+      }
+    },
+    "sources": {
+      "query_ok": {
+        "method": "queryUsageAndQuota",
+        "source": "[success,failure]",
+        "expectCallback": true
+      },
+      "request_zero": {
+        "method": "requestQuota",
+        "source": "[0,success,failure]",
+        "expectCallback": true
+      },
+      "request_small": {
+        "method": "requestQuota",
+        "source": "[17,success,failure]",
+        "expectCallback": true
+      },
+      "request_negative": {
+        "method": "requestQuota",
+        "source": "[-1,success,failure]",
+        "expectCallback": true
+      },
+      "query_missing": {
+        "method": "queryUsageAndQuota",
+        "source": "[]",
+        "expectCallback": false
+      },
+      "query_null": {
+        "method": "queryUsageAndQuota",
+        "source": "[null,failure]",
+        "expectCallback": false
+      },
+      "query_undefined": {
+        "method": "queryUsageAndQuota",
+        "source": "[undefined,failure]",
+        "expectCallback": false
+      },
+      "query_object": {
+        "method": "queryUsageAndQuota",
+        "source": "[{},failure]",
+        "expectCallback": false
+      },
+      "query_bad_error": {
+        "method": "queryUsageAndQuota",
+        "source": "[success,17]",
+        "expectCallback": false
+      },
+      "query_null_error": {
+        "method": "queryUsageAndQuota",
+        "source": "[success,null]",
+        "expectCallback": true
+      },
+      "request_missing": {
+        "method": "requestQuota",
+        "source": "[]",
+        "expectCallback": false
+      },
+      "request_no_callbacks": {
+        "method": "requestQuota",
+        "source": "[1]",
+        "expectCallback": false
+      },
+      "request_null_callbacks": {
+        "method": "requestQuota",
+        "source": "[1,null,null]",
+        "expectCallback": false
+      },
+      "request_bad_callback": {
+        "method": "requestQuota",
+        "source": "[1,{},failure]",
+        "expectCallback": false
+      },
+      "request_bad_error": {
+        "method": "requestQuota",
+        "source": "[1,success,{}]",
+        "expectCallback": false
+      },
+      "request_symbol": {
+        "method": "requestQuota",
+        "source": "[Symbol('size'),success,failure]",
+        "expectCallback": false
+      },
+      "request_bigint": {
+        "method": "requestQuota",
+        "source": "[1n,success,failure]",
+        "expectCallback": false
+      },
+      "request_nan": {
+        "method": "requestQuota",
+        "source": "[NaN,success,failure]",
+        "expectCallback": true
+      },
+      "request_inf": {
+        "method": "requestQuota",
+        "source": "[Infinity,success,failure]",
+        "expectCallback": true
+      },
+      "request_fraction": {
+        "method": "requestQuota",
+        "source": "[7.9,success,failure]",
+        "expectCallback": true
+      },
+      "request_wrap": {
+        "method": "requestQuota",
+        "source": "[18446744073709551616,success,failure]",
+        "expectCallback": true
+      },
+      "request_string": {
+        "method": "requestQuota",
+        "source": "['17',success,failure]",
+        "expectCallback": true
+      },
+      "request_convert": {
+        "method": "requestQuota",
+        "source": "[{valueOf(){effects.push('valueOf');return 17;}},success,failure]",
+        "expectCallback": true
+      },
+      "request_negative_fraction": {
+        "method": "requestQuota",
+        "source": "[-0.5,success,failure]",
+        "expectCallback": true
+      },
+      "request_primitive": {
+        "method": "requestQuota",
+        "source": "[{[Symbol.toPrimitive](hint){effects.push(hint);return 13;}},success,failure]",
+        "expectCallback": true
+      },
+      "request_object_symbol": {
+        "method": "requestQuota",
+        "source": "[{valueOf(){effects.push('valueOf');return Symbol('size');}},success,failure]",
+        "expectCallback": false
+      },
+      "query_proxy_callback": {
+        "method": "queryUsageAndQuota",
+        "source": "[new Proxy(success,{apply(target,receiver,args){effects.push('apply');return Reflect.apply(target,receiver,args);}}),failure]",
+        "expectCallback": true
+      },
+      "query_html_dda": {
+        "method": "queryUsageAndQuota",
+        "source": "[document.all,failure]",
+        "expectCallback": true
+      },
+      "request_throw": {
+        "method": "requestQuota",
+        "source": "[{valueOf(){effects.push('valueOf');throw sentinel;}},success,failure]",
+        "expectCallback": false
+      },
+      "request_conversion_before_callback": {
+        "method": "requestQuota",
+        "source": "[{valueOf(){effects.push('valueOf');return 1;}},17,failure]",
+        "expectCallback": false
+      }
+    },
+    "errors": {
+      "missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'DOMError': 1 argument required, but only 0 present."
+        }
+      },
+      "undefined": {
+        "name": "undefined",
+        "message": ""
+      },
+      "null": {
+        "name": "null",
+        "message": "null"
+      },
+      "omitted_message": {
+        "name": "Name",
+        "message": ""
+      },
+      "undefined_message": {
+        "name": "Name",
+        "message": ""
+      },
+      "known_name": {
+        "name": "AbortError",
+        "message": ""
+      },
+      "call": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'DOMError': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
+        }
+      },
+      "symbol": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'DOMError': Cannot convert a Symbol value to a string"
+        }
+      },
+      "symbol_message": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'DOMError': Cannot convert a Symbol value to a string"
+        }
+      },
+      "queryUsageAndQuotaReceiver": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        }
+      },
+      "requestQuotaReceiver": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        }
+      },
+      "webkitTemporaryStorageReceiver": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        }
+      },
+      "webkitPersistentStorageReceiver": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation"
+        }
+      }
+    }
+  }
+}

@@ -138,6 +138,9 @@ public:
     v8::Local<v8::Value> create_web_interface(v8::Isolate* isolate,
         v8::Local<v8::Context> context, const std::string& name,
         v8::Local<v8::Array> arguments);
+    v8::Local<v8::Value> create_dom_error(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, const std::u16string& name,
+        const std::u16string& message);
 
     // Step 5g: internal factory used only by the JS matchMedia bootstrap; returns
     // a cached HostObject backing for one query result. Not bound to Python.

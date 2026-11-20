@@ -20,7 +20,7 @@ SOURCES = [
     ("tag_css", "tag_css", "CSS", "window_shell", "CSS"),
     ("tag_style", "tag_style_proto", "CSSStyleDeclaration", "host_object", "CSSStyleDeclaration.prototype"),
     ("tag_battery", "tag_battery", "BatteryManager", "host_object", "BatteryManager"),
-    ("tag_quota", "tag_quota", "DeprecatedStorageQuota", "host_object", "DeprecatedStorageQuota"),
+    ("tag_quota", "tag_quota_proto", "DeprecatedStorageQuota", "host_object", "DeprecatedStorageQuota.prototype"),
 ]
 
 
@@ -42,6 +42,7 @@ def bind_tags(page):
         globalThis.tag_style_proto=Object.getPrototypeOf(tag_style);
         globalThis.tag_battery=null;navigator.getBattery().then(value=>{tag_battery=value;});
         globalThis.tag_quota=navigator.webkitPersistentStorage;
+        globalThis.tag_quota_proto=Object.getPrototypeOf(tag_quota);
         globalThis.tag_stringify=Object.prototype.toString;
         globalThis.tag_original_descriptor=Object.getOwnPropertyDescriptor;
         globalThis.tag_reflect_get=Reflect.get;globalThis.tag_effects=[];
@@ -102,7 +103,8 @@ def test_data_descriptors_flags_and_own_key_order_survive_monitoring_and_readonl
         reference_owner = "WindowProperties" if source[2] == "WindowProperties" else source[4]
         reference = browser_reference["owners"].get(reference_owner)
         if reference is None:
-            # Bootstrap Battery/Quota keep their existing flat profile; CSSStyle
+            # Bootstrap Battery keeps its flat profile; the new native quota
+            # prototype is checked against the BOM-03 fixture. CSSStyle
             # shape preservation is checked against this runtime's baseline.
             continue
         descriptor = {name: row[name] for name in ("value", "writable", "enumerable", "configurable")}

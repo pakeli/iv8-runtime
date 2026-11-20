@@ -63,7 +63,7 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     browser::watch_record(isolate, "window", name);
     const bool constructible = name == "Document" || name == "EventTarget" ||
         name == "Text" || name == "Comment" || name == "DocumentFragment" ||
-        name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser";
+        name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser" || name == "DOMError";
     if (!info.IsConstructCall()) {
         const auto message = constructible
             ? "Failed to construct '" + name + "': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
@@ -88,6 +88,14 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> result;
     if (!factory.As<v8::Function>()->Call(context, info.This(), 2, factory_arguments)
             .ToLocal(&result)) return;
+    if (name == "DOMError") {
+        // V8 has already obtained NewTarget.prototype when allocating This.
+        // Reuse it without executing a Proxy's prototype getter a second time.
+        if (result->IsObject() && !result.As<v8::Object>()->SetPrototype(
+                context, info.This()->GetPrototype()).FromMaybe(false)) return;
+        info.GetReturnValue().Set(result);
+        return;
+    }
     // Respect a subclass's prototype while retaining the native receiver brand.
     v8::Local<v8::Value> prototype;
     if (result->IsObject() && info.NewTarget().As<v8::Object>()
@@ -227,9 +235,10 @@ v8::Local<v8::Object> web_interface_prototype(
             v8::Symbol::GetToStringTag(isolate), string(isolate, name),
             browser::native_api_identity(isolate, prototype), "host_object", name + ".prototype",
             static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontEnum))) return {};
-    if (name == "WindowProperties" || name == "StyleMedia") return prototype;
+    if (name == "WindowProperties" || name == "StyleMedia" ||
+        name == "DeprecatedStorageQuota") return prototype;
     v8::Local<v8::Function> constructor;
-    const int length = name == "Worker" ? 1 : 0;
+    const int length = name == "Worker" || name == "DOMError" ? 1 : 0;
     if (!v8::Function::New(context, &interface_constructor, string(isolate, name), length)
             .ToLocal(&constructor)) return {};
     constructor->SetName(string(isolate, name));
@@ -312,7 +321,7 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
             "XMLHttpRequest", "XMLHttpRequestUpload", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
             "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser", "Scheduling",
-            "NetworkInformation", "ScreenOrientation", "VisualViewport"}) {
+            "NetworkInformation", "ScreenOrientation", "VisualViewport", "DOMError"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }
     for (const auto& [tag, name] : html_interfaces()) {

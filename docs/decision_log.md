@@ -1,11 +1,34 @@
 # Decision Log
 
-Last reviewed: `2026-11-19`
+Last reviewed: `2026-11-20`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
 
 ## Confirmed Decisions
+
+### Resume with the next bounded BOM family (`2026-11-20`)
+
+The user resumes work after the saved pause. BOM-02 is already implemented and
+validated; PR #33 has a green required V8 check and no submitted reviews/threads,
+so it is marked ready for review. Runtime binaries are retained. The next bounded
+family is selected from the existing BOM queue: native legacy quota aliases and
+callback behavior, including only the DOMError dependency actually required by
+Chrome. The user was offered alternate priorities while read-only work continued;
+the existing BOM queue supplies the default scope.
+
+Chrome confirms both aliases share one object, a private quota interface and a
+public constructible DOMError. The boundary is updated before implementation;
+the old persistent-shim nonzero failure, Promise-job timing and flat shape are
+superseded. Numeric/string conversions reuse the active vibrate primitive path,
+preserving user exceptions and existing generated-error profile limits. Mac
+wheels are validated first; release/installation remain distinct statuses.
+Boundary and evidence: `docs/bom_03_legacy_quota.md` /
+`docs/bom_03_legacy_quota_report.md`. PR #33 is not merged by this continuation.
+Local Mac Python 3.11–3.14 acceptance passes 1225 gate tests and 3451/2 full
+each (118 new cases); all four wheels and 442 source inputs are verified. The
+five offline scenarios preserve their prior execution outcomes. The full
+Linux/Windows release matrix and shared SDK installation remain pending.
 
 ### Continue BOM-02 after offline baseline validation (`2026-11-19`)
 

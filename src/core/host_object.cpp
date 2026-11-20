@@ -662,6 +662,13 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
             key, AccessOperation::kCall, legacy_owner);
         AccessCallCompletion completion(isolate, sequence, info);
         if (!isolate->IsExecutionTerminating()) {
+            if (interface_name == "DeprecatedStorageQuota") {
+                // Preserve the former bootstrap's call-attempt watch channel,
+                // including receiver rejection, for both native alias selectors.
+                browser::watch_record(isolate, "DeprecatedStorageQuota", key);
+                browser::watch_record(isolate, "navigator.webkitTemporaryStorage", key);
+                browser::watch_record(isolate, "navigator.webkitPersistentStorage", key);
+            }
             // These selected Promise-returning operations report receiver
             // failures as rejections. Trace only their synchronous Promise return.
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
