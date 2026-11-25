@@ -32,4 +32,7 @@ extern void file_reader_dispatch_event(const v8::FunctionCallbackInfo<v8::Value>
 
 extern void file_reader_constructor(const v8::FunctionCallbackInfo<v8::Value>& info);
 
+bool is_file_object(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                    v8::Local<v8::Value> value);
+
 }  // namespace iv8::browser

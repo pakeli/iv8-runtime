@@ -39,6 +39,11 @@ v8::Local<v8::Private> blob_type_key(v8::Isolate* isolate) {
         isolate, v8::String::NewFromUtf8Literal(isolate, "iv8::Blob::type"));
 }
 
+v8::Local<v8::Private> file_brand_key(v8::Isolate* isolate) {
+    return v8::Private::ForApi(
+        isolate, v8::String::NewFromUtf8Literal(isolate, "iv8::File::brand"));
+}
+
 v8::Local<v8::Private> file_reader_state_key(v8::Isolate* isolate) {
     return v8::Private::ForApi(
         isolate,
@@ -249,6 +254,18 @@ void file_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     }
     set_blob_field(isolate, context, info.This(), "lastModified",
                    v8::Number::New(isolate, last_modified), "File");
+    (void)info.This()->SetPrivate(context, file_brand_key(isolate),
+                                  v8::True(isolate));
+}
+
+bool is_file_object(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                    v8::Local<v8::Value> value) {
+    if (!value->IsObject() || value->IsProxy()) {
+        return false;
+    }
+    return value.As<v8::Object>()
+        ->HasPrivate(context, file_brand_key(isolate))
+        .FromMaybe(false);
 }
 
 DocumentHost* document_from_blob_data(v8::Local<v8::Value> data) {

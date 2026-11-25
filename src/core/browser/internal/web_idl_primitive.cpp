@@ -1,5 +1,8 @@
 #include "web_idl_primitive.h"
 
+#include <cmath>
+#include <cstdint>
+
 #include "iv8/access_origin.h"
 #include "common.h"
 
@@ -102,6 +105,86 @@ bool web_idl_to_primitive(v8::Isolate* isolate, v8::Local<v8::Context> context,
         if (!(*primitive)->IsObject()) return true;
     }
     return conversion_error(isolate, error_prefix, "Cannot convert object to primitive value");
+}
+
+bool web_idl_dom_string_u16(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Value> input, const std::string& error_prefix,
+    std::u16string* output) {
+    v8::Local<v8::Value> primitive;
+    if (!web_idl_to_primitive(isolate, context, input, true, error_prefix, &primitive)) return false;
+    if (primitive->IsSymbol()) {
+        return conversion_error(isolate, error_prefix, "Cannot convert a Symbol value to a string");
+    }
+    v8::Local<v8::String> text;
+    if (!primitive->ToString(context).ToLocal(&text)) return false;
+    v8::String::Value units(isolate, text);
+    if (!units.length()) {
+        output->clear();
+        return true;
+    }
+    if (*units == nullptr) return false;
+    output->assign(reinterpret_cast<const char16_t*>(*units),
+        static_cast<std::size_t>(units.length()));
+    return true;
+}
+
+bool web_idl_dom_string(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Value> input, const std::string& error_prefix,
+    std::string* output) {
+    v8::Local<v8::Value> primitive;
+    if (!web_idl_to_primitive(isolate, context, input, true, error_prefix, &primitive)) return false;
+    if (primitive->IsSymbol()) {
+        return conversion_error(isolate, error_prefix, "Cannot convert a Symbol value to a string");
+    }
+    v8::Local<v8::String> text;
+    if (!primitive->ToString(context).ToLocal(&text)) return false;
+    v8::String::Utf8Value utf8(isolate, text);
+    if (*utf8 == nullptr) {
+        output->clear();
+        return true;
+    }
+    output->assign(*utf8, static_cast<std::size_t>(utf8.length()));
+    return true;
+}
+
+bool web_idl_usv_string(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Value> input, const std::string& error_prefix,
+    std::string* output) {
+    // V8's Utf8Value replaces unpaired UTF-16 surrogates with U+FFFD, matching
+    // WebIDL's scalar-value USVString normalization.
+    return web_idl_dom_string(isolate, context, input, error_prefix, output);
+}
+
+bool web_idl_enforce_range_ull(v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Value> input, const std::string& error_prefix,
+    std::uint64_t* output) {
+    v8::Local<v8::Value> primitive;
+    if (!web_idl_to_primitive(isolate, context, input, false, error_prefix, &primitive)) return false;
+    if (primitive->IsSymbol()) {
+        return conversion_error(isolate, error_prefix, "Cannot convert a Symbol value to a number");
+    }
+    if (primitive->IsBigInt()) {
+        return conversion_error(isolate, error_prefix, "Cannot convert a BigInt value to a number");
+    }
+    v8::Maybe<double> number = primitive->NumberValue(context);
+    if (number.IsNothing()) return false;
+    const double raw = number.FromJust();
+    if (std::isnan(raw)) {
+        return conversion_error(isolate, error_prefix,
+            "Value is not of type 'unsigned long long'.");
+    }
+    if (std::isinf(raw)) {
+        return conversion_error(isolate, error_prefix,
+            "Value is infinite and not of type 'unsigned long long'.");
+    }
+    const double truncated = std::trunc(raw);
+    constexpr double kMaxSafeInteger = 9007199254740991.0;
+    if (truncated < 0.0 || truncated > kMaxSafeInteger) {
+        return conversion_error(isolate, error_prefix,
+            "Value is outside the 'unsigned long long' value range.");
+    }
+    *output = static_cast<std::uint64_t>(truncated);
+    return true;
 }
 
 }  // namespace iv8::browser

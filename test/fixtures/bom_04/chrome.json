@@ -1,0 +1,2569 @@
+{
+  "browser": "Google Chrome 157.0.8103.80",
+  "captured_at_utc": "2026-11-23T14:02:52.229Z",
+  "execution": {
+    "os": "darwin 25.5.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:<port>/reference",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "d191e5145a2800b499b6683bcce01c9b6d6ed0adb748c24cf7c4c948c12c355d",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "origin": "http://127.0.0.1:51790",
+    "activation": false,
+    "shape": {
+      "canShare": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "canShare",
+            "length": 0,
+            "source": "function canShare() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "share": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "share",
+            "length": 0,
+            "source": "function share() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "setAppBadge": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "setAppBadge",
+            "length": 0,
+            "source": "function setAppBadge() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "clearAppBadge": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "clearAppBadge",
+            "length": 0,
+            "source": "function clearAppBadge() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "registerProtocolHandler": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "registerProtocolHandler",
+            "length": 2,
+            "source": "function registerProtocolHandler() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "unregisterProtocolHandler": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "unregisterProtocolHandler",
+            "length": 2,
+            "source": "function unregisterProtocolHandler() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "getUserMedia": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "getUserMedia",
+            "length": 3,
+            "source": "function getUserMedia() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "webkitGetUserMedia": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "webkitGetUserMedia",
+            "length": 3,
+            "source": "function webkitGetUserMedia() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "requestMIDIAccess": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "requestMIDIAccess",
+            "length": 0,
+            "source": "function requestMIDIAccess() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "requestMediaKeySystemAccess": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "requestMediaKeySystemAccess",
+            "length": 2,
+            "source": "function requestMediaKeySystemAccess() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "sameGetUserMedia": false
+    },
+    "calls": {
+      "canShare_missing": {
+        "returned": {
+          "type": "boolean",
+          "value": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "canShare_undefined": {
+        "returned": {
+          "type": "boolean",
+          "value": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[undefined]"
+      },
+      "canShare_null": {
+        "returned": {
+          "type": "boolean",
+          "value": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[null]"
+      },
+      "canShare_empty": {
+        "returned": {
+          "type": "boolean",
+          "value": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{}]"
+      },
+      "canShare_url": {
+        "returned": {
+          "type": "boolean",
+          "value": true
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{url:'https://example.com/'}]"
+      },
+      "canShare_relative": {
+        "returned": {
+          "type": "boolean",
+          "value": true
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{url:'relative/path'}]"
+      },
+      "canShare_bad_url": {
+        "returned": {
+          "type": "boolean",
+          "value": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{url:'http://[bad'}]"
+      },
+      "canShare_javascript": {
+        "returned": {
+          "type": "boolean",
+          "value": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{url:'javascript:void(0)'}]"
+      },
+      "canShare_ftp": {
+        "returned": {
+          "type": "boolean",
+          "value": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{url:'ftp://example.com/'}]"
+      },
+      "canShare_title": {
+        "returned": {
+          "type": "boolean",
+          "value": true
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{title:'t'}]"
+      },
+      "canShare_text": {
+        "returned": {
+          "type": "boolean",
+          "value": true
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{text:'x'}]"
+      },
+      "canShare_empty_text": {
+        "returned": {
+          "type": "boolean",
+          "value": true
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{text:''}]"
+      },
+      "canShare_files_empty": {
+        "returned": {
+          "type": "boolean",
+          "value": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{files:[]}]"
+      },
+      "canShare_file": {
+        "returned": {
+          "type": "boolean",
+          "value": true
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{files:[new File(['a'],'a.txt',{type:'text/plain'})]}]"
+      },
+      "canShare_file_exe": {
+        "returned": {
+          "type": "boolean",
+          "value": true
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{files:[new File(['a'],'a.exe',{type:'application/octet-stream'})]}]"
+      },
+      "canShare_files_bad": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'canShare' on 'Navigator': Failed to read the 'files' property from 'ShareData': Failed to convert value to 'File'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{files:[17]}]"
+      },
+      "canShare_number": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'canShare' on 'Navigator': The provided value is not of type 'ShareData'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[17]"
+      },
+      "canShare_string": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'canShare' on 'Navigator': The provided value is not of type 'ShareData'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['x']"
+      },
+      "canShare_order": {
+        "returned": {
+          "type": "boolean",
+          "value": true
+        },
+        "effects": [
+          "files",
+          "text",
+          "title",
+          "url",
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{get files(){effects.push('files');return undefined;},get text(){effects.push('text');return undefined;},get title(){effects.push('title');return undefined;},get url(){effects.push('url');return 'https://example.com/share';}}]"
+      },
+      "canShare_throw": {
+        "error": {
+          "tag": "[object Object]",
+          "domException": false,
+          "same": true
+        },
+        "effects": [
+          "url",
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{get url(){effects.push('url');throw sentinel;}}]"
+      },
+      "share_missing": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "share_empty": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{}]"
+      },
+      "share_url": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{url:'https://example.com/'}]"
+      },
+      "share_bad_url": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{url:'http://[bad'}]"
+      },
+      "share_number": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'share' on 'Navigator': The provided value is not of type 'ShareData'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[17]"
+      },
+      "share_text": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{text:'x'}]"
+      },
+      "share_order": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "files",
+          "text",
+          "title",
+          "url",
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{get files(){effects.push('files');return undefined;},get text(){effects.push('text');return undefined;},get title(){effects.push('title');return undefined;},get url(){effects.push('url');return 'https://example.com/share';}}]"
+      },
+      "share_throw": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "url",
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "tag": "[object Object]",
+              "domException": false
+            },
+            "same": true
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{get url(){effects.push('url');throw sentinel;}}]"
+      },
+      "share_file": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{files:[new File(['a'],'a.txt',{type:'text/plain'})]}]"
+      },
+      "setAppBadge_missing": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "setAppBadge_undefined": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[undefined]"
+      },
+      "setAppBadge_zero": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[0]"
+      },
+      "setAppBadge_five": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[5]"
+      },
+      "setAppBadge_negative": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'setAppBadge' on 'Navigator': Value is outside the 'unsigned long long' value range.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[-1]"
+      },
+      "setAppBadge_fraction": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[1.5]"
+      },
+      "setAppBadge_string": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['3']"
+      },
+      "setAppBadge_nan": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'setAppBadge' on 'Navigator': Value is not of type 'unsigned long long'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[NaN]"
+      },
+      "setAppBadge_infinity": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'setAppBadge' on 'Navigator': Value is infinite and not of type 'unsigned long long'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[Infinity]"
+      },
+      "setAppBadge_huge": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'setAppBadge' on 'Navigator': Value is outside the 'unsigned long long' value range.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[2**64]"
+      },
+      "setAppBadge_max_safe": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[Number.MAX_SAFE_INTEGER]"
+      },
+      "setAppBadge_over_safe": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'setAppBadge' on 'Navigator': Value is outside the 'unsigned long long' value range.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[Number.MAX_SAFE_INTEGER+2]"
+      },
+      "setAppBadge_symbol": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'setAppBadge' on 'Navigator': Cannot convert a Symbol value to a number",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[Symbol('x')]"
+      },
+      "setAppBadge_bigint": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'setAppBadge' on 'Navigator': Cannot convert a BigInt value to a number",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[1n]"
+      },
+      "setAppBadge_null": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[null]"
+      },
+      "setAppBadge_convert": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "valueOf",
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{valueOf(){effects.push('valueOf');return 2;}}]"
+      },
+      "setAppBadge_throw": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "valueOf",
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "tag": "[object Object]",
+              "domException": false
+            },
+            "same": true
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{valueOf(){effects.push('valueOf');throw sentinel;}}]"
+      },
+      "clearAppBadge_missing": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "clearAppBadge_extra": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{valueOf(){effects.push('valueOf');return 1;}}]"
+      },
+      "register_missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': 2 arguments required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "register_one": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': 2 arguments required, but only 1 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test']"
+      },
+      "register_relative": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','/handler?q=%s']"
+      },
+      "register_absolute_same": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test',location.origin+'/handler?q=%s']"
+      },
+      "register_cross_origin": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': Can only register custom handler in the document's origin.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','https://example.com/?q=%s']"
+      },
+      "register_insecure_cross": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The scheme of the url provided must be HTTP(S).",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','http://example.com/?q=%s']"
+      },
+      "register_no_placeholder": {
+        "error": {
+          "name": "SyntaxError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The url provided ('/handler') does not contain '%s'.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','/handler']"
+      },
+      "register_bad_scheme": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The scheme 'notallowed' doesn't belong to the scheme allowlist. Please prefix non-allowlisted schemes with the string 'web+'.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['notallowed','/h?%s']"
+      },
+      "register_mailto": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['mailto','/h?%s']"
+      },
+      "register_bitcoin": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['bitcoin','/h?%s']"
+      },
+      "register_web_plus_only": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The scheme name 'web+' is not allowed. Schemes starting with 'web+' must be followed by one or more ASCII letters.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+','/h?%s']"
+      },
+      "register_upper": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['WEB+Test','/h?%s']"
+      },
+      "register_web_digit": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The scheme name 'web+te5t' is not allowed. Schemes starting with 'web+te5t' must be followed by one or more ASCII letters.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+te5t','/h?%s']"
+      },
+      "register_non_ascii": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The scheme name 'web+tést' is not allowed by URI syntax (RFC3986).",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+tést','/h?%s']"
+      },
+      "register_bad_url": {
+        "error": {
+          "name": "SyntaxError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The custom handler URL created by removing '%s' and prepending 'http://127.0.0.1:51790/reference' is invalid.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','http://[bad/%s']"
+      },
+      "register_javascript_url": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The scheme of the url provided must be HTTP(S).",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','javascript:%s']"
+      },
+      "register_data_url": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The scheme of the url provided must be HTTP(S).",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','data:text/html,%s']"
+      },
+      "register_http_scheme": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': The scheme 'http' doesn't belong to the scheme allowlist. Please prefix non-allowlisted schemes with the string 'web+'.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['http','/h?%s']"
+      },
+      "register_ftp_scheme": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['ftp','/h?%s']"
+      },
+      "register_convert": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "scheme",
+          "url",
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{toString(){effects.push('scheme');return 'web+x';}},{toString(){effects.push('url');return '/h?%s';}}]"
+      },
+      "register_throw_scheme": {
+        "error": {
+          "tag": "[object Object]",
+          "domException": false,
+          "same": true
+        },
+        "effects": [
+          "scheme",
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{toString(){effects.push('scheme');throw sentinel;}},{toString(){effects.push('url');return '/h?%s';}}]"
+      },
+      "register_symbol": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'registerProtocolHandler' on 'Navigator': Cannot convert a Symbol value to a string",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[Symbol('x'),'/h?%s']"
+      },
+      "register_three": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','/h?%s','title']"
+      },
+      "unregister_missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': 2 arguments required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "unregister_one": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': 2 arguments required, but only 1 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test']"
+      },
+      "unregister_relative": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','/handler?q=%s']"
+      },
+      "unregister_absolute_same": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test',location.origin+'/handler?q=%s']"
+      },
+      "unregister_cross_origin": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': Can only register custom handler in the document's origin.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','https://example.com/?q=%s']"
+      },
+      "unregister_insecure_cross": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The scheme of the url provided must be HTTP(S).",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','http://example.com/?q=%s']"
+      },
+      "unregister_no_placeholder": {
+        "error": {
+          "name": "SyntaxError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The url provided ('/handler') does not contain '%s'.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','/handler']"
+      },
+      "unregister_bad_scheme": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The scheme 'notallowed' doesn't belong to the scheme allowlist. Please prefix non-allowlisted schemes with the string 'web+'.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['notallowed','/h?%s']"
+      },
+      "unregister_mailto": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['mailto','/h?%s']"
+      },
+      "unregister_bitcoin": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['bitcoin','/h?%s']"
+      },
+      "unregister_web_plus_only": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The scheme name 'web+' is not allowed. Schemes starting with 'web+' must be followed by one or more ASCII letters.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+','/h?%s']"
+      },
+      "unregister_upper": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['WEB+Test','/h?%s']"
+      },
+      "unregister_web_digit": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The scheme name 'web+te5t' is not allowed. Schemes starting with 'web+te5t' must be followed by one or more ASCII letters.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+te5t','/h?%s']"
+      },
+      "unregister_non_ascii": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The scheme name 'web+tést' is not allowed by URI syntax (RFC3986).",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+tést','/h?%s']"
+      },
+      "unregister_bad_url": {
+        "error": {
+          "name": "SyntaxError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The custom handler URL created by removing '%s' and prepending 'http://127.0.0.1:51790/reference' is invalid.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','http://[bad/%s']"
+      },
+      "unregister_javascript_url": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The scheme of the url provided must be HTTP(S).",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','javascript:%s']"
+      },
+      "unregister_data_url": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The scheme of the url provided must be HTTP(S).",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','data:text/html,%s']"
+      },
+      "unregister_http_scheme": {
+        "error": {
+          "name": "SecurityError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': The scheme 'http' doesn't belong to the scheme allowlist. Please prefix non-allowlisted schemes with the string 'web+'.",
+          "tag": "[object DOMException]",
+          "domException": true,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['http','/h?%s']"
+      },
+      "unregister_ftp_scheme": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['ftp','/h?%s']"
+      },
+      "unregister_convert": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "scheme",
+          "url",
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{toString(){effects.push('scheme');return 'web+x';}},{toString(){effects.push('url');return '/h?%s';}}]"
+      },
+      "unregister_throw_scheme": {
+        "error": {
+          "tag": "[object Object]",
+          "domException": false,
+          "same": true
+        },
+        "effects": [
+          "scheme",
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{toString(){effects.push('scheme');throw sentinel;}},{toString(){effects.push('url');return '/h?%s';}}]"
+      },
+      "unregister_symbol": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'unregisterProtocolHandler' on 'Navigator': Cannot convert a Symbol value to a string",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[Symbol('x'),'/h?%s']"
+      },
+      "unregister_three": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "['web+test','/h?%s','title']"
+      },
+      "getUserMedia_missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': 3 arguments required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "getUserMedia_constraints_only": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': 3 arguments required, but only 1 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true}]"
+      },
+      "getUserMedia_two": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': 3 arguments required, but only 2 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true},success]"
+      },
+      "getUserMedia_empty_constraints": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': At least one of audio and video must be requested",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{},success,failure]"
+      },
+      "getUserMedia_audio": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission denied",
+              "tag": "[object DOMException]",
+              "domException": true
+            }
+          }
+        ],
+        "source": "[{audio:true},success,failure]"
+      },
+      "getUserMedia_video": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission denied",
+              "tag": "[object DOMException]",
+              "domException": true
+            }
+          }
+        ],
+        "source": "[{video:true},success,failure]"
+      },
+      "getUserMedia_bad_success": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': parameter 2 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true},17,failure]"
+      },
+      "getUserMedia_bad_failure": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': parameter 3 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true},success,17]"
+      },
+      "getUserMedia_null_failure": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': parameter 3 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true},success,null]"
+      },
+      "getUserMedia_number_constraints": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': The provided value is not of type 'MediaStreamConstraints'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[17,success,failure]"
+      },
+      "getUserMedia_false_both": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getUserMedia' on 'Navigator': At least one of audio and video must be requested",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:false,video:false},success,failure]"
+      },
+      "getUserMedia_order": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "audio",
+          "video",
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission denied",
+              "tag": "[object DOMException]",
+              "domException": true
+            }
+          }
+        ],
+        "source": "[{get audio(){effects.push('audio');return true;},get video(){effects.push('video');return false;}},success,failure]"
+      },
+      "webkitGetUserMedia_missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': 3 arguments required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "webkitGetUserMedia_constraints_only": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': 3 arguments required, but only 1 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true}]"
+      },
+      "webkitGetUserMedia_two": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': 3 arguments required, but only 2 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true},success]"
+      },
+      "webkitGetUserMedia_empty_constraints": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': At least one of audio and video must be requested",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{},success,failure]"
+      },
+      "webkitGetUserMedia_audio": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission denied",
+              "tag": "[object DOMException]",
+              "domException": true
+            }
+          }
+        ],
+        "source": "[{audio:true},success,failure]"
+      },
+      "webkitGetUserMedia_video": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission denied",
+              "tag": "[object DOMException]",
+              "domException": true
+            }
+          }
+        ],
+        "source": "[{video:true},success,failure]"
+      },
+      "webkitGetUserMedia_bad_success": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': parameter 2 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true},17,failure]"
+      },
+      "webkitGetUserMedia_bad_failure": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': parameter 3 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true},success,17]"
+      },
+      "webkitGetUserMedia_null_failure": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': parameter 3 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:true},success,null]"
+      },
+      "webkitGetUserMedia_number_constraints": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': The provided value is not of type 'MediaStreamConstraints'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[17,success,failure]"
+      },
+      "webkitGetUserMedia_false_both": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'webkitGetUserMedia' on 'Navigator': At least one of audio and video must be requested",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "source": "[{audio:false,video:false},success,failure]"
+      },
+      "webkitGetUserMedia_order": {
+        "returned": {
+          "type": "undefined"
+        },
+        "effects": [
+          "audio",
+          "video",
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission denied",
+              "tag": "[object DOMException]",
+              "domException": true
+            }
+          }
+        ],
+        "source": "[{get audio(){effects.push('audio');return true;},get video(){effects.push('video');return false;}},success,failure]"
+      },
+      "midi_missing": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission to use Web MIDI API was not granted.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "source": "[]"
+      },
+      "midi_empty": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission to use Web MIDI API was not granted.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "source": "[{}]"
+      },
+      "midi_sysex": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission to use Web MIDI API was not granted.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "source": "[{sysex:true}]"
+      },
+      "midi_number": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestMIDIAccess' on 'Navigator': The provided value is not of type 'MIDIOptions'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[17]"
+      },
+      "midi_null": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission to use Web MIDI API was not granted.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "source": "[null]"
+      },
+      "midi_order": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "sysex",
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Permission to use Web MIDI API was not granted.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "source": "[{get software(){effects.push('software');return false;},get sysex(){effects.push('sysex');return false;}}]"
+      },
+      "mksa_missing": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestMediaKeySystemAccess' on 'Navigator': 2 arguments required, but only 0 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[]"
+      },
+      "mksa_one": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestMediaKeySystemAccess' on 'Navigator': 2 arguments required, but only 1 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['org.w3.clearkey']"
+      },
+      "mksa_empty_list": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestMediaKeySystemAccess' on 'Navigator': The supportedConfigurations parameter is empty.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['org.w3.clearkey',[]]"
+      },
+      "mksa_empty_system": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestMediaKeySystemAccess' on 'Navigator': The keySystem parameter is empty.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['',[{}]]"
+      },
+      "mksa_widevine": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "Unsupported keySystem or supportedConfigurations.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "source": "['com.widevine.alpha',[{}]]"
+      },
+      "mksa_unknown": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "Unsupported keySystem or supportedConfigurations.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['unknown.system',[{}]]"
+      },
+      "mksa_clearkey_empty": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "Unsupported keySystem or supportedConfigurations.",
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['org.w3.clearkey',[{}]]"
+      },
+      "mksa_clearkey_video": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object MediaKeySystemAccess]"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['org.w3.clearkey',[{initDataTypes:['cenc'],videoCapabilities:[{contentType:'video/mp4; codecs=\"avc1.42E01E\"'}]}]]"
+      },
+      "mksa_not_iterable": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestMediaKeySystemAccess' on 'Navigator': The provided value cannot be converted to a sequence.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['org.w3.clearkey',17]"
+      },
+      "mksa_bad_config": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestMediaKeySystemAccess' on 'Navigator': The provided value is not of type 'MediaKeySystemConfiguration'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "['org.w3.clearkey',[17]]"
+      },
+      "mksa_order": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "effects": [
+          "keySystem",
+          "iterator",
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestMediaKeySystemAccess' on 'Navigator': The supportedConfigurations parameter is empty.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "source": "[{toString(){effects.push('keySystem');return 'org.w3.clearkey';}},{[Symbol.iterator](){effects.push('iterator');return [][Symbol.iterator]();}}]"
+      }
+    },
+    "receivers": {
+      "canShare": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "share": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "rejected": {
+          "name": "TypeError",
+          "message": "Failed to execute 'share' on 'Navigator': Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "setAppBadge": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "rejected": {
+          "name": "TypeError",
+          "message": "Failed to execute 'setAppBadge' on 'Navigator': Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "clearAppBadge": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "rejected": {
+          "name": "TypeError",
+          "message": "Failed to execute 'clearAppBadge' on 'Navigator': Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "registerProtocolHandler": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "unregisterProtocolHandler": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "getUserMedia": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "webkitGetUserMedia": {
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "requestMIDIAccess": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "rejected": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestMIDIAccess' on 'Navigator': Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "requestMediaKeySystemAccess": {
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        },
+        "rejected": {
+          "name": "TypeError",
+          "message": "Failed to execute 'requestMediaKeySystemAccess' on 'Navigator': Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      }
+    },
+    "extra": {
+      "accessError": {
+        "name": "NotSupportedError",
+        "message": "Unsupported keySystem or supportedConfigurations.",
+        "tag": "[object DOMException]",
+        "domException": true
+      }
+    }
+  }
+}

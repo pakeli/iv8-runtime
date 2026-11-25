@@ -671,10 +671,23 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
             }
             // These selected Promise-returning operations report receiver
             // failures as rejections. Trace only their synchronous Promise return.
+            const bool navigator_promise = interface_name == "Navigator" &&
+                (key == "getInstalledRelatedApps" || key == "share" ||
+                 key == "setAppBadge" || key == "clearAppBadge" ||
+                 key == "requestMIDIAccess" || key == "requestMediaKeySystemAccess");
+            const bool eme_promise =
+                (interface_name == "MediaKeySystemAccess" && key == "createMediaKeys") ||
+                (interface_name == "MediaKeys" &&
+                    (key == "setServerCertificate" || key == "getStatusForPolicy")) ||
+                (interface_name == "MediaKeySession" &&
+                    (key == "close" || key == "generateRequest" || key == "load" ||
+                     key == "remove" || key == "update"));
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
-                (interface_name == "Navigator" && key == "getInstalledRelatedApps")) {
-                browser::watch_record(isolate,
-                    interface_name == "Navigator" ? "navigator" : "screen.orientation", key);
+                navigator_promise || eme_promise) {
+                const std::string watch_owner = navigator_promise
+                    ? "navigator"
+                    : (interface_name == "ScreenOrientation" ? "screen.orientation" : interface_name);
+                browser::watch_record(isolate, watch_owner, key);
                 v8::Local<v8::Promise::Resolver> resolver;
                 if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||
                     !resolver->Reject(context, v8::Exception::TypeError(v8str(isolate,

@@ -13,6 +13,8 @@ int web_method_length(std::string_view receiver, std::string_view name) {
     if (receiver == "history" && (name == "pushState" || name == "replaceState")) return 2;
     if (receiver == "orientation" && name == "lock") return 1;
     if (receiver == "navigator" && name == "vibrate") return 1;
+    if (receiver == "media_key_status_map" &&
+        (name == "get" || name == "has" || name == "forEach")) return 1;
     if (name == "queryUsageAndQuota" || name == "requestQuota") return 1;
     if (name == "add" && receiver == "host_probe") return 2;
     if (name == "replace" && receiver == "location") return 1;
@@ -50,6 +52,10 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"mark", 1}, {"measure", 1}, {"getEntriesByName", 1},
         {"getEntriesByType", 1}, {"moveTo", 2}, {"moveBy", 2},
         {"resizeTo", 2}, {"resizeBy", 2},
+        {"registerProtocolHandler", 2}, {"unregisterProtocolHandler", 2},
+        {"getUserMedia", 3}, {"webkitGetUserMedia", 3},
+        {"requestMediaKeySystemAccess", 2}, {"setServerCertificate", 1},
+        {"generateRequest", 2}, {"load", 1}, {"update", 1},
     };
     const auto found = lengths.find(name);
     return found == lengths.end() ? 0 : found->second;

@@ -36,6 +36,7 @@ std::string_view parent_interface(std::string_view name) {
         {"VisualViewport", "EventTarget"},
         {"CookieStore", "EventTarget"}, {"Navigation", "EventTarget"},
         {"DocumentPictureInPicture", "EventTarget"}, {"SpeechSynthesis", "EventTarget"},
+        {"MediaKeySession", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"},
         {"XMLHttpRequestUpload", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
@@ -63,7 +64,8 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     browser::watch_record(isolate, "window", name);
     const bool constructible = name == "Document" || name == "EventTarget" ||
         name == "Text" || name == "Comment" || name == "DocumentFragment" ||
-        name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser" || name == "DOMError";
+        name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser" ||
+        name == "DOMError" || name == "DOMException";
     if (!info.IsConstructCall()) {
         const auto message = constructible
             ? "Failed to construct '" + name + "': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
@@ -88,7 +90,7 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> result;
     if (!factory.As<v8::Function>()->Call(context, info.This(), 2, factory_arguments)
             .ToLocal(&result)) return;
-    if (name == "DOMError") {
+    if (name == "DOMError" || name == "DOMException") {
         // V8 has already obtained NewTarget.prototype when allocating This.
         // Reuse it without executing a Proxy's prototype getter a second time.
         if (result->IsObject() && !result.As<v8::Object>()->SetPrototype(
@@ -321,7 +323,8 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
             "XMLHttpRequest", "XMLHttpRequestUpload", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
             "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser", "Scheduling",
-            "NetworkInformation", "ScreenOrientation", "VisualViewport", "DOMError"}) {
+            "NetworkInformation", "ScreenOrientation", "VisualViewport",
+            "DOMError", "DOMException"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }
     for (const auto& [tag, name] : html_interfaces()) {

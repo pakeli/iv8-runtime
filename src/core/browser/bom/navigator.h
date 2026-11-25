@@ -20,6 +20,7 @@
 #include "navigator_identity.h"
 #include "navigator_capabilities.h"
 #include "navigator_vibration.h"
+#include "navigator_methods.h"
 #include "legacy_quota.h"
 
 namespace iv8 {
@@ -37,6 +38,7 @@ public:
     NavigatorHost(const HostEnvironment* environment, bool secure_context,
         PageState* owner, const std::string& base_url)
         : environment_(environment), secure_context_(secure_context),
+          owner_(owner), base_url_(base_url),
           connection_(environment), user_agent_data_(environment), quota_(owner, base_url) {}
 
     std::string global_name() const override { return "navigator"; }
@@ -57,7 +59,13 @@ public:
 
     std::vector<std::string> method_names() const override {
         std::vector<std::string> names = {"getGamepads", "javaEnabled", "vibrate"};
-        if (secure_context_) names.emplace_back("getInstalledRelatedApps");
+        if (secure_context_) {
+            names.insert(names.end(), {
+                "canShare", "share", "clearAppBadge", "getUserMedia",
+                "requestMIDIAccess", "requestMediaKeySystemAccess",
+                "setAppBadge", "webkitGetUserMedia", "getInstalledRelatedApps",
+                "registerProtocolHandler", "unregisterProtocolHandler"});
+        }
         return names;
     }
 
@@ -212,7 +220,8 @@ public:
         if (name == "getInstalledRelatedApps") return empty_related_applications(isolate, context);
         if (name == "vibrate") return navigator_vibrate(isolate, context, arguments);
         if (name == "javaEnabled") return v8::False(isolate);
-        return v8::Undefined(isolate);
+        return navigator_call_bom04_method(
+            isolate, context, owner_, base_url_, name, arguments);
     }
 
 private:
@@ -220,6 +229,8 @@ private:
     // valid for as long as this host object is installed.
     const HostEnvironment* environment_;
     const bool secure_context_;
+    PageState* owner_;
+    std::string base_url_;
     ConnectionHost connection_;
     SchedulingHost scheduling_;
     NavigatorUADataHost user_agent_data_;
