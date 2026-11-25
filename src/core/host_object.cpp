@@ -682,11 +682,33 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 (interface_name == "MediaKeySession" &&
                     (key == "close" || key == "generateRequest" || key == "load" ||
                      key == "remove" || key == "update"));
+            const bool bom05_promise =
+                (interface_name == "Clipboard" &&
+                    (key == "read" || key == "readText" ||
+                     key == "write" || key == "writeText")) ||
+                (interface_name == "ClipboardItem" && key == "getType") ||
+                (interface_name == "CredentialsContainer" &&
+                    (key == "create" || key == "get" ||
+                     key == "preventSilentAccess" || key == "store")) ||
+                (interface_name == "LockManager" &&
+                    (key == "query" || key == "request")) ||
+                (interface_name == "WakeLock" && key == "request") ||
+                (interface_name == "WakeLockSentinel" && key == "release") ||
+                (interface_name == "Keyboard" &&
+                    (key == "getLayoutMap" || key == "lock")) ||
+                (interface_name == "MediaCapabilities" &&
+                    (key == "decodingInfo" || key == "encodingInfo"));
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
-                navigator_promise || eme_promise) {
-                const std::string watch_owner = navigator_promise
-                    ? "navigator"
-                    : (interface_name == "ScreenOrientation" ? "screen.orientation" : interface_name);
+                navigator_promise || eme_promise || bom05_promise) {
+                std::string watch_owner = interface_name;
+                if (navigator_promise) watch_owner = "navigator";
+                else if (interface_name == "ScreenOrientation") watch_owner = "screen.orientation";
+                else if (interface_name == "Clipboard") watch_owner = "navigator.clipboard";
+                else if (interface_name == "CredentialsContainer") watch_owner = "navigator.credentials";
+                else if (interface_name == "LockManager") watch_owner = "navigator.locks";
+                else if (interface_name == "WakeLock") watch_owner = "navigator.wakeLock";
+                else if (interface_name == "Keyboard") watch_owner = "navigator.keyboard";
+                else if (interface_name == "MediaCapabilities") watch_owner = "navigator.mediaCapabilities";
                 browser::watch_record(isolate, watch_owner, key);
                 v8::Local<v8::Promise::Resolver> resolver;
                 if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||

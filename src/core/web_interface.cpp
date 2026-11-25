@@ -37,6 +37,7 @@ std::string_view parent_interface(std::string_view name) {
         {"CookieStore", "EventTarget"}, {"Navigation", "EventTarget"},
         {"DocumentPictureInPicture", "EventTarget"}, {"SpeechSynthesis", "EventTarget"},
         {"MediaKeySession", "EventTarget"},
+        {"Clipboard", "EventTarget"}, {"WakeLockSentinel", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"},
         {"XMLHttpRequestUpload", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
@@ -65,7 +66,8 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     const bool constructible = name == "Document" || name == "EventTarget" ||
         name == "Text" || name == "Comment" || name == "DocumentFragment" ||
         name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser" ||
-        name == "DOMError" || name == "DOMException";
+        name == "DOMError" || name == "DOMException" ||
+        name == "ClipboardItem" || name == "MediaMetadata";
     if (!info.IsConstructCall()) {
         const auto message = constructible
             ? "Failed to construct '" + name + "': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
@@ -90,7 +92,8 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> result;
     if (!factory.As<v8::Function>()->Call(context, info.This(), 2, factory_arguments)
             .ToLocal(&result)) return;
-    if (name == "DOMError" || name == "DOMException") {
+    if (name == "DOMError" || name == "DOMException" ||
+        name == "ClipboardItem" || name == "MediaMetadata") {
         // V8 has already obtained NewTarget.prototype when allocating This.
         // Reuse it without executing a Proxy's prototype getter a second time.
         if (result->IsObject() && !result.As<v8::Object>()->SetPrototype(
@@ -240,7 +243,8 @@ v8::Local<v8::Object> web_interface_prototype(
     if (name == "WindowProperties" || name == "StyleMedia" ||
         name == "DeprecatedStorageQuota") return prototype;
     v8::Local<v8::Function> constructor;
-    const int length = name == "Worker" || name == "DOMError" ? 1 : 0;
+    const int length = name == "Worker" || name == "DOMError" ||
+        name == "ClipboardItem" ? 1 : 0;
     if (!v8::Function::New(context, &interface_constructor, string(isolate, name), length)
             .ToLocal(&constructor)) return {};
     constructor->SetName(string(isolate, name));

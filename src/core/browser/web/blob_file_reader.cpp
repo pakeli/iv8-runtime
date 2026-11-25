@@ -268,6 +268,62 @@ bool is_file_object(v8::Isolate* isolate, v8::Local<v8::Context> context,
         .FromMaybe(false);
 }
 
+bool is_blob_object(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                    v8::Local<v8::Value> value) {
+    if (!value->IsObject() || value->IsProxy()) {
+        return false;
+    }
+    return value.As<v8::Object>()
+        ->HasPrivate(context, blob_bytes_key(isolate))
+        .FromMaybe(false);
+}
+
+v8::Local<v8::Private> runtime_blob_ctor_key(v8::Isolate* isolate) {
+    return v8::Private::ForApi(
+        isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8::Blob::constructor"));
+}
+
+void register_runtime_blob_constructor(v8::Isolate* isolate,
+                                       v8::Local<v8::Context> context,
+                                       v8::Local<v8::Function> constructor) {
+    (void)context->Global()->SetPrivate(
+        context, runtime_blob_ctor_key(isolate), constructor);
+}
+
+v8::MaybeLocal<v8::Object> create_runtime_blob(v8::Isolate* isolate,
+                                               v8::Local<v8::Context> context,
+                                               v8::Local<v8::String> text,
+                                               const std::string& type) {
+    auto runtime_origin = access_runtime_scope(isolate);
+    v8::Local<v8::Value> ctor_val;
+    v8::Local<v8::Value> proto_val;
+    if (!context->Global()
+             ->GetPrivate(context, runtime_blob_ctor_key(isolate))
+             .ToLocal(&ctor_val) ||
+        !ctor_val->IsFunction() ||
+        !ctor_val.As<v8::Object>()
+             ->Get(context, v8_string(isolate, "prototype"))
+             .ToLocal(&proto_val) ||
+        !proto_val->IsObject()) {
+        return {};
+    }
+    auto self = v8::Object::New(isolate);
+    if (!self->SetPrototype(context, proto_val).FromMaybe(false)) {
+        return {};
+    }
+    auto parts = v8::Array::New(isolate, 1);
+    (void)parts->CreateDataProperty(context, 0, text);
+    auto options = v8::Object::New(isolate);
+    (void)options->CreateDataProperty(
+        context, v8_string(isolate, "type").As<v8::String>(),
+        v8_string(isolate, type));
+    if (!blob_initialize(isolate, context, parts, options, self, "Blob")) {
+        return {};
+    }
+    return self;
+}
+
 DocumentHost* document_from_blob_data(v8::Local<v8::Value> data) {
     if (!data->IsExternal()) {
         return nullptr;

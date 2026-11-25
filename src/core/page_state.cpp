@@ -36,6 +36,7 @@
 #include "browser/bom/navigator_identity.h"
 #include "browser/bom/navigator_capabilities.h"
 #include "browser/bom/navigator_methods.h"
+#include "browser/bom/navigator_permissions_bom.h"
 #include "browser/bom/legacy_quota.h"
 #include "browser/web/dom_exception.h"
 #include "browser/window/window_event_target.h"
@@ -1823,6 +1824,10 @@ v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Array> arguments) {
     if (name == "DOMError") return construct_dom_error(isolate, context, this, arguments);
     if (name == "DOMException") return construct_dom_exception(isolate, context, this, arguments);
+    if (name == "ClipboardItem") return construct_clipboard_item(isolate, context, this, arguments);
+    if (name == "MediaMetadata") {
+        return construct_media_metadata(isolate, context, this, bootstrap_.base_url, arguments);
+    }
     if (name == "XMLHttpRequest") {
         auto upload = std::make_unique<XMLHttpRequestUploadHost>();
         auto upload_object = make_host_object(isolate, context, upload.get());
@@ -1963,6 +1968,9 @@ void PageState::install_page(const std::string& base_url,
             if (!install_legacy_quota_interfaces(isolate, context, this)) return;
             if (!install_navigator_method_interfaces(isolate, context, this,
                     window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
+            if (!install_navigator_bom05_interfaces(isolate, context, this,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate),
+                    base_url)) return;
             install_dom_parser_interface(isolate, context, this);
             install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());
@@ -2679,6 +2687,7 @@ void PageState::install_page(const std::string& base_url,
                 v8::Local<v8::Function> blob_fn =
                     blob_tpl->GetFunction(context).ToLocalChecked();
                 document->set_blob_constructor(isolate, blob_fn);
+                register_runtime_blob_constructor(isolate, context, blob_fn);
                 (void)global->Set(context, v8_string(isolate, "Blob"), blob_fn);
                 (void)global->Set(
                     context, v8_string(isolate, "File"),

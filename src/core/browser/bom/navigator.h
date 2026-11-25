@@ -21,6 +21,7 @@
 #include "navigator_capabilities.h"
 #include "navigator_vibration.h"
 #include "navigator_methods.h"
+#include "navigator_permissions_bom.h"
 #include "legacy_quota.h"
 
 namespace iv8 {
@@ -39,22 +40,31 @@ public:
         PageState* owner, const std::string& base_url)
         : environment_(environment), secure_context_(secure_context),
           owner_(owner), base_url_(base_url),
-          connection_(environment), user_agent_data_(environment), quota_(owner, base_url) {}
+          connection_(environment), user_agent_data_(environment), quota_(owner, base_url),
+          geolocation_(owner, secure_context), clipboard_(owner),
+          credentials_(owner), locks_(owner, base_url),
+          wake_lock_(owner), keyboard_(owner),
+          media_capabilities_(owner, secure_context) {}
 
     std::string global_name() const override { return "navigator"; }
     std::string prototype_key() const override { return "Navigator"; }
     std::string trace_object_type() const override { return "navigator"; }
 
     std::vector<std::string> property_names() const override {
-        return {"userAgent", "appVersion", "deviceMemory", "userAgentData", "userActivation",
-                "platform",          "language",
-                "webdriver",       "languages",         "onLine",
-                "cookieEnabled",   "hardwareConcurrency", "appName",
-                "appCodeName",     "product",           "vendor",
-                "vendorSub",       "productSub",        "maxTouchPoints",
-                "pdfViewerEnabled", "doNotTrack",        "connection", "scheduling",
-                "storage",         "permissions",       "plugins",
-                "mimeTypes", "webkitTemporaryStorage", "webkitPersistentStorage"};
+        std::vector<std::string> names = {
+            "userAgent", "appVersion", "deviceMemory", "userAgentData", "userActivation",
+            "geolocation", "mediaCapabilities",
+            "platform", "language", "webdriver", "languages", "onLine",
+            "cookieEnabled", "hardwareConcurrency", "appName", "appCodeName",
+            "product", "vendor", "vendorSub", "productSub", "maxTouchPoints",
+            "pdfViewerEnabled", "doNotTrack", "connection", "scheduling",
+            "storage", "permissions", "plugins", "mimeTypes",
+            "webkitTemporaryStorage", "webkitPersistentStorage", "mediaSession"};
+        if (secure_context_) {
+            names.insert(names.end(), {
+                "clipboard", "credentials", "keyboard", "locks", "wakeLock"});
+        }
+        return names;
     }
 
     std::vector<std::string> method_names() const override {
@@ -71,6 +81,9 @@ public:
 
     void release_v8_handles() noexcept override {
         connection_.release_v8_handles();
+        clipboard_.release_v8_handles();
+        locks_.release_v8_handles();
+        media_session_.release_v8_handles();
         connection_object_.Reset();
         scheduling_object_.Reset();
         storage_object_.Reset();
@@ -80,6 +93,14 @@ public:
         user_agent_data_object_.Reset();
         user_activation_object_.Reset();
         quota_object_.Reset();
+        geolocation_object_.Reset();
+        clipboard_object_.Reset();
+        credentials_object_.Reset();
+        locks_object_.Reset();
+        wake_lock_object_.Reset();
+        keyboard_object_.Reset();
+        media_session_object_.Reset();
+        media_capabilities_object_.Reset();
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -176,6 +197,54 @@ public:
             }
             return scheduling_object_.Get(isolate);
         }
+        if (name == "geolocation") {
+            if (geolocation_object_.IsEmpty()) {
+                geolocation_object_.Reset(isolate, make_host_object(isolate, context, &geolocation_));
+            }
+            return geolocation_object_.Get(isolate);
+        }
+        if (name == "clipboard") {
+            if (clipboard_object_.IsEmpty()) {
+                clipboard_object_.Reset(isolate, make_host_object(isolate, context, &clipboard_));
+            }
+            return clipboard_object_.Get(isolate);
+        }
+        if (name == "credentials") {
+            if (credentials_object_.IsEmpty()) {
+                credentials_object_.Reset(isolate, make_host_object(isolate, context, &credentials_));
+            }
+            return credentials_object_.Get(isolate);
+        }
+        if (name == "locks") {
+            if (locks_object_.IsEmpty()) {
+                locks_object_.Reset(isolate, make_host_object(isolate, context, &locks_));
+            }
+            return locks_object_.Get(isolate);
+        }
+        if (name == "wakeLock") {
+            if (wake_lock_object_.IsEmpty()) {
+                wake_lock_object_.Reset(isolate, make_host_object(isolate, context, &wake_lock_));
+            }
+            return wake_lock_object_.Get(isolate);
+        }
+        if (name == "keyboard") {
+            if (keyboard_object_.IsEmpty()) {
+                keyboard_object_.Reset(isolate, make_host_object(isolate, context, &keyboard_));
+            }
+            return keyboard_object_.Get(isolate);
+        }
+        if (name == "mediaSession") {
+            if (media_session_object_.IsEmpty()) {
+                media_session_object_.Reset(isolate, make_host_object(isolate, context, &media_session_));
+            }
+            return media_session_object_.Get(isolate);
+        }
+        if (name == "mediaCapabilities") {
+            if (media_capabilities_object_.IsEmpty()) {
+                media_capabilities_object_.Reset(isolate, make_host_object(isolate, context, &media_capabilities_));
+            }
+            return media_capabilities_object_.Get(isolate);
+        }
         // Step 5e: cache the plain StorageManager object so repeated reads keep
         // the same identity and the read-only method descriptors unchanged.
         // The parent `navigator.storage` read itself is traced by the generic
@@ -236,7 +305,23 @@ private:
     NavigatorUADataHost user_agent_data_;
     UserActivationHost user_activation_;
     LegacyQuotaHost quota_;
+    GeolocationHost geolocation_;
+    ClipboardHost clipboard_;
+    CredentialsContainerHost credentials_;
+    LockManagerHost locks_;
+    WakeLockHost wake_lock_;
+    KeyboardHost keyboard_;
+    MediaSessionHost media_session_;
+    MediaCapabilitiesHost media_capabilities_;
     v8::Global<v8::Object> quota_object_;
+    v8::Global<v8::Object> geolocation_object_;
+    v8::Global<v8::Object> clipboard_object_;
+    v8::Global<v8::Object> credentials_object_;
+    v8::Global<v8::Object> locks_object_;
+    v8::Global<v8::Object> wake_lock_object_;
+    v8::Global<v8::Object> keyboard_object_;
+    v8::Global<v8::Object> media_session_object_;
+    v8::Global<v8::Object> media_capabilities_object_;
     v8::Global<v8::Object> user_agent_data_object_;
     v8::Global<v8::Object> user_activation_object_;
     v8::Global<v8::Object> connection_object_;

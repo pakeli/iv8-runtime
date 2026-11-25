@@ -2,3 +2,4 @@
 test/fixtures/bom_02/*.js text eol=lf
 test/fixtures/bom_03/*.js text eol=lf
 test/fixtures/bom_04/*.js text eol=lf
+test/fixtures/bom_05/*.js text eol=lf

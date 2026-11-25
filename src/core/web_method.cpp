@@ -15,6 +15,11 @@ int web_method_length(std::string_view receiver, std::string_view name) {
     if (receiver == "navigator" && name == "vibrate") return 1;
     if (receiver == "media_key_status_map" &&
         (name == "get" || name == "has" || name == "forEach")) return 1;
+    if (receiver == "keyboard_layout_map" &&
+        (name == "get" || name == "has" || name == "forEach")) return 1;
+    if (receiver == "locks" && name == "request") return 2;
+    if (receiver == "locks" && name == "query") return 0;
+    if (receiver == "credentials" && name == "get") return 0;
     if (name == "queryUsageAndQuota" || name == "requestQuota") return 1;
     if (name == "add" && receiver == "host_probe") return 2;
     if (name == "replace" && receiver == "location") return 1;
@@ -56,6 +61,10 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"getUserMedia", 3}, {"webkitGetUserMedia", 3},
         {"requestMediaKeySystemAccess", 2}, {"setServerCertificate", 1},
         {"generateRequest", 2}, {"load", 1}, {"update", 1},
+        {"clearWatch", 1}, {"getCurrentPosition", 1}, {"watchPosition", 1},
+        {"write", 1}, {"writeText", 1}, {"getType", 1}, {"store", 1},
+        {"setActionHandler", 2}, {"setCameraActive", 1},
+        {"setMicrophoneActive", 1}, {"decodingInfo", 1}, {"encodingInfo", 1},
     };
     const auto found = lengths.find(name);
     return found == lengths.end() ? 0 : found->second;

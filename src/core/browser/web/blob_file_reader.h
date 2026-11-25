@@ -35,4 +35,16 @@ extern void file_reader_constructor(const v8::FunctionCallbackInfo<v8::Value>& i
 bool is_file_object(v8::Isolate* isolate, v8::Local<v8::Context> context,
                     v8::Local<v8::Value> value);
 
+bool is_blob_object(v8::Isolate* isolate, v8::Local<v8::Context> context,
+                    v8::Local<v8::Value> value);
+
+void register_runtime_blob_constructor(v8::Isolate* isolate,
+                                       v8::Local<v8::Context> context,
+                                       v8::Local<v8::Function> constructor);
+
+v8::MaybeLocal<v8::Object> create_runtime_blob(v8::Isolate* isolate,
+                                               v8::Local<v8::Context> context,
+                                               v8::Local<v8::String> text,
+                                               const std::string& type);
+
 }  // namespace iv8::browser
