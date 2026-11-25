@@ -1,0 +1,59 @@
+{
+  "date": "2026-11-25",
+  "baseline_source": "7c88322",
+  "fixed_presence_reference": "docs/browser_api_inventory.json (secure Chrome 157.0.8103.51)",
+  "behavior_reference": "test/fixtures/bom_06 (Chrome 158.0.8127.88)",
+  "scope": "Native secure Navigator bluetooth, hid, serial, usb, xr, gpu, and presentation subobjects and associated interfaces in the no-device/no-GPU offline profile",
+  "navigator": {
+    "before_secure_present": 53,
+    "added": [
+      "bluetooth",
+      "gpu",
+      "hid",
+      "presentation",
+      "serial",
+      "usb",
+      "xr"
+    ],
+    "profiles": {
+      "secure": {
+        "fixed_reference_names": 70,
+        "present": 60,
+        "missing": [
+          "cpuPerformance",
+          "devicePosture",
+          "ink",
+          "login",
+          "managed",
+          "mediaDevices",
+          "serviceWorker",
+          "storageBuckets",
+          "virtualKeyboard",
+          "windowControlsOverlay"
+        ]
+      },
+      "insecure": {
+        "fixed_reference_names": 70,
+        "present": 36
+      },
+      "opaque": {
+        "fixed_reference_names": 70,
+        "present": 36
+      }
+    }
+  },
+  "new_global_interfaces": [
+    "Bluetooth (secure only)",
+    "HID (secure only)",
+    "Serial (secure only)",
+    "USB (secure only)",
+    "XRSystem (secure only)",
+    "GPU (secure only)",
+    "WGSLLanguageFeatures (secure only)",
+    "Presentation (secure only)",
+    "PresentationRequest (secure only)",
+    "PresentationReceiver (secure only)"
+  ],
+  "remaining_monitoring": "Symbol.iterator deferred until BOM-08",
+  "shared_sdk_replaced": false
+}

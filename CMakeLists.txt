@@ -102,6 +102,7 @@ if(IV8_LINK_V8)
       src/core/browser/bom/navigator_vibration.cpp
       src/core/browser/bom/navigator_methods.cpp
       src/core/browser/bom/navigator_permissions_bom.cpp
+      src/core/browser/bom/navigator_devices_bom.cpp
       src/core/browser/bom/legacy_quota.cpp
       src/core/browser/internal/web_idl_primitive.cpp
       src/core/browser/bom/media_query.cpp

@@ -17,6 +17,9 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         (name == "get" || name == "has" || name == "forEach")) return 1;
     if (receiver == "keyboard_layout_map" &&
         (name == "get" || name == "has" || name == "forEach")) return 1;
+    if (receiver == "wgsl_language_features" &&
+        (name == "has" || name == "forEach")) return 1;
+    if ((receiver == "hid" || receiver == "usb") && name == "requestDevice") return 1;
     if (receiver == "locks" && name == "request") return 2;
     if (receiver == "locks" && name == "query") return 0;
     if (receiver == "credentials" && name == "get") return 0;
@@ -65,6 +68,7 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"write", 1}, {"writeText", 1}, {"getType", 1}, {"store", 1},
         {"setActionHandler", 2}, {"setCameraActive", 1},
         {"setMicrophoneActive", 1}, {"decodingInfo", 1}, {"encodingInfo", 1},
+        {"isSessionSupported", 1}, {"requestSession", 1}, {"reconnect", 1},
     };
     const auto found = lengths.find(name);
     return found == lengths.end() ? 0 : found->second;

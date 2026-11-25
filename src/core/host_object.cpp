@@ -698,8 +698,22 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                     (key == "getLayoutMap" || key == "lock")) ||
                 (interface_name == "MediaCapabilities" &&
                     (key == "decodingInfo" || key == "encodingInfo"));
+            const bool bom06_promise =
+                (interface_name == "Bluetooth" &&
+                    (key == "getAvailability" || key == "requestDevice")) ||
+                (interface_name == "HID" &&
+                    (key == "getDevices" || key == "requestDevice")) ||
+                (interface_name == "Serial" &&
+                    (key == "getPorts" || key == "requestPort")) ||
+                (interface_name == "USB" &&
+                    (key == "getDevices" || key == "requestDevice")) ||
+                (interface_name == "XRSystem" &&
+                    (key == "isSessionSupported" || key == "requestSession")) ||
+                (interface_name == "GPU" && key == "requestAdapter") ||
+                (interface_name == "PresentationRequest" &&
+                    (key == "getAvailability" || key == "reconnect" || key == "start"));
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
-                navigator_promise || eme_promise || bom05_promise) {
+                navigator_promise || eme_promise || bom05_promise || bom06_promise) {
                 std::string watch_owner = interface_name;
                 if (navigator_promise) watch_owner = "navigator";
                 else if (interface_name == "ScreenOrientation") watch_owner = "screen.orientation";
@@ -709,6 +723,12 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 else if (interface_name == "WakeLock") watch_owner = "navigator.wakeLock";
                 else if (interface_name == "Keyboard") watch_owner = "navigator.keyboard";
                 else if (interface_name == "MediaCapabilities") watch_owner = "navigator.mediaCapabilities";
+                else if (interface_name == "Bluetooth") watch_owner = "navigator.bluetooth";
+                else if (interface_name == "HID") watch_owner = "navigator.hid";
+                else if (interface_name == "Serial") watch_owner = "navigator.serial";
+                else if (interface_name == "USB") watch_owner = "navigator.usb";
+                else if (interface_name == "XRSystem") watch_owner = "navigator.xr";
+                else if (interface_name == "GPU") watch_owner = "navigator.gpu";
                 browser::watch_record(isolate, watch_owner, key);
                 v8::Local<v8::Promise::Resolver> resolver;
                 if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||

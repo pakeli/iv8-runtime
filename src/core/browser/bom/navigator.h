@@ -22,6 +22,7 @@
 #include "navigator_vibration.h"
 #include "navigator_methods.h"
 #include "navigator_permissions_bom.h"
+#include "navigator_devices_bom.h"
 #include "legacy_quota.h"
 
 namespace iv8 {
@@ -44,7 +45,9 @@ public:
           geolocation_(owner, secure_context), clipboard_(owner),
           credentials_(owner), locks_(owner, base_url),
           wake_lock_(owner), keyboard_(owner),
-          media_capabilities_(owner, secure_context) {}
+          media_capabilities_(owner, secure_context),
+          bluetooth_(owner), hid_(owner), serial_(owner),
+          usb_(owner), xr_(owner) {}
 
     std::string global_name() const override { return "navigator"; }
     std::string prototype_key() const override { return "Navigator"; }
@@ -62,7 +65,8 @@ public:
             "webkitTemporaryStorage", "webkitPersistentStorage", "mediaSession"};
         if (secure_context_) {
             names.insert(names.end(), {
-                "clipboard", "credentials", "keyboard", "locks", "wakeLock"});
+                "bluetooth", "clipboard", "credentials", "keyboard", "locks",
+                "wakeLock", "gpu", "hid", "presentation", "serial", "usb", "xr"});
         }
         return names;
     }
@@ -84,6 +88,13 @@ public:
         clipboard_.release_v8_handles();
         locks_.release_v8_handles();
         media_session_.release_v8_handles();
+        bluetooth_.release_v8_handles();
+        hid_.release_v8_handles();
+        serial_.release_v8_handles();
+        usb_.release_v8_handles();
+        xr_.release_v8_handles();
+        gpu_.release_v8_handles();
+        presentation_.release_v8_handles();
         connection_object_.Reset();
         scheduling_object_.Reset();
         storage_object_.Reset();
@@ -101,6 +112,13 @@ public:
         keyboard_object_.Reset();
         media_session_object_.Reset();
         media_capabilities_object_.Reset();
+        bluetooth_object_.Reset();
+        hid_object_.Reset();
+        serial_object_.Reset();
+        usb_object_.Reset();
+        xr_object_.Reset();
+        gpu_object_.Reset();
+        presentation_object_.Reset();
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -245,6 +263,48 @@ public:
             }
             return media_capabilities_object_.Get(isolate);
         }
+        if (name == "bluetooth") {
+            if (bluetooth_object_.IsEmpty()) {
+                bluetooth_object_.Reset(isolate, make_host_object(isolate, context, &bluetooth_));
+            }
+            return bluetooth_object_.Get(isolate);
+        }
+        if (name == "hid") {
+            if (hid_object_.IsEmpty()) {
+                hid_object_.Reset(isolate, make_host_object(isolate, context, &hid_));
+            }
+            return hid_object_.Get(isolate);
+        }
+        if (name == "serial") {
+            if (serial_object_.IsEmpty()) {
+                serial_object_.Reset(isolate, make_host_object(isolate, context, &serial_));
+            }
+            return serial_object_.Get(isolate);
+        }
+        if (name == "usb") {
+            if (usb_object_.IsEmpty()) {
+                usb_object_.Reset(isolate, make_host_object(isolate, context, &usb_));
+            }
+            return usb_object_.Get(isolate);
+        }
+        if (name == "xr") {
+            if (xr_object_.IsEmpty()) {
+                xr_object_.Reset(isolate, make_host_object(isolate, context, &xr_));
+            }
+            return xr_object_.Get(isolate);
+        }
+        if (name == "gpu") {
+            if (gpu_object_.IsEmpty()) {
+                gpu_object_.Reset(isolate, make_host_object(isolate, context, &gpu_));
+            }
+            return gpu_object_.Get(isolate);
+        }
+        if (name == "presentation") {
+            if (presentation_object_.IsEmpty()) {
+                presentation_object_.Reset(isolate, make_host_object(isolate, context, &presentation_));
+            }
+            return presentation_object_.Get(isolate);
+        }
         // Step 5e: cache the plain StorageManager object so repeated reads keep
         // the same identity and the read-only method descriptors unchanged.
         // The parent `navigator.storage` read itself is traced by the generic
@@ -313,6 +373,13 @@ private:
     KeyboardHost keyboard_;
     MediaSessionHost media_session_;
     MediaCapabilitiesHost media_capabilities_;
+    BluetoothHost bluetooth_;
+    HIDHost hid_;
+    SerialHost serial_;
+    USBHost usb_;
+    XRSystemHost xr_;
+    GPUHost gpu_;
+    PresentationHost presentation_;
     v8::Global<v8::Object> quota_object_;
     v8::Global<v8::Object> geolocation_object_;
     v8::Global<v8::Object> clipboard_object_;
@@ -322,6 +389,13 @@ private:
     v8::Global<v8::Object> keyboard_object_;
     v8::Global<v8::Object> media_session_object_;
     v8::Global<v8::Object> media_capabilities_object_;
+    v8::Global<v8::Object> bluetooth_object_;
+    v8::Global<v8::Object> hid_object_;
+    v8::Global<v8::Object> serial_object_;
+    v8::Global<v8::Object> usb_object_;
+    v8::Global<v8::Object> xr_object_;
+    v8::Global<v8::Object> gpu_object_;
+    v8::Global<v8::Object> presentation_object_;
     v8::Global<v8::Object> user_agent_data_object_;
     v8::Global<v8::Object> user_activation_object_;
     v8::Global<v8::Object> connection_object_;

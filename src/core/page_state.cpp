@@ -37,6 +37,7 @@
 #include "browser/bom/navigator_capabilities.h"
 #include "browser/bom/navigator_methods.h"
 #include "browser/bom/navigator_permissions_bom.h"
+#include "browser/bom/navigator_devices_bom.h"
 #include "browser/bom/legacy_quota.h"
 #include "browser/web/dom_exception.h"
 #include "browser/window/window_event_target.h"
@@ -1828,6 +1829,9 @@ v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     if (name == "MediaMetadata") {
         return construct_media_metadata(isolate, context, this, bootstrap_.base_url, arguments);
     }
+    if (name == "PresentationRequest") {
+        return construct_presentation_request(isolate, context, this, bootstrap_.base_url, arguments);
+    }
     if (name == "XMLHttpRequest") {
         auto upload = std::make_unique<XMLHttpRequestUploadHost>();
         auto upload_object = make_host_object(isolate, context, upload.get());
@@ -1971,6 +1975,8 @@ void PageState::install_page(const std::string& base_url,
             if (!install_navigator_bom05_interfaces(isolate, context, this,
                     window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate),
                     base_url)) return;
+            if (!install_navigator_bom06_interfaces(isolate, context, this,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
             install_dom_parser_interface(isolate, context, this);
             install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());
