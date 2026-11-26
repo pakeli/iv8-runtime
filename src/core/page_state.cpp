@@ -78,6 +78,7 @@
 #include "browser/web/xml_http_request.h"
 #include "browser/window/to_string_monitoring.h"
 #include "browser/web/event_constructors.h"
+#include "browser/web/observable.h"
 #include "browser/web/url.h"
 #include "browser/bootstrap/bootstrap_scripts.h"
 #include "browser/internal/event_support.h"
@@ -1838,6 +1839,12 @@ v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     if (name == "DOMRect") {
         return construct_dom_rect(isolate, context, this, arguments);
     }
+    if (name == "AbortController") {
+        return construct_abort_controller(isolate, context, this, arguments);
+    }
+    if (name == "Observable") {
+        return construct_observable(isolate, context, this, arguments);
+    }
     if (name == "XMLHttpRequest") {
         auto upload = std::make_unique<XMLHttpRequestUploadHost>();
         auto upload_object = make_host_object(isolate, context, upload.get());
@@ -1985,6 +1992,7 @@ void PageState::install_page(const std::string& base_url,
                     window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
             if (!install_navigator_bom07_interfaces(isolate, context, this,
                     window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
+            if (!install_observable_and_abort_interfaces(isolate, context, this)) return;
             install_dom_parser_interface(isolate, context, this);
             install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());

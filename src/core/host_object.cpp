@@ -731,9 +731,14 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 (interface_name == "NavigatorManagedData" &&
                     key == "getManagedConfiguration") ||
                 (interface_name == "Ink" && key == "requestPresenter");
+            const bool bom08_promise =
+                interface_name == "Observable" &&
+                (key == "every" || key == "find" || key == "first" ||
+                 key == "forEach" || key == "last" || key == "reduce" ||
+                 key == "some" || key == "toArray");
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
                 navigator_promise || eme_promise || bom05_promise ||
-                bom06_promise || bom07_promise) {
+                bom06_promise || bom07_promise || bom08_promise) {
                 std::string watch_owner = interface_name;
                 if (navigator_promise) watch_owner = "navigator";
                 else if (interface_name == "ScreenOrientation") watch_owner = "screen.orientation";

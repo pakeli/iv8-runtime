@@ -108,6 +108,7 @@ if(IV8_LINK_V8)
       src/core/browser/internal/web_idl_primitive.cpp
       src/core/browser/bom/media_query.cpp
       src/core/browser/web/dom_exception.cpp
+      src/core/browser/web/observable.cpp
       src/core/browser/web/performance.cpp
       src/core/browser/web/structured_clone.cpp
       src/core/browser/web/dom_parser.cpp

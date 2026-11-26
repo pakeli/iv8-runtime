@@ -147,7 +147,8 @@ public:
         // Shared EventTarget.prototype callbacks use the generic HostObject
         // call tracer, so only add the independent watch hit on this route.
         if (specification_.event_target && (name == "addEventListener" ||
-                name == "removeEventListener" || name == "dispatchEvent"))
+                name == "removeEventListener" || name == "dispatchEvent" ||
+                name == "when"))
             watch_record(isolate, specification_.name, name);
         if (specification_.event_target && handle_event_method(isolate, context, name, arguments, value)) return value;
         if (specification_.name == "CSS" && name == "escape") return css_escape(isolate, context, arguments);

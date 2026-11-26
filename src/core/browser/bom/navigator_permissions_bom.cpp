@@ -24,6 +24,7 @@
 #include "../web/blob_file_reader.h"
 #include "../web/dom_exception.h"
 #include "../web/event_constructors.h"
+#include "../web/observable.h"
 #include "../window/window_trace_support.h"
 #include "navigator_parts.h"
 
@@ -1040,6 +1041,7 @@ v8::Local<v8::Value> CredentialsContainerHost::call_method(
     }
     if (name == "get") {
         bool any_type = false;
+        AbortSignalHost* cred_sig = nullptr;
         if (arguments.Length() > 0 && !arguments[0]->IsNullOrUndefined()) {
             if (!arguments[0]->IsObject()) {
                 throw_type_error(isolate, prefix,
@@ -1072,10 +1074,13 @@ v8::Local<v8::Value> CredentialsContainerHost::call_method(
                     }
                 } else if (std::string_view(key) == "signal") {
                     if (!val->IsNullOrUndefined()) {
-                        throw_type_error(isolate, prefix,
-                            "Failed to read the 'signal' property from 'CredentialRequestOptions': "
-                            "Failed to convert value to 'AbortSignal'.");
-                        return reject_from_try_catch(isolate, context, caught);
+                        cred_sig = as_abort_signal(val);
+                        if (cred_sig == nullptr) {
+                            throw_type_error(isolate, prefix,
+                                "Failed to read the 'signal' property from 'CredentialRequestOptions': "
+                                "Failed to convert value to 'AbortSignal'.");
+                            return reject_from_try_catch(isolate, context, caught);
+                        }
                     }
                 } else if (std::string_view(key) == "password") {
                     if (val->BooleanValue(isolate)) any_type = true;
@@ -1091,6 +1096,9 @@ v8::Local<v8::Value> CredentialsContainerHost::call_method(
                 }
             }
         }
+        if (cred_sig != nullptr && cred_sig->aborted()) {
+            return rejected_promise(isolate, context, cred_sig->reason_value(isolate));
+        }
         if (!any_type) {
             auto err = make_dom_exception(isolate, context, owner_,
                 "NotSupportedError",
@@ -1101,6 +1109,7 @@ v8::Local<v8::Value> CredentialsContainerHost::call_method(
     }
     if (name == "create") {
         int count = 0;
+        AbortSignalHost* create_sig = nullptr;
         if (arguments.Length() > 0 && !arguments[0]->IsNullOrUndefined()) {
             if (!arguments[0]->IsObject()) {
                 throw_type_error(isolate, prefix,
@@ -1116,10 +1125,13 @@ v8::Local<v8::Value> CredentialsContainerHost::call_method(
                 }
                 if (std::string_view(key) == "signal") {
                     if (!val->IsNullOrUndefined()) {
-                        throw_type_error(isolate, prefix,
-                            "Failed to read the 'signal' property from 'CredentialCreationOptions': "
-                            "Failed to convert value to 'AbortSignal'.");
-                        return reject_from_try_catch(isolate, context, caught);
+                        create_sig = as_abort_signal(val);
+                        if (create_sig == nullptr) {
+                            throw_type_error(isolate, prefix,
+                                "Failed to read the 'signal' property from 'CredentialCreationOptions': "
+                                "Failed to convert value to 'AbortSignal'.");
+                            return reject_from_try_catch(isolate, context, caught);
+                        }
                     }
                 } else if (!val->IsUndefined()) {
                     if (!val->IsObject()) {
@@ -1132,6 +1144,9 @@ v8::Local<v8::Value> CredentialsContainerHost::call_method(
                     ++count;
                 }
             }
+        }
+        if (create_sig != nullptr && create_sig->aborted()) {
+            return rejected_promise(isolate, context, create_sig->reason_value(isolate));
         }
         if (count != 1) {
             auto err = make_dom_exception(isolate, context, owner_,
@@ -1189,6 +1204,34 @@ void LockManagerHost::release_held_lock(
     held_.erase(std::remove_if(held_.begin(), held_.end(),
         [id](const LockEntry& entry) { return entry.id == id; }), held_.end());
     process_queue(isolate, context);
+}
+
+void LockManagerHost::cancel_pending_lock(
+    v8::Isolate* isolate, v8::Local<v8::Context> context, std::uint64_t id,
+    v8::Local<v8::Value> reason) {
+    auto it = std::find_if(pending_.begin(), pending_.end(),
+        [id](const LockEntry& entry) { return entry.id == id; });
+    if (it == pending_.end()) return;
+    v8::Local<v8::Promise::Resolver> resolver;
+    if (!it->resolver.IsEmpty()) {
+        resolver = it->resolver.Get(isolate);
+    }
+    it->callback.Reset();
+    it->resolver.Reset();
+    pending_.erase(it);
+    if (!resolver.IsEmpty()) {
+        (void)resolver->Reject(context, reason);
+    }
+    if (!pending_.empty()) {
+        if (auto* state = state_from_isolate(isolate)) {
+            v8::Local<v8::Function> pump;
+            if (v8::Function::New(context, &deliver_lock_manager_pump,
+                    v8::External::New(isolate, this, v8::kExternalPointerTypeTagDefault),
+                    0, v8::ConstructorBehavior::kThrow).ToLocal(&pump)) {
+                (void)state->register_timer(pump, 0, false, false);
+            }
+        }
+    }
 }
 
 void LockManagerHost::process_queue(
@@ -1319,6 +1362,7 @@ v8::Local<v8::Value> LockManagerHost::call_method(
         std::string mode = "exclusive";
         bool if_available = false;
         bool steal = false;
+        AbortSignalHost* lock_sig = nullptr;
         v8::Local<v8::Value> cb_arg;
         if (arguments.Length() == 2) {
             if (!is_callable_object(arguments[1])) {
@@ -1366,16 +1410,36 @@ v8::Local<v8::Value> LockManagerHost::call_method(
                     return reject_from_try_catch(isolate, context, caught);
                 }
                 if (!signal_val->IsNullOrUndefined()) {
-                    throw_type_error(isolate, prefix,
-                        "Failed to read the 'signal' property from 'LockOptions': "
-                        "Failed to convert value to 'AbortSignal'.");
-                    return reject_from_try_catch(isolate, context, caught);
+                    lock_sig = as_abort_signal(signal_val);
+                    if (lock_sig == nullptr) {
+                        throw_type_error(isolate, prefix,
+                            "Failed to read the 'signal' property from 'LockOptions': "
+                            "Failed to convert value to 'AbortSignal'.");
+                        return reject_from_try_catch(isolate, context, caught);
+                    }
                 }
                 if (!user_get(isolate, context, opts, v8_string(isolate, "steal"))
                         .ToLocal(&steal_val)) {
                     return reject_from_try_catch(isolate, context, caught);
                 }
                 steal = steal_val->BooleanValue(isolate);
+                if (lock_sig != nullptr) {
+                    if (steal) {
+                        auto err = make_dom_exception(isolate, context, owner_,
+                            "NotSupportedError",
+                            prefix + "Options 'steal' and 'signal' cannot be used together.");
+                        return rejected_promise(isolate, context, err);
+                    }
+                    if (if_available) {
+                        auto err = make_dom_exception(isolate, context, owner_,
+                            "NotSupportedError",
+                            prefix + "Options 'ifAvailable' and 'signal' cannot be used together.");
+                        return rejected_promise(isolate, context, err);
+                    }
+                    if (lock_sig->aborted()) {
+                        return rejected_promise(isolate, context, lock_sig->reason_value(isolate));
+                    }
+                }
             }
             if (!is_callable_object(arguments[2])) {
                 throw_type_error(isolate, prefix,
@@ -1423,8 +1487,9 @@ v8::Local<v8::Value> LockManagerHost::call_method(
         if (!v8::Promise::Resolver::New(context).ToLocal(&resolver)) {
             return v8::Undefined(isolate);
         }
+        const std::uint64_t entry_id = ++next_id_;
         LockEntry entry;
-        entry.id = ++next_id_;
+        entry.id = entry_id;
         entry.name = std::move(lock_name);
         entry.mode = std::move(mode);
         entry.if_available = if_available;
@@ -1434,6 +1499,12 @@ v8::Local<v8::Value> LockManagerHost::call_method(
             pending_.insert(pending_.begin(), std::move(entry));
         } else {
             pending_.push_back(std::move(entry));
+        }
+        if (lock_sig != nullptr) {
+            lock_sig->add_abort_algorithm(
+                [this, entry_id, lock_sig](v8::Isolate* iso, v8::Local<v8::Context> ctx) {
+                    cancel_pending_lock(iso, ctx, entry_id, lock_sig->reason_value(iso));
+                });
         }
         if (auto* state = state_from_isolate(isolate)) {
             v8::Local<v8::Function> pump;

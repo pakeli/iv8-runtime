@@ -75,6 +75,11 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"register", 1}, {"showNotification", 1}, {"setExpires", 1},
         {"setStatus", 1}, {"getManagedConfiguration", 1},
         {"updateInkTrailStartPoint", 2},
+        {"when", 1}, {"addTeardown", 1}, {"error", 1}, {"next", 1},
+        {"catch", 1}, {"drop", 1}, {"every", 1}, {"filter", 1},
+        {"finally", 1}, {"find", 1}, {"flatMap", 1}, {"forEach", 1},
+        {"map", 1}, {"reduce", 1}, {"some", 1}, {"switchMap", 1},
+        {"take", 1}, {"takeUntil", 1},
     };
     const auto found = lengths.find(name);
     return found == lengths.end() ? 0 : found->second;

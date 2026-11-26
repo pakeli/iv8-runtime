@@ -206,6 +206,8 @@ public:
     void process_queue(v8::Isolate* isolate, v8::Local<v8::Context> context);
     void release_held_lock(v8::Isolate* isolate, v8::Local<v8::Context> context,
         std::uint64_t id);
+    void cancel_pending_lock(v8::Isolate* isolate, v8::Local<v8::Context> context,
+        std::uint64_t id, v8::Local<v8::Value> reason);
     const std::vector<LockEntry>& held_locks() const { return held_; }
     const std::vector<LockEntry>& pending_locks() const { return pending_; }
 

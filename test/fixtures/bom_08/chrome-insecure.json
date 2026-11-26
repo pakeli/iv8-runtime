@@ -1,0 +1,1201 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-26T12:54:13.892Z",
+  "execution": {
+    "os": "darwin 27.2.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://bom-fixture.invalid:<port>/reference",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "75ed0444e1889ac4b69de0fc4b0298c69efe4070eafe3085cd0043a8f56cbe15",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": false,
+    "windowHasOwnWhen": false,
+    "windowProtoHasOwnWhen": false,
+    "windowWhenEqEventTarget": true,
+    "globals": {
+      "Observable": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Observable",
+            "length": 1,
+            "source": "function Observable() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "Subscriber": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Subscriber",
+            "length": 0,
+            "source": "function Subscriber() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "AbortController": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "AbortController",
+            "length": 0,
+            "source": "function AbortController() { [native code] }",
+            "prototype": true,
+            "construct": "constructed"
+          }
+        }
+      },
+      "AbortSignal": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "AbortSignal",
+            "length": 0,
+            "source": "function AbortSignal() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "EventTarget": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "EventTarget",
+            "length": 0,
+            "source": "function EventTarget() { [native code] }",
+            "prototype": true,
+            "construct": "constructed"
+          }
+        }
+      }
+    },
+    "interfaces": {
+      "Observable": {
+        "constructor": {
+          "name": "Observable",
+          "length": 1,
+          "source": "function Observable() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "from"
+        ],
+        "staticMembers": {
+          "from": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "from",
+              "length": 1,
+              "source": "function from() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          }
+        },
+        "prototypeKeys": [
+          "catch",
+          "drop",
+          "every",
+          "filter",
+          "finally",
+          "find",
+          "first",
+          "flatMap",
+          "forEach",
+          "inspect",
+          "last",
+          "map",
+          "reduce",
+          "some",
+          "subscribe",
+          "switchMap",
+          "take",
+          "takeUntil",
+          "toArray",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "catch": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "catch",
+              "length": 1,
+              "source": "function catch() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "drop": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "drop",
+              "length": 1,
+              "source": "function drop() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "every": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "every",
+              "length": 1,
+              "source": "function every() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "filter": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "filter",
+              "length": 1,
+              "source": "function filter() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "finally": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "finally",
+              "length": 1,
+              "source": "function finally() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "find": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "find",
+              "length": 1,
+              "source": "function find() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "first": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "first",
+              "length": 0,
+              "source": "function first() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "flatMap": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "flatMap",
+              "length": 1,
+              "source": "function flatMap() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "forEach": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "forEach",
+              "length": 1,
+              "source": "function forEach() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "inspect": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "inspect",
+              "length": 0,
+              "source": "function inspect() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "last": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "last",
+              "length": 0,
+              "source": "function last() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "map": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "map",
+              "length": 1,
+              "source": "function map() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "reduce": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "reduce",
+              "length": 1,
+              "source": "function reduce() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "some": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "some",
+              "length": 1,
+              "source": "function some() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "subscribe": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "subscribe",
+              "length": 0,
+              "source": "function subscribe() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "switchMap": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "switchMap",
+              "length": 1,
+              "source": "function switchMap() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "take": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "take",
+              "length": 1,
+              "source": "function take() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "takeUntil": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "takeUntil",
+              "length": 1,
+              "source": "function takeUntil() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "toArray": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "toArray",
+              "length": 0,
+              "source": "function toArray() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Observable",
+              "length": 1,
+              "source": "function Observable() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Observable"
+          }
+        }
+      },
+      "Subscriber": {
+        "constructor": {
+          "name": "Subscriber",
+          "length": 0,
+          "source": "function Subscriber() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "active",
+          "signal",
+          "addTeardown",
+          "complete",
+          "error",
+          "next",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "active": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get active",
+              "length": 0,
+              "source": "function get active() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "signal": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get signal",
+              "length": 0,
+              "source": "function get signal() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "addTeardown": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "addTeardown",
+              "length": 1,
+              "source": "function addTeardown() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "complete": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "complete",
+              "length": 0,
+              "source": "function complete() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "error": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "error",
+              "length": 1,
+              "source": "function error() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "next": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "next",
+              "length": 1,
+              "source": "function next() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Subscriber",
+              "length": 0,
+              "source": "function Subscriber() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Subscriber"
+          }
+        }
+      },
+      "AbortController": {
+        "constructor": {
+          "name": "AbortController",
+          "length": 0,
+          "source": "function AbortController() { [native code] }",
+          "prototype": true,
+          "construct": "constructed"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "signal",
+          "abort",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "signal": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get signal",
+              "length": 0,
+              "source": "function get signal() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "abort": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "abort",
+              "length": 0,
+              "source": "function abort() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "AbortController",
+              "length": 0,
+              "source": "function AbortController() { [native code] }",
+              "prototype": true,
+              "construct": "constructed"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "AbortController"
+          }
+        }
+      },
+      "AbortSignal": {
+        "constructor": {
+          "name": "AbortSignal",
+          "length": 0,
+          "source": "function AbortSignal() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "abort",
+          "any",
+          "timeout"
+        ],
+        "staticMembers": {
+          "abort": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "abort",
+              "length": 0,
+              "source": "function abort() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "any": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "any",
+              "length": 1,
+              "source": "function any() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "timeout": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "timeout",
+              "length": 1,
+              "source": "function timeout() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          }
+        },
+        "prototypeKeys": [
+          "aborted",
+          "reason",
+          "onabort",
+          "throwIfAborted",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "EventTarget.prototype",
+        "members": {
+          "aborted": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get aborted",
+              "length": 0,
+              "source": "function get aborted() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "reason": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get reason",
+              "length": 0,
+              "source": "function get reason() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "onabort": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onabort",
+              "length": 0,
+              "source": "function get onabort() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onabort",
+              "length": 1,
+              "source": "function set onabort() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "throwIfAborted": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "throwIfAborted",
+              "length": 0,
+              "source": "function throwIfAborted() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "AbortSignal",
+              "length": 0,
+              "source": "function AbortSignal() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "AbortSignal"
+          }
+        }
+      },
+      "EventTarget": {
+        "constructor": {
+          "name": "EventTarget",
+          "length": 0,
+          "source": "function EventTarget() { [native code] }",
+          "prototype": true,
+          "construct": "constructed"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "addEventListener",
+          "dispatchEvent",
+          "removeEventListener",
+          "when",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "addEventListener": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "addEventListener",
+              "length": 2,
+              "source": "function addEventListener() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "dispatchEvent": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "dispatchEvent",
+              "length": 1,
+              "source": "function dispatchEvent() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "removeEventListener": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "removeEventListener",
+              "length": 2,
+              "source": "function removeEventListener() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "when": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "when",
+              "length": 1,
+              "source": "function when() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "EventTarget",
+              "length": 0,
+              "source": "function EventTarget() { [native code] }",
+              "prototype": true,
+              "construct": "constructed"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "EventTarget"
+          }
+        }
+      }
+    },
+    "subobjects": {
+      "connection": {
+        "hasWhen": true,
+        "ownWhen": false,
+        "protoOwnWhen": false,
+        "sameAsEventTarget": true
+      },
+      "orientation": {
+        "hasWhen": true,
+        "ownWhen": false,
+        "protoOwnWhen": false,
+        "sameAsEventTarget": true
+      },
+      "viewport": {
+        "hasWhen": true,
+        "ownWhen": false,
+        "protoOwnWhen": false,
+        "sameAsEventTarget": true
+      }
+    },
+    "behavior": {
+      "whenBadReceiver": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "whenMissingArg": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'when' on 'EventTarget': 1 argument required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "whenBadOptions": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'when' on 'EventTarget': The provided value is not of type 'ObservableEventListenerOptions'.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "windowWhenClick": {
+        "ok": true,
+        "value": "[object Observable]"
+      },
+      "obsTag": "[object Observable]",
+      "obsInstance": true,
+      "dispatched": [
+        "conn:change",
+        "conn:change"
+      ],
+      "obsNoNew": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'Observable': Please use the 'new' operator, this DOM object constructor cannot be called as a function.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "obsMissingArg": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'Observable': 1 argument required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "obsBadCallback": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'Observable': parameter 1 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "subConstruct": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'Subscriber': Illegal constructor",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "abortSigConstruct": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'AbortSignal': Illegal constructor",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "subscriberShape": {
+        "tag": "[object Subscriber]",
+        "instance": true,
+        "active": true,
+        "signalTag": "[object AbortSignal]",
+        "signalInstance": true,
+        "signalAborted": false
+      },
+      "custom": [
+        "active:true",
+        "next:1",
+        "next:2",
+        "teardown",
+        "done",
+        "afterComplete:false",
+        "signalAfterComplete:true"
+      ],
+      "fnSubscribe": [
+        4,
+        5
+      ],
+      "fromMissing": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'from' on 'Observable': 1 argument required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "fromPrim": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'from' on 'Observable': Cannot convert value to an Observable. Input value must be an Observable, async iterable, iterable, or Promise.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "fromSameObs": true,
+      "fromPromise": {
+        "ok": true,
+        "value": "ok"
+      },
+      "mapFilterTakeToArray": {
+        "ok": true,
+        "value": [
+          20,
+          41
+        ]
+      },
+      "drop": {
+        "ok": true,
+        "value": [
+          3,
+          4
+        ]
+      },
+      "firstEmpty": {
+        "ok": false,
+        "error": {
+          "name": "RangeError",
+          "message": "No values in Observable",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "last": {
+        "ok": true,
+        "value": 9
+      },
+      "lastEmpty": {
+        "ok": false,
+        "error": {
+          "name": "RangeError",
+          "message": "No values in Observable",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "find": {
+        "ok": true,
+        "value": 4
+      },
+      "every": {
+        "ok": true,
+        "value": true
+      },
+      "some": {
+        "ok": true,
+        "value": true
+      },
+      "reduce": {
+        "ok": true,
+        "value": 20
+      },
+      "reduceNoInit": {
+        "ok": true,
+        "value": 10
+      },
+      "reduceEmptyNoInit": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Reduce of empty array with no initial value",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "forEach": {
+        "ok": true,
+        "value": {
+          "rType": "undefined",
+          "seen": [
+            "a0",
+            "b1"
+          ]
+        }
+      },
+      "flatMap": {
+        "ok": true,
+        "value": [
+          1,
+          10,
+          2,
+          20
+        ]
+      },
+      "switchMap": {
+        "ok": true,
+        "value": [
+          1,
+          101,
+          2,
+          102
+        ]
+      },
+      "catchOp": {
+        "ok": true,
+        "value": [
+          1,
+          "boom!"
+        ]
+      },
+      "finallyOp": {
+        "ok": true,
+        "value": {
+          "v": [
+            9
+          ],
+          "finLog": [
+            "fin"
+          ]
+        }
+      },
+      "inspectOp": {
+        "ok": true,
+        "value": {
+          "v": [
+            5
+          ],
+          "inspLog": [
+            5
+          ]
+        }
+      },
+      "takeUntil": {
+        "ok": true,
+        "value": [
+          "change"
+        ]
+      },
+      "abortDetails": {
+        "beforeAbort": {
+          "aborted": false
+        },
+        "afterDefaultAbort": {
+          "aborted": true,
+          "reasonName": "AbortError",
+          "reasonDomEx": true,
+          "fired": [
+            "handler",
+            "listener"
+          ],
+          "throwIfAborted": {
+            "ok": false,
+            "error": {
+              "name": "AbortError",
+              "message": "signal is aborted without reason",
+              "code": 20,
+              "tag": "[object DOMException]",
+              "domException": true
+            }
+          }
+        },
+        "staticAborted": {
+          "aborted": true,
+          "reason": "custom-reason"
+        }
+      }
+    }
+  }
+}

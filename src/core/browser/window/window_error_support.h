@@ -24,6 +24,9 @@ private:
 
 void window_event_getter(const v8::FunctionCallbackInfo<v8::Value>& info);
 void window_event_setter(const v8::FunctionCallbackInfo<v8::Value>& info);
+void report_window_exception(v8::Isolate* isolate,
+                             v8::Local<v8::Context> context,
+                             v8::Local<v8::Value> exception);
 void window_report_error_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
 bool install_window_error_support(v8::Isolate* isolate,
                                    v8::Local<v8::Context> context);
