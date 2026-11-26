@@ -1,6 +1,8 @@
 # Next Tasks
 
-**Latest implemented/validated candidate (`2026-11-21`): BOM-03 native legacy quota.** Fixed runtime `4cbab176ec8105d5d0545f61335c6600d9db8830` / tree `c76e926f74a7bcc1995ed697d0841a3950195a65` passes all 12 selected Python 3.11–3.14 lanes: local Mac first, then hosted Linux/Windows. Every lane passes the **37-module / 1225-test gate**; full Mac/Linux are **3451 passed, 2 skipped**, Windows **3449 passed, 4 skipped**. All five hosted ZIPs and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 15.0.245.19 engines are reused; native extensions/wheels are rebuilt. Runs: Linux `44769697781`, Windows `44769706158`; push/PR V8 CI `44722569894` / `44722637832` also pass. Navigator remains **35/70** with **118 new tests**. PR #34 is ready for review above unmerged PR #33. This batch does not install the shared SDK or publish a version. Scope/evidence: `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md`, `docs/bom_03_api_delta.json`, `docs/bom_03_release_report.md`.
+**Latest implemented/validated candidate (`2026-11-26`): BOM-04..BOM-08 complete Navigator (`70/70`) and Observable/`EventTarget.prototype.when`.** Fixed runtime `3cc59b336676b5ce430f668646861eca5e359f8a` / tree `0fe758ea9a74679774280988b22597b4713a1c8e` completes all 35 remaining `Navigator` APIs (`35/70 -> 70/70` secure, `33/70 -> 38/70` insecure/opaque) across `BOM-04`..`BOM-07` and native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and `EventTarget.prototype.when` in `BOM-08` (`navigator.connection` `9/9`, `screen.orientation` `9/9`, `visualViewport` `14/14`, inherited `window.when`). Each batch was independently reviewed by Codex CLI and verified against headless Chrome `158.0.8127.88`. All 12 selected Python 3.11–3.14 lanes pass: local macOS arm64 first, then hosted Linux x64 and Windows x64. Every lane passes the **42-module / 1257-test gate** (**32 new pytest cases**); full Mac/Linux are **3483 passed, 2 skipped**, Windows **3481 passed, 4 skipped**. All five hosted ZIPs (`15125369259`, `15125461652`, `15125761278`, `15126235377`, `15125606444`) and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 `15.0.245.19` engines are reused; native extensions/wheels are rebuilt. Runs: Linux `45835448535`, Windows `45835458516`, push V8 CI `45835443187` (**83 audit / 1257 gate / 3483 passed, 2 skipped**). Shared SDK remains BIND-01; no shared installation, PR merge, or version tag publication is performed. Scope/evidence: `docs/bom_04_navigator_methods.md`..`docs/bom_08_observable_when.md`, `docs/bom_04_navigator_methods_report.md`..`docs/bom_08_observable_when_report.md`, `docs/bom_08_release_report.md`.
+
+**Previous implemented/validated candidate (`2026-11-21`): BOM-03 native legacy quota.** Fixed runtime `4cbab176ec8105d5d0545f61335c6600d9db8830` / tree `c76e926f74a7bcc1995ed697d0841a3950195a65` passes all 12 selected Python 3.11–3.14 lanes: local Mac first, then hosted Linux/Windows. Every lane passes the **37-module / 1225-test gate**; full Mac/Linux are **3451 passed, 2 skipped**, Windows **3449 passed, 4 skipped**. All five hosted ZIPs and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 15.0.245.19 engines are reused; native extensions/wheels are rebuilt. Runs: Linux `44769697781`, Windows `44769706158`; push/PR V8 CI `44722569894` / `44722637832` also pass. Navigator remains **35/70** with **118 new tests**. PR #34 is ready for review above unmerged PR #33. This batch does not install the shared SDK or publish a version. Scope/evidence: `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md`, `docs/bom_03_api_delta.json`, `docs/bom_03_release_report.md`.
 
 **Previous implemented/validated candidate (`2026-11-19`): BOM-02.** Native secure getInstalledRelatedApps and inactive-profile vibrate raise Navigator secure-reference membership to **34/70**. Local Mac Python 3.11–3.14 wheels are validated before hosted Linux/Windows; all 12 selected lanes pass the **36-module / 1107-test gate**. Full Mac/Linux: **3333 passed, 2 skipped**; Windows: **3331 passed, 4 skipped**. There are **190 new tests**. Runtime code is `1dff793c5349206976dcb575d761c8331732da6e` / tree `3f7e18f50a7e17abf9fed27be7e57cc0aec6f01f`; Windows uses checkout-fix `d97412dcd97df4ababba40fa55b1c7c92888b3b4` / tree `57ad2e7f7a3c059c34cdc7fa8b2e8baa8a267d78`, differing only by .gitattributes with all 431 canonical runtime/test/build/workflow inputs unchanged. Both commits pass V8 source CI; all five remote ZIPs and 12 wheels are collected and verified. Generated diagnostic object-label differences under modified prototype metadata remain explicit. Baseline PR #32 is merged; BOM-02 is draft PR #33. Shared SDK remains BIND-01. Boundary/report/delta/release evidence: `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md`, `docs/bom_02_api_delta.json`, `docs/bom_02_release_report.md`.
 
@@ -106,17 +108,23 @@ Contract, artifact IDs, source/driver restoration and remaining limits:
 `docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
 numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-21`
+Last reviewed: `2026-11-26`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — after combined release verification (`2026-11-15`)
+## Current execution order — after BOM-04..BOM-08 release verification (`2026-11-26`)
 
-The user's latest BOM-first direction and `docs/bom_coverage_plan.md` take precedence
-over the older per-slice queue below. DOM foundations are locally accepted;
-continue Navigator/BOM subobject coverage, with completed Window exposure and Location/History regressions protected.
-Further DOM-node and Web-data batches are deferred. M11-53 remains a numbered candidate rather than an
+All eight BOM member categories tracked in `docs/bom_coverage_plan.md` now have
+complete name coverage against `docs/browser_api_inventory.json` in the validated
+`3cc59b3` candidate (`Window` ordinary names `128/128` + `125/125` handlers,
+`Location` `15/15`, secure `Navigator` `70/70`, `navigator.connection` `9/9`,
+`screen.orientation` `9/9`, `visualViewport` `14/14`, `History` `8/8`; the
+separately audited `Window` global-interface category remains tracked separately —
+see `docs/bom_coverage_plan.md` and `docs/bom_08_release_report.md`). Keep completed
+Window, Navigator, Observable/`when`, and Location/History regressions protected;
+select next work from concrete offline scenario needs, deferred DOM/Web-data
+slices, or deferred `Symbol.iterator` / strict API-observation items. M11-53 remains a numbered candidate rather than an
 automatic next task; detailed function/prototype conformance follows basic API
 coverage. Network/rendering/device subsystems still need explicit boundaries.
 
