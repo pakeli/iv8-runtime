@@ -20,6 +20,9 @@ int web_method_length(std::string_view receiver, std::string_view name) {
     if (receiver == "wgsl_language_features" &&
         (name == "has" || name == "forEach")) return 1;
     if ((receiver == "hid" || receiver == "usb") && name == "requestDevice") return 1;
+    if (receiver == "media_devices" && name == "getUserMedia") return 0;
+    if (receiver == "service_worker_registration" && name == "update") return 0;
+    if (receiver == "storage_buckets" && (name == "open" || name == "delete")) return 1;
     if (receiver == "locks" && name == "request") return 2;
     if (receiver == "locks" && name == "query") return 0;
     if (receiver == "credentials" && name == "get") return 0;
@@ -69,6 +72,9 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"setActionHandler", 2}, {"setCameraActive", 1},
         {"setMicrophoneActive", 1}, {"decodingInfo", 1}, {"encodingInfo", 1},
         {"isSessionSupported", 1}, {"requestSession", 1}, {"reconnect", 1},
+        {"register", 1}, {"showNotification", 1}, {"setExpires", 1},
+        {"setStatus", 1}, {"getManagedConfiguration", 1},
+        {"updateInkTrailStartPoint", 2},
     };
     const auto found = lengths.find(name);
     return found == lengths.end() ? 0 : found->second;

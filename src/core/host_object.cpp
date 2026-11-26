@@ -712,8 +712,28 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 (interface_name == "GPU" && key == "requestAdapter") ||
                 (interface_name == "PresentationRequest" &&
                     (key == "getAvailability" || key == "reconnect" || key == "start"));
+            const bool bom07_promise =
+                (interface_name == "MediaDevices" &&
+                    (key == "enumerateDevices" || key == "getUserMedia" ||
+                     key == "getDisplayMedia")) ||
+                (interface_name == "ServiceWorkerContainer" &&
+                    (key == "getRegistration" || key == "getRegistrations" ||
+                     key == "register")) ||
+                (interface_name == "ServiceWorkerRegistration" &&
+                    (key == "unregister" || key == "update" ||
+                     key == "getNotifications" || key == "showNotification")) ||
+                (interface_name == "StorageBucketManager" &&
+                    (key == "delete" || key == "keys" || key == "open")) ||
+                (interface_name == "StorageBucket" &&
+                    (key == "estimate" || key == "expires" || key == "getDirectory" ||
+                     key == "persisted" || key == "setExpires" || key == "persist")) ||
+                (interface_name == "NavigatorLogin" && key == "setStatus") ||
+                (interface_name == "NavigatorManagedData" &&
+                    key == "getManagedConfiguration") ||
+                (interface_name == "Ink" && key == "requestPresenter");
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
-                navigator_promise || eme_promise || bom05_promise || bom06_promise) {
+                navigator_promise || eme_promise || bom05_promise ||
+                bom06_promise || bom07_promise) {
                 std::string watch_owner = interface_name;
                 if (navigator_promise) watch_owner = "navigator";
                 else if (interface_name == "ScreenOrientation") watch_owner = "screen.orientation";
@@ -729,6 +749,12 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 else if (interface_name == "USB") watch_owner = "navigator.usb";
                 else if (interface_name == "XRSystem") watch_owner = "navigator.xr";
                 else if (interface_name == "GPU") watch_owner = "navigator.gpu";
+                else if (interface_name == "MediaDevices") watch_owner = "navigator.mediaDevices";
+                else if (interface_name == "ServiceWorkerContainer") watch_owner = "navigator.serviceWorker";
+                else if (interface_name == "StorageBucketManager") watch_owner = "navigator.storageBuckets";
+                else if (interface_name == "NavigatorLogin") watch_owner = "navigator.login";
+                else if (interface_name == "NavigatorManagedData") watch_owner = "navigator.managed";
+                else if (interface_name == "Ink") watch_owner = "navigator.ink";
                 browser::watch_record(isolate, watch_owner, key);
                 v8::Local<v8::Promise::Resolver> resolver;
                 if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||

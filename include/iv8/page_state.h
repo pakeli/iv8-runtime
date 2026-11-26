@@ -208,6 +208,7 @@ public:
                             const std::string& url);
     // Internal same-document History commit; no HTTP or cross-document load.
     void apply_history_url(const std::string& url);
+    const std::string& current_url() const { return bootstrap_.base_url; }
     pybind11::dict read_navigation_requests(bool clear);
     void capture_async_errors(bool enabled);
     pybind11::dict read_async_errors(bool clear);

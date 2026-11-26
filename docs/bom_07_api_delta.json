@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-25",
+  "baseline_source": "538a31d",
+  "fixed_presence_reference": "docs/browser_api_inventory.json (secure Chrome 157.0.8103.51)",
+  "behavior_reference": "test/fixtures/bom_07 (Chrome 158.0.8127.88)",
+  "scope": "Native remaining Navigator members (mediaDevices, serviceWorker, storageBuckets, login, managed, ink, devicePosture, virtualKeyboard, windowControlsOverlay, cpuPerformance) and DOMRect/DOMRectReadOnly in the deterministic offline profile",
+  "navigator": {
+    "before_secure_present": 60,
+    "added": [
+      "cpuPerformance",
+      "devicePosture",
+      "ink",
+      "login",
+      "managed",
+      "mediaDevices",
+      "serviceWorker",
+      "storageBuckets",
+      "virtualKeyboard",
+      "windowControlsOverlay"
+    ],
+    "profiles": {
+      "secure": {
+        "fixed_reference_names": 70,
+        "present": 70,
+        "missing": []
+      },
+      "insecure": {
+        "fixed_reference_names": 70,
+        "present": 38
+      },
+      "opaque": {
+        "fixed_reference_names": 70,
+        "present": 38
+      }
+    }
+  },
+  "new_global_interfaces": [
+    "DOMRectReadOnly (all contexts)",
+    "DOMRect (all contexts)",
+    "Ink (all contexts)",
+    "DelegatedInkTrailPresenter (all contexts)",
+    "WindowControlsOverlay (all contexts)",
+    "InputDeviceInfo (all contexts)",
+    "MediaDevices (secure only)",
+    "MediaDeviceInfo (secure only; prototype parent of InputDeviceInfo in all contexts)",
+    "ServiceWorkerContainer (secure only)",
+    "ServiceWorker (secure only)",
+    "ServiceWorkerRegistration (secure only)",
+    "StorageBucketManager (secure only)",
+    "StorageBucket (secure only)",
+    "NavigatorLogin (secure only)",
+    "NavigatorManagedData (secure only)",
+    "DevicePosture (secure only)",
+    "VirtualKeyboard (secure only)"
+  ],
+  "remaining_monitoring": "Symbol.iterator deferred until BOM-08",
+  "shared_sdk_replaced": false
+}

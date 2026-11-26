@@ -23,6 +23,7 @@
 #include "navigator_methods.h"
 #include "navigator_permissions_bom.h"
 #include "navigator_devices_bom.h"
+#include "navigator_remaining_bom.h"
 #include "legacy_quota.h"
 
 namespace iv8 {
@@ -47,7 +48,10 @@ public:
           wake_lock_(owner), keyboard_(owner),
           media_capabilities_(owner, secure_context),
           bluetooth_(owner), hid_(owner), serial_(owner),
-          usb_(owner), xr_(owner) {}
+          usb_(owner), xr_(owner),
+          media_devices_(owner), service_worker_(owner, base_url),
+          storage_buckets_(owner), managed_(owner), ink_(owner),
+          virtual_keyboard_(owner), window_controls_overlay_(owner) {}
 
     std::string global_name() const override { return "navigator"; }
     std::string prototype_key() const override { return "Navigator"; }
@@ -56,7 +60,7 @@ public:
     std::vector<std::string> property_names() const override {
         std::vector<std::string> names = {
             "userAgent", "appVersion", "deviceMemory", "userAgentData", "userActivation",
-            "geolocation", "mediaCapabilities",
+            "geolocation", "ink", "mediaCapabilities", "windowControlsOverlay",
             "platform", "language", "webdriver", "languages", "onLine",
             "cookieEnabled", "hardwareConcurrency", "appName", "appCodeName",
             "product", "vendor", "vendorSub", "productSub", "maxTouchPoints",
@@ -65,8 +69,10 @@ public:
             "webkitTemporaryStorage", "webkitPersistentStorage", "mediaSession"};
         if (secure_context_) {
             names.insert(names.end(), {
-                "bluetooth", "clipboard", "credentials", "keyboard", "locks",
-                "wakeLock", "gpu", "hid", "presentation", "serial", "usb", "xr"});
+                "cpuPerformance", "bluetooth", "clipboard", "credentials", "keyboard",
+                "managed", "mediaDevices", "serviceWorker", "virtualKeyboard",
+                "locks", "wakeLock", "gpu", "login", "devicePosture",
+                "hid", "presentation", "serial", "usb", "xr", "storageBuckets"});
         }
         return names;
     }
@@ -95,6 +101,12 @@ public:
         xr_.release_v8_handles();
         gpu_.release_v8_handles();
         presentation_.release_v8_handles();
+        media_devices_.release_v8_handles();
+        service_worker_.release_v8_handles();
+        managed_.release_v8_handles();
+        device_posture_.release_v8_handles();
+        virtual_keyboard_.release_v8_handles();
+        window_controls_overlay_.release_v8_handles();
         connection_object_.Reset();
         scheduling_object_.Reset();
         storage_object_.Reset();
@@ -119,6 +131,15 @@ public:
         xr_object_.Reset();
         gpu_object_.Reset();
         presentation_object_.Reset();
+        media_devices_object_.Reset();
+        service_worker_object_.Reset();
+        storage_buckets_object_.Reset();
+        login_object_.Reset();
+        managed_object_.Reset();
+        ink_object_.Reset();
+        device_posture_object_.Reset();
+        virtual_keyboard_object_.Reset();
+        window_controls_overlay_object_.Reset();
     }
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
@@ -305,6 +326,64 @@ public:
             }
             return presentation_object_.Get(isolate);
         }
+        if (name == "cpuPerformance") {
+            return v8::Integer::New(isolate,
+                navigator_cpu_performance_tier(environment_->hardware_concurrency));
+        }
+        if (name == "mediaDevices") {
+            if (media_devices_object_.IsEmpty()) {
+                media_devices_object_.Reset(isolate, make_host_object(isolate, context, &media_devices_));
+            }
+            return media_devices_object_.Get(isolate);
+        }
+        if (name == "serviceWorker") {
+            if (service_worker_object_.IsEmpty()) {
+                service_worker_object_.Reset(isolate, make_host_object(isolate, context, &service_worker_));
+            }
+            return service_worker_object_.Get(isolate);
+        }
+        if (name == "storageBuckets") {
+            if (storage_buckets_object_.IsEmpty()) {
+                storage_buckets_object_.Reset(isolate, make_host_object(isolate, context, &storage_buckets_));
+            }
+            return storage_buckets_object_.Get(isolate);
+        }
+        if (name == "login") {
+            if (login_object_.IsEmpty()) {
+                login_object_.Reset(isolate, make_host_object(isolate, context, &login_));
+            }
+            return login_object_.Get(isolate);
+        }
+        if (name == "managed") {
+            if (managed_object_.IsEmpty()) {
+                managed_object_.Reset(isolate, make_host_object(isolate, context, &managed_));
+            }
+            return managed_object_.Get(isolate);
+        }
+        if (name == "ink") {
+            if (ink_object_.IsEmpty()) {
+                ink_object_.Reset(isolate, make_host_object(isolate, context, &ink_));
+            }
+            return ink_object_.Get(isolate);
+        }
+        if (name == "devicePosture") {
+            if (device_posture_object_.IsEmpty()) {
+                device_posture_object_.Reset(isolate, make_host_object(isolate, context, &device_posture_));
+            }
+            return device_posture_object_.Get(isolate);
+        }
+        if (name == "virtualKeyboard") {
+            if (virtual_keyboard_object_.IsEmpty()) {
+                virtual_keyboard_object_.Reset(isolate, make_host_object(isolate, context, &virtual_keyboard_));
+            }
+            return virtual_keyboard_object_.Get(isolate);
+        }
+        if (name == "windowControlsOverlay") {
+            if (window_controls_overlay_object_.IsEmpty()) {
+                window_controls_overlay_object_.Reset(isolate, make_host_object(isolate, context, &window_controls_overlay_));
+            }
+            return window_controls_overlay_object_.Get(isolate);
+        }
         // Step 5e: cache the plain StorageManager object so repeated reads keep
         // the same identity and the read-only method descriptors unchanged.
         // The parent `navigator.storage` read itself is traced by the generic
@@ -380,6 +459,15 @@ private:
     XRSystemHost xr_;
     GPUHost gpu_;
     PresentationHost presentation_;
+    MediaDevicesHost media_devices_;
+    ServiceWorkerContainerHost service_worker_;
+    StorageBucketManagerHost storage_buckets_;
+    NavigatorLoginHost login_;
+    NavigatorManagedDataHost managed_;
+    InkHost ink_;
+    DevicePostureHost device_posture_;
+    VirtualKeyboardHost virtual_keyboard_;
+    WindowControlsOverlayHost window_controls_overlay_;
     v8::Global<v8::Object> quota_object_;
     v8::Global<v8::Object> geolocation_object_;
     v8::Global<v8::Object> clipboard_object_;
@@ -396,6 +484,15 @@ private:
     v8::Global<v8::Object> xr_object_;
     v8::Global<v8::Object> gpu_object_;
     v8::Global<v8::Object> presentation_object_;
+    v8::Global<v8::Object> media_devices_object_;
+    v8::Global<v8::Object> service_worker_object_;
+    v8::Global<v8::Object> storage_buckets_object_;
+    v8::Global<v8::Object> login_object_;
+    v8::Global<v8::Object> managed_object_;
+    v8::Global<v8::Object> ink_object_;
+    v8::Global<v8::Object> device_posture_object_;
+    v8::Global<v8::Object> virtual_keyboard_object_;
+    v8::Global<v8::Object> window_controls_overlay_object_;
     v8::Global<v8::Object> user_agent_data_object_;
     v8::Global<v8::Object> user_activation_object_;
     v8::Global<v8::Object> connection_object_;

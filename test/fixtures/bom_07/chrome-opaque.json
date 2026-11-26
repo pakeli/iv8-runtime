@@ -1,0 +1,1014 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-25T14:51:04.443Z",
+  "execution": {
+    "os": "darwin 27.2.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "about:blank",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "a8e0f71b40b4e6c7b89528fe13b68a293984433dc69c9a74323d794dda3efe83",
+  "requests": [],
+  "result": {
+    "secure": false,
+    "origin": "null",
+    "navigatorOwnKeys": [
+      "maxTouchPoints",
+      "scheduling",
+      "userActivation",
+      "geolocation",
+      "ink",
+      "doNotTrack",
+      "mediaCapabilities",
+      "permissions",
+      "webkitTemporaryStorage",
+      "webkitPersistentStorage",
+      "windowControlsOverlay",
+      "hardwareConcurrency",
+      "cookieEnabled",
+      "appCodeName",
+      "appName",
+      "appVersion",
+      "platform",
+      "product",
+      "productSub",
+      "userAgent",
+      "vendor",
+      "vendorSub",
+      "language",
+      "languages",
+      "onLine",
+      "webdriver",
+      "plugins",
+      "mimeTypes",
+      "pdfViewerEnabled",
+      "connection",
+      "getGamepads",
+      "javaEnabled",
+      "sendBeacon",
+      "vibrate",
+      "mediaSession",
+      "constructor",
+      "Symbol(Symbol.toStringTag)"
+    ],
+    "shape": {
+      "mediaDevices": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "serviceWorker": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "storageBuckets": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "login": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "managed": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "ink": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get ink",
+            "length": 0,
+            "source": "function get ink() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "valueType": "object",
+        "stable": true,
+        "tag": "[object Ink]",
+        "ownKeys": [],
+        "protoName": "Ink",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "devicePosture": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "virtualKeyboard": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "windowControlsOverlay": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get windowControlsOverlay",
+            "length": 0,
+            "source": "function get windowControlsOverlay() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "valueType": "object",
+        "stable": true,
+        "tag": "[object WindowControlsOverlay]",
+        "ownKeys": [],
+        "protoName": "WindowControlsOverlay",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "cpuPerformance": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      }
+    },
+    "globals": {
+      "MediaDevices": {
+        "present": false,
+        "descriptor": null
+      },
+      "MediaDeviceInfo": {
+        "present": false,
+        "descriptor": null
+      },
+      "InputDeviceInfo": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "InputDeviceInfo",
+            "length": 0,
+            "source": "function InputDeviceInfo() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "ServiceWorkerContainer": {
+        "present": false,
+        "descriptor": null
+      },
+      "ServiceWorker": {
+        "present": false,
+        "descriptor": null
+      },
+      "ServiceWorkerRegistration": {
+        "present": false,
+        "descriptor": null
+      },
+      "StorageBucketManager": {
+        "present": false,
+        "descriptor": null
+      },
+      "StorageBucket": {
+        "present": false,
+        "descriptor": null
+      },
+      "NavigatorLogin": {
+        "present": false,
+        "descriptor": null
+      },
+      "NavigatorManagedData": {
+        "present": false,
+        "descriptor": null
+      },
+      "Ink": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Ink",
+            "length": 0,
+            "source": "function Ink() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "DelegatedInkTrailPresenter": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "DelegatedInkTrailPresenter",
+            "length": 0,
+            "source": "function DelegatedInkTrailPresenter() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "DevicePosture": {
+        "present": false,
+        "descriptor": null
+      },
+      "VirtualKeyboard": {
+        "present": false,
+        "descriptor": null
+      },
+      "WindowControlsOverlay": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "WindowControlsOverlay",
+            "length": 0,
+            "source": "function WindowControlsOverlay() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "DOMRect": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "DOMRect",
+            "length": 0,
+            "source": "function DOMRect() { [native code] }",
+            "prototype": true,
+            "construct": "constructed"
+          }
+        }
+      },
+      "DOMRectReadOnly": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "DOMRectReadOnly",
+            "length": 0,
+            "source": "function DOMRectReadOnly() { [native code] }",
+            "prototype": true,
+            "construct": "constructed"
+          }
+        }
+      }
+    },
+    "interfaces": {
+      "InputDeviceInfo": {
+        "constructor": {
+          "name": "InputDeviceInfo",
+          "length": 0,
+          "source": "function InputDeviceInfo() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "getCapabilities",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "MediaDeviceInfo",
+        "members": {
+          "getCapabilities": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getCapabilities",
+              "length": 0,
+              "source": "function getCapabilities() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "InputDeviceInfo",
+              "length": 0,
+              "source": "function InputDeviceInfo() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "InputDeviceInfo"
+          }
+        }
+      },
+      "Ink": {
+        "constructor": {
+          "name": "Ink",
+          "length": 0,
+          "source": "function Ink() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "requestPresenter",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "requestPresenter": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "requestPresenter",
+              "length": 0,
+              "source": "function requestPresenter() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Ink",
+              "length": 0,
+              "source": "function Ink() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Ink"
+          }
+        }
+      },
+      "DelegatedInkTrailPresenter": {
+        "constructor": {
+          "name": "DelegatedInkTrailPresenter",
+          "length": 0,
+          "source": "function DelegatedInkTrailPresenter() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "presentationArea",
+          "updateInkTrailStartPoint",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "presentationArea": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get presentationArea",
+              "length": 0,
+              "source": "function get presentationArea() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "updateInkTrailStartPoint": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "updateInkTrailStartPoint",
+              "length": 2,
+              "source": "function updateInkTrailStartPoint() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "DelegatedInkTrailPresenter",
+              "length": 0,
+              "source": "function DelegatedInkTrailPresenter() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "DelegatedInkTrailPresenter"
+          }
+        }
+      },
+      "WindowControlsOverlay": {
+        "constructor": {
+          "name": "WindowControlsOverlay",
+          "length": 0,
+          "source": "function WindowControlsOverlay() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "visible",
+          "ongeometrychange",
+          "getTitlebarAreaRect",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "EventTarget.prototype",
+        "members": {
+          "visible": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get visible",
+              "length": 0,
+              "source": "function get visible() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "ongeometrychange": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get ongeometrychange",
+              "length": 0,
+              "source": "function get ongeometrychange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set ongeometrychange",
+              "length": 1,
+              "source": "function set ongeometrychange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "getTitlebarAreaRect": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getTitlebarAreaRect",
+              "length": 0,
+              "source": "function getTitlebarAreaRect() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "WindowControlsOverlay",
+              "length": 0,
+              "source": "function WindowControlsOverlay() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "WindowControlsOverlay"
+          }
+        }
+      },
+      "DOMRect": {
+        "constructor": {
+          "name": "DOMRect",
+          "length": 0,
+          "source": "function DOMRect() { [native code] }",
+          "prototype": true,
+          "construct": "constructed"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "fromRect"
+        ],
+        "prototypeKeys": [
+          "x",
+          "y",
+          "width",
+          "height",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "DOMRectReadOnly",
+        "members": {
+          "x": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get x",
+              "length": 0,
+              "source": "function get x() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set x",
+              "length": 1,
+              "source": "function set x() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "y": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get y",
+              "length": 0,
+              "source": "function get y() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set y",
+              "length": 1,
+              "source": "function set y() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "width": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get width",
+              "length": 0,
+              "source": "function get width() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set width",
+              "length": 1,
+              "source": "function set width() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "height": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get height",
+              "length": 0,
+              "source": "function get height() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set height",
+              "length": 1,
+              "source": "function set height() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "DOMRect",
+              "length": 0,
+              "source": "function DOMRect() { [native code] }",
+              "prototype": true,
+              "construct": "constructed"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "DOMRect"
+          }
+        }
+      },
+      "DOMRectReadOnly": {
+        "constructor": {
+          "name": "DOMRectReadOnly",
+          "length": 0,
+          "source": "function DOMRectReadOnly() { [native code] }",
+          "prototype": true,
+          "construct": "constructed"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "fromRect"
+        ],
+        "prototypeKeys": [
+          "x",
+          "y",
+          "width",
+          "height",
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "toJSON",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "x": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get x",
+              "length": 0,
+              "source": "function get x() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "y": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get y",
+              "length": 0,
+              "source": "function get y() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "width": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get width",
+              "length": 0,
+              "source": "function get width() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "height": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get height",
+              "length": 0,
+              "source": "function get height() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "top": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get top",
+              "length": 0,
+              "source": "function get top() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "right": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get right",
+              "length": 0,
+              "source": "function get right() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "bottom": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get bottom",
+              "length": 0,
+              "source": "function get bottom() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "left": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get left",
+              "length": 0,
+              "source": "function get left() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "toJSON": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "toJSON",
+              "length": 0,
+              "source": "function toJSON() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "DOMRectReadOnly",
+              "length": 0,
+              "source": "function DOMRectReadOnly() { [native code] }",
+              "prototype": true,
+              "construct": "constructed"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "DOMRectReadOnly"
+          }
+        }
+      }
+    },
+    "calls": {
+      "ink_empty": {
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object DelegatedInkTrailPresenter]"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "ink_dict": {
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object DelegatedInkTrailPresenter]"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "ink_null_area": {
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object DelegatedInkTrailPresenter]"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "ink_el": {
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object DelegatedInkTrailPresenter]"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "ink_bad_area": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestPresenter' on 'Ink': Failed to read the 'presentationArea' property from 'InkPresenterParam': Failed to convert value to 'Element'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "ink_bad": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'requestPresenter' on 'Ink': The provided value is not of type 'InkPresenterParam'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      }
+    },
+    "details": {
+      "wco": {
+        "visible": false,
+        "rectTag": "[object DOMRect]",
+        "rectSame": false,
+        "rectJson": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      }
+    }
+  }
+}

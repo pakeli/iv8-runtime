@@ -41,6 +41,11 @@ std::string_view parent_interface(std::string_view name) {
         {"Bluetooth", "EventTarget"}, {"HID", "EventTarget"},
         {"Serial", "EventTarget"}, {"USB", "EventTarget"},
         {"XRSystem", "EventTarget"}, {"PresentationRequest", "EventTarget"},
+        {"DOMRect", "DOMRectReadOnly"}, {"InputDeviceInfo", "MediaDeviceInfo"},
+        {"MediaDevices", "EventTarget"}, {"ServiceWorkerContainer", "EventTarget"},
+        {"ServiceWorker", "EventTarget"}, {"ServiceWorkerRegistration", "EventTarget"},
+        {"NavigatorManagedData", "EventTarget"}, {"DevicePosture", "EventTarget"},
+        {"VirtualKeyboard", "EventTarget"}, {"WindowControlsOverlay", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"},
         {"XMLHttpRequestUpload", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
@@ -71,7 +76,8 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
         name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser" ||
         name == "DOMError" || name == "DOMException" ||
         name == "ClipboardItem" || name == "MediaMetadata" ||
-        name == "PresentationRequest";
+        name == "PresentationRequest" || name == "DOMRect" ||
+        name == "DOMRectReadOnly";
     if (!info.IsConstructCall()) {
         const auto message = constructible
             ? "Failed to construct '" + name + "': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
@@ -98,7 +104,8 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
             .ToLocal(&result)) return;
     if (name == "DOMError" || name == "DOMException" ||
         name == "ClipboardItem" || name == "MediaMetadata" ||
-        name == "PresentationRequest") {
+        name == "PresentationRequest" || name == "DOMRect" ||
+        name == "DOMRectReadOnly") {
         // V8 has already obtained NewTarget.prototype when allocating This.
         // Reuse it without executing a Proxy's prototype getter a second time.
         if (result->IsObject() && !result.As<v8::Object>()->SetPrototype(
@@ -223,6 +230,18 @@ std::string web_member_interface(const std::string& name,
                 "namespaceURI", "localName", "prefix"}))) return "Element";
         if (!method && member_in(member, {"innerText", "style", "dataset"})) return "HTMLElement";
     }
+    if (web_interface_inherits(name, "DOMRectReadOnly")) {
+        if ((method && member == "toJSON") ||
+            (!method && member_in(member, {"top", "right", "bottom", "left"}))) {
+            return "DOMRectReadOnly";
+        }
+    }
+    if (web_interface_inherits(name, "MediaDeviceInfo")) {
+        if ((method && member == "toJSON") ||
+            (!method && member_in(member, {"deviceId", "kind", "label", "groupId"}))) {
+            return "MediaDeviceInfo";
+        }
+    }
     return name;
 }
 
@@ -286,7 +305,8 @@ v8::Local<v8::Object> web_interface_prototype(
     if (constructor_parent == "WindowProperties") constructor_parent = "EventTarget";
     if (!constructor_parent.empty()) {
         v8::Local<v8::Value> parent_constructor;
-        auto parent_prototype = web_interface_prototype(isolate, context, std::string(constructor_parent));
+        auto parent_prototype = web_interface_prototype(
+            isolate, context, std::string(constructor_parent), expose_global);
         if (parent_prototype.IsEmpty() || !parent_prototype->GetPrivate(context, registry_key(isolate, "constructor"))
                 .ToLocal(&parent_constructor) ||
             !constructor->SetPrototype(context, parent_constructor).FromMaybe(false)) return {};
