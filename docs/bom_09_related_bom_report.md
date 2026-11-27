@@ -64,7 +64,7 @@ Date: `2026-11-27`
 
 - Browser references: `test/fixtures/bom_09/{chrome,chrome-insecure,chrome-opaque}.json`
   (Google Chrome `158.0.8127.88`, fresh headless profiles).
-- Verified and resolved all 7 review items (plus `IteratorStep` `done`-before-`value`
+- Verified and resolved all 7 review items (plus `IteratorStep` `value`-before-`done`
   ordering in `TaskSignal.any` and `AbortSignal.any`) with dedicated regressions in
   `test/test_bom_09_related_bom.py`:
   1. `[P1]` Released Python GIL during `to_py=True` / `JSValue.to_py()` JS
