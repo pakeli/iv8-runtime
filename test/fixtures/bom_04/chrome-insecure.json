@@ -1,0 +1,104 @@
+{
+  "browser": "Google Chrome 157.0.8103.80",
+  "captured_at_utc": "2026-11-23T14:02:53.776Z",
+  "execution": {
+    "os": "darwin 25.5.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://bom-fixture.invalid:<port>/reference",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "d191e5145a2800b499b6683bcce01c9b6d6ed0adb748c24cf7c4c948c12c355d",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": false,
+    "origin": "http://bom-fixture.invalid:51804",
+    "activation": false,
+    "shape": {
+      "canShare": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "share": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "setAppBadge": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "clearAppBadge": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "registerProtocolHandler": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "unregisterProtocolHandler": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "getUserMedia": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "webkitGetUserMedia": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "requestMIDIAccess": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "requestMediaKeySystemAccess": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "sameGetUserMedia": true
+    },
+    "calls": {},
+    "receivers": {},
+    "extra": {}
+  }
+}

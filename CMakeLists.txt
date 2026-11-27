@@ -100,9 +100,15 @@ if(IV8_LINK_V8)
       src/core/browser/bom/navigator_identity.cpp
       src/core/browser/bom/navigator_capabilities.cpp
       src/core/browser/bom/navigator_vibration.cpp
+      src/core/browser/bom/navigator_methods.cpp
+      src/core/browser/bom/navigator_permissions_bom.cpp
+      src/core/browser/bom/navigator_devices_bom.cpp
+      src/core/browser/bom/navigator_remaining_bom.cpp
       src/core/browser/bom/legacy_quota.cpp
       src/core/browser/internal/web_idl_primitive.cpp
       src/core/browser/bom/media_query.cpp
+      src/core/browser/web/dom_exception.cpp
+      src/core/browser/web/observable.cpp
       src/core/browser/web/performance.cpp
       src/core/browser/web/structured_clone.cpp
       src/core/browser/web/dom_parser.cpp

@@ -1,11 +1,29 @@
 # Decision Log
 
-Last reviewed: `2026-11-21`
+Last reviewed: `2026-11-26`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
 
 ## Confirmed Decisions
+
+### Complete BOM-04..BOM-08 with independent Codex review and 12-lane validation (`2026-11-26`)
+
+The user requests completion of all 35 remaining `Navigator` APIs (`35/70 -> 70/70`
+secure) plus the three missing `when` methods on `navigator.connection`,
+`screen.orientation`, and `visualViewport`, using native C++ bindings and
+deterministic fresh-headless-Chrome offline profile behavior (no host OS/device/
+network side effects), with independent OpenAI Codex CLI code review after each
+batch (`BOM-04`..`BOM-08`). Every Codex technical finding across all batches is
+verified against headless Chrome `158.0.8127.88`, fixed with regression tests,
+and committed separately (`4a68fbf`, `7c88322`, `538a31d`, `3e8c198`, `3cc59b3`).
+Local macOS arm64 Python 3.11–3.14 wheels are built and validated first, followed
+by hosted Linux x64 (`45835448535`) and Windows x64 (`45835458516`) plus push
+V8 CI (`45835443187`) on fixed runtime `3cc59b3` / tree `0fe758ea`. Every lane
+passes the **42-module / 1257-test gate**; full Mac/Linux report **3483 passed,
+2 skipped** and Windows **3481 passed, 4 skipped**. Five hosted ZIPs and all 12
+wheels are verified in `docs/bom_08_release_report.md`; shared SDK deployment
+remains `BIND-01`.
 
 ### Finish the BOM-03 release matrix on resume (`2026-11-21`)
 

@@ -1,6 +1,7 @@
 #include "window_error_support.h"
 #include "window_trace_support.h"
 
+#include "iv8/access_origin.h"
 #include "iv8/web_method.h"
 #include "iv8/access_summary.h"
 #include "../internal/trace_hooks.h"
@@ -72,6 +73,35 @@ void window_event_setter(const v8::FunctionCallbackInfo<v8::Value>& info) {
     if (!install_traced_window_data_property(isolate, context, context->Global(), "event", value)) return;
 }
 
+void report_window_exception(v8::Isolate* isolate,
+                             v8::Local<v8::Context> context,
+                             v8::Local<v8::Value> exception) {
+    EventTargetHost* target = nullptr;
+    v8::Local<v8::Object> event;
+    {
+        auto runtime_origin = access_runtime_scope(isolate);
+        target = window_event_target(isolate, context);
+        if (target == nullptr) return;
+        if (!create_runtime_event(isolate, context, "error", false, true).ToLocal(&event)) return;
+        const auto message = v8::Exception::CreateMessage(isolate, exception);
+        auto filename = message->GetScriptResourceName();
+        if (!filename->IsString()) filename = v8::String::Empty(isolate);
+        const int line = message->GetLineNumber(context).FromMaybe(0);
+        const int column = message->GetStartColumn(context).FromMaybe(-1);
+        if (!event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "message"),
+                message->Get()).FromMaybe(false) ||
+            !event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "error"),
+                exception).FromMaybe(false) ||
+            !event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "filename"),
+                filename).FromMaybe(false) ||
+            !event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "lineno"),
+                v8::Integer::New(isolate, line)).FromMaybe(false) ||
+            !event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "colno"),
+                v8::Integer::New(isolate, column < 0 ? 0 : column + 1)).FromMaybe(false)) return;
+    }
+    target->dispatch_event(isolate, context, event, context->Global());
+}
+
 void window_report_error_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
     auto isolate = info.GetIsolate();
     const auto sequence = window_trace_record(isolate, "reportError", AccessOperation::kCall);
@@ -83,26 +113,7 @@ void window_report_error_callback(const v8::FunctionCallbackInfo<v8::Value>& inf
             v8::String::NewFromUtf8Literal(isolate, "reportError requires an error argument")));
         return;
     }
-    auto* target = window_event_target(isolate, context);
-    if (target == nullptr) return;
-    v8::Local<v8::Object> event;
-    if (!create_runtime_event(isolate, context, "error", false, true).ToLocal(&event)) return;
-    const auto message = v8::Exception::CreateMessage(isolate, info[0]);
-    auto filename = message->GetScriptResourceName();
-    if (!filename->IsString()) filename = v8::String::Empty(isolate);
-    const int line = message->GetLineNumber(context).FromMaybe(0);
-    const int column = message->GetStartColumn(context).FromMaybe(-1);
-    if (!event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "message"),
-            message->Get()).FromMaybe(false) ||
-        !event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "error"),
-            info[0]).FromMaybe(false) ||
-        !event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "filename"),
-            filename).FromMaybe(false) ||
-        !event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "lineno"),
-            v8::Integer::New(isolate, line)).FromMaybe(false) ||
-        !event->CreateDataProperty(context, v8::String::NewFromUtf8Literal(isolate, "colno"),
-            v8::Integer::New(isolate, column < 0 ? 0 : column + 1)).FromMaybe(false)) return;
-    target->dispatch_event(isolate, context, event, context->Global());
+    report_window_exception(isolate, context, info[0]);
 }
 
 bool install_window_error_support(v8::Isolate* isolate,

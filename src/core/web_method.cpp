@@ -13,6 +13,19 @@ int web_method_length(std::string_view receiver, std::string_view name) {
     if (receiver == "history" && (name == "pushState" || name == "replaceState")) return 2;
     if (receiver == "orientation" && name == "lock") return 1;
     if (receiver == "navigator" && name == "vibrate") return 1;
+    if (receiver == "media_key_status_map" &&
+        (name == "get" || name == "has" || name == "forEach")) return 1;
+    if (receiver == "keyboard_layout_map" &&
+        (name == "get" || name == "has" || name == "forEach")) return 1;
+    if (receiver == "wgsl_language_features" &&
+        (name == "has" || name == "forEach")) return 1;
+    if ((receiver == "hid" || receiver == "usb") && name == "requestDevice") return 1;
+    if (receiver == "media_devices" && name == "getUserMedia") return 0;
+    if (receiver == "service_worker_registration" && name == "update") return 0;
+    if (receiver == "storage_buckets" && (name == "open" || name == "delete")) return 1;
+    if (receiver == "locks" && name == "request") return 2;
+    if (receiver == "locks" && name == "query") return 0;
+    if (receiver == "credentials" && name == "get") return 0;
     if (name == "queryUsageAndQuota" || name == "requestQuota") return 1;
     if (name == "add" && receiver == "host_probe") return 2;
     if (name == "replace" && receiver == "location") return 1;
@@ -50,6 +63,23 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"mark", 1}, {"measure", 1}, {"getEntriesByName", 1},
         {"getEntriesByType", 1}, {"moveTo", 2}, {"moveBy", 2},
         {"resizeTo", 2}, {"resizeBy", 2},
+        {"registerProtocolHandler", 2}, {"unregisterProtocolHandler", 2},
+        {"getUserMedia", 3}, {"webkitGetUserMedia", 3},
+        {"requestMediaKeySystemAccess", 2}, {"setServerCertificate", 1},
+        {"generateRequest", 2}, {"load", 1}, {"update", 1},
+        {"clearWatch", 1}, {"getCurrentPosition", 1}, {"watchPosition", 1},
+        {"write", 1}, {"writeText", 1}, {"getType", 1}, {"store", 1},
+        {"setActionHandler", 2}, {"setCameraActive", 1},
+        {"setMicrophoneActive", 1}, {"decodingInfo", 1}, {"encodingInfo", 1},
+        {"isSessionSupported", 1}, {"requestSession", 1}, {"reconnect", 1},
+        {"register", 1}, {"showNotification", 1}, {"setExpires", 1},
+        {"setStatus", 1}, {"getManagedConfiguration", 1},
+        {"updateInkTrailStartPoint", 2},
+        {"when", 1}, {"addTeardown", 1}, {"error", 1}, {"next", 1},
+        {"catch", 1}, {"drop", 1}, {"every", 1}, {"filter", 1},
+        {"finally", 1}, {"find", 1}, {"flatMap", 1}, {"forEach", 1},
+        {"map", 1}, {"reduce", 1}, {"some", 1}, {"switchMap", 1},
+        {"take", 1}, {"takeUntil", 1},
     };
     const auto found = lengths.find(name);
     return found == lengths.end() ? 0 : found->second;

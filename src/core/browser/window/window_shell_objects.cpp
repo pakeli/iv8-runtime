@@ -147,7 +147,8 @@ public:
         // Shared EventTarget.prototype callbacks use the generic HostObject
         // call tracer, so only add the independent watch hit on this route.
         if (specification_.event_target && (name == "addEventListener" ||
-                name == "removeEventListener" || name == "dispatchEvent"))
+                name == "removeEventListener" || name == "dispatchEvent" ||
+                name == "when"))
             watch_record(isolate, specification_.name, name);
         if (specification_.event_target && handle_event_method(isolate, context, name, arguments, value)) return value;
         if (specification_.name == "CSS" && name == "escape") return css_escape(isolate, context, arguments);
@@ -364,6 +365,25 @@ bool install_window_shell_objects(v8::Isolate* isolate, v8::Local<v8::Context> c
     for (const auto& specification : specifications)
         if (!install_shell(isolate, context, owners, specification)) return false;
     return true;
+}
+
+v8::Local<v8::Object> create_window_shell_instance(
+    PageState* owner, v8::Isolate* isolate, v8::Local<v8::Context> context,
+    std::string_view kind) {
+    if (owner == nullptr) return {};
+    ShellSpec spec;
+    if (kind == "indexedDB") {
+        spec = {"indexedDB", "IDBFactory",
+            {{"cmp", 2}, {"databases", 0, true}, {"deleteDatabase", 1}, {"open", 1}}};
+    } else if (kind == "caches") {
+        spec = {"caches", "CacheStorage",
+            {{"delete", 1, true}, {"has", 1, true}, {"keys", 0, true}, {"match", 1, true}, {"open", 1, true}}};
+    } else {
+        return {};
+    }
+    (void)web_interface_prototype(isolate, context, spec.interface_name, false);
+    return owner->adopt_host_object(isolate, context,
+        std::make_unique<WindowShellHost>(std::move(spec)));
 }
 
 }  // namespace iv8::browser

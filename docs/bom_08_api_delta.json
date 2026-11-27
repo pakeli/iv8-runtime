@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-26",
+  "baseline_source": "3e8c198",
+  "fixed_presence_reference": "docs/browser_api_inventory.json (secure Chrome 157.0.8103.51)",
+  "behavior_reference": "test/fixtures/bom_08 (Chrome 158.0.8127.88)",
+  "scope": "Native Observable, Subscriber, AbortController, AbortSignal, and EventTarget.prototype.when across all contexts",
+  "bom_subobjects": {
+    "navigator.connection": {
+      "before": "8/9",
+      "after": "9/9",
+      "added": ["when"]
+    },
+    "screen.orientation": {
+      "before": "8/9",
+      "after": "9/9",
+      "added": ["when"]
+    },
+    "visualViewport": {
+      "before": "13/14",
+      "after": "14/14",
+      "added": ["when"]
+    }
+  },
+  "new_global_interfaces": [
+    "Observable (all contexts)",
+    "Subscriber (all contexts)",
+    "AbortController (all contexts)",
+    "AbortSignal (all contexts)"
+  ],
+  "updated_interfaces": [
+    "EventTarget.prototype.when (all contexts; supersedes PRES-03 own window.when NotSupportedError stub)"
+  ],
+  "shared_sdk_replaced": false
+}

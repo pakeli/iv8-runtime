@@ -17,7 +17,7 @@ HTML = "<html><head></head><body></body></html>"
 on_only = pytest.mark.skipif(not getattr(iv8, "_v8_linked", False), reason="requires V8")
 SYNC_UNSUPPORTED = (
     "open()", "getComputedStyle(document.body)", "getSelection()", "find('text')",
-    "fetchLater('https://presence-03-window.test/never-sent')", "when('click')",
+    "fetchLater('https://presence-03-window.test/never-sent')",
     "webkitRequestFileSystem(TEMPORARY,0,()=>{},()=>{})",
     "webkitResolveLocalFileSystemURL('filesystem:https://presence-03-window.test/temporary/',()=>{},()=>{})",
 )

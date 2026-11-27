@@ -12,10 +12,16 @@
 #include "event_handlers.h"
 #include "../internal/common.h"
 #include "../internal/event_support.h"
+#include "../internal/trace_hooks.h"
 #include "../window/window_error_support.h"
 #include "../web/event_constructors.h"
 
 namespace iv8::browser {
+
+class EventTargetHost;
+v8::Local<v8::Value> event_target_when(EventTargetHost* target,
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    const v8::FunctionCallbackInfo<v8::Value>& arguments);
 
 class EventTargetHost : public HostObject {
 public:
@@ -41,6 +47,16 @@ public:
         event_handlers_.set(isolate, name, value);
     }
 
+    void add_observable_listener(v8::Isolate* isolate, const std::string& type,
+                                 v8::Local<v8::Function> callback, bool passive) {
+        add_listener(isolate, type, callback, ListenerOptions{false, false, passive});
+    }
+
+    void remove_observable_listener(v8::Isolate* isolate, const std::string& type,
+                                    v8::Local<v8::Function> callback) {
+        remove_listener_handle(isolate, type, callback, false);
+    }
+
     // If `name` is an event-target method, handle it, write the JS result to
     // `out`, and return true; otherwise return false so the concrete host handles
     // its own methods. Runs inside the isolate/context scopes (during eval), under
@@ -64,6 +80,10 @@ public:
                 listener_arg(args, 1),
                 listener_options(isolate, context, args, 2).capture);
             out = v8::Undefined(isolate);
+            return true;
+        }
+        if (name == "when") {
+            out = event_target_when(this, isolate, context, args);
             return true;
         }
         if (name == "dispatchEvent") {
@@ -167,7 +187,7 @@ protected:
     // append these to their own method_names().
     static const std::vector<std::string>& event_method_names() {
         static const std::vector<std::string> names = {
-            "addEventListener", "removeEventListener", "dispatchEvent"};
+            "addEventListener", "removeEventListener", "dispatchEvent", "when"};
         return names;
     }
 
@@ -400,6 +420,7 @@ public:
                                       const std::string&) override { return v8::Undefined(isolate); }
     v8::Local<v8::Value> call_method(v8::Isolate* isolate, v8::Local<v8::Context> context,
         const std::string& name, const v8::FunctionCallbackInfo<v8::Value>& args) override {
+        watch_record(isolate, "EventTarget", name);
         v8::Local<v8::Value> result;
         if (handle_event_method(isolate, context, name, args, result)) return result;
         return v8::Undefined(isolate);

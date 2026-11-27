@@ -35,7 +35,11 @@
 #include "browser/bom/screen.h"
 #include "browser/bom/navigator_identity.h"
 #include "browser/bom/navigator_capabilities.h"
+#include "browser/bom/navigator_methods.h"
+#include "browser/bom/navigator_permissions_bom.h"
+#include "browser/bom/navigator_devices_bom.h"
 #include "browser/bom/legacy_quota.h"
+#include "browser/web/dom_exception.h"
 #include "browser/window/window_event_target.h"
 #include "browser/window/window_functions.h"
 #include "browser/window/window_presence_functions.h"
@@ -74,6 +78,7 @@
 #include "browser/web/xml_http_request.h"
 #include "browser/window/to_string_monitoring.h"
 #include "browser/web/event_constructors.h"
+#include "browser/web/observable.h"
 #include "browser/web/url.h"
 #include "browser/bootstrap/bootstrap_scripts.h"
 #include "browser/internal/event_support.h"
@@ -1798,9 +1803,48 @@ v8::Local<v8::Value> PageState::create_dom_error(v8::Isolate* isolate,
     return object;
 }
 
+v8::Local<v8::Value> PageState::create_dom_exception(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, const std::u16string& name,
+    const std::u16string& message, bool capture_stack) {
+    auto error = std::make_unique<DOMExceptionHost>(name, message);
+    auto object = make_host_object(isolate, context, error.get());
+    if (capture_stack) {
+        (void)v8::Exception::CaptureStackTrace(context, object);
+    }
+    host_objects_.push_back(std::move(error));
+    return object;
+}
+
+v8::Local<v8::Object> PageState::adopt_host_object(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, std::unique_ptr<HostObject> host) {
+    auto object = make_host_object(isolate, context, host.get());
+    host_objects_.push_back(std::move(host));
+    return object;
+}
+
 v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Array> arguments) {
     if (name == "DOMError") return construct_dom_error(isolate, context, this, arguments);
+    if (name == "DOMException") return construct_dom_exception(isolate, context, this, arguments);
+    if (name == "ClipboardItem") return construct_clipboard_item(isolate, context, this, arguments);
+    if (name == "MediaMetadata") {
+        return construct_media_metadata(isolate, context, this, bootstrap_.base_url, arguments);
+    }
+    if (name == "PresentationRequest") {
+        return construct_presentation_request(isolate, context, this, bootstrap_.base_url, arguments);
+    }
+    if (name == "DOMRectReadOnly") {
+        return construct_dom_rect_read_only(isolate, context, this, arguments);
+    }
+    if (name == "DOMRect") {
+        return construct_dom_rect(isolate, context, this, arguments);
+    }
+    if (name == "AbortController") {
+        return construct_abort_controller(isolate, context, this, arguments);
+    }
+    if (name == "Observable") {
+        return construct_observable(isolate, context, this, arguments);
+    }
     if (name == "XMLHttpRequest") {
         auto upload = std::make_unique<XMLHttpRequestUploadHost>();
         auto upload_object = make_host_object(isolate, context, upload.get());
@@ -1939,6 +1983,16 @@ void PageState::install_page(const std::string& base_url,
             if (!install_navigator_capability_interfaces(isolate, context) ||
                 !install_bom_event_interfaces(isolate, context, &environment_)) return;
             if (!install_legacy_quota_interfaces(isolate, context, this)) return;
+            if (!install_navigator_method_interfaces(isolate, context, this,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
+            if (!install_navigator_bom05_interfaces(isolate, context, this,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate),
+                    base_url)) return;
+            if (!install_navigator_bom06_interfaces(isolate, context, this,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
+            if (!install_navigator_bom07_interfaces(isolate, context, this,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
+            if (!install_observable_and_abort_interfaces(isolate, context, this)) return;
             install_dom_parser_interface(isolate, context, this);
             install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());
@@ -2655,6 +2709,7 @@ void PageState::install_page(const std::string& base_url,
                 v8::Local<v8::Function> blob_fn =
                     blob_tpl->GetFunction(context).ToLocalChecked();
                 document->set_blob_constructor(isolate, blob_fn);
+                register_runtime_blob_constructor(isolate, context, blob_fn);
                 (void)global->Set(context, v8_string(isolate, "Blob"), blob_fn);
                 (void)global->Set(
                     context, v8_string(isolate, "File"),

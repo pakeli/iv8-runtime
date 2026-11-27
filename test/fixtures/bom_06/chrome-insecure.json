@@ -1,0 +1,161 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-25T13:38:14.624Z",
+  "execution": {
+    "os": "darwin 27.2.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://bom-fixture.invalid:<port>/reference",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "c3d991c1f7a158aefbecacf13c4883216e76b62aeb815b1b223d2fd5d83e4016",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "secure": false,
+    "origin": "http://bom-fixture.invalid:59919",
+    "shape": {
+      "bluetooth": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "hid": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "serial": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "usb": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "xr": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "gpu": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      },
+      "presentation": {
+        "present": false,
+        "own": false,
+        "descriptor": null
+      }
+    },
+    "globals": {
+      "Bluetooth": {
+        "present": false,
+        "descriptor": null
+      },
+      "BluetoothDevice": {
+        "present": false,
+        "descriptor": null
+      },
+      "HID": {
+        "present": false,
+        "descriptor": null
+      },
+      "HIDDevice": {
+        "present": false,
+        "descriptor": null
+      },
+      "Serial": {
+        "present": false,
+        "descriptor": null
+      },
+      "SerialPort": {
+        "present": false,
+        "descriptor": null
+      },
+      "USB": {
+        "present": false,
+        "descriptor": null
+      },
+      "USBDevice": {
+        "present": false,
+        "descriptor": null
+      },
+      "XRSystem": {
+        "present": false,
+        "descriptor": null
+      },
+      "XRSession": {
+        "present": false,
+        "descriptor": null
+      },
+      "GPU": {
+        "present": false,
+        "descriptor": null
+      },
+      "GPUAdapter": {
+        "present": false,
+        "descriptor": null
+      },
+      "WGSLLanguageFeatures": {
+        "present": false,
+        "descriptor": null
+      },
+      "Presentation": {
+        "present": false,
+        "descriptor": null
+      },
+      "PresentationRequest": {
+        "present": false,
+        "descriptor": null
+      },
+      "PresentationReceiver": {
+        "present": false,
+        "descriptor": null
+      },
+      "PresentationConnectionAvailableEvent": {
+        "present": false,
+        "descriptor": null
+      }
+    },
+    "interfaces": {},
+    "calls": {},
+    "details": {}
+  }
+}

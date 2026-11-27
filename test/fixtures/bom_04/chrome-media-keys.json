@@ -1,0 +1,887 @@
+{
+  "browser": "Google Chrome 157.0.8103.80",
+  "captured_at_utc": "2026-11-24T08:36:02.562Z",
+  "execution": {
+    "os": "darwin 27.2.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:<port>/reference",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "2dcba0c4c852ba6cf5ea2a5248b42d5a009c3bf3e9d3973f83e53d83166c828a",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "configs": {
+      "empty": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "init_only": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "video_mp4": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "video_mp4_init": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [
+            "cenc"
+          ],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "video_webm_vp9": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/webm; codecs=\"vp9\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "video_webm_vp8": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/webm; codecs=\"vp8\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "audio_mp4": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [
+            {
+              "contentType": "audio/mp4; codecs=\"mp4a.40.2\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": []
+        }
+      },
+      "audio_webm_opus": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [
+            {
+              "contentType": "audio/webm; codecs=\"opus\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": []
+        }
+      },
+      "audio_mp4_flac": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [
+            {
+              "contentType": "audio/mp4; codecs=\"flac\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": []
+        }
+      },
+      "video_no_codecs": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "video_bad_mime": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "video_empty_type": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "video_hevc": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "mixed": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "robustness": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "init_webm": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [
+            "webm"
+          ],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "init_keyids": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [
+            "keyids"
+          ],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "init_bad": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "init_mixed": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [
+            "cenc",
+            "keyids"
+          ],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "distinctive_required": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "distinctive_not_allowed": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "persistent_required": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "persistent_not_allowed": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "session_temporary": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "session_persistent": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "label": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "first",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "second_ok": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "second",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "encryption_scheme": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": "cenc",
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "encryption_cbcs": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": "cbcs",
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "encryption_bad": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "audio_video": {
+        "resolved": true,
+        "keySystem": "org.w3.clearkey",
+        "configuration": {
+          "audioCapabilities": [
+            {
+              "contentType": "audio/mp4; codecs=\"mp4a.40.2\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ],
+          "distinctiveIdentifier": "not-allowed",
+          "initDataTypes": [],
+          "label": "",
+          "persistentState": "not-allowed",
+          "sessionTypes": [
+            "temporary"
+          ],
+          "videoCapabilities": [
+            {
+              "contentType": "video/mp4; codecs=\"avc1.42E01E\"",
+              "encryptionScheme": null,
+              "robustness": ""
+            }
+          ]
+        }
+      },
+      "system_com.widevine.alpha": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "system_com.microsoft.playready": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "system_com.apple.fps": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "system_org.w3.clearkey.extra": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "system_ORG.W3.CLEARKEY": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      },
+      "system_x-org.w3.clearkey": {
+        "rejected": {
+          "name": "NotSupportedError",
+          "message": "Unsupported keySystem or supportedConfigurations.",
+          "tag": "[object DOMException]"
+        }
+      }
+    },
+    "access": {
+      "tag": "[object MediaKeySystemAccess]",
+      "ownKeys": [],
+      "prototypeKeys": [
+        "keySystem",
+        "createMediaKeys",
+        "getConfiguration",
+        "constructor",
+        "Symbol(Symbol.toStringTag)"
+      ],
+      "parentIsObject": true,
+      "members": {
+        "keySystem": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get keySystem",
+            "length": 0,
+            "source": "function get keySystem() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "createMediaKeys": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "createMediaKeys",
+            "length": 0,
+            "source": "function createMediaKeys() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        },
+        "getConfiguration": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "getConfiguration",
+            "length": 0,
+            "source": "function getConfiguration() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        },
+        "constructor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "MediaKeySystemAccess",
+            "length": 0,
+            "source": "function MediaKeySystemAccess() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        },
+        "Symbol(Symbol.toStringTag)": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": false,
+          "value": "MediaKeySystemAccess"
+        }
+      },
+      "global": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "value": {
+          "name": "MediaKeySystemAccess",
+          "length": 0,
+          "source": "function MediaKeySystemAccess() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        }
+      },
+      "constructor": {
+        "name": "MediaKeySystemAccess",
+        "length": 0,
+        "source": "function MediaKeySystemAccess() { [native code] }",
+        "prototype": true,
+        "construct": "TypeError"
+      },
+      "sameConfiguration": false,
+      "receiverKeySystem": {
+        "name": "TypeError",
+        "message": "Illegal invocation",
+        "tag": "[object Error]"
+      },
+      "receiverGetConfiguration": {
+        "name": "TypeError",
+        "message": "Illegal invocation",
+        "tag": "[object Error]"
+      },
+      "receiverCreate": {
+        "returned": "[object Promise]",
+        "rejected": {
+          "name": "TypeError",
+          "message": "Failed to execute 'createMediaKeys' on 'MediaKeySystemAccess': Illegal invocation",
+          "tag": "[object Error]"
+        }
+      },
+      "createOrder": [
+        "microtask",
+        "task",
+        "resolved"
+      ],
+      "createDistinct": true
+    },
+    "mediaKeys": {
+      "tag": "[object MediaKeys]",
+      "ownKeys": [],
+      "prototypeKeys": [
+        "createSession",
+        "setServerCertificate",
+        "constructor",
+        "getStatusForPolicy",
+        "Symbol(Symbol.toStringTag)"
+      ],
+      "parentIsObject": true,
+      "members": {
+        "createSession": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "createSession",
+            "length": 0,
+            "source": "function createSession() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        },
+        "setServerCertificate": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "setServerCertificate",
+            "length": 1,
+            "source": "function setServerCertificate() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        },
+        "constructor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "MediaKeys",
+            "length": 0,
+            "source": "function MediaKeys() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        },
+        "getStatusForPolicy": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "getStatusForPolicy",
+            "length": 0,
+            "source": "function getStatusForPolicy() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          }
+        },
+        "Symbol(Symbol.toStringTag)": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": false,
+          "value": "MediaKeys"
+        }
+      },
+      "global": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "value": {
+          "name": "MediaKeys",
+          "length": 0,
+          "source": "function MediaKeys() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        }
+      },
+      "constructor": {
+        "name": "MediaKeys",
+        "length": 0,
+        "source": "function MediaKeys() { [native code] }",
+        "prototype": true,
+        "construct": "TypeError"
+      },
+      "calls": {
+        "certificate": {
+          "returned": "[object Promise]",
+          "resolved": false
+        },
+        "certificate_empty": {
+          "returned": "[object Promise]",
+          "rejected": {
+            "name": "TypeError",
+            "message": "Failed to execute 'setServerCertificate' on 'MediaKeys': The serverCertificate parameter is empty.",
+            "tag": "[object Error]"
+          }
+        },
+        "certificate_missing": {
+          "returned": "[object Promise]",
+          "rejected": {
+            "name": "TypeError",
+            "message": "Failed to execute 'setServerCertificate' on 'MediaKeys': 1 argument required, but only 0 present.",
+            "tag": "[object Error]"
+          }
+        },
+        "status_missing": {
+          "returned": "[object Promise]",
+          "resolved": "usable"
+        },
+        "status_empty": {
+          "returned": "[object Promise]",
+          "resolved": "usable"
+        },
+        "status_hdcp": {
+          "returned": "[object Promise]",
+          "resolved": "usable"
+        },
+        "session_default": {
+          "returned": "[object MediaKeySession]",
+          "sessionKeys": [
+            "sessionId",
+            "expiration",
+            "closed",
+            "keyStatuses",
+            "onkeystatuseschange",
+            "onmessage",
+            "close",
+            "generateRequest",
+            "load",
+            "remove",
+            "update",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ]
+        },
+        "session_temporary": {
+          "returned": "[object MediaKeySession]",
+          "sessionKeys": [
+            "sessionId",
+            "expiration",
+            "closed",
+            "keyStatuses",
+            "onkeystatuseschange",
+            "onmessage",
+            "close",
+            "generateRequest",
+            "load",
+            "remove",
+            "update",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ]
+        },
+        "session_persistent": {
+          "error": {
+            "name": "NotSupportedError",
+            "message": "Failed to execute 'createSession' on 'MediaKeys': Unsupported session type.",
+            "tag": "[object DOMException]"
+          }
+        },
+        "session_bad": {
+          "error": {
+            "name": "TypeError",
+            "message": "Failed to execute 'createSession' on 'MediaKeys': The provided value 'bogus' is not a valid enum value of type MediaKeySessionType.",
+            "tag": "[object Error]"
+          }
+        }
+      }
+    }
+  }
+}

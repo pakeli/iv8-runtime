@@ -1,0 +1,3389 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-25T08:18:51.675Z",
+  "execution": {
+    "os": "darwin 27.2.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:<port>/reference",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "1d6d2497d7989eeddc19dcee8d155a33f7a3963e0fa9c1b467fde02c236a8358",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "origin": "http://127.0.0.1:57475",
+    "shape": {
+      "geolocation": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get geolocation",
+            "length": 0,
+            "source": "function get geolocation() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "stable": true,
+        "tag": "[object Geolocation]",
+        "ownKeys": [],
+        "protoName": "Geolocation",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "clipboard": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get clipboard",
+            "length": 0,
+            "source": "function get clipboard() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "stable": true,
+        "tag": "[object Clipboard]",
+        "ownKeys": [],
+        "protoName": "Clipboard",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "credentials": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get credentials",
+            "length": 0,
+            "source": "function get credentials() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "stable": true,
+        "tag": "[object CredentialsContainer]",
+        "ownKeys": [],
+        "protoName": "CredentialsContainer",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "locks": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get locks",
+            "length": 0,
+            "source": "function get locks() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "stable": true,
+        "tag": "[object LockManager]",
+        "ownKeys": [],
+        "protoName": "LockManager",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "wakeLock": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get wakeLock",
+            "length": 0,
+            "source": "function get wakeLock() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "stable": true,
+        "tag": "[object WakeLock]",
+        "ownKeys": [],
+        "protoName": "WakeLock",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "keyboard": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get keyboard",
+            "length": 0,
+            "source": "function get keyboard() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "stable": true,
+        "tag": "[object Keyboard]",
+        "ownKeys": [],
+        "protoName": "Keyboard",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "mediaSession": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get mediaSession",
+            "length": 0,
+            "source": "function get mediaSession() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "stable": true,
+        "tag": "[object MediaSession]",
+        "ownKeys": [],
+        "protoName": "MediaSession",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "mediaCapabilities": {
+        "present": true,
+        "own": false,
+        "descriptor": {
+          "enumerable": true,
+          "configurable": true,
+          "kind": "accessor",
+          "get": {
+            "name": "get mediaCapabilities",
+            "length": 0,
+            "source": "function get mediaCapabilities() { [native code] }",
+            "prototype": false,
+            "construct": "TypeError"
+          },
+          "set": null
+        },
+        "stable": true,
+        "tag": "[object MediaCapabilities]",
+        "ownKeys": [],
+        "protoName": "MediaCapabilities",
+        "badReceiver": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      }
+    },
+    "globals": {
+      "Geolocation": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Geolocation",
+            "length": 0,
+            "source": "function Geolocation() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "GeolocationPositionError": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "GeolocationPositionError",
+            "length": 0,
+            "source": "function GeolocationPositionError() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "GeolocationPosition": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "GeolocationPosition",
+            "length": 0,
+            "source": "function GeolocationPosition() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "GeolocationCoordinates": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "GeolocationCoordinates",
+            "length": 0,
+            "source": "function GeolocationCoordinates() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "Clipboard": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Clipboard",
+            "length": 0,
+            "source": "function Clipboard() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "ClipboardItem": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "ClipboardItem",
+            "length": 1,
+            "source": "function ClipboardItem() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "CredentialsContainer": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "CredentialsContainer",
+            "length": 0,
+            "source": "function CredentialsContainer() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "Credential": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Credential",
+            "length": 0,
+            "source": "function Credential() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "LockManager": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "LockManager",
+            "length": 0,
+            "source": "function LockManager() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "Lock": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Lock",
+            "length": 0,
+            "source": "function Lock() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "WakeLock": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "WakeLock",
+            "length": 0,
+            "source": "function WakeLock() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "WakeLockSentinel": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "WakeLockSentinel",
+            "length": 0,
+            "source": "function WakeLockSentinel() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "Keyboard": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Keyboard",
+            "length": 0,
+            "source": "function Keyboard() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "KeyboardLayoutMap": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "KeyboardLayoutMap",
+            "length": 0,
+            "source": "function KeyboardLayoutMap() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "MediaSession": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "MediaSession",
+            "length": 0,
+            "source": "function MediaSession() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "MediaMetadata": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "MediaMetadata",
+            "length": 0,
+            "source": "function MediaMetadata() { [native code] }",
+            "prototype": true,
+            "construct": "constructed"
+          }
+        }
+      },
+      "MediaCapabilities": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "MediaCapabilities",
+            "length": 0,
+            "source": "function MediaCapabilities() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      }
+    },
+    "interfaces": {
+      "Geolocation": {
+        "constructor": {
+          "name": "Geolocation",
+          "length": 0,
+          "source": "function Geolocation() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "clearWatch",
+          "getCurrentPosition",
+          "watchPosition",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "clearWatch": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "clearWatch",
+              "length": 1,
+              "source": "function clearWatch() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "getCurrentPosition": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getCurrentPosition",
+              "length": 1,
+              "source": "function getCurrentPosition() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "watchPosition": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "watchPosition",
+              "length": 1,
+              "source": "function watchPosition() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Geolocation",
+              "length": 0,
+              "source": "function Geolocation() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Geolocation"
+          }
+        }
+      },
+      "GeolocationPositionError": {
+        "constructor": {
+          "name": "GeolocationPositionError",
+          "length": 0,
+          "source": "function GeolocationPositionError() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "PERMISSION_DENIED",
+          "POSITION_UNAVAILABLE",
+          "TIMEOUT"
+        ],
+        "prototypeKeys": [
+          "code",
+          "message",
+          "PERMISSION_DENIED",
+          "POSITION_UNAVAILABLE",
+          "TIMEOUT",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "code": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get code",
+              "length": 0,
+              "source": "function get code() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "message": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get message",
+              "length": 0,
+              "source": "function get message() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "PERMISSION_DENIED": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 1
+          },
+          "POSITION_UNAVAILABLE": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 2
+          },
+          "TIMEOUT": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 3
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "GeolocationPositionError",
+              "length": 0,
+              "source": "function GeolocationPositionError() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "GeolocationPositionError"
+          }
+        }
+      },
+      "GeolocationPosition": {
+        "constructor": {
+          "name": "GeolocationPosition",
+          "length": 0,
+          "source": "function GeolocationPosition() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "coords",
+          "timestamp",
+          "toJSON",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "coords": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get coords",
+              "length": 0,
+              "source": "function get coords() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "timestamp": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get timestamp",
+              "length": 0,
+              "source": "function get timestamp() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "toJSON": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "toJSON",
+              "length": 0,
+              "source": "function toJSON() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "GeolocationPosition",
+              "length": 0,
+              "source": "function GeolocationPosition() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "GeolocationPosition"
+          }
+        }
+      },
+      "GeolocationCoordinates": {
+        "constructor": {
+          "name": "GeolocationCoordinates",
+          "length": 0,
+          "source": "function GeolocationCoordinates() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "latitude",
+          "longitude",
+          "altitude",
+          "accuracy",
+          "altitudeAccuracy",
+          "heading",
+          "speed",
+          "toJSON",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "latitude": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get latitude",
+              "length": 0,
+              "source": "function get latitude() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "longitude": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get longitude",
+              "length": 0,
+              "source": "function get longitude() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "altitude": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get altitude",
+              "length": 0,
+              "source": "function get altitude() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "accuracy": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get accuracy",
+              "length": 0,
+              "source": "function get accuracy() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "altitudeAccuracy": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get altitudeAccuracy",
+              "length": 0,
+              "source": "function get altitudeAccuracy() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "heading": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get heading",
+              "length": 0,
+              "source": "function get heading() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "speed": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get speed",
+              "length": 0,
+              "source": "function get speed() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "toJSON": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "toJSON",
+              "length": 0,
+              "source": "function toJSON() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "GeolocationCoordinates",
+              "length": 0,
+              "source": "function GeolocationCoordinates() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "GeolocationCoordinates"
+          }
+        }
+      },
+      "Clipboard": {
+        "constructor": {
+          "name": "Clipboard",
+          "length": 0,
+          "source": "function Clipboard() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "onclipboardchange",
+          "read",
+          "readText",
+          "write",
+          "writeText",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "EventTarget.prototype",
+        "members": {
+          "onclipboardchange": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onclipboardchange",
+              "length": 0,
+              "source": "function get onclipboardchange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onclipboardchange",
+              "length": 1,
+              "source": "function set onclipboardchange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "read": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "read",
+              "length": 0,
+              "source": "function read() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "readText": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "readText",
+              "length": 0,
+              "source": "function readText() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "write": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "write",
+              "length": 1,
+              "source": "function write() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "writeText": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "writeText",
+              "length": 1,
+              "source": "function writeText() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Clipboard",
+              "length": 0,
+              "source": "function Clipboard() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Clipboard"
+          }
+        }
+      },
+      "ClipboardItem": {
+        "constructor": {
+          "name": "ClipboardItem",
+          "length": 1,
+          "source": "function ClipboardItem() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "supports"
+        ],
+        "prototypeKeys": [
+          "types",
+          "getType",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "types": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get types",
+              "length": 0,
+              "source": "function get types() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "getType": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getType",
+              "length": 1,
+              "source": "function getType() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "ClipboardItem",
+              "length": 1,
+              "source": "function ClipboardItem() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "ClipboardItem"
+          }
+        }
+      },
+      "CredentialsContainer": {
+        "constructor": {
+          "name": "CredentialsContainer",
+          "length": 0,
+          "source": "function CredentialsContainer() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "create",
+          "get",
+          "preventSilentAccess",
+          "store",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "create": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "create",
+              "length": 0,
+              "source": "function create() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "get": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "get",
+              "length": 0,
+              "source": "function get() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "preventSilentAccess": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "preventSilentAccess",
+              "length": 0,
+              "source": "function preventSilentAccess() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "store": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "store",
+              "length": 1,
+              "source": "function store() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "CredentialsContainer",
+              "length": 0,
+              "source": "function CredentialsContainer() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "CredentialsContainer"
+          }
+        }
+      },
+      "Credential": {
+        "constructor": {
+          "name": "Credential",
+          "length": 0,
+          "source": "function Credential() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "isConditionalMediationAvailable"
+        ],
+        "prototypeKeys": [
+          "id",
+          "type",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "id": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get id",
+              "length": 0,
+              "source": "function get id() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "type": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get type",
+              "length": 0,
+              "source": "function get type() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Credential",
+              "length": 0,
+              "source": "function Credential() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Credential"
+          }
+        }
+      },
+      "LockManager": {
+        "constructor": {
+          "name": "LockManager",
+          "length": 0,
+          "source": "function LockManager() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "query",
+          "request",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "query": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "query",
+              "length": 0,
+              "source": "function query() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "request": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "request",
+              "length": 2,
+              "source": "function request() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "LockManager",
+              "length": 0,
+              "source": "function LockManager() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "LockManager"
+          }
+        }
+      },
+      "Lock": {
+        "constructor": {
+          "name": "Lock",
+          "length": 0,
+          "source": "function Lock() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "name",
+          "mode",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "name": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get name",
+              "length": 0,
+              "source": "function get name() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "mode": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get mode",
+              "length": 0,
+              "source": "function get mode() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Lock",
+              "length": 0,
+              "source": "function Lock() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Lock"
+          }
+        }
+      },
+      "WakeLock": {
+        "constructor": {
+          "name": "WakeLock",
+          "length": 0,
+          "source": "function WakeLock() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "request",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "request": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "request",
+              "length": 0,
+              "source": "function request() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "WakeLock",
+              "length": 0,
+              "source": "function WakeLock() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "WakeLock"
+          }
+        }
+      },
+      "WakeLockSentinel": {
+        "constructor": {
+          "name": "WakeLockSentinel",
+          "length": 0,
+          "source": "function WakeLockSentinel() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "onrelease",
+          "released",
+          "type",
+          "release",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "EventTarget.prototype",
+        "members": {
+          "onrelease": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onrelease",
+              "length": 0,
+              "source": "function get onrelease() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onrelease",
+              "length": 1,
+              "source": "function set onrelease() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "released": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get released",
+              "length": 0,
+              "source": "function get released() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "type": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get type",
+              "length": 0,
+              "source": "function get type() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "release": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "release",
+              "length": 0,
+              "source": "function release() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "WakeLockSentinel",
+              "length": 0,
+              "source": "function WakeLockSentinel() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "WakeLockSentinel"
+          }
+        }
+      },
+      "Keyboard": {
+        "constructor": {
+          "name": "Keyboard",
+          "length": 0,
+          "source": "function Keyboard() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "getLayoutMap",
+          "lock",
+          "unlock",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "getLayoutMap": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getLayoutMap",
+              "length": 0,
+              "source": "function getLayoutMap() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "lock": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "lock",
+              "length": 0,
+              "source": "function lock() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "unlock": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "unlock",
+              "length": 0,
+              "source": "function unlock() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Keyboard",
+              "length": 0,
+              "source": "function Keyboard() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Keyboard"
+          }
+        }
+      },
+      "KeyboardLayoutMap": {
+        "constructor": {
+          "name": "KeyboardLayoutMap",
+          "length": 0,
+          "source": "function KeyboardLayoutMap() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "size",
+          "entries",
+          "forEach",
+          "get",
+          "has",
+          "keys",
+          "values",
+          "constructor",
+          "Symbol(Symbol.toStringTag)",
+          "Symbol(Symbol.iterator)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "size": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get size",
+              "length": 0,
+              "source": "function get size() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "entries": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "entries",
+              "length": 0,
+              "source": "function entries() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "forEach": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "forEach",
+              "length": 1,
+              "source": "function forEach() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "get": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "get",
+              "length": 1,
+              "source": "function get() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "has": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "has",
+              "length": 1,
+              "source": "function has() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "keys": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "keys",
+              "length": 0,
+              "source": "function keys() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "values": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "values",
+              "length": 0,
+              "source": "function values() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "KeyboardLayoutMap",
+              "length": 0,
+              "source": "function KeyboardLayoutMap() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "KeyboardLayoutMap"
+          },
+          "Symbol(Symbol.iterator)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "entries",
+              "length": 0,
+              "source": "function entries() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          }
+        }
+      },
+      "MediaSession": {
+        "constructor": {
+          "name": "MediaSession",
+          "length": 0,
+          "source": "function MediaSession() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "metadata",
+          "playbackState",
+          "setActionHandler",
+          "setCameraActive",
+          "setMicrophoneActive",
+          "setPositionState",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "metadata": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get metadata",
+              "length": 0,
+              "source": "function get metadata() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set metadata",
+              "length": 1,
+              "source": "function set metadata() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "playbackState": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get playbackState",
+              "length": 0,
+              "source": "function get playbackState() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set playbackState",
+              "length": 1,
+              "source": "function set playbackState() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "setActionHandler": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setActionHandler",
+              "length": 2,
+              "source": "function setActionHandler() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "setCameraActive": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setCameraActive",
+              "length": 1,
+              "source": "function setCameraActive() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "setMicrophoneActive": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setMicrophoneActive",
+              "length": 1,
+              "source": "function setMicrophoneActive() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "setPositionState": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setPositionState",
+              "length": 0,
+              "source": "function setPositionState() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "MediaSession",
+              "length": 0,
+              "source": "function MediaSession() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "MediaSession"
+          }
+        }
+      },
+      "MediaMetadata": {
+        "constructor": {
+          "name": "MediaMetadata",
+          "length": 0,
+          "source": "function MediaMetadata() { [native code] }",
+          "prototype": true,
+          "construct": "constructed"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "title",
+          "artist",
+          "album",
+          "artwork",
+          "chapterInfo",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "title": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get title",
+              "length": 0,
+              "source": "function get title() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set title",
+              "length": 1,
+              "source": "function set title() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "artist": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get artist",
+              "length": 0,
+              "source": "function get artist() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set artist",
+              "length": 1,
+              "source": "function set artist() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "album": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get album",
+              "length": 0,
+              "source": "function get album() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set album",
+              "length": 1,
+              "source": "function set album() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "artwork": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get artwork",
+              "length": 0,
+              "source": "function get artwork() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set artwork",
+              "length": 1,
+              "source": "function set artwork() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "chapterInfo": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get chapterInfo",
+              "length": 0,
+              "source": "function get chapterInfo() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "MediaMetadata",
+              "length": 0,
+              "source": "function MediaMetadata() { [native code] }",
+              "prototype": true,
+              "construct": "constructed"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "MediaMetadata"
+          }
+        }
+      },
+      "MediaCapabilities": {
+        "constructor": {
+          "name": "MediaCapabilities",
+          "length": 0,
+          "source": "function MediaCapabilities() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "prototypeKeys": [
+          "decodingInfo",
+          "encodingInfo",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "decodingInfo": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "decodingInfo",
+              "length": 1,
+              "source": "function decodingInfo() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "encodingInfo": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "encodingInfo",
+              "length": 1,
+              "source": "function encodingInfo() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "MediaCapabilities",
+              "length": 0,
+              "source": "function MediaCapabilities() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "MediaCapabilities"
+          }
+        }
+      }
+    },
+    "calls": {
+      "geo_get_missing": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getCurrentPosition' on 'Geolocation': 1 argument required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "geo_get_bad_cb": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getCurrentPosition' on 'Geolocation': parameter 1 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "geo_get_bad_err": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getCurrentPosition' on 'Geolocation': parameter 2 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "geo_get_ok": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "message": "Timeout expired",
+              "code": 3,
+              "tag": "[object GeolocationPositionError]",
+              "domException": false
+            }
+          }
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "geo_get_default": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "message": "User denied Geolocation",
+              "code": 1,
+              "tag": "[object GeolocationPositionError]",
+              "domException": false
+            }
+          }
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "geo_get_order": {
+        "effects": [
+          "eha",
+          "maxAge",
+          "timeout",
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "message": "Timeout expired",
+              "code": 3,
+              "tag": "[object GeolocationPositionError]",
+              "domException": false
+            }
+          }
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "geo_watch_missing": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'watchPosition' on 'Geolocation': 1 argument required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "geo_watch_ok": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "message": "Timeout expired",
+              "code": 3,
+              "tag": "[object GeolocationPositionError]",
+              "domException": false
+            }
+          },
+          {
+            "kind": "failure",
+            "thisUndefined": true,
+            "error": {
+              "message": "User denied Geolocation",
+              "code": 1,
+              "tag": "[object GeolocationPositionError]",
+              "domException": false
+            }
+          }
+        ],
+        "returned": {
+          "type": "number",
+          "value": 1
+        }
+      },
+      "geo_clear_missing": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'clearWatch' on 'Geolocation': 1 argument required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "geo_clear_num": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "clip_read": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'read' on 'Clipboard': Read permission denied.",
+              "code": 0,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "clip_readText": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'readText' on 'Clipboard': Read permission denied.",
+              "code": 0,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "clip_write_missing": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'write' on 'Clipboard': 1 argument required, but only 0 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "clip_write_empty": {
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "clip_writeText_missing": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'writeText' on 'Clipboard': 1 argument required, but only 0 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "clip_writeText_ok": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotAllowedError",
+              "message": "Failed to execute 'writeText' on 'Clipboard': Write permission denied.",
+              "code": 0,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_get_empty": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "No credential type was specified in the request.",
+              "code": 9,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_get_dict": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "No credential type was specified in the request.",
+              "code": 9,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_get_password": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "value": null
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_get_bad": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'get' on 'CredentialsContainer': The provided value is not of type 'CredentialRequestOptions'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_create_empty": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "Only exactly one of 'password', 'federated', and 'publicKey' credential types are currently supported.",
+              "code": 9,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_create_dict": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "Only exactly one of 'password', 'federated', and 'publicKey' credential types are currently supported.",
+              "code": 9,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_create_bad": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'create' on 'CredentialsContainer': The provided value is not of type 'CredentialCreationOptions'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_prevent": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_store_missing": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'store' on 'CredentialsContainer': 1 argument required, but only 0 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "cred_store_bad": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'store' on 'CredentialsContainer': parameter 1 is not of type 'Credential'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_query": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object Object]"
+            },
+            "raw": {
+              "held": [],
+              "pending": []
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_req_missing": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'request' on 'LockManager': 2 arguments required, but only 0 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_req_one": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'request' on 'LockManager': 2 arguments required, but only 1 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_req_bad_cb": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'request' on 'LockManager': parameter 2 is not of type 'Function'.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_req_ok": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "lockName": "res",
+            "lockMode": "exclusive",
+            "tag": "[object Lock]"
+          },
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "number",
+              "value": 42
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_req_opts": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "string",
+              "value": "shared"
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_req_bad_mode": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'request' on 'LockManager': Failed to read the 'mode' property from 'LockOptions': The provided value 'bogus' is not a valid enum value of type LockMode.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_req_steal_ifavail": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "Failed to execute 'request' on 'LockManager': The 'steal' and 'ifAvailable' options cannot be used together.",
+              "code": 9,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "locks_req_slash": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "NotSupportedError",
+              "message": "Failed to execute 'request' on 'LockManager': Names cannot start with '-'.",
+              "code": 9,
+              "tag": "[object DOMException]",
+              "domException": true
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "wake_default": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object WakeLockSentinel]"
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "wake_screen": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object WakeLockSentinel]"
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "wake_bad": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'request' on 'WakeLock': The provided value 'bogus' is not a valid enum value of type WakeLockType.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "kb_map": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object KeyboardLayoutMap]"
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "kb_lock_empty": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "kb_lock_keys": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "undefined"
+            }
+          }
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "kb_lock_bad": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'lock' on 'Keyboard': The provided value cannot be converted to a sequence.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "kb_unlock": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "ms_action_ok": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "ms_action_null": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "ms_action_bad_enum": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'setActionHandler' on 'MediaSession': The provided value 'bogus' is not a valid enum value of type MediaSessionAction.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "ms_action_missing": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'setActionHandler' on 'MediaSession': 2 arguments required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "ms_cam_ok": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "ms_cam_missing": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'setCameraActive' on 'MediaSession': 1 argument required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "ms_mic_ok": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "ms_pos_empty": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "ms_pos_ok": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "undefined"
+        }
+      },
+      "ms_pos_bad_neg": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'setPositionState' on 'MediaSession': The provided duration cannot be less than zero.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "ms_pos_bad_pos": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'setPositionState' on 'MediaSession': The provided position cannot be greater than the duration.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "ms_pos_zero_rate": {
+        "effects": [
+          "after call",
+          "microtask",
+          "task"
+        ],
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'setPositionState' on 'MediaSession': The provided playbackRate cannot be equal to zero.",
+          "tag": "[object Error]",
+          "domException": false,
+          "same": false
+        }
+      },
+      "mc_dec_missing": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'decodingInfo' on 'MediaCapabilities': 1 argument required, but only 0 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "mc_dec_empty": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'decodingInfo' on 'MediaCapabilities': Failed to read the 'type' property from 'MediaDecodingConfiguration': Required member is undefined.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "mc_dec_file_video": {
+        "effects": [
+          "after call",
+          "microtask",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object Object]"
+            },
+            "raw": {
+              "powerEfficient": false,
+              "smooth": true,
+              "supported": true,
+              "keySystemAccess": null
+            }
+          },
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "mc_dec_file_audio": {
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object Object]"
+            },
+            "raw": {
+              "powerEfficient": true,
+              "smooth": true,
+              "supported": true,
+              "keySystemAccess": null
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "mc_dec_bad_mime": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'decodingInfo' on 'MediaCapabilities': The video configuration dictionary is not valid.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "mc_dec_unknown_codec": {
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object Object]"
+            },
+            "raw": {
+              "powerEfficient": false,
+              "smooth": false,
+              "supported": false,
+              "keySystemAccess": null
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "mc_enc_missing": {
+        "effects": [
+          "after call",
+          {
+            "kind": "rejected",
+            "error": {
+              "name": "TypeError",
+              "message": "Failed to execute 'encodingInfo' on 'MediaCapabilities': 1 argument required, but only 0 present.",
+              "tag": "[object Error]",
+              "domException": false
+            },
+            "same": false
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      },
+      "mc_enc_webrtc_video": {
+        "effects": [
+          "after call",
+          {
+            "kind": "resolved",
+            "value": {
+              "type": "object",
+              "tag": "[object Object]"
+            },
+            "raw": {
+              "powerEfficient": false,
+              "smooth": false,
+              "supported": false
+            }
+          },
+          "microtask",
+          "task"
+        ],
+        "returned": {
+          "type": "object",
+          "tag": "[object Promise]"
+        }
+      }
+    },
+    "receivers": {},
+    "details": {
+      "geoErrorConstants": {
+        "PERMISSION_DENIED": 1,
+        "POSITION_UNAVAILABLE": 2,
+        "TIMEOUT": 3
+      },
+      "wakeSentinel": {
+        "tag": "[object WakeLockSentinel]",
+        "released": false,
+        "type": "screen"
+      },
+      "wakeAfterRelease": {
+        "released": true
+      },
+      "kbMap": {
+        "tag": "[object KeyboardLayoutMap]",
+        "size": 48,
+        "hasKeyA": true,
+        "getKeyA": "a"
+      },
+      "mediaSessionInitial": {
+        "metadata": null,
+        "playbackState": "none"
+      },
+      "mediaSessionAfter": {
+        "sameMetadata": true,
+        "title": "Song",
+        "artist": "Artist",
+        "album": "Album",
+        "artworkLen": 1,
+        "artwork0": {
+          "sizes": "96x96",
+          "src": "https://example.com/a.png",
+          "type": "image/png"
+        },
+        "sameArtwork": false,
+        "playbackState": "playing"
+      }
+    }
+  }
+}

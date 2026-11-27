@@ -1,6 +1,8 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest implemented/validated candidate (`2026-11-21`): BOM-03 native legacy quota.** Fixed runtime `4cbab176ec8105d5d0545f61335c6600d9db8830` / tree `c76e926f74a7bcc1995ed697d0841a3950195a65` passes all 12 selected Python 3.11–3.14 lanes: local Mac first, then hosted Linux/Windows. Every lane passes the **37-module / 1225-test gate**; full Mac/Linux are **3451 passed, 2 skipped**, Windows **3449 passed, 4 skipped**. All five hosted ZIPs and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 15.0.245.19 engines are reused; native extensions/wheels are rebuilt. Runs: Linux `44769697781`, Windows `44769706158`; push/PR V8 CI `44722569894` / `44722637832` also pass. Navigator remains **35/70** with **118 new tests**. PR #34 is ready for review above unmerged PR #33. This batch does not install the shared SDK or publish a version. Scope/evidence: `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md`, `docs/bom_03_api_delta.json`, `docs/bom_03_release_report.md`.
+**Latest implemented/validated candidate (`2026-11-26`): BOM-04..BOM-08 complete Navigator (`70/70`) and Observable/`EventTarget.prototype.when`.** Fixed runtime `3cc59b336676b5ce430f668646861eca5e359f8a` / tree `0fe758ea9a74679774280988b22597b4713a1c8e` completes all 35 remaining `Navigator` APIs (`35/70 -> 70/70` secure, `33/70 -> 38/70` insecure/opaque) across `BOM-04`..`BOM-07` and native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and `EventTarget.prototype.when` in `BOM-08` (`navigator.connection` `9/9`, `screen.orientation` `9/9`, `visualViewport` `14/14`, inherited `window.when`). Each batch was independently reviewed by Codex CLI and verified against headless Chrome `158.0.8127.88`. All 12 selected Python 3.11–3.14 lanes pass: local macOS arm64 first, then hosted Linux x64 and Windows x64. Every lane passes the **42-module / 1257-test gate** (**32 new pytest cases**); full Mac/Linux are **3483 passed, 2 skipped**, Windows **3481 passed, 4 skipped**. All five hosted ZIPs (`15125369259`, `15125461652`, `15125761278`, `15126235377`, `15125606444`) and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 `15.0.245.19` engines are reused; native extensions/wheels are rebuilt. Runs: Linux `45835448535`, Windows `45835458516`, push V8 CI `45835443187` (**83 audit / 1257 gate / 3483 passed, 2 skipped**). Shared SDK remains BIND-01; no shared installation, PR merge, or version tag publication is performed. Scope/evidence: `docs/bom_04_navigator_methods.md`..`docs/bom_08_observable_when.md`, `docs/bom_04_navigator_methods_report.md`..`docs/bom_08_observable_when_report.md`, `docs/bom_08_release_report.md`.
+
+**Previous implemented/validated candidate (`2026-11-21`): BOM-03 native legacy quota.** Fixed runtime `4cbab176ec8105d5d0545f61335c6600d9db8830` / tree `c76e926f74a7bcc1995ed697d0841a3950195a65` passes all 12 selected Python 3.11–3.14 lanes: local Mac first, then hosted Linux/Windows. Every lane passes the **37-module / 1225-test gate**; full Mac/Linux are **3451 passed, 2 skipped**, Windows **3449 passed, 4 skipped**. All five hosted ZIPs and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 15.0.245.19 engines are reused; native extensions/wheels are rebuilt. Runs: Linux `44769697781`, Windows `44769706158`; push/PR V8 CI `44722569894` / `44722637832` also pass. Navigator remains **35/70** with **118 new tests**. PR #34 is ready for review above unmerged PR #33. This batch does not install the shared SDK or publish a version. Scope/evidence: `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md`, `docs/bom_03_api_delta.json`, `docs/bom_03_release_report.md`.
 
 **Previous implemented/validated candidate (`2026-11-19`): BOM-02.** Native secure getInstalledRelatedApps and inactive-profile vibrate raise Navigator secure-reference membership to **34/70**. Local Mac Python 3.11–3.14 wheels are validated before hosted Linux/Windows; all 12 selected lanes pass the **36-module / 1107-test gate**. Full Mac/Linux: **3333 passed, 2 skipped**; Windows: **3331 passed, 4 skipped**. There are **190 new tests**. Runtime code is `1dff793c5349206976dcb575d761c8331732da6e` / tree `3f7e18f50a7e17abf9fed27be7e57cc0aec6f01f`; Windows uses checkout-fix `d97412dcd97df4ababba40fa55b1c7c92888b3b4` / tree `57ad2e7f7a3c059c34cdc7fa8b2e8baa8a267d78`, differing only by .gitattributes with all 431 canonical runtime/test/build/workflow inputs unchanged. Both commits pass V8 source CI; all five remote ZIPs and 12 wheels are collected and verified. Generated diagnostic object-label differences under modified prototype metadata remain explicit. Baseline PR #32 is merged; BOM-02 is draft PR #33. Shared SDK remains BIND-01. Boundary/report/delta/release evidence: `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md`, `docs/bom_02_api_delta.json`, `docs/bom_02_release_report.md`.
 
@@ -419,8 +421,10 @@ Installed per generation by `install_page`:
   property model. `reportError` delivers error/message through the existing
   synthetic event path; the earlier single-Event/false-cancellation onerror model
   is retained. Chrome's five-argument legacy semantics remain a profile gap.
-  `open`, `getComputedStyle`, `getSelection`, `find`, `fetchLater`, `when` and
-  legacy filesystem operations throw NotSupportedError. Image/device/font/picker
+  `open`, `getComputedStyle`, `getSelection`, `find`, `fetchLater`, and
+  legacy filesystem operations throw NotSupportedError (PRES-03's initial
+  `when` NotSupportedError stub is superseded by BOM-08's inherited
+  `EventTarget.prototype.when`). Image/device/font/picker
   operations return explicitly rejected Promises. `close`, capture/releaseEvents
   and requestResize are bounded no-ops; deterministic flags/constants report
   only this offline profile. User-authorized native `open` exposure supersedes
@@ -453,6 +457,27 @@ Installed per generation by `install_page`:
   NotSupportedError, invalid MIME types throw TypeError. XMLSerializer and full
   XML/HTML5 parsing remain outside this batch. See `docs/presence_02_dom.md`.
 
+- **BOM-04..BOM-08 Navigator completion and Observable/`EventTarget.prototype.when` (local Mac and hosted Linux/Windows validated)** —
+  `BOM-04` adds the ten secure `Navigator.prototype` methods (`canShare`, `share`,
+  `setAppBadge`, `clearAppBadge`, `registerProtocolHandler`,
+  `unregisterProtocolHandler`, `getUserMedia`, `webkitGetUserMedia`,
+  `requestMIDIAccess`, `requestMediaKeySystemAccess`), constructible
+  `DOMException`, ClearKey EME, and `File` branding (`docs/bom_04_navigator_methods.md`).
+  `BOM-05` adds `geolocation`, `mediaSession`, `mediaCapabilities`, and secure
+  `clipboard`, `credentials`, `locks`, `wakeLock`, `keyboard` plus 17 interfaces
+  (`docs/bom_05_permission_objects.md`). `BOM-06` adds secure `bluetooth`, `hid`,
+  `serial`, `usb`, `xr`, `gpu`, `presentation` plus 10 interfaces
+  (`docs/bom_06_device_objects.md`). `BOM-07` adds `ink`, `windowControlsOverlay`,
+  and secure `cpuPerformance`, `devicePosture`, `login`, `managed`,
+  `mediaDevices`, `serviceWorker`, `storageBuckets`, `virtualKeyboard` plus 17
+  interfaces including constructible `DOMRectReadOnly` and `DOMRect`, reaching
+  **70/70** secure `Navigator` (`docs/bom_07_remaining_navigator.md`). `BOM-08`
+  adds native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and
+  `EventTarget.prototype.when`, bringing `navigator.connection` (**9/9**),
+  `screen.orientation` (**9/9**), and `visualViewport` (**14/14**) to 100% and
+  restoring inherited `window.when === EventTarget.prototype.when`
+  (`docs/bom_08_observable_when.md`, `docs/bom_08_release_report.md`).
+
 - **BOM-03 legacy quota (local Mac and hosted Linux/Windows validated)** — native shared
   webkitTemporaryStorage/webkitPersistentStorage getters, private
   DeprecatedStorageQuota methods, deterministic quota values and task/synchronous
@@ -473,8 +498,9 @@ Installed per generation by `install_page`:
   `Scheduling.isInputPending(options)` with dictionary conversion and false
   results without trusted input. NetworkInformation, ScreenOrientation and
   VisualViewport have shared native interfaces and synthetic EventTarget support;
-  onscrollend and orientation lock/unlock complete the selected name slice.
-  Device execution and Observable-dependent when remain separate. See
+  onscrollend and orientation lock/unlock complete the selected name slice
+  (the three Observable-dependent `when` methods are subsequently completed by
+  `BOM-08`). See
   `docs/bom_01_capabilities.md` / `docs/bom_01_capabilities_report.md`.
 
 - **PRES-01 BOM/event additions (previous local acceptance; combined release verified)** —
@@ -912,6 +938,11 @@ clock.
 | PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release verification in `docs/bom_release_report.md` | `docs/presence_02_dom.md` / report |
 | PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release verification in `docs/bom_release_report.md` | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
+| BOM-08 | Native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and `EventTarget.prototype.when` (`connection`/`orientation`/`visualViewport` complete; 12-lane release verified) | `docs/bom_08_observable_when.md`, `docs/bom_08_observable_when_report.md`, `docs/bom_08_release_report.md` |
+| BOM-07 | Final 10 `Navigator` members (`70/70` secure) plus `DOMRect`/`DOMRectReadOnly`, `ServiceWorkerContainer`, `StorageBucketManager`, `MediaDevices` | `docs/bom_07_remaining_navigator.md`, `docs/bom_07_remaining_navigator_report.md` |
+| BOM-06 | Secure `Navigator` device, WebXR, WebGPU, and Presentation objects (`60/70` secure) | `docs/bom_06_device_objects.md`, `docs/bom_06_device_objects_report.md` |
+| BOM-05 | `Navigator` permission, lock, session, and media-capability objects (`53/70` secure) | `docs/bom_05_permission_objects.md`, `docs/bom_05_permission_objects_report.md` |
+| BOM-04 | Secure `Navigator.prototype` methods (`45/70` secure), constructible `DOMException`, ClearKey EME | `docs/bom_04_navigator_methods.md`, `docs/bom_04_navigator_methods_report.md` |
 | BOM-03 | Native legacy quota aliases, callbacks and required DOMError dependency; local acceptance and release status separated | `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md`, `docs/bom_03_release_report.md` |
 | BOM-02 | Secure related-app inspection and native vibration argument conversion in the offline/inactive Page profile; local and release evidence tracked separately | `docs/bom_02_navigator.md`, `docs/bom_02_navigator_report.md` |
 | BOM-01 | Offline Navigator capability queries and native connection/orientation/viewport event foundations; local acceptance and release status tracked separately | `docs/bom_01_capabilities.md`, `docs/bom_01_capabilities_report.md` |

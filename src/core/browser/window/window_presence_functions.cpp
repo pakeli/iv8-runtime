@@ -135,7 +135,7 @@ bool install_window_presence_functions(v8::Isolate* isolate,
     for (const char* name : {"open", "find", "getSelection"}) {
         if (!install_operation(isolate, context, name, 0, &unsupported_operation)) return false;
     }
-    for (const char* name : {"getComputedStyle", "fetchLater", "when"}) {
+    for (const char* name : {"getComputedStyle", "fetchLater"}) {
         if (!install_operation(isolate, context, name, 1, &unsupported_operation)) return false;
     }
     if (!install_operation(isolate, context, "webkitRequestFileSystem", 3, &unsupported_operation) ||

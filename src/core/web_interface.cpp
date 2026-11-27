@@ -36,6 +36,17 @@ std::string_view parent_interface(std::string_view name) {
         {"VisualViewport", "EventTarget"},
         {"CookieStore", "EventTarget"}, {"Navigation", "EventTarget"},
         {"DocumentPictureInPicture", "EventTarget"}, {"SpeechSynthesis", "EventTarget"},
+        {"MediaKeySession", "EventTarget"},
+        {"Clipboard", "EventTarget"}, {"WakeLockSentinel", "EventTarget"},
+        {"Bluetooth", "EventTarget"}, {"HID", "EventTarget"},
+        {"Serial", "EventTarget"}, {"USB", "EventTarget"},
+        {"XRSystem", "EventTarget"}, {"PresentationRequest", "EventTarget"},
+        {"DOMRect", "DOMRectReadOnly"}, {"InputDeviceInfo", "MediaDeviceInfo"},
+        {"MediaDevices", "EventTarget"}, {"ServiceWorkerContainer", "EventTarget"},
+        {"ServiceWorker", "EventTarget"}, {"ServiceWorkerRegistration", "EventTarget"},
+        {"NavigatorManagedData", "EventTarget"}, {"DevicePosture", "EventTarget"},
+        {"VirtualKeyboard", "EventTarget"}, {"WindowControlsOverlay", "EventTarget"},
+        {"AbortSignal", "EventTarget"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"},
         {"XMLHttpRequestUpload", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
@@ -63,7 +74,12 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     browser::watch_record(isolate, "window", name);
     const bool constructible = name == "Document" || name == "EventTarget" ||
         name == "Text" || name == "Comment" || name == "DocumentFragment" ||
-        name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser" || name == "DOMError";
+        name == "XMLHttpRequest" || name == "Worker" || name == "DOMParser" ||
+        name == "DOMError" || name == "DOMException" ||
+        name == "ClipboardItem" || name == "MediaMetadata" ||
+        name == "PresentationRequest" || name == "DOMRect" ||
+        name == "DOMRectReadOnly" || name == "Observable" ||
+        name == "AbortController";
     if (!info.IsConstructCall()) {
         const auto message = constructible
             ? "Failed to construct '" + name + "': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
@@ -88,7 +104,11 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
     v8::Local<v8::Value> result;
     if (!factory.As<v8::Function>()->Call(context, info.This(), 2, factory_arguments)
             .ToLocal(&result)) return;
-    if (name == "DOMError") {
+    if (name == "DOMError" || name == "DOMException" ||
+        name == "ClipboardItem" || name == "MediaMetadata" ||
+        name == "PresentationRequest" || name == "DOMRect" ||
+        name == "DOMRectReadOnly" || name == "Observable" ||
+        name == "AbortController") {
         // V8 has already obtained NewTarget.prototype when allocating This.
         // Reuse it without executing a Proxy's prototype getter a second time.
         if (result->IsObject() && !result.As<v8::Object>()->SetPrototype(
@@ -180,7 +200,7 @@ std::string web_member_interface(const std::string& name,
         member_in(member, {"onloadstart", "onprogress", "onabort", "onerror",
             "onload", "ontimeout", "onloadend"})) return "XMLHttpRequestEventTarget";
     if (web_interface_inherits(name, "EventTarget") && method &&
-        member_in(member, {"addEventListener", "removeEventListener", "dispatchEvent"}))
+        member_in(member, {"addEventListener", "removeEventListener", "dispatchEvent", "when"}))
         return "EventTarget";
     if (web_interface_inherits(name, "Node")) {
         if ((method && member_in(member, {"appendChild", "removeChild", "insertBefore",
@@ -213,6 +233,18 @@ std::string web_member_interface(const std::string& name,
                 "namespaceURI", "localName", "prefix"}))) return "Element";
         if (!method && member_in(member, {"innerText", "style", "dataset"})) return "HTMLElement";
     }
+    if (web_interface_inherits(name, "DOMRectReadOnly")) {
+        if ((method && member == "toJSON") ||
+            (!method && member_in(member, {"top", "right", "bottom", "left"}))) {
+            return "DOMRectReadOnly";
+        }
+    }
+    if (web_interface_inherits(name, "MediaDeviceInfo")) {
+        if ((method && member == "toJSON") ||
+            (!method && member_in(member, {"deviceId", "kind", "label", "groupId"}))) {
+            return "MediaDeviceInfo";
+        }
+    }
     return name;
 }
 
@@ -238,7 +270,9 @@ v8::Local<v8::Object> web_interface_prototype(
     if (name == "WindowProperties" || name == "StyleMedia" ||
         name == "DeprecatedStorageQuota") return prototype;
     v8::Local<v8::Function> constructor;
-    const int length = name == "Worker" || name == "DOMError" ? 1 : 0;
+    const int length = name == "Worker" || name == "DOMError" ||
+        name == "ClipboardItem" || name == "PresentationRequest" ||
+        name == "Observable" ? 1 : 0;
     if (!v8::Function::New(context, &interface_constructor, string(isolate, name), length)
             .ToLocal(&constructor)) return {};
     constructor->SetName(string(isolate, name));
@@ -275,7 +309,8 @@ v8::Local<v8::Object> web_interface_prototype(
     if (constructor_parent == "WindowProperties") constructor_parent = "EventTarget";
     if (!constructor_parent.empty()) {
         v8::Local<v8::Value> parent_constructor;
-        auto parent_prototype = web_interface_prototype(isolate, context, std::string(constructor_parent));
+        auto parent_prototype = web_interface_prototype(
+            isolate, context, std::string(constructor_parent), expose_global);
         if (parent_prototype.IsEmpty() || !parent_prototype->GetPrivate(context, registry_key(isolate, "constructor"))
                 .ToLocal(&parent_constructor) ||
             !constructor->SetPrototype(context, parent_constructor).FromMaybe(false)) return {};
@@ -321,7 +356,8 @@ void install_web_interfaces(v8::Isolate* isolate, v8::Local<v8::Context> context
             "HTMLMetaElement", "Text", "Comment", "DocumentFragment", "Storage",
             "XMLHttpRequest", "XMLHttpRequestUpload", "Worker", "NavigatorUAData", "UserActivation", "DOMStringList",
             "Attr", "NamedNodeMap", "DOMStringMap", "DOMParser", "Scheduling",
-            "NetworkInformation", "ScreenOrientation", "VisualViewport", "DOMError"}) {
+            "NetworkInformation", "ScreenOrientation", "VisualViewport",
+            "DOMError", "DOMException"}) {
         if (web_interface_prototype(isolate, context, name).IsEmpty()) return;
     }
     for (const auto& [tag, name] : html_interfaces()) {

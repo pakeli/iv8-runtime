@@ -18,7 +18,7 @@ GLOBAL_CALLS = [
     ("getSelection", "getSelection()", 0, "threw", "NotSupportedError"),
     ("getComputedStyle", "getComputedStyle(document.body)", 1, "threw", "NotSupportedError"),
     ("fetchLater", "fetchLater('https://presence-03-monitoring.test/never-sent')", 1, "threw", "NotSupportedError"),
-    ("when", "when('click')", 1, "threw", "NotSupportedError"),
+    ("when", "when('click')", 1, "object", None),
     ("webkitRequestFileSystem", "webkitRequestFileSystem(0,0,()=>{})", 3, "threw", "NotSupportedError"),
     ("webkitResolveLocalFileSystemURL", "webkitResolveLocalFileSystemURL('filesystem:never',()=>{})", 2, "threw", "NotSupportedError"),
     ("createImageBitmap", "createImageBitmap(document.createElement('canvas'))", 1, "promise", None),
@@ -94,7 +94,7 @@ def assert_call_record(record, count, outcome, error_name=None):
     else:
         assert record["outcome"] == "returned"
         assert "exception_name" not in record
-        expected = "object" if outcome == "promise" else "boolean:false" if outcome == "boolean" else outcome
+        expected = "object" if outcome == "promise" else "host_object" if outcome == "object" else "boolean:false" if outcome == "boolean" else outcome
         if expected in {"number", "string"}:
             assert record["return_summary"].startswith(expected + ":")
         else:
@@ -108,8 +108,13 @@ def test_direct_global_reads_cover_all_49_without_inventing_watch_calls(page):
     for name in names:
         page.read_access_trace(clear=True)
         page.eval("void window[" + json.dumps(name) + "]", name="read-global.js")
+        expected_owner = (
+            ("host_object", "EventTarget.prototype")
+            if REFERENCE["members"][name].get("owner_depth") == 3
+            else ("window", "window")
+        )
         reads = [record for record in events(page)
-                 if record["object_type"] == "window" and record["label"] == "window"
+                 if (record["object_type"], record["label"]) == expected_owner
                  and record["member"] == name and record["operation"] in {"get", "get_method"}]
         assert len(reads) == 1, name
         record = reads[0]

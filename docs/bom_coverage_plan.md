@@ -23,10 +23,22 @@ required DOMError dependency. Browser evidence, acceptance and limits are in
 All 12 selected lanes and wheel artifacts are validated on `2026-11-21`; exact
 release evidence is in `docs/bom_03_release_report.md`.
 
+BOM-04 through BOM-08 complete the remaining audited BOM inventory on
+`2026-11-26`: secure `Navigator` reaches **70/70** (`38/70` insecure/opaque)
+across `BOM-04` (`docs/bom_04_navigator_methods.md`), `BOM-05`
+(`docs/bom_05_permission_objects.md`), `BOM-06` (`docs/bom_06_device_objects.md`),
+and `BOM-07` (`docs/bom_07_remaining_navigator.md`), and `BOM-08`
+(`docs/bom_08_observable_when.md`) adds native `Observable`, `Subscriber`,
+`AbortController`, `AbortSignal`, and `EventTarget.prototype.when`, bringing
+`navigator.connection` (**9/9**), `screen.orientation` (**9/9**), and
+`visualViewport` (**14/14**) to 100% inventory coverage. All 12 selected
+Python 3.11–3.14 lanes and 12 wheels are verified on `2026-11-26` in
+`docs/bom_08_release_report.md`.
+
 ## Current measured baseline
 
-Counts use the fixed Chrome 157 inventory plus the PRES-01/PRES-02/PRES-03
-deltas plus BOM-01/BOM-02/BOM-03 for the locally accepted candidate, not the shared BIND-01 SDK. PRES-03
+Counts use the fixed Chrome inventory plus PRES-01/PRES-02/PRES-03 and
+BOM-01..BOM-08 for the validated candidate (`3cc59b3`), not the shared BIND-01 SDK. PRES-03
 evidence and the name/behavior distinction: `docs/presence_03_report.md`.
 
 The subsequent WIN-MON-01 closes scoped monitoring gaps for these entries:
@@ -40,10 +52,10 @@ does not add API names or backend execution. Its combined release is verified in
 | Window ordinary properties/methods | 128 | 128 | 0 |
 | Window on* handlers | 125 | 125 | 0 |
 | Location | 15 | 15 | 0 |
-| Navigator (secure context) | 70 | 35 | 35 |
-| navigator.connection | 9 | 8 | 1 |
-| screen.orientation | 9 | 8 | 1 |
-| visualViewport | 14 | 13 | 1 |
+| Navigator (secure context) | 70 | 70 | 0 |
+| navigator.connection | 9 | 9 | 0 |
+| screen.orientation | 9 | 9 | 0 |
+| visualViewport | 14 | 14 | 0 |
 | History | 8 | 8 | 0 |
 
 Window's global interface-entry category is separate. The PRES-03 baseline
@@ -73,13 +85,14 @@ History state/URL updates execute.
    conversion, leaving 36 Navigator names in the fixed secure inventory and the
    three Observable-dependent when entries; see `docs/bom_02_api_delta.json`.
    BOM-03 then adds webkitTemporaryStorage and restores native shared quota
-   behavior, leaving 35 Navigator names in that secure inventory. Further
-   Navigator families follow concrete offline samples and new browser evidence. Empty
-   device lists/inactive input remain explicit profile states. The three
-   EventTarget when methods depend on Observable and stay deferred.
-   Clipboard, geolocation, media/devices, service workers, GPU/XR and
-   other execution systems are separate bounded families, not arbitrary empty
-   success objects.
+   behavior, leaving 35 Navigator names in that secure inventory. BOM-04 through
+   BOM-07 subsequently complete all 35 remaining Navigator APIs (**70/70** secure,
+   **38/70** insecure/opaque) using deterministic fresh-headless-Chrome offline
+   profile semantics (no host hardware, OS permission grant, user gesture or
+   network I/O). BOM-08 implements native `Observable`, `Subscriber`,
+   `AbortController`, `AbortSignal`, and `EventTarget.prototype.when`, closing
+   the three remaining `when` entries on `navigator.connection`,
+   `screen.orientation`, and `visualViewport`.
 3. **Location/History protection and concrete gaps.** Their measured member
    names are already complete. Keep URL components, configured identity,
    same-document state/URL updates and named access in the regression gate.

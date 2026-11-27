@@ -671,10 +671,96 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
             }
             // These selected Promise-returning operations report receiver
             // failures as rejections. Trace only their synchronous Promise return.
+            const bool navigator_promise = interface_name == "Navigator" &&
+                (key == "getInstalledRelatedApps" || key == "share" ||
+                 key == "setAppBadge" || key == "clearAppBadge" ||
+                 key == "requestMIDIAccess" || key == "requestMediaKeySystemAccess");
+            const bool eme_promise =
+                (interface_name == "MediaKeySystemAccess" && key == "createMediaKeys") ||
+                (interface_name == "MediaKeys" &&
+                    (key == "setServerCertificate" || key == "getStatusForPolicy")) ||
+                (interface_name == "MediaKeySession" &&
+                    (key == "close" || key == "generateRequest" || key == "load" ||
+                     key == "remove" || key == "update"));
+            const bool bom05_promise =
+                (interface_name == "Clipboard" &&
+                    (key == "read" || key == "readText" ||
+                     key == "write" || key == "writeText")) ||
+                (interface_name == "ClipboardItem" && key == "getType") ||
+                (interface_name == "CredentialsContainer" &&
+                    (key == "create" || key == "get" ||
+                     key == "preventSilentAccess" || key == "store")) ||
+                (interface_name == "LockManager" &&
+                    (key == "query" || key == "request")) ||
+                (interface_name == "WakeLock" && key == "request") ||
+                (interface_name == "WakeLockSentinel" && key == "release") ||
+                (interface_name == "Keyboard" &&
+                    (key == "getLayoutMap" || key == "lock")) ||
+                (interface_name == "MediaCapabilities" &&
+                    (key == "decodingInfo" || key == "encodingInfo"));
+            const bool bom06_promise =
+                (interface_name == "Bluetooth" &&
+                    (key == "getAvailability" || key == "requestDevice")) ||
+                (interface_name == "HID" &&
+                    (key == "getDevices" || key == "requestDevice")) ||
+                (interface_name == "Serial" &&
+                    (key == "getPorts" || key == "requestPort")) ||
+                (interface_name == "USB" &&
+                    (key == "getDevices" || key == "requestDevice")) ||
+                (interface_name == "XRSystem" &&
+                    (key == "isSessionSupported" || key == "requestSession")) ||
+                (interface_name == "GPU" && key == "requestAdapter") ||
+                (interface_name == "PresentationRequest" &&
+                    (key == "getAvailability" || key == "reconnect" || key == "start"));
+            const bool bom07_promise =
+                (interface_name == "MediaDevices" &&
+                    (key == "enumerateDevices" || key == "getUserMedia" ||
+                     key == "getDisplayMedia")) ||
+                (interface_name == "ServiceWorkerContainer" &&
+                    (key == "getRegistration" || key == "getRegistrations" ||
+                     key == "register")) ||
+                (interface_name == "ServiceWorkerRegistration" &&
+                    (key == "unregister" || key == "update" ||
+                     key == "getNotifications" || key == "showNotification")) ||
+                (interface_name == "StorageBucketManager" &&
+                    (key == "delete" || key == "keys" || key == "open")) ||
+                (interface_name == "StorageBucket" &&
+                    (key == "estimate" || key == "expires" || key == "getDirectory" ||
+                     key == "persisted" || key == "setExpires" || key == "persist")) ||
+                (interface_name == "NavigatorLogin" && key == "setStatus") ||
+                (interface_name == "NavigatorManagedData" &&
+                    key == "getManagedConfiguration") ||
+                (interface_name == "Ink" && key == "requestPresenter");
+            const bool bom08_promise =
+                interface_name == "Observable" &&
+                (key == "every" || key == "find" || key == "first" ||
+                 key == "forEach" || key == "last" || key == "reduce" ||
+                 key == "some" || key == "toArray");
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
-                (interface_name == "Navigator" && key == "getInstalledRelatedApps")) {
-                browser::watch_record(isolate,
-                    interface_name == "Navigator" ? "navigator" : "screen.orientation", key);
+                navigator_promise || eme_promise || bom05_promise ||
+                bom06_promise || bom07_promise || bom08_promise) {
+                std::string watch_owner = interface_name;
+                if (navigator_promise) watch_owner = "navigator";
+                else if (interface_name == "ScreenOrientation") watch_owner = "screen.orientation";
+                else if (interface_name == "Clipboard") watch_owner = "navigator.clipboard";
+                else if (interface_name == "CredentialsContainer") watch_owner = "navigator.credentials";
+                else if (interface_name == "LockManager") watch_owner = "navigator.locks";
+                else if (interface_name == "WakeLock") watch_owner = "navigator.wakeLock";
+                else if (interface_name == "Keyboard") watch_owner = "navigator.keyboard";
+                else if (interface_name == "MediaCapabilities") watch_owner = "navigator.mediaCapabilities";
+                else if (interface_name == "Bluetooth") watch_owner = "navigator.bluetooth";
+                else if (interface_name == "HID") watch_owner = "navigator.hid";
+                else if (interface_name == "Serial") watch_owner = "navigator.serial";
+                else if (interface_name == "USB") watch_owner = "navigator.usb";
+                else if (interface_name == "XRSystem") watch_owner = "navigator.xr";
+                else if (interface_name == "GPU") watch_owner = "navigator.gpu";
+                else if (interface_name == "MediaDevices") watch_owner = "navigator.mediaDevices";
+                else if (interface_name == "ServiceWorkerContainer") watch_owner = "navigator.serviceWorker";
+                else if (interface_name == "StorageBucketManager") watch_owner = "navigator.storageBuckets";
+                else if (interface_name == "NavigatorLogin") watch_owner = "navigator.login";
+                else if (interface_name == "NavigatorManagedData") watch_owner = "navigator.managed";
+                else if (interface_name == "Ink") watch_owner = "navigator.ink";
+                browser::watch_record(isolate, watch_owner, key);
                 v8::Local<v8::Promise::Resolver> resolver;
                 if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||
                     !resolver->Reject(context, v8::Exception::TypeError(v8str(isolate,

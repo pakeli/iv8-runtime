@@ -141,6 +141,11 @@ public:
     v8::Local<v8::Value> create_dom_error(v8::Isolate* isolate,
         v8::Local<v8::Context> context, const std::u16string& name,
         const std::u16string& message);
+    v8::Local<v8::Value> create_dom_exception(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, const std::u16string& name,
+        const std::u16string& message, bool capture_stack);
+    v8::Local<v8::Object> adopt_host_object(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, std::unique_ptr<HostObject> host);
 
     // Step 5g: internal factory used only by the JS matchMedia bootstrap; returns
     // a cached HostObject backing for one query result. Not bound to Python.
@@ -203,6 +208,7 @@ public:
                             const std::string& url);
     // Internal same-document History commit; no HTTP or cross-document load.
     void apply_history_url(const std::string& url);
+    const std::string& current_url() const { return bootstrap_.base_url; }
     pybind11::dict read_navigation_requests(bool clear);
     void capture_async_errors(bool enabled);
     pybind11::dict read_async_errors(bool clear);

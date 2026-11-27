@@ -1,0 +1,816 @@
+{
+  "browser": "Google Chrome 157.0.8103.80",
+  "captured_at_utc": "2026-11-24T08:46:36.860Z",
+  "execution": {
+    "os": "darwin 27.2.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://127.0.0.1:<port>/reference",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "3b990609ed09129367094db86852eab43a682538f3911bb8af0d6f9186503151",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "global": {
+      "enumerable": false,
+      "configurable": true,
+      "kind": "data",
+      "writable": true,
+      "value": {
+        "name": "DOMException",
+        "length": 0,
+        "source": "function DOMException() { [native code] }",
+        "prototype": true,
+        "construct": "constructed"
+      }
+    },
+    "constructor": {
+      "name": "DOMException",
+      "length": 0,
+      "source": "function DOMException() { [native code] }",
+      "prototype": true,
+      "construct": "constructed"
+    },
+    "constructorParent": "Function.prototype",
+    "constructorKeys": [
+      "length",
+      "name",
+      "prototype",
+      "INDEX_SIZE_ERR",
+      "DOMSTRING_SIZE_ERR",
+      "HIERARCHY_REQUEST_ERR",
+      "WRONG_DOCUMENT_ERR",
+      "INVALID_CHARACTER_ERR",
+      "NO_DATA_ALLOWED_ERR",
+      "NO_MODIFICATION_ALLOWED_ERR",
+      "NOT_FOUND_ERR",
+      "NOT_SUPPORTED_ERR",
+      "INUSE_ATTRIBUTE_ERR",
+      "INVALID_STATE_ERR",
+      "SYNTAX_ERR",
+      "INVALID_MODIFICATION_ERR",
+      "NAMESPACE_ERR",
+      "INVALID_ACCESS_ERR",
+      "VALIDATION_ERR",
+      "TYPE_MISMATCH_ERR",
+      "SECURITY_ERR",
+      "NETWORK_ERR",
+      "ABORT_ERR",
+      "URL_MISMATCH_ERR",
+      "QUOTA_EXCEEDED_ERR",
+      "TIMEOUT_ERR",
+      "INVALID_NODE_TYPE_ERR",
+      "DATA_CLONE_ERR"
+    ],
+    "constructorMembers": {
+      "length": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": false,
+        "value": 0
+      },
+      "name": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": false,
+        "value": "DOMException"
+      },
+      "prototype": {
+        "enumerable": false,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": "[object]"
+      },
+      "INDEX_SIZE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 1
+      },
+      "DOMSTRING_SIZE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 2
+      },
+      "HIERARCHY_REQUEST_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 3
+      },
+      "WRONG_DOCUMENT_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 4
+      },
+      "INVALID_CHARACTER_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 5
+      },
+      "NO_DATA_ALLOWED_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 6
+      },
+      "NO_MODIFICATION_ALLOWED_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 7
+      },
+      "NOT_FOUND_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 8
+      },
+      "NOT_SUPPORTED_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 9
+      },
+      "INUSE_ATTRIBUTE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 10
+      },
+      "INVALID_STATE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 11
+      },
+      "SYNTAX_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 12
+      },
+      "INVALID_MODIFICATION_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 13
+      },
+      "NAMESPACE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 14
+      },
+      "INVALID_ACCESS_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 15
+      },
+      "VALIDATION_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 16
+      },
+      "TYPE_MISMATCH_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 17
+      },
+      "SECURITY_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 18
+      },
+      "NETWORK_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 19
+      },
+      "ABORT_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 20
+      },
+      "URL_MISMATCH_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 21
+      },
+      "QUOTA_EXCEEDED_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 22
+      },
+      "TIMEOUT_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 23
+      },
+      "INVALID_NODE_TYPE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 24
+      },
+      "DATA_CLONE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 25
+      }
+    },
+    "prototypeKeys": [
+      "code",
+      "name",
+      "message",
+      "INDEX_SIZE_ERR",
+      "DOMSTRING_SIZE_ERR",
+      "HIERARCHY_REQUEST_ERR",
+      "WRONG_DOCUMENT_ERR",
+      "INVALID_CHARACTER_ERR",
+      "NO_DATA_ALLOWED_ERR",
+      "NO_MODIFICATION_ALLOWED_ERR",
+      "NOT_FOUND_ERR",
+      "NOT_SUPPORTED_ERR",
+      "INUSE_ATTRIBUTE_ERR",
+      "INVALID_STATE_ERR",
+      "SYNTAX_ERR",
+      "INVALID_MODIFICATION_ERR",
+      "NAMESPACE_ERR",
+      "INVALID_ACCESS_ERR",
+      "VALIDATION_ERR",
+      "TYPE_MISMATCH_ERR",
+      "SECURITY_ERR",
+      "NETWORK_ERR",
+      "ABORT_ERR",
+      "URL_MISMATCH_ERR",
+      "QUOTA_EXCEEDED_ERR",
+      "TIMEOUT_ERR",
+      "INVALID_NODE_TYPE_ERR",
+      "DATA_CLONE_ERR",
+      "constructor",
+      "Symbol(Symbol.toStringTag)"
+    ],
+    "prototypeParentIsError": true,
+    "prototypeMembers": {
+      "code": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get code",
+          "length": 0,
+          "source": "function get code() { [native code] }",
+          "prototype": false,
+          "construct": "TypeError"
+        },
+        "set": null
+      },
+      "name": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get name",
+          "length": 0,
+          "source": "function get name() { [native code] }",
+          "prototype": false,
+          "construct": "TypeError"
+        },
+        "set": null
+      },
+      "message": {
+        "enumerable": true,
+        "configurable": true,
+        "kind": "accessor",
+        "get": {
+          "name": "get message",
+          "length": 0,
+          "source": "function get message() { [native code] }",
+          "prototype": false,
+          "construct": "TypeError"
+        },
+        "set": null
+      },
+      "INDEX_SIZE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 1
+      },
+      "DOMSTRING_SIZE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 2
+      },
+      "HIERARCHY_REQUEST_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 3
+      },
+      "WRONG_DOCUMENT_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 4
+      },
+      "INVALID_CHARACTER_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 5
+      },
+      "NO_DATA_ALLOWED_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 6
+      },
+      "NO_MODIFICATION_ALLOWED_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 7
+      },
+      "NOT_FOUND_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 8
+      },
+      "NOT_SUPPORTED_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 9
+      },
+      "INUSE_ATTRIBUTE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 10
+      },
+      "INVALID_STATE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 11
+      },
+      "SYNTAX_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 12
+      },
+      "INVALID_MODIFICATION_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 13
+      },
+      "NAMESPACE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 14
+      },
+      "INVALID_ACCESS_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 15
+      },
+      "VALIDATION_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 16
+      },
+      "TYPE_MISMATCH_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 17
+      },
+      "SECURITY_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 18
+      },
+      "NETWORK_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 19
+      },
+      "ABORT_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 20
+      },
+      "URL_MISMATCH_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 21
+      },
+      "QUOTA_EXCEEDED_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 22
+      },
+      "TIMEOUT_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 23
+      },
+      "INVALID_NODE_TYPE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 24
+      },
+      "DATA_CLONE_ERR": {
+        "enumerable": true,
+        "configurable": false,
+        "kind": "data",
+        "writable": false,
+        "value": 25
+      },
+      "constructor": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": true,
+        "value": {
+          "name": "DOMException",
+          "length": 0,
+          "source": "function DOMException() { [native code] }",
+          "prototype": true,
+          "construct": "constructed"
+        }
+      },
+      "Symbol(Symbol.toStringTag)": {
+        "enumerable": false,
+        "configurable": true,
+        "kind": "data",
+        "writable": false,
+        "value": "DOMException"
+      }
+    },
+    "cases": {
+      "none": {
+        "name": "Error",
+        "message": "",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "Error",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "message": {
+        "name": "Error",
+        "message": "m",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "Error: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "named": {
+        "name": "NotAllowedError",
+        "message": "m",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "NotAllowedError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "custom": {
+        "name": "CustomName",
+        "message": "m",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "CustomName: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "undefined_args": {
+        "name": "Error",
+        "message": "",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "Error",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "null_args": {
+        "name": "null",
+        "message": "null",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "null: null",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "number_args": {
+        "name": "2",
+        "message": "1",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "2: 1",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "legacy": {
+        "name": "IndexSizeError",
+        "message": "m",
+        "code": 1,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "IndexSizeError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "data_clone": {
+        "name": "DataCloneError",
+        "message": "m",
+        "code": 25,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "DataCloneError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "quota": {
+        "name": "QuotaExceededError",
+        "message": "m",
+        "code": 22,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "QuotaExceededError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "security": {
+        "name": "SecurityError",
+        "message": "m",
+        "code": 18,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "SecurityError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "syntax": {
+        "name": "SyntaxError",
+        "message": "m",
+        "code": 12,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "SyntaxError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "not_supported": {
+        "name": "NotSupportedError",
+        "message": "m",
+        "code": 9,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "NotSupportedError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "abort": {
+        "name": "AbortError",
+        "message": "m",
+        "code": 20,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "AbortError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "timeout": {
+        "name": "TimeoutError",
+        "message": "m",
+        "code": 23,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "TimeoutError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "invalid_state": {
+        "name": "InvalidStateError",
+        "message": "m",
+        "code": 11,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "InvalidStateError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "not_found": {
+        "name": "NotFoundError",
+        "message": "m",
+        "code": 8,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "NotFoundError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "encoding": {
+        "name": "EncodingError",
+        "message": "m",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "EncodingError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "operation": {
+        "name": "OperationError",
+        "message": "m",
+        "code": 0,
+        "ownKeys": [],
+        "tag": "[object DOMException]",
+        "instanceOfError": true,
+        "string": "OperationError: m",
+        "stackType": "undefined",
+        "stackOwn": null
+      },
+      "call": {
+        "error": "TypeError",
+        "message": "Failed to construct 'DOMException': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
+      },
+      "symbol": {
+        "error": "TypeError",
+        "message": "Failed to construct 'DOMException': Cannot convert a Symbol value to a string"
+      }
+    },
+    "platform": {
+      "name": "NotAllowedError",
+      "message": "Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+      "code": 0,
+      "ownKeys": [
+        "stack"
+      ],
+      "tag": "[object DOMException]",
+      "instanceOfError": true,
+      "string": "NotAllowedError: Failed to execute 'share' on 'Navigator': Must be handling a user gesture to perform a share request.",
+      "stackType": "string",
+      "stackOwn": "accessor"
+    },
+    "receivers": {
+      "name": "TypeError: Illegal invocation",
+      "message": "TypeError: Illegal invocation",
+      "code": "TypeError: Illegal invocation"
+    },
+    "prototypeAccess": {
+      "name": "TypeError: Illegal invocation",
+      "message": "TypeError: Illegal invocation",
+      "code": "TypeError: Illegal invocation"
+    },
+    "conversionOrder": [
+      "message",
+      "name"
+    ],
+    "subclass": {
+      "proto": true,
+      "name": "AbortError",
+      "code": 20,
+      "tag": "[object DOMException]"
+    }
+  }
+}
