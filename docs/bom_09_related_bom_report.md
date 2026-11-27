@@ -104,6 +104,16 @@ Date: `2026-11-27`
       `out_data_clone_error` flag in `structured_clone_value` so user-thrown
       `detail` getter errors (including messages containing `"structuredClone:"`)
       propagate with exact error identity.
+  12. `[P2]` Bound `PerformanceMarkHost` / `PerformanceMeasureHost` lifetimes to
+      their JS wrappers via `PageState::adopt_ephemeral_host_object` (`v8::Global`
+      `SetWeak` callback + `AccessTrace::forget_identity`) and moved `entry.name`
+      onto a private V8 wrapper slot (`iv8.bom09.perf_entry.name`), reclaiming
+      both native entry objects and arbitrarily long names on timeline clear / GC.
+  13. `[P2]` Aligned `AbortSignal.any` and `TaskSignal.any` iterator step
+      unpacking with Chrome `158.0.8127.88` (`Blink ScriptIterator::Next`):
+      reading `"value"` before `"done"` on every `next()` result so throwing
+      `value` getters propagate even when `done === true`, while non-throwing
+      `value`s are ignored once `done` is truthy.
 - Migrated superseded pre-`BOM-09` flat-object / JS-bootstrap expectations in
   `test_m11_31_virtual_performance_clock.py`, `test_m11_36_40_bom_completion.py`,
   `test_access_trace_bom_calls.py`, `test_access_trace_bom_references.py`,

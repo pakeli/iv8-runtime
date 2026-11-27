@@ -1823,6 +1823,59 @@ v8::Local<v8::Object> PageState::adopt_host_object(v8::Isolate* isolate,
     return object;
 }
 
+void PageState::on_ephemeral_host_weak(
+    const v8::WeakCallbackInfo<EphemeralHostEntry>& data) {
+    EphemeralHostEntry* entry = data.GetParameter();
+    if (entry == nullptr || entry->page == nullptr) {
+        return;
+    }
+    PageState* page = entry->page;
+    HostObject* key = entry->key;
+    entry->weak_wrapper.Reset();
+    if (entry->host) {
+        entry->host->release_v8_handles();
+    }
+    page->access_trace_.forget_identity(key);
+    page->ephemeral_host_objects_.erase(key);
+}
+
+v8::Local<v8::Object> PageState::adopt_ephemeral_host_object(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    std::unique_ptr<HostObject> host,
+    const v8::Global<v8::Object>** out_weak_wrapper) {
+    HostObject* raw = host.get();
+    auto object = make_host_object(isolate, context, raw);
+    auto entry = std::make_unique<EphemeralHostEntry>();
+    entry->page = this;
+    entry->key = raw;
+    entry->host = std::move(host);
+    entry->weak_wrapper.Reset(isolate, object);
+    auto* entry_ptr = entry.get();
+    if (out_weak_wrapper != nullptr) {
+        *out_weak_wrapper = &entry_ptr->weak_wrapper;
+    }
+    ephemeral_host_objects_.emplace(raw, std::move(entry));
+    entry_ptr->weak_wrapper.SetWeak(
+        entry_ptr, &PageState::on_ephemeral_host_weak,
+        v8::WeakCallbackType::kParameter);
+    return object;
+}
+
+void PageState::collect_garbage_for_testing() {
+    state_->with_scope([](v8::Isolate* isolate, v8::Local<v8::Context>) {
+        py::gil_scoped_release release_gil;
+        isolate->LowMemoryNotification();
+    });
+}
+
+std::size_t PageState::ephemeral_host_object_count() {
+    std::size_t count = 0;
+    state_->with_scope([this, &count](v8::Isolate*, v8::Local<v8::Context>) {
+        count = ephemeral_host_objects_.size();
+    });
+    return count;
+}
+
 v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Array> arguments) {
     if (name == "DOMError") return construct_dom_error(isolate, context, this, arguments);
@@ -1940,6 +1993,15 @@ void PageState::install_page(const std::string& base_url,
         for (const std::unique_ptr<HostObject>& host : host_objects_) {
             host->release_v8_handles();
         }
+        for (auto& kv : ephemeral_host_objects_) {
+            if (kv.second) {
+                kv.second->weak_wrapper.Reset();
+                if (kv.second->host) {
+                    kv.second->host->release_v8_handles();
+                }
+            }
+        }
+        ephemeral_host_objects_.clear();
         if (performance_store_) {
             performance_store_->release_v8_handles();
         }
@@ -1951,6 +2013,7 @@ void PageState::install_page(const std::string& base_url,
         }
     });
     host_objects_.clear();
+    ephemeral_host_objects_.clear();
     // Step 5g: matchMedia backings are per-generation; their JS wrappers died
     // with the previous context above.
     media_query_lists_.reset();

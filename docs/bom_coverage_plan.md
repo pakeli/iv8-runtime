@@ -35,6 +35,14 @@ and `BOM-07` (`docs/bom_07_remaining_navigator.md`), and `BOM-08`
 Python 3.11–3.14 lanes and 12 wheels are verified on `2026-11-26` in
 `docs/bom_08_release_report.md`.
 
+BOM-09 (`2026-11-27`, implemented and locally validated on macOS arm64;
+cross-platform release verification pending) completes `performance`
+(`9/22 -> 22/22`), `console` (`22/25 -> 25/25`), and `scheduler`
+(`1/2 -> 2/2`) in `docs/bom_09_related_bom.md` /
+`docs/bom_09_related_bom_report.md`, leaving only `crypto.subtle` (`2/3 -> 3/3`)
+and `navigator.storage.getDirectory` (`3/4 -> 4/4`) in `BOM-10` among the 17
+non-DOM objects in `docs/browser_api_inventory.json`.
+
 ## Current measured baseline
 
 Counts use the fixed Chrome inventory plus PRES-01/PRES-02/PRES-03 and

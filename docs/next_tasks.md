@@ -1,6 +1,8 @@
 # Next Tasks
 
-**Latest implemented/validated candidate (`2026-11-26`): BOM-04..BOM-08 complete Navigator (`70/70`) and Observable/`EventTarget.prototype.when`.** Fixed runtime `3cc59b336676b5ce430f668646861eca5e359f8a` / tree `0fe758ea9a74679774280988b22597b4713a1c8e` completes all 35 remaining `Navigator` APIs (`35/70 -> 70/70` secure, `33/70 -> 38/70` insecure/opaque) across `BOM-04`..`BOM-07` and native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and `EventTarget.prototype.when` in `BOM-08` (`navigator.connection` `9/9`, `screen.orientation` `9/9`, `visualViewport` `14/14`, inherited `window.when`). Each batch was independently reviewed by Codex CLI and verified against headless Chrome `158.0.8127.88`. All 12 selected Python 3.11–3.14 lanes pass: local macOS arm64 first, then hosted Linux x64 and Windows x64. Every lane passes the **42-module / 1257-test gate** (**32 new pytest cases**); full Mac/Linux are **3483 passed, 2 skipped**, Windows **3481 passed, 4 skipped**. All five hosted ZIPs (`15125369259`, `15125461652`, `15125761278`, `15126235377`, `15125606444`) and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 `15.0.245.19` engines are reused; native extensions/wheels are rebuilt. Runs: Linux `45835448535`, Windows `45835458516`, push V8 CI `45835443187` (**83 audit / 1257 gate / 3483 passed, 2 skipped**). Shared SDK remains BIND-01; no shared installation, PR merge, or version tag publication is performed. Scope/evidence: `docs/bom_04_navigator_methods.md`..`docs/bom_08_observable_when.md`, `docs/bom_04_navigator_methods_report.md`..`docs/bom_08_observable_when_report.md`, `docs/bom_08_release_report.md`.
+**Latest implemented candidate (`2026-11-27`, local macOS arm64 validated; cross-platform release verification pending): BOM-09 completes Performance (`22/22`), Console (`25/25`), and Scheduler (`2/2`).** Branch `codex/bom-09-related-bom` completes 17 of the final 19 missing members across the non-DOM BOM objects in `docs/browser_api_inventory.json` (`performance` `22/22`, `console` `25/25`, `scheduler` `2/2`, plus GIL-free `to_python_deep`, interface-scoped `web_method_length`, ephemeral `PerformanceEntryHost` GC reclamation, and Chrome-matching `AbortSignal.any`/`TaskSignal.any` `value`-then-`done` iterator unpacking). Local macOS arm64 / Python 3.13 passes **8 BOM-09 focused**, **43 move-audit**, and **3491 passed, 2 skipped** full-suite tests. Next queued work is `BOM-10` (`crypto.subtle` and `navigator.storage.getDirectory()`, closing the final 2 non-DOM BOM inventory members) followed by 12-lane Python 3.11–3.14 cross-platform wheel verification (local macOS arm64 first, then hosted Linux x64 and Windows x64 + V8 CI). Scope/evidence: `docs/bom_09_related_bom.md`, `docs/bom_09_related_bom_report.md`, `docs/bom_09_api_delta.json`.
+
+**Latest cross-platform release-verified candidate (`2026-11-26`): BOM-04..BOM-08 complete Navigator (`70/70`) and Observable/`EventTarget.prototype.when`.** Fixed runtime `3cc59b336676b5ce430f668646861eca5e359f8a` / tree `0fe758ea9a74679774280988b22597b4713a1c8e` completes all 35 remaining `Navigator` APIs (`35/70 -> 70/70` secure, `33/70 -> 38/70` insecure/opaque) across `BOM-04`..`BOM-07` and native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and `EventTarget.prototype.when` in `BOM-08` (`navigator.connection` `9/9`, `screen.orientation` `9/9`, `visualViewport` `14/14`, inherited `window.when`). Each batch was independently reviewed by Codex CLI and verified against headless Chrome `158.0.8127.88`. All 12 selected Python 3.11–3.14 lanes pass: local macOS arm64 first, then hosted Linux x64 and Windows x64. Every lane passes the **42-module / 1257-test gate** (**32 new pytest cases**); full Mac/Linux are **3483 passed, 2 skipped**, Windows **3481 passed, 4 skipped**. All five hosted ZIPs (`15125369259`, `15125461652`, `15125761278`, `15126235377`, `15125606444`) and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 `15.0.245.19` engines are reused; native extensions/wheels are rebuilt. Runs: Linux `45835448535`, Windows `45835458516`, push V8 CI `45835443187` (**83 audit / 1257 gate / 3483 passed, 2 skipped**). Shared SDK remains BIND-01; no shared installation, PR merge, or version tag publication is performed. Scope/evidence: `docs/bom_04_navigator_methods.md`..`docs/bom_08_observable_when.md`, `docs/bom_04_navigator_methods_report.md`..`docs/bom_08_observable_when_report.md`, `docs/bom_08_release_report.md`.
 
 **Previous implemented/validated candidate (`2026-11-21`): BOM-03 native legacy quota.** Fixed runtime `4cbab176ec8105d5d0545f61335c6600d9db8830` / tree `c76e926f74a7bcc1995ed697d0841a3950195a65` passes all 12 selected Python 3.11–3.14 lanes: local Mac first, then hosted Linux/Windows. Every lane passes the **37-module / 1225-test gate**; full Mac/Linux are **3451 passed, 2 skipped**, Windows **3449 passed, 4 skipped**. All five hosted ZIPs and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 15.0.245.19 engines are reused; native extensions/wheels are rebuilt. Runs: Linux `44769697781`, Windows `44769706158`; push/PR V8 CI `44722569894` / `44722637832` also pass. Navigator remains **35/70** with **118 new tests**. PR #34 is ready for review above unmerged PR #33. This batch does not install the shared SDK or publish a version. Scope/evidence: `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md`, `docs/bom_03_api_delta.json`, `docs/bom_03_release_report.md`.
 
@@ -108,14 +110,24 @@ Contract, artifact IDs, source/driver restoration and remaining limits:
 `docs/browser_compatibility_repair.md`. M11-53 focus/visibility remains the next
 numbered feature milestone; actual navigation and networking remain absent.
 
-Last reviewed: `2026-11-26`
+Last reviewed: `2026-11-27`
 
 This file is intentionally short and should be kept current. It is the preferred
 task queue for Claude after chat-history loss.
 
-## Current execution order — after BOM-04..BOM-08 release verification (`2026-11-26`)
+## Current execution order — BOM-09 locally validated, BOM-10 & release matrix next (`2026-11-27`)
 
-All eight BOM member categories tracked in `docs/bom_coverage_plan.md` now have
+On top of the cross-platform verified `BOM-04..BOM-08` (`3cc59b3`, PR #35)
+candidate, `BOM-09` (`codex/bom-09-related-bom`) brings `performance` (`22/22`),
+`console` (`25/25`), and `scheduler` (`2/2`) to 100% inventory coverage on local
+macOS arm64 (`3491 passed, 2 skipped`). Complete `BOM-10` (`crypto.subtle`
+`2/3 -> 3/3` and `navigator.storage.getDirectory` `3/4 -> 4/4`) next so all 17
+non-DOM BOM objects in `docs/browser_api_inventory.json` reach `0` missing
+members, then run the 12-lane Python 3.11–3.14 wheel matrix (local macOS arm64
+first, then hosted Linux x64 and Windows x64 + V8 CI) before marking `BOM-09` /
+`BOM-10` release-verified.
+
+All eight BOM member categories tracked in `docs/bom_coverage_plan.md` already have
 complete name coverage against `docs/browser_api_inventory.json` in the validated
 `3cc59b3` candidate (`Window` ordinary names `128/128` + `125/125` handlers,
 `Location` `15/15`, secure `Navigator` `70/70`, `navigator.connection` `9/9`,

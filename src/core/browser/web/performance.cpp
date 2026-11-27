@@ -191,6 +191,11 @@ v8::Local<v8::Private> perf_entry_detail_slot(v8::Isolate* isolate) {
         v8::String::NewFromUtf8Literal(isolate, "iv8.bom09.perf_entry.detail"));
 }
 
+v8::Local<v8::Private> perf_entry_name_slot(v8::Isolate* isolate) {
+    return v8::Private::ForApi(isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8.bom09.perf_entry.name"));
+}
+
 bool clone_performance_detail(v8::Isolate* isolate,
     v8::Local<v8::Context> context, PageState* owner,
     v8::Local<v8::Value> input, const std::string& prefix,
@@ -225,13 +230,39 @@ bool parse_performance_mark_args(v8::Isolate* isolate,
     v8::Local<v8::Context> context, PageState* owner,
     int argc, const std::function<v8::Local<v8::Value>(int)>& arg_at,
     const std::string& prefix, std::string* name_out,
+    v8::Local<v8::String>* name_v8_out,
     double* start_time_out, v8::Local<v8::Value>* detail_out) {
     if (argc < 1) {
         return throw_perf_type_error(isolate, prefix,
             "1 argument required, but only 0 present.");
     }
-    if (!perf_to_string(isolate, context, arg_at(0), name_out)) {
+    v8::Local<v8::String> name_str;
+    if (!access_user_operation(isolate, [&] {
+            return arg_at(0)->ToString(context);
+        }).ToLocal(&name_str)) {
         return false;
+    }
+    std::string small_name;
+    auto materialize_name = [&]() -> const std::string& {
+        if (name_out != nullptr) {
+            return *name_out;
+        }
+        if (small_name.empty() && name_str->Length() > 0) {
+            v8::String::Utf8Value utf8(isolate, name_str);
+            if (*utf8 != nullptr) {
+                small_name.assign(*utf8, static_cast<std::size_t>(utf8.length()));
+            }
+        }
+        return small_name;
+    };
+    if (name_out != nullptr) {
+        v8::String::Utf8Value utf8(isolate, name_str);
+        name_out->assign(*utf8 != nullptr ? *utf8 : "",
+            *utf8 != nullptr ? static_cast<std::size_t>(utf8.length()) : 0);
+    } else if (name_str->Length() <= 32) {
+        v8::String::Utf8Value utf8(isolate, name_str);
+        small_name.assign(*utf8 != nullptr ? *utf8 : "",
+            *utf8 != nullptr ? static_cast<std::size_t>(utf8.length()) : 0);
     }
     double start_time = static_cast<double>(performance_clock_ms(isolate));
     bool has_start_time = false;
@@ -266,19 +297,24 @@ bool parse_performance_mark_args(v8::Isolate* isolate,
         }
     }
 
-    if (is_timing_attribute_name(*name_out)) {
+    const std::string& candidate_timing =
+        name_out != nullptr ? *name_out : small_name;
+    if (name_str->Length() <= 32 && is_timing_attribute_name(candidate_timing)) {
         isolate->ThrowException(make_dom_exception(isolate, context, owner,
             "SyntaxError",
-            prefix + "'" + *name_out +
+            prefix + "'" + candidate_timing +
             "' is part of the PerformanceTiming interface, and cannot be used as a mark name."));
         return false;
     }
     if (has_start_time && start_time < 0.0) {
         return throw_perf_type_error(isolate, prefix,
-            "'" + *name_out + "' cannot have a negative start time.");
+            "'" + materialize_name() + "' cannot have a negative start time.");
     }
     if (!clone_performance_detail(isolate, context, owner, raw_detail, prefix, detail_out)) {
         return false;
+    }
+    if (name_v8_out != nullptr) {
+        *name_v8_out = name_str;
     }
     *start_time_out = start_time;
     return true;
@@ -629,8 +665,19 @@ v8::Local<v8::Object> create_memory_info_object(v8::Isolate* isolate,
 // --- PerformanceEntryHost / Mark / Measure ---
 
 v8::Local<v8::Value> PerformanceEntryHost::get_property(v8::Isolate* isolate,
-    v8::Local<v8::Context>, const std::string& name) {
-    if (name == "name") return v8_string(isolate, name_);
+    v8::Local<v8::Context> context, const std::string& name) {
+    if (name == "name") {
+        if (weak_wrapper_ != nullptr && !weak_wrapper_->IsEmpty()) {
+            auto runtime_origin = access_runtime_scope(isolate);
+            v8::Local<v8::Value> val;
+            if (weak_wrapper_->Get(isolate)->GetPrivate(
+                    context, perf_entry_name_slot(isolate)).ToLocal(&val) &&
+                !val.IsEmpty() && val->IsString()) {
+                return val;
+            }
+        }
+        return v8_string(isolate, "");
+    }
     if (name == "entryType") return v8_string(isolate, entry_type_);
     if (name == "startTime") return v8::Number::New(isolate, start_time_);
     if (name == "duration") return v8::Number::New(isolate, duration_);
@@ -640,12 +687,21 @@ v8::Local<v8::Value> PerformanceEntryHost::get_property(v8::Isolate* isolate,
 
 v8::Local<v8::Value> PerformanceEntryHost::call_method(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& name,
-    const v8::FunctionCallbackInfo<v8::Value>&) {
+    const v8::FunctionCallbackInfo<v8::Value>& arguments) {
     watch_record(isolate, "PerformanceEntry", name);
     if (name != "toJSON") return v8::Undefined(isolate);
     auto runtime_origin = access_runtime_scope(isolate);
+    v8::Local<v8::Value> name_val = v8_string(isolate, "");
+    if (arguments.This()->IsObject()) {
+        v8::Local<v8::Value> priv;
+        if (arguments.This().As<v8::Object>()->GetPrivate(
+                context, perf_entry_name_slot(isolate)).ToLocal(&priv) &&
+            !priv.IsEmpty() && priv->IsString()) {
+            name_val = priv;
+        }
+    }
     auto json = v8::Object::New(isolate);
-    (void)json->CreateDataProperty(context, v8_string(isolate, "name").As<v8::Name>(), v8_string(isolate, name_));
+    (void)json->CreateDataProperty(context, v8_string(isolate, "name").As<v8::Name>(), name_val);
     (void)json->CreateDataProperty(context, v8_string(isolate, "entryType").As<v8::Name>(), v8_string(isolate, entry_type_));
     (void)json->CreateDataProperty(context, v8_string(isolate, "startTime").As<v8::Name>(), v8::Number::New(isolate, start_time_));
     (void)json->CreateDataProperty(context, v8_string(isolate, "duration").As<v8::Name>(), v8::Number::New(isolate, duration_));
@@ -653,13 +709,17 @@ v8::Local<v8::Value> PerformanceEntryHost::call_method(v8::Isolate* isolate,
     return json;
 }
 
-void attach_perf_entry_detail(v8::Isolate* isolate,
+void attach_perf_entry_slots(v8::Isolate* isolate,
     v8::Local<v8::Context> context, v8::Local<v8::Object> wrapper,
-    v8::Local<v8::Value> detail) {
-    const v8::Local<v8::Value> stored =
+    v8::Local<v8::String> entry_name, v8::Local<v8::Value> detail) {
+    auto runtime_origin = access_runtime_scope(isolate);
+    const v8::Local<v8::Value> stored_name = entry_name.IsEmpty()
+        ? v8_string(isolate, "") : v8::Local<v8::Value>(entry_name);
+    const v8::Local<v8::Value> stored_detail =
         detail.IsEmpty() || detail->IsUndefined()
             ? v8::Local<v8::Value>(v8::Null(isolate)) : detail;
-    (void)wrapper->SetPrivate(context, perf_entry_detail_slot(isolate), stored);
+    (void)wrapper->SetPrivate(context, perf_entry_name_slot(isolate), stored_name);
+    (void)wrapper->SetPrivate(context, perf_entry_detail_slot(isolate), stored_detail);
 }
 
 void perf_entry_detail_getter(const v8::FunctionCallbackInfo<v8::Value>& info) {
@@ -959,19 +1019,22 @@ v8::Local<v8::Value> PerformanceHost::call_method(v8::Isolate* isolate,
 
     if (name == "mark") {
         std::string mark_name;
+        v8::Local<v8::String> mark_name_v8;
         double start_time = 0.0;
         v8::Local<v8::Value> detail;
         if (!parse_performance_mark_args(isolate, context, owner_,
                 arguments.Length(),
                 [&](int idx) { return arguments[idx]; },
-                prefix, &mark_name, &start_time, &detail)) {
+                prefix, &mark_name, &mark_name_v8, &start_time, &detail)) {
             return v8::Undefined(isolate);
         }
-        auto mark_host = std::make_unique<PerformanceMarkHost>(
-            mark_name, start_time);
-        auto mark_obj = owner_->adopt_host_object(
-            isolate, context, std::move(mark_host));
-        attach_perf_entry_detail(isolate, context, mark_obj, detail);
+        auto mark_host = std::make_unique<PerformanceMarkHost>(start_time);
+        auto* mark_raw = mark_host.get();
+        const v8::Global<v8::Object>* weak_slot = nullptr;
+        auto mark_obj = owner_->adopt_ephemeral_host_object(
+            isolate, context, std::move(mark_host), &weak_slot);
+        mark_raw->set_weak_wrapper(weak_slot);
+        attach_perf_entry_slots(isolate, context, mark_obj, mark_name_v8, detail);
         if (store_ != nullptr) {
             PerformanceEntryRecord rec;
             rec.name = std::move(mark_name);
@@ -990,10 +1053,15 @@ v8::Local<v8::Value> PerformanceHost::call_method(v8::Isolate* isolate,
                 "1 argument required, but only 0 present.");
             return v8::Undefined(isolate);
         }
-        std::string measure_name;
-        if (!perf_to_string(isolate, context, arguments[0], &measure_name)) {
+        v8::Local<v8::String> measure_name_v8;
+        if (!access_user_operation(isolate, [&] {
+                return arguments[0]->ToString(context);
+            }).ToLocal(&measure_name_v8)) {
             return v8::Undefined(isolate);
         }
+        v8::String::Utf8Value measure_utf8(isolate, measure_name_v8);
+        std::string measure_name(*measure_utf8 != nullptr ? *measure_utf8 : "",
+            *measure_utf8 != nullptr ? static_cast<std::size_t>(measure_utf8.length()) : 0);
 
         v8::Local<v8::Value> raw_detail = v8::Undefined(isolate);
         bool has_detail = false;
@@ -1151,10 +1219,13 @@ v8::Local<v8::Value> PerformanceHost::call_method(v8::Isolate* isolate,
             return v8::Undefined(isolate);
         }
         auto meas_host = std::make_unique<PerformanceMeasureHost>(
-            measure_name, final_start, final_duration);
-        auto meas_obj = owner_->adopt_host_object(
-            isolate, context, std::move(meas_host));
-        attach_perf_entry_detail(isolate, context, meas_obj, detail);
+            final_start, final_duration);
+        auto* meas_raw = meas_host.get();
+        const v8::Global<v8::Object>* weak_slot = nullptr;
+        auto meas_obj = owner_->adopt_ephemeral_host_object(
+            isolate, context, std::move(meas_host), &weak_slot);
+        meas_raw->set_weak_wrapper(weak_slot);
+        attach_perf_entry_slots(isolate, context, meas_obj, measure_name_v8, detail);
         if (store_ != nullptr) {
             PerformanceEntryRecord rec;
             rec.name = std::move(measure_name);
@@ -1260,7 +1331,7 @@ v8::Local<v8::Value> construct_performance_mark(v8::Isolate* isolate,
     v8::Local<v8::Context> context, PageState* owner,
     v8::Local<v8::Array> arguments) {
     const std::string prefix = "Failed to construct 'PerformanceMark': ";
-    std::string mark_name;
+    v8::Local<v8::String> mark_name_v8;
     double start_time = 0.0;
     v8::Local<v8::Value> detail;
     if (!parse_performance_mark_args(isolate, context, owner,
@@ -1272,13 +1343,16 @@ v8::Local<v8::Value> construct_performance_mark(v8::Isolate* isolate,
                 }
                 return val;
             },
-            prefix, &mark_name, &start_time, &detail)) {
+            prefix, /*name_out=*/nullptr, &mark_name_v8, &start_time, &detail)) {
         return v8::Undefined(isolate);
     }
-    auto mark_host = std::make_unique<PerformanceMarkHost>(
-        std::move(mark_name), start_time);
-    auto mark_obj = owner->adopt_host_object(isolate, context, std::move(mark_host));
-    attach_perf_entry_detail(isolate, context, mark_obj, detail);
+    auto mark_host = std::make_unique<PerformanceMarkHost>(start_time);
+    auto* mark_raw = mark_host.get();
+    const v8::Global<v8::Object>* weak_slot = nullptr;
+    auto mark_obj = owner->adopt_ephemeral_host_object(
+        isolate, context, std::move(mark_host), &weak_slot);
+    mark_raw->set_weak_wrapper(weak_slot);
+    attach_perf_entry_slots(isolate, context, mark_obj, mark_name_v8, detail);
     return mark_obj;
 }
 
@@ -1293,9 +1367,9 @@ bool install_performance_interfaces(v8::Isolate* isolate,
         return false;
     }
 
-    PerformanceEntryHost entry_decl("", "", 0.0, 0.0);
-    PerformanceMarkHost mark_decl("", 0.0);
-    PerformanceMeasureHost meas_decl("", 0.0, 0.0);
+    PerformanceEntryHost entry_decl("", 0.0, 0.0);
+    PerformanceMarkHost mark_decl(0.0);
+    PerformanceMeasureHost meas_decl(0.0, 0.0);
     PerformanceNavigationHost nav_decl;
     PerformanceTimingHost timing_decl(https_scheme);
     EventCountsHost ec_decl;

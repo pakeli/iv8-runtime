@@ -1,11 +1,31 @@
 # Decision Log
 
-Last reviewed: `2026-11-26`
+Last reviewed: `2026-11-27`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
 
 ## Confirmed Decisions
+
+### Implement BOM-09 related BOM surfaces and resolve review findings (`2026-11-27`)
+
+After opening PR #35 for the release-verified `BOM-04..BOM-08` stack (`3cc59b3`),
+the user directs completing the remaining 19 non-DOM BOM inventory members across
+`performance`, `console`, `scheduler`, `crypto`, and `navigator.storage`. `BOM-09`
+delivers the first 17 members (`performance` `22/22`, `console` `25/25`,
+`scheduler` `2/2`) on `codex/bom-09-related-bom` with multi-pass review fixes
+verified against headless Chrome `158.0.8127.88`: GIL-free `to_python_deep`
+traversal, explicit `DataCloneError` vs user-getter error separation, weak-wrapper
+`adopt_ephemeral_host_object` GC reclamation for `PerformanceEntry` hosts and
+private-slot names/details, 6-level priority-ranked `Scheduler` + V8
+continuation-preserved `yield()` attribution + immediate pending-task/signal
+cleanup, transitive `TaskSignal` priority propagation, pre-initialized
+`EventCounts Iterator` prototype, interface-keyed `web_method_length`, and
+`value`-then-`done` `AbortSignal.any`/`TaskSignal.any` iterator unpacking. Local
+macOS arm64 / Python 3.13 passes **3491 passed, 2 skipped** (`test/`) and **43
+passed** (`tools/test_audit_move.py`). Cross-platform 12-lane release verification
+remains pending with `BOM-10`; `BOM-08` (`3cc59b3`) remains the latest
+cross-platform verified milestone and `BIND-01` remains the shared SDK.
 
 ### Complete BOM-04..BOM-08 with independent Codex review and 12-lane validation (`2026-11-26`)
 

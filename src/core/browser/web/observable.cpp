@@ -330,17 +330,17 @@ void abort_signal_any_static(const v8::FunctionCallbackInfo<v8::Value>& info) {
             }
             return;
         }
+        v8::Local<v8::Value> item;
+        if (!user_get(isolate, context, step.As<v8::Object>(), v8_string(isolate, "value"))
+                .ToLocal(&item)) {
+            return;
+        }
         v8::Local<v8::Value> done;
         if (!user_get(isolate, context, step.As<v8::Object>(), v8_string(isolate, "done"))
                 .ToLocal(&done)) {
             return;
         }
         if (done->BooleanValue(isolate)) break;
-        v8::Local<v8::Value> item;
-        if (!user_get(isolate, context, step.As<v8::Object>(), v8_string(isolate, "value"))
-                .ToLocal(&item)) {
-            return;
-        }
         auto* sig = as_abort_signal(item);
         if (sig == nullptr) {
             throw_type_error(isolate, prefix,

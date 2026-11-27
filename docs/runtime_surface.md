@@ -1,6 +1,8 @@
 # iv8-runtime Runtime Surface Index
 
-**Latest implemented/validated candidate (`2026-11-26`): BOM-04..BOM-08 complete Navigator (`70/70`) and Observable/`EventTarget.prototype.when`.** Fixed runtime `3cc59b336676b5ce430f668646861eca5e359f8a` / tree `0fe758ea9a74679774280988b22597b4713a1c8e` completes all 35 remaining `Navigator` APIs (`35/70 -> 70/70` secure, `33/70 -> 38/70` insecure/opaque) across `BOM-04`..`BOM-07` and native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and `EventTarget.prototype.when` in `BOM-08` (`navigator.connection` `9/9`, `screen.orientation` `9/9`, `visualViewport` `14/14`, inherited `window.when`). Each batch was independently reviewed by Codex CLI and verified against headless Chrome `158.0.8127.88`. All 12 selected Python 3.11–3.14 lanes pass: local macOS arm64 first, then hosted Linux x64 and Windows x64. Every lane passes the **42-module / 1257-test gate** (**32 new pytest cases**); full Mac/Linux are **3483 passed, 2 skipped**, Windows **3481 passed, 4 skipped**. All five hosted ZIPs (`15125369259`, `15125461652`, `15125761278`, `15126235377`, `15125606444`) and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 `15.0.245.19` engines are reused; native extensions/wheels are rebuilt. Runs: Linux `45835448535`, Windows `45835458516`, push V8 CI `45835443187` (**83 audit / 1257 gate / 3483 passed, 2 skipped**). Shared SDK remains BIND-01; no shared installation, PR merge, or version tag publication is performed. Scope/evidence: `docs/bom_04_navigator_methods.md`..`docs/bom_08_observable_when.md`, `docs/bom_04_navigator_methods_report.md`..`docs/bom_08_observable_when_report.md`, `docs/bom_08_release_report.md`.
+**Latest implemented candidate (`2026-11-27`, local macOS arm64 validated; cross-platform release verification pending): BOM-09 completes Performance (`22/22`), Console (`25/25`), and Scheduler (`2/2`).** Branch `codex/bom-09-related-bom` upgrades `performance` to a native `Performance` `EventTarget` host (`22/22` members) with `PerformanceEntry`, `PerformanceMark` (constructible), `PerformanceMeasure`, `PerformanceNavigation`, `PerformanceTiming`, `EventCounts`, and private `MemoryInfo` (deterministic offline timing/heap constants, structured-cloned `detail`, and weak-wrapper GC reclamation for entry hosts); completes `console` (`25/25` with `context`, `createTask`, `memory` accessor, `Symbol.toStringTag = "console"`, and Chrome 158 own-key order/arities); replaces the `M11-40` JS `scheduler` shim with native `Scheduler` (`postTask` + `yield`), `TaskController`, `TaskSignal` (`TaskSignal.any` + transitive priority propagation), and `TaskPriorityChangeEvent` over 6-level priority-ranked deterministic scheduling with V8 continuation-preserved `yield()` attribution and `AbortSignal` cancellation; and releases the Python GIL during deep `to_py` V8 traversal. Local macOS arm64 / Python 3.13 passes **8 BOM-09 focused**, **43 move-audit**, and **3491 passed, 2 skipped** full-suite tests; 12-lane cross-platform release validation remains pending alongside `BOM-10`. Scope/evidence: `docs/bom_09_related_bom.md`, `docs/bom_09_related_bom_report.md`, `docs/bom_09_api_delta.json`.
+
+**Latest cross-platform release-verified candidate (`2026-11-26`): BOM-04..BOM-08 complete Navigator (`70/70`) and Observable/`EventTarget.prototype.when`.** Fixed runtime `3cc59b336676b5ce430f668646861eca5e359f8a` / tree `0fe758ea9a74679774280988b22597b4713a1c8e` completes all 35 remaining `Navigator` APIs (`35/70 -> 70/70` secure, `33/70 -> 38/70` insecure/opaque) across `BOM-04`..`BOM-07` and native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and `EventTarget.prototype.when` in `BOM-08` (`navigator.connection` `9/9`, `screen.orientation` `9/9`, `visualViewport` `14/14`, inherited `window.when`). Each batch was independently reviewed by Codex CLI and verified against headless Chrome `158.0.8127.88`. All 12 selected Python 3.11–3.14 lanes pass: local macOS arm64 first, then hosted Linux x64 and Windows x64. Every lane passes the **42-module / 1257-test gate** (**32 new pytest cases**); full Mac/Linux are **3483 passed, 2 skipped**, Windows **3481 passed, 4 skipped**. All five hosted ZIPs (`15125369259`, `15125461652`, `15125761278`, `15126235377`, `15125606444`) and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 `15.0.245.19` engines are reused; native extensions/wheels are rebuilt. Runs: Linux `45835448535`, Windows `45835458516`, push V8 CI `45835443187` (**83 audit / 1257 gate / 3483 passed, 2 skipped**). Shared SDK remains BIND-01; no shared installation, PR merge, or version tag publication is performed. Scope/evidence: `docs/bom_04_navigator_methods.md`..`docs/bom_08_observable_when.md`, `docs/bom_04_navigator_methods_report.md`..`docs/bom_08_observable_when_report.md`, `docs/bom_08_release_report.md`.
 
 **Previous implemented/validated candidate (`2026-11-21`): BOM-03 native legacy quota.** Fixed runtime `4cbab176ec8105d5d0545f61335c6600d9db8830` / tree `c76e926f74a7bcc1995ed697d0841a3950195a65` passes all 12 selected Python 3.11–3.14 lanes: local Mac first, then hosted Linux/Windows. Every lane passes the **37-module / 1225-test gate**; full Mac/Linux are **3451 passed, 2 skipped**, Windows **3449 passed, 4 skipped**. All five hosted ZIPs and 12 wheels are collected and hash/CRC/ABI/native/RECORD verified. V8 15.0.245.19 engines are reused; native extensions/wheels are rebuilt. Runs: Linux `44769697781`, Windows `44769706158`; push/PR V8 CI `44722569894` / `44722637832` also pass. Navigator remains **35/70** with **118 new tests**. PR #34 is ready for review above unmerged PR #33. This batch does not install the shared SDK or publish a version. Scope/evidence: `docs/bom_03_legacy_quota.md`, `docs/bom_03_legacy_quota_report.md`, `docs/bom_03_api_delta.json`, `docs/bom_03_release_report.md`.
 
@@ -547,7 +549,11 @@ Installed per generation by `install_page`:
   `count` → Python `logging`, logger `iv8.console`). PRES-01 adds `clear` /
   `countReset` / `dirxml` / `groupCollapsed` / `profile` / `profileEnd` /
   `timeLog` / `timeStamp`; `timeLog` uses the explicit Page clock, while UI
-  clearing and profiling remain no-ops without those backends;
+  clearing and profiling remain no-ops without those backends. BOM-09 completes
+  `console` (`25/25`) in Chrome 158's own-key order and method arities (`0`
+  except `context(name)` with `length=1`), adding `context(name)` (22 contextual
+  methods), `createTask(name)` (`task.run(fn)`), the `memory` accessor (fresh
+  private `MemoryInfo` objects), and `Symbol.toStringTag = "console"`;
 - `navigator` (`userAgent` / `platform` / `language` / `webdriver` plus M11-24
   `languages` / `onLine` / `cookieEnabled` / `hardwareConcurrency`, M11-27
   `appName` / `appCodeName` / `product` / `vendor` / `vendorSub` /
@@ -616,15 +622,22 @@ Installed per generation by `install_page`:
   watchable;
 - **timers** — `setTimeout` / `clearTimeout` / `setInterval` / `clearInterval`
   (manual-pump only);
-- **virtual performance clock** (M11-31) — `performance.now()` reports the
+- **virtual performance clock & Performance interface** (M11-31, M11-37, BOM-09) —
+  `window.performance` is a native `Performance` `EventTarget` instance (`22/22`
+  members, `addEventListener` / `removeEventListener` / `dispatchEvent` / `when`
+  inherited from `EventTarget.prototype`). `performance.now()` reports the
   M11-29/M11-30 facade clock (`Page.event_loop_time_ms`), and
-  `performance.timeOrigin` is the virtual epoch `0`; both are read-only. There
-  is no real clock; `Date` remains V8's wall clock;
-- **performance timeline** (M11-37) — `performance.mark()` / `measure()` /
-  `getEntries()` / `getEntriesByName()` / `getEntriesByType()` /
-  `clearMarks()` / `clearMeasures()` return plain read-only entries over virtual
-  timestamps; entries reset per `load()`. No `PerformanceObserver`, resource /
-  navigation timing, or `performance.timeline`;
+  `performance.timeOrigin` is the virtual epoch `0` (`Date` remains V8's wall
+  clock). `performance.mark()` / `new PerformanceMark()` / `performance.measure()`
+  / `getEntries()` / `getEntriesByName()` / `getEntriesByType()` / `clearMarks()`
+  / `clearMeasures()` produce native `PerformanceMark` and `PerformanceMeasure`
+  (`PerformanceEntry`) instances with structured-cloned `detail` and weak-wrapper
+  GC reclamation; `clearResourceTimings()`, `setResourceTimingBufferSize()`,
+  `onresourcetimingbufferfull`, `toJSON()`, `interactionCount` (`0`),
+  `PerformanceNavigation`, `PerformanceTiming`, `EventCounts` (36 deterministic
+  zeroed keys), and private `MemoryInfo` (`performance.memory`) expose
+  deterministic offline constants. `PerformanceObserver`, live network resource
+  entries, and `performance.timeline` remain absent;
 - **Crypto random** (M11-33) — read-only `crypto.getRandomValues(typedArray)`
   (integer TypedArrays, same-view return, view byte range, 65536-byte quota) and
   `crypto.randomUUID()` (v4). Bytes come from the platform CSPRNG and are the
@@ -637,10 +650,17 @@ Installed per generation by `install_page`:
   cloned backing buffer. Functions, symbols, promises, weak collections,
   RegExp/Error objects, shared buffers, proxies, DOM/host objects, and the
   global object throw a JS `TypeError`; transfer lists are absent;
-- **scheduler.postTask** (M11-40) — Promise-based `scheduler.postTask()`
-  scheduled on the existing timer queue, supporting `options.delay`; tasks run
-  only under the explicit timer/facade pumps. Priority queues, `AbortSignal`,
-  and automatic execution are absent;
+- **Scheduler & TaskController** (M11-40, BOM-09) — native `Scheduler`
+  (`scheduler.postTask(callback, options?)` and `scheduler.yield()`),
+  `TaskController` (extends `AbortController`), `TaskSignal` (extends
+  `AbortSignal`, with `TaskSignal.any(signals, init?)` and transitive priority
+  propagation), and `TaskPriorityChangeEvent` (extends `Event`). Tasks run on
+  the explicit deterministic timer/facade queue across 6 priority ranks
+  (`user-blocking`, `user-visible`, `background` continuations and tasks),
+  supporting `[EnforceRange]` `delay`, dynamic `TaskSignal` priority updates,
+  `AbortSignal` pre-abort/queued cancellation, and V8 continuation-preserved
+  `yield()` task attribution across `async`/`await` microtasks. Automatic
+  background execution remains absent;
 - **navigator storage/permissions** (M11-43, M11-44) — read-only
   `navigator.storage` with Promise-based `estimate()` (`usage: 0`,
   `quota: 10737418240`), `persisted()` / `persist()` (`false`), and
@@ -924,8 +944,10 @@ JS as `performance.now()` and passes it to rAF callbacks. It is still only
 driven by explicit Python calls: there is no background loop, no **real** clock,
 and no vsync. The legacy one-queue pumps remain available and independent.
 `IdleDeadline.timeRemaining()` remains a constant and `options.timeout` never
-fires. M11-40 adds `scheduler.postTask` as a Promise wrapper over that same
-explicit timer queue; it does not add an automatic loop. Crypto random (M11-33)
+fires. M11-40 and BOM-09 schedule `scheduler.postTask` and `scheduler.yield` on
+that same explicit priority-ranked timer queue (with `TaskController` /
+`TaskSignal` / `AbortSignal` support); they do not add an automatic background
+loop. Crypto random (M11-33)
 is the one intentional non-deterministic surface; it does not affect the virtual
 clock.
 
@@ -938,6 +960,7 @@ clock.
 | PRES-02 | DOM logic/reflection with native attribute interfaces, namespace/tree helpers, import/adopt and inert HTML DOMParser; locally accepted, release verification in `docs/bom_release_report.md` | `docs/presence_02_dom.md` / report |
 | PRES-01 | Presence-first offline BOM/events with unified native prototypes; previous local acceptance, release verification in `docs/bom_release_report.md` | `docs/presence_01_bom_events.md` |
 | M1 | `JSContext` execution kernel | `docs/api_contract.md`, `docs/architecture.md` |
+| BOM-09 | Native `Performance` (`22/22`), `Console` (`25/25`), and `Scheduler` (`2/2` with `TaskController`/`TaskSignal`/`TaskPriorityChangeEvent`); implemented, local macOS arm64 validated; cross-platform release verification pending | `docs/bom_09_related_bom.md`, `docs/bom_09_related_bom_report.md` |
 | BOM-08 | Native `Observable`, `Subscriber`, `AbortController`, `AbortSignal`, and `EventTarget.prototype.when` (`connection`/`orientation`/`visualViewport` complete; 12-lane release verified) | `docs/bom_08_observable_when.md`, `docs/bom_08_observable_when_report.md`, `docs/bom_08_release_report.md` |
 | BOM-07 | Final 10 `Navigator` members (`70/70` secure) plus `DOMRect`/`DOMRectReadOnly`, `ServiceWorkerContainer`, `StorageBucketManager`, `MediaDevices` | `docs/bom_07_remaining_navigator.md`, `docs/bom_07_remaining_navigator_report.md` |
 | BOM-06 | Secure `Navigator` device, WebXR, WebGPU, and Presentation objects (`60/70` secure) | `docs/bom_06_device_objects.md`, `docs/bom_06_device_objects_report.md` |

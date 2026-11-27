@@ -81,6 +81,17 @@ void AccessTrace::begin_generation(std::uint64_t generation) noexcept {
     }
 }
 
+void AccessTrace::forget_identity(const void* identity) noexcept {
+    if (identity == nullptr) {
+        return;
+    }
+    try {
+        std::lock_guard<std::mutex> lock(mutex_);
+        object_ids_.erase(identity);
+    } catch (...) {
+    }
+}
+
 void AccessTrace::bind_isolate(v8::Isolate* isolate) noexcept {
     origin_isolate_ = isolate;
 }

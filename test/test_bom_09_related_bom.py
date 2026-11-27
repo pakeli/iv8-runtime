@@ -381,17 +381,9 @@ def test_review_regressions_all_7_findings():
             """
         )
         page.run_jobs()
+        page._native.collect_garbage_for_testing()
         alive_details = page.eval(
-            """
-            (() => {
-              for (let round = 0; round < 4; ++round) {
-                let hold = [];
-                for (let i = 0; i < 400; ++i) hold.push(new Array(16384).fill(i));
-                hold = null;
-              }
-              return clearedRefs.filter(w => w.deref() !== undefined).length;
-            })()
-            """,
+            "clearedRefs.filter(w => w.deref() !== undefined).length",
             to_py=True,
         )
         assert page.eval("performance.getEntries().length") == 0
@@ -472,7 +464,7 @@ def test_review_regressions_all_7_findings():
                     next() {
                       return {
                         get done() { seenStep.push('done'); return true; },
-                        get value() { seenStep.push('value'); throw new Error('must not read value'); },
+                        get value() { seenStep.push('value'); return 'ignored-when-done'; },
                       };
                     }
                   };
@@ -481,10 +473,36 @@ def test_review_regressions_all_7_findings():
               TaskSignal.any(customIter);
               AbortSignal.any(customIter);
 
+              const throwErr = new RangeError('boom-on-done-true-value');
+              const throwOrder = [];
+              const throwIter = {
+                [Symbol.iterator]() {
+                  return {
+                    next() {
+                      return {
+                        get done() { throwOrder.push('done'); return true; },
+                        get value() { throwOrder.push('value'); throw throwErr; },
+                      };
+                    }
+                  };
+                }
+              };
+              const caughtIter = [];
+              for (const fn of [() => AbortSignal.any(throwIter), () => TaskSignal.any(throwIter)]) {
+                try {
+                  fn();
+                  caughtIter.push({ same: false });
+                } catch (e) {
+                  caughtIter.push({ same: e === throwErr, name: e.name });
+                }
+              }
+
               return {
                 userArrayIterCalls,
                 firstDone: first.done,
                 seenStep,
+                throwOrder,
+                caughtIter,
                 consoleErrorLen: console.error.length,
                 subscriberErrorLen: Subscriber.prototype.error.length,
                 consoleFirstKey: Reflect.ownKeys(console).map(String)[0],
@@ -496,7 +514,12 @@ def test_review_regressions_all_7_findings():
         assert meta == {
             "userArrayIterCalls": 0,
             "firstDone": False,
-            "seenStep": ["done", "done"],
+            "seenStep": ["value", "done", "value", "done"],
+            "throwOrder": ["value", "value"],
+            "caughtIter": [
+                {"same": True, "name": "RangeError"},
+                {"same": True, "name": "RangeError"},
+            ],
             "consoleErrorLen": 0,
             "subscriberErrorLen": 1,
             "consoleFirstKey": "debug",
@@ -690,14 +713,10 @@ def _run_codex_second_pass_regressions(page):
         """
     )
     page.run_until_idle()
+    page._native.collect_garbage_for_testing()
     alive_after_reused_signal = page.eval(
         """
         (() => {
-          for (let round = 0; round < 4; ++round) {
-            let hold = [];
-            for (let i = 0; i < 400; ++i) hold.push(new Array(16384).fill(i));
-            hold = null;
-          }
           const alivePayloads = globalThis.__reclaimRefs.filter(r => r.deref() !== undefined).length;
           globalThis.__reclaimRefs = null;
           globalThis.__reusedAc.abort('later');
@@ -739,4 +758,48 @@ def _run_codex_second_pass_regressions(page):
         {"same": True, "name": "TypeError", "msg": "structuredClone: user getter boom"},
         {"same": True, "name": "TypeError", "msg": "structuredClone: user getter boom"},
     ]
+
+    # 5. [P2] Ephemeral PerformanceMark / PerformanceMeasure native entries & long
+    # names are deterministically reclaimed with their JS wrappers on GC.
+    assert not hasattr(iv8.Page, "collect_garbage_for_testing")
+    assert not hasattr(iv8.Page, "ephemeral_host_object_count")
+    page.eval("performance.clearMarks(); performance.clearMeasures();")
+    page._native.collect_garbage_for_testing()
+    assert page._native.ephemeral_host_object_count() == 0
+
+    page.eval(
+        """
+        globalThis.__entryWrapperRefs = [];
+        for (let i = 0; i < 120; ++i) {
+          const m = performance.mark('mark-long-' + 'x'.repeat(512 * 1024) + '-' + i);
+          const ms = performance.measure('meas-' + 'y'.repeat(512 * 1024) + '-' + i, { start: 0, end: 1 });
+          const standalone = new PerformanceMark('standalone-' + 'z'.repeat(512 * 1024) + '-' + i);
+          globalThis.__entryWrapperRefs.push(new WeakRef(m), new WeakRef(ms), new WeakRef(standalone));
+        }
+        """
+    )
+    page.run_until_idle()
+    page._native.collect_garbage_for_testing()
+    # 120 standalone PerformanceMark objects have no timeline retention and are
+    # already reclaimed; the 120 marks + 120 measures stay alive in the timeline.
+    assert page._native.ephemeral_host_object_count() == 240
+
+    page.eval("performance.clearMarks(); performance.clearMeasures();")
+    page.run_until_idle()
+    page._native.collect_garbage_for_testing()
+    assert page._native.ephemeral_host_object_count() == 0
+    alive_wrappers = page.eval(
+        """
+        (() => {
+          const alive = globalThis.__entryWrapperRefs.filter(w => w.deref() !== undefined).length;
+          globalThis.__entryWrapperRefs = null;
+          return alive;
+        })()
+        """,
+        to_py=True,
+    )
+    assert alive_wrappers == 0
+
+
+
 

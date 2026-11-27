@@ -37,10 +37,8 @@ namespace browser {
 
 class PerformanceEntryHost : public HostObject {
 public:
-    PerformanceEntryHost(std::string name, std::string entry_type,
-        double start_time, double duration)
-        : name_(std::move(name)),
-          entry_type_(std::move(entry_type)),
+    PerformanceEntryHost(const char* entry_type, double start_time, double duration)
+        : entry_type_(entry_type),
           start_time_(start_time),
           duration_(duration) {}
 
@@ -54,9 +52,14 @@ public:
     std::vector<std::string> method_names() const override {
         return {"toJSON"};
     }
+    void release_v8_handles() noexcept override {
+        weak_wrapper_ = nullptr;
+    }
+    void set_weak_wrapper(const v8::Global<v8::Object>* wrapper) noexcept {
+        weak_wrapper_ = wrapper;
+    }
 
-    const std::string& entry_name() const noexcept { return name_; }
-    const std::string& entry_type() const noexcept { return entry_type_; }
+    const char* entry_type() const noexcept { return entry_type_; }
     double start_time() const noexcept { return start_time_; }
     double duration() const noexcept { return duration_; }
 
@@ -67,16 +70,16 @@ public:
         const v8::FunctionCallbackInfo<v8::Value>& arguments) override;
 
 protected:
-    std::string name_;
-    std::string entry_type_;
+    const char* entry_type_ = "";
     double start_time_ = 0.0;
     double duration_ = 0.0;
+    const v8::Global<v8::Object>* weak_wrapper_ = nullptr;
 };
 
 class PerformanceMarkHost : public PerformanceEntryHost {
 public:
-    PerformanceMarkHost(std::string name, double start_time)
-        : PerformanceEntryHost(std::move(name), "mark", start_time, 0.0) {}
+    explicit PerformanceMarkHost(double start_time)
+        : PerformanceEntryHost("mark", start_time, 0.0) {}
 
     std::string prototype_key() const override { return "PerformanceMark"; }
     std::string trace_label() const override { return "PerformanceEntry"; }
@@ -86,8 +89,8 @@ public:
 
 class PerformanceMeasureHost : public PerformanceEntryHost {
 public:
-    PerformanceMeasureHost(std::string name, double start_time, double duration)
-        : PerformanceEntryHost(std::move(name), "measure", start_time, duration) {}
+    PerformanceMeasureHost(double start_time, double duration)
+        : PerformanceEntryHost("measure", start_time, duration) {}
 
     std::string prototype_key() const override { return "PerformanceMeasure"; }
     std::string trace_label() const override { return "PerformanceEntry"; }

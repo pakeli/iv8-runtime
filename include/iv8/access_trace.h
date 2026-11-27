@@ -117,6 +117,7 @@ public:
     // Advance the Page generation and clear object-ID bindings. Events keep
     // their old generation; object IDs are never reused.
     void begin_generation(std::uint64_t generation) noexcept;
+    void forget_identity(const void* identity) noexcept;
 
     void bind_isolate(v8::Isolate* isolate) noexcept;
     void register_runtime_script(int script_id);

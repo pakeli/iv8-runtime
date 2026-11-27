@@ -146,6 +146,11 @@ public:
         const std::u16string& message, bool capture_stack);
     v8::Local<v8::Object> adopt_host_object(v8::Isolate* isolate,
         v8::Local<v8::Context> context, std::unique_ptr<HostObject> host);
+    v8::Local<v8::Object> adopt_ephemeral_host_object(v8::Isolate* isolate,
+        v8::Local<v8::Context> context, std::unique_ptr<HostObject> host,
+        const v8::Global<v8::Object>** out_weak_wrapper = nullptr);
+    void collect_garbage_for_testing();
+    std::size_t ephemeral_host_object_count();
 
     // Step 5g: internal factory used only by the JS matchMedia bootstrap; returns
     // a cached HostObject backing for one query result. Not bound to Python.
@@ -424,6 +429,16 @@ private:
     std::vector<std::pair<std::string, std::string>> local_storage_;
     std::vector<std::pair<std::string, std::string>> session_storage_;
     std::vector<std::unique_ptr<HostObject>> host_objects_;
+    struct EphemeralHostEntry {
+        PageState* page = nullptr;
+        HostObject* key = nullptr;
+        std::unique_ptr<HostObject> host;
+        v8::Global<v8::Object> weak_wrapper;
+    };
+    static void on_ephemeral_host_weak(
+        const v8::WeakCallbackInfo<EphemeralHostEntry>& data);
+    std::unordered_map<HostObject*, std::unique_ptr<EphemeralHostEntry>>
+        ephemeral_host_objects_;
     // M3-4 window event target: holds window's event listeners. window itself
     // stays the intrinsic global object; this is only its listener store and is
     // NOT installed as a named global. Its listener handles are released by the
