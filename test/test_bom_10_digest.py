@@ -20,7 +20,7 @@ CONTEXTS = [
 
 
 def reference(group, context):
-    return json.loads((FIXTURES / f"{group}-{context}.json").read_text())
+    return json.loads((FIXTURES / f"{group}-{context}.json").read_text(encoding="utf-8"))
 
 
 def run_probe(page, group, result_name):

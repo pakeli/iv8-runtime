@@ -16,7 +16,7 @@ CONTEXTS = ("secure", "insecure", "opaque")
 
 
 def load(group, context="secure"):
-    return json.loads((FIXTURES / f"{group}-{context}.json").read_text())
+    return json.loads((FIXTURES / f"{group}-{context}.json").read_text(encoding="utf-8"))
 
 
 def check_complete(value):

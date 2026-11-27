@@ -31,7 +31,7 @@ def evaluate_async(page, expression):
 @pytest.mark.parametrize("context,url", CONTEXTS)
 def test_storage_tree_matches_browser_reference(context, url):
     source = (FIXTURES / "storage_tree_probe.js").read_bytes()
-    fixture = json.loads((FIXTURES / f"storage_tree-{context}.json").read_text())
+    fixture = json.loads((FIXTURES / f"storage_tree-{context}.json").read_text(encoding="utf-8"))
     assert fixture["probe_sha256"] == hashlib.sha256(source).hexdigest()
     with iv8.Page() as page:
         page.load("<html></html>", url)
@@ -42,13 +42,13 @@ def test_storage_tree_matches_browser_reference(context, url):
 
 @pytest.mark.parametrize("context,url", CONTEXTS)
 def test_storage_native_shapes_match_reference_without_stream_execution(context, url):
-    source = (FIXTURES / "storage_probe.js").read_text()
+    source = (FIXTURES / "storage_probe.js").read_text(encoding="utf-8")
     # Keep the existing browser shape probe byte-for-byte through shape collection;
     # stop before its later write-stream discovery, which is not in this slice.
     marker = "      const fn = StorageManager.prototype.getDirectory;"
     assert source.count(marker) == 1
     source = source[:source.index(marker)] + "return out; } } return out; })()"
-    reference = json.loads((FIXTURES / f"storage-{context}.json").read_text())["result"]
+    reference = json.loads((FIXTURES / f"storage-{context}.json").read_text(encoding="utf-8"))["result"]
     with iv8.Page() as page:
         page.load("<html></html>", url)
         actual = evaluate_async(page, source)
