@@ -1,0 +1,385 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-27T14:24:40.135507+00:00",
+  "probe_sha256": "d7269f1799d4751d6b004abb1f18473ed8beb2f41f295a1f8a0173d4d0dd191f",
+  "execution": {
+    "os": "Darwin",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile for each origin class",
+    "origin": "http://127.0.0.1:<port>/reference",
+    "network": "local fixture server only; external DNS disabled; no user profile, permission grant or user gesture",
+    "transport": "private local DevTools pipe; Runtime.evaluate awaitPromise, 45s timeout",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--disable-extensions",
+      "--no-pings",
+      "--metrics-recording-only",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ]
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "random": {
+      "missing": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': 1 argument required, but only 0 present.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "buffer": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "float": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeMismatchError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': The provided ArrayBufferView is of type 'Float32', which is not an integer array type.",
+          "code": 17,
+          "dom": true
+        }
+      },
+      "float64": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeMismatchError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': The provided ArrayBufferView is of type 'Float64', which is not an integer array type.",
+          "code": 17,
+          "dom": true
+        }
+      },
+      "dataView": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeMismatchError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': The provided ArrayBufferView is of type 'DataView', which is not an integer array type.",
+          "code": 17,
+          "dom": true
+        }
+      },
+      "array": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "null": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "symbol": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "quota": {
+        "mode": "throw",
+        "error": {
+          "name": "QuotaExceededError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (65537) exceeds the number of bytes of entropy available via this API (65536).",
+          "code": 22,
+          "dom": true
+        }
+      },
+      "badReceiver": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      },
+      "detached": {
+        "mode": "return",
+        "ok": true
+      },
+      "globalReceiver": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      },
+      "uuidReceiver": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      }
+    },
+    "digest": {
+      "nameUndefined": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Algorithm: name: Missing or not a string",
+          "code": null,
+          "dom": false
+        }
+      },
+      "nameNull": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Algorithm: Unrecognized name",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "nameNumber": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Algorithm: Unrecognized name",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "nameSymbol": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Cannot convert a Symbol value to a string",
+          "code": null,
+          "dom": false
+        }
+      },
+      "rsa": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': RSA-PSS: Unsupported operation: digest",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "space": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Algorithm: Unrecognized name",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "resizable": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': The provided ArrayBuffer value must not be resizable.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "resizableView": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': The provided ArrayBufferView value must not be resizable.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "detachInName": {
+        "mode": "promise",
+        "ok": true
+      },
+      "ML-KEM-768": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': ML-KEM-768: Unsupported operation: digest",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "ML-KEM-1024": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': ML-KEM-1024: Unsupported operation: digest",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "ML-DSA-44": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': ML-DSA-44: Unsupported operation: digest",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "ML-DSA-65": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': ML-DSA-65: Unsupported operation: digest",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "ML-DSA-87": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': ML-DSA-87: Unsupported operation: digest",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "ChaCha20-Poly1305": {
+        "mode": "promise",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': ChaCha20-Poly1305: Unsupported operation: digest",
+          "code": 9,
+          "dom": true
+        }
+      },
+      "badDataBeforeDictionary": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "badDataReads": [],
+      "errorIdentity": true,
+      "errorReads": 1,
+      "snapshotInName": "709e80c88487a2411e1ee4dfb9f22a861492d20c4765150c0c794abd70f8147c"
+    },
+    "supports": {
+      "missing": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'supports' on 'SubtleCrypto': 2 arguments required, but only 0 present.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "missingAlgorithm": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'supports' on 'SubtleCrypto': 2 arguments required, but only 1 present.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "sha": {
+        "value": true
+      },
+      "lowercase": {
+        "value": true
+      },
+      "dictionary": {
+        "value": true
+      },
+      "unknownOperation": {
+        "value": false
+      },
+      "operationCase": {
+        "value": false
+      },
+      "unknownAlgorithm": {
+        "value": false
+      },
+      "operationMismatch": {
+        "value": false
+      },
+      "symbolOperation": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'supports' on 'SubtleCrypto': Cannot convert a Symbol value to a string",
+          "code": null,
+          "dom": false
+        }
+      },
+      "symbolAlgorithm": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'supports' on 'SubtleCrypto': Cannot convert a Symbol value to a string",
+          "code": null,
+          "dom": false
+        }
+      },
+      "nullAlgorithm": {
+        "value": false
+      },
+      "emptyAlgorithm": {
+        "value": false
+      },
+      "nestedSymbol": {
+        "value": false
+      },
+      "invalidOperationSymbol": {
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'supports' on 'SubtleCrypto': Cannot convert a Symbol value to a string",
+          "code": null,
+          "dom": false
+        }
+      },
+      "receiver": {
+        "value": true
+      },
+      "extra": {
+        "value": true
+      },
+      "getterIdentity": false,
+      "invalidOperationDictionary": false,
+      "invalidOperationReads": [],
+      "throwingGetterResult": false
+    }
+  }
+}

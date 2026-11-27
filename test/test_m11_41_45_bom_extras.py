@@ -177,8 +177,18 @@ def test_storage_manager_is_deterministic_and_promise_based():
             "navigator.storage = null; typeof navigator.storage"
         ) == "object"
         assert page.eval(
-            "navigator.storage.estimate = 1; typeof navigator.storage.estimate"
-        ) == "function"
+            """(() => {
+              const manager = navigator.storage;
+              const original = manager.estimate;
+              const descriptor = Object.getOwnPropertyDescriptor(StorageManager.prototype, 'estimate');
+              manager.estimate = 1;
+              const overridden = manager.estimate === 1 && Object.hasOwn(manager, 'estimate');
+              delete manager.estimate;
+              return manager instanceof StorageManager && overridden &&
+                descriptor.writable && descriptor.enumerable && descriptor.configurable &&
+                manager.estimate === original && !Object.hasOwn(manager, 'estimate');
+            })()"""
+        ) is True
 
 
 # --- M11-44 navigator.permissions ---------------------------------------------

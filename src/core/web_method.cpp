@@ -5,6 +5,25 @@
 namespace iv8 {
 
 int web_method_length(std::string_view receiver, std::string_view name) {
+    if (receiver == "StorageManager" || receiver == "storage_manager") return 0;
+    if (receiver == "FileSystemHandle") return name == "isSameEntry" ? 1 : 0;
+    if (receiver == "FileSystemDirectoryHandle") {
+        return (name == "getDirectoryHandle" || name == "getFileHandle" ||
+                name == "removeEntry" || name == "resolve") ? 1 : 0;
+    }
+    if (receiver == "FileSystemFileHandle") return name == "move" ? 1 : 0;
+    if (receiver == "Crypto" || receiver == "crypto") {
+        return name == "getRandomValues" ? 1 : 0;
+    }
+    if (receiver == "SubtleCrypto") {
+        if (name == "unwrapKey") return 7;
+        if (name == "decapsulateKey") return 6;
+        if (name == "deriveKey" || name == "importKey" || name == "encapsulateKey") return 5;
+        if (name == "verify" || name == "wrapKey") return 4;
+        if (name == "decrypt" || name == "encrypt" || name == "generateKey" ||
+            name == "sign" || name == "decapsulateBits") return 3;
+        return 2;
+    }
     if (receiver == "console") {
         return name == "context" ? 1 : 0;
     }

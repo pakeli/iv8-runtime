@@ -14,13 +14,13 @@ REFERENCES = [
     ("performancePrototype", "host_object", "Performance.prototype", name, "Performance." + name, True)
     for name in ("now", "mark", "measure", "getEntries", "getEntriesByName", "getEntriesByType", "clearMarks", "clearMeasures")
 ] + [
-    ("cryptoOwner", "crypto", "crypto", name, "crypto." + name, False)
+    ("cryptoPrototype", "host_object", "Crypto.prototype", name, "Crypto." + name, True)
     for name in ("getRandomValues", "randomUUID")
 ] + [
     ("storagePrototype", "host_object", "Storage.prototype", name, "Storage." + name, True)
     for name in ("getItem", "setItem", "removeItem", "clear", "key")
 ] + [
-    ("managerOwner", "storage_manager", "navigator.storage", name, "navigator.storage." + name, False)
+    ("managerPrototype", "host_object", "StorageManager.prototype", name, "navigator.storage." + name, True)
     for name in ("estimate", "persisted", "persist")
 ] + [("permissionsOwner", "permissions", "navigator.permissions", "query", "navigator.permissions.query", False)] + [
     ("statusOwner", "permission_status", "permissionStatus", name, "permissionStatus." + name, False)
@@ -33,9 +33,10 @@ def page():
     with iv8.Page() as value:
         value.load(HTML, BASE)
         value.eval("""globalThis.performanceOwner=performance;globalThis.performancePrototype=Object.getPrototypeOf(performance);
-            globalThis.cryptoOwner=crypto;
+            globalThis.cryptoOwner=crypto;globalThis.cryptoPrototype=Crypto.prototype;
             globalThis.localOwner=localStorage;globalThis.storagePrototype=Object.getPrototypeOf(localStorage);
-            globalThis.managerOwner=navigator.storage;globalThis.permissionsOwner=navigator.permissions;
+            globalThis.managerOwner=navigator.storage;globalThis.managerPrototype=StorageManager.prototype;
+            globalThis.permissionsOwner=navigator.permissions;
             permissionsOwner.query({name:'geolocation'}).then(value=>{globalThis.statusOwner=value;});
             globalThis.queryOne=matchMedia('(min-width: 0px)');globalThis.queryTwo=matchMedia('(min-width: 0px)');
             globalThis.syntheticEvent=new Event('change');""")
@@ -48,7 +49,7 @@ def events(page, **matches):
             if all(event.get(key) == value for key, value in matches.items())]
 
 
-def test_all_22_bom_method_references_record_get_with_original_data_flags(page):
+def test_all_22_bom_method_references_record_get_with_declared_data_flags(page):
     assert len(REFERENCES) == 22
     page.watch_apis([entry[4] for entry in REFERENCES])
     page.start_access_trace()
@@ -67,6 +68,64 @@ def test_all_22_bom_method_references_record_get_with_original_data_flags(page):
         })())"""))
         assert descriptor == {"data": True, "writable": mutable, "enumerable": True, "configurable": mutable}
     assert page.read_watch_api_hits() == []
+
+
+@pytest.mark.parametrize("member,arguments,count", [
+    ("getRandomValues", "new Uint8Array(4)", 1),
+    ("randomUUID", "", 0),
+])
+def test_crypto_instance_reference_and_folded_call_keep_native_identity(page, member, arguments, count):
+    page.watch_apis(["crypto." + member])
+    page.start_access_trace(object_types=["crypto"])
+    page.eval("cryptoOwner." + member + "; cryptoOwner." + member + "(" + arguments + ");",
+              name="crypto-reference.js")
+    recorded = events(page)
+    assert [(record["label"], record["member"], record["operation"]) for record in recorded] == [
+        ("crypto", member, "get_method"), ("crypto", member, "call"),
+    ]
+    reference, call = recorded
+    assert reference["object_id"] == call["object_id"]
+    assert call["outcome"] == "returned" and call["argument_count"] == count
+    assert all(record["source_kind"] == "eval" and record["resource_name"] == "crypto-reference.js"
+               for record in recorded)
+    assert [hit["path"] for hit in page.read_watch_api_hits()] == ["crypto." + member]
+
+
+@pytest.mark.parametrize("member", ["estimate", "persisted", "persist", "getDirectory"])
+def test_storage_manager_instance_reference_and_folded_call_keep_native_identity(page, member):
+    page.watch_apis(["navigator.storage." + member])
+    page.start_access_trace(object_types=["storage_manager"])
+    page.eval("managerOwner." + member + "; managerOwner." + member + "();",
+              name="manager-reference.js")
+    recorded = events(page)
+    assert [(record["label"], record["member"], record["operation"]) for record in recorded] == [
+        ("navigator.storage", member, "get_method"),
+        ("navigator.storage", member, "call"),
+    ]
+    reference, call = recorded
+    assert reference["object_id"] == call["object_id"]
+    assert call["outcome"] == "returned" and call["argument_count"] == 0
+    assert all(record["source_kind"] == "eval" and record["resource_name"] == "manager-reference.js"
+               for record in recorded)
+    assert [hit["path"] for hit in page.read_watch_api_hits()] == ["navigator.storage." + member]
+
+
+def test_storage_manager_user_override_is_not_recorded_as_a_native_call(page):
+    page.eval("""globalThis.replacementCalls=0;
+        managerOwner.estimate=()=>{replacementCalls++;return Promise.resolve({usage:3,quota:5});};""")
+    page.watch_apis(["navigator.storage.estimate"])
+    page.start_access_trace(object_types=["storage_manager"])
+    page.eval("""managerOwner.estimate().then(value=>globalThis.replacementEstimate=value);
+        StorageManager.prototype.estimate.call(managerOwner).then(value=>globalThis.nativeEstimate=value);""")
+    page.run_jobs()
+    assert page.eval("replacementCalls") == 1
+    assert page.eval("replacementEstimate", to_py=True) == {"usage": 3, "quota": 5}
+    assert page.eval("nativeEstimate", to_py=True) == {"usage": 0, "quota": 10737418240}
+    recorded = events(page, operation="call")
+    assert [(record["label"], record["member"], record["outcome"]) for record in recorded] == [
+        ("navigator.storage", "estimate", "returned")]
+    assert [hit["path"] for hit in page.read_watch_api_hits()] == ["navigator.storage.estimate"]
+    assert page.eval("delete managerOwner.estimate; managerOwner.estimate===StorageManager.prototype.estimate")
 
 
 def test_new_bom_watch_paths_do_not_duplicate_existing_structured_calls(page):

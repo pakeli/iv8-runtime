@@ -1,11 +1,71 @@
 # Decision Log
 
-Last reviewed: `2026-11-27`
+Last reviewed: `2026-11-28`
 
 This file records project-level decisions that are easy to lose when work moves
 between machines or chat sessions.
 
 ## Confirmed Decisions
+
+### Implement origin-partitioned Page memory storage (`2026-11-28`)
+
+The user directs continuing after digest. Implement native StorageManager and
+FileSystem handle interfaces using a Page-owned, origin-partitioned C++ tree,
+without host filesystem access. Same-origin reload retains entries while old
+JS wrappers invalidate; different origins/Pages isolate data; dispose clears it.
+Canonicalization uses the existing bounded HTTP(S) URL parser.
+
+Chrome 158 comparisons establish USVString/NUL path behavior, new wrappers for
+the same root, identity after deletion/recreation, native descriptors, Promise
+errors and iterator membership. Use weak wrapper ownership and an internal
+File factory, immutable empty snapshots, deterministic metadata and sorted
+snapshot enumeration. Writes/streams/move reject the explicit offline profile.
+Full File/Blob browser shape and key algorithms are not silently expanded.
+
+Fresh macOS arm64/Python 3.13 wheel: 96 focused passed; full 3604 passed,
+2 skipped. Three new reference payloads reproduce exactly; all release entry
+points share 46 focused modules. Twelve-lane release verification remains
+pending; BOM-08 remains latest cross-platform verified and SDK is unchanged.
+Contract/evidence: `docs/bom_10_storage.md`, `docs/bom_10_storage_report.md`.
+
+### Implement BOM-10 native crypto and digest with a pinned C backend (`2026-11-27`)
+
+The user directs continuing the next step after reference preparation. Select
+TF-PSA-Crypto 1.1.2 and statically compile its unchanged portable SHA sources
+(SHA-1/256/384/512) through an internal C-ABI adapter. Pin source URL/SHA-256,
+verify cached archives and bundle the upstream license; V8-free builds omit it.
+
+Install native Crypto/SubtleCrypto/CryptoKey metadata, secure-context gating,
+digest and static supports; preserve random entropy while replacing historical
+flat-object shape and error substitutes with captured Chrome behavior. Other
+16 SubtleCrypto methods reject an explicit digest-only profile; full parameter
+conversion, key operations and OPFS are not claimed. Native digest computes
+synchronously without the GIL and settles a Promise whose reactions require
+explicit Page pumping. Global SharedArrayBuffer exposure remains the existing
+V8 profile difference.
+
+Fresh local macOS arm64/Python 3.13 wheel: 144 focused passed, full 3577 passed
+and 2 skipped. Backend vectors/archive-rejection checks and V8-free smoke pass.
+Linux/Windows and other local Python release lanes remain pending. Evidence:
+`docs/bom_10_digest_report.md`, `docs/bom_10_digest_backend.md`.
+
+### Start BOM-10 with browser evidence and an explicit execution boundary (`2026-11-27`)
+
+The user accepts the proposed first step: write the BOM-10 boundary and capture
+real-browser references for `crypto.subtle` and `navigator.storage.getDirectory`.
+This preparation stage adds no runtime implementation or dependencies. Six
+Chrome `158.0.8127.88` receipts across secure/insecure/opaque contexts reproduce
+exactly in fresh profiles; 19 offline reference/hash/vector tests pass.
+
+The boundary separates inventory membership, native interface shape and working
+operations. The next crypto slice is digest with SHA-1/256/384/512 after selecting
+a maintained, pinned native backend. The proposed storage profile is Page-owned
+origin-partitioned memory with same-origin reload retention, independent Pages
+and disposal cleanup; those persistence choices are explicit offline policy, not
+claims from the initial browser capture. Key algorithm families and writable
+streams remain separately scoped work. Preserve BOM-09 as latest implemented
+and BOM-08 as latest cross-platform verified until the appropriate release lanes
+pass. See `docs/bom_10_crypto_storage.md` and `docs/bom_10_reference_report.md`.
 
 ### Implement BOM-09 related BOM surfaces and resolve review findings (`2026-11-27`)
 

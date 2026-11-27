@@ -2,9 +2,11 @@
 
 #include "iv8/v8_headers.h"
 
+namespace iv8 { class PageState; }
+
 namespace iv8::browser {
 
-void crypto_get_random_values_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
-void crypto_random_uuid_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
+bool install_crypto_interfaces(v8::Isolate* isolate,
+    v8::Local<v8::Context> context, PageState* owner, bool secure);
 
 }  // namespace iv8::browser

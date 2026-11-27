@@ -159,9 +159,8 @@ constexpr char kBomExtrasBootstrap[] = R"JS(
     }
   };
 
-  // M11-43: deterministic StorageManager. It is installed natively through
-  // NavigatorHost (see make_storage_manager_object) so its reads/calls can be
-  // access-traced while keeping the plain-object shape.
+  // BOM-10: native StorageManager and its virtual filesystem are installed
+  // through NavigatorHost; this bootstrap does not create their objects.
 
   // M11-44: navigator.permissions is installed natively through NavigatorHost
   // (see make_permissions_object) so its parent read, query() calls, and returned

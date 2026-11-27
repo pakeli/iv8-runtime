@@ -324,6 +324,77 @@ v8::MaybeLocal<v8::Object> create_runtime_blob(v8::Isolate* isolate,
     return self;
 }
 
+v8::Local<v8::Private> runtime_file_prototype_key(v8::Isolate* isolate) {
+    return v8::Private::ForApi(
+        isolate,
+        v8::String::NewFromUtf8Literal(isolate, "iv8::File::prototype"));
+}
+
+bool register_runtime_file_prototype(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     v8::Local<v8::Object> prototype) {
+    return !prototype.IsEmpty() && context->Global()->SetPrivate(
+        context, runtime_file_prototype_key(isolate), prototype).FromMaybe(false);
+}
+
+v8::MaybeLocal<v8::Object> create_runtime_file(v8::Isolate* isolate,
+                                              v8::Local<v8::Context> context,
+                                              const std::vector<std::uint8_t>& bytes,
+                                              const std::u16string& name,
+                                              const std::string& type,
+                                              double last_modified) {
+    auto runtime_origin = access_runtime_scope(isolate);
+    v8::Local<v8::Value> prototype;
+    if (!context->Global()->GetPrivate(context, runtime_file_prototype_key(isolate))
+             .ToLocal(&prototype) || !prototype->IsObject()) {
+        return {};
+    }
+    if (name.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
+        type.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        isolate->ThrowException(v8::Exception::RangeError(
+            v8::String::NewFromUtf8Literal(isolate, "File metadata is too large")));
+        return {};
+    }
+    v8::Local<v8::String> filename;
+    v8::Local<v8::String> media_type;
+    const std::string normalized_type = ascii_lower(type);
+    if (!v8::String::NewFromTwoByte(isolate,
+            reinterpret_cast<const std::uint16_t*>(name.data()),
+            v8::NewStringType::kNormal, static_cast<int>(name.size()))
+             .ToLocal(&filename) ||
+        !v8::String::NewFromUtf8(isolate, normalized_type.data(),
+            v8::NewStringType::kNormal, static_cast<int>(normalized_type.size()))
+             .ToLocal(&media_type)) {
+        return {};
+    }
+    auto self = v8::Object::New(isolate);
+    auto buffer = v8::ArrayBuffer::New(isolate, bytes.size());
+    if (!bytes.empty()) {
+        std::memcpy(buffer->Data(), bytes.data(), bytes.size());
+    }
+    if (!self->SetPrototype(context, prototype).FromMaybe(false) ||
+        !self->SetPrivate(context, blob_bytes_key(isolate), buffer).FromMaybe(false) ||
+        !self->SetPrivate(context, blob_type_key(isolate), media_type).FromMaybe(false) ||
+        !self->SetPrivate(context, file_brand_key(isolate), v8::True(isolate)).FromMaybe(false)) {
+        return {};
+    }
+
+    // Define own fields directly: inherited setters and Object/Array prototype
+    // hooks cannot run while the host materializes a filesystem snapshot.
+    const auto identity = native_api_identity(isolate, self);
+    const auto define = [&](const char* field, v8::Local<v8::Value> value) {
+        return install_traced_api_data_property(isolate, context, self, field,
+            value, identity, "host_object", "File", v8::ReadOnly);
+    };
+    const double modified = std::isfinite(last_modified) ? std::trunc(last_modified) : 0.0;
+    if (!define("size", v8::Number::New(isolate, static_cast<double>(bytes.size()))) ||
+        !define("type", media_type) || !define("name", filename) ||
+        !define("lastModified", v8::Number::New(isolate, modified))) {
+        return {};
+    }
+    return self;
+}
+
 DocumentHost* document_from_blob_data(v8::Local<v8::Value> data) {
     if (!data->IsExternal()) {
         return nullptr;

@@ -739,10 +739,16 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
             const bool bom09_promise =
                 interface_name == "Scheduler" &&
                 (key == "postTask" || key == "yield");
+            const bool file_system_promise =
+                interface_name == "StorageManager" ||
+                interface_name == "FileSystemHandle" ||
+                interface_name == "FileSystemFileHandle" ||
+                (interface_name == "FileSystemDirectoryHandle" &&
+                    key != "entries" && key != "keys" && key != "values");
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
                 navigator_promise || eme_promise || bom05_promise ||
                 bom06_promise || bom07_promise || bom08_promise ||
-                bom09_promise) {
+                bom09_promise || interface_name == "SubtleCrypto" || file_system_promise) {
                 std::string watch_owner = interface_name;
                 if (navigator_promise) watch_owner = "navigator";
                 else if (interface_name == "ScreenOrientation") watch_owner = "screen.orientation";
@@ -765,6 +771,8 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 else if (interface_name == "NavigatorManagedData") watch_owner = "navigator.managed";
                 else if (interface_name == "Ink") watch_owner = "navigator.ink";
                 else if (interface_name == "Scheduler") watch_owner = "scheduler";
+                else if (interface_name == "SubtleCrypto") watch_owner = "crypto.subtle";
+                else if (interface_name == "StorageManager") watch_owner = "navigator.storage";
                 browser::watch_record(isolate, watch_owner, key);
                 v8::Local<v8::Promise::Resolver> resolver;
                 if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||

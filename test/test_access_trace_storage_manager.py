@@ -1,4 +1,7 @@
-"""Step 5e: access trace for navigator.storage (StorageManager)."""
+"""Native StorageManager shape and preserved Step-5e monitoring contracts."""
+
+import json
+from pathlib import Path
 
 import pytest
 
@@ -9,6 +12,7 @@ on_only = pytest.mark.skipif(not v8_linked, reason="requires a V8-linked build")
 
 BASE = "https://access-storage-manager.test/"
 HTML = "<html><body></body></html>"
+FIXTURES = Path(__file__).resolve().parent / "fixtures" / "bom_10"
 
 
 def _load(page):
@@ -49,15 +53,12 @@ def test_storage_manager_reads_and_calls_are_traced():
             ("window", "window", "persist", "get_probe"),
             ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "storage", "get"),
-            ("storage_manager", "navigator.storage", "estimate", "get"),
             ("storage_manager", "navigator.storage", "estimate", "call"),
             ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "storage", "get"),
-            ("storage_manager", "navigator.storage", "persisted", "get"),
             ("storage_manager", "navigator.storage", "persisted", "call"),
             ("window", "window", "navigator", "get"),
             ("navigator", "navigator", "storage", "get"),
-            ("storage_manager", "navigator.storage", "persist", "get"),
             ("storage_manager", "navigator.storage", "persist", "call"),
         ]
         assert all(event["source_kind"] == "eval" for event in events)
@@ -67,46 +68,47 @@ def test_storage_manager_reads_and_calls_are_traced():
 
 
 @on_only
-def test_storage_manager_keeps_plain_object_shape_and_identity():
+def test_storage_manager_native_shape_identity_and_writable_methods():
     with iv8.Page() as page:
         _load(page)
+        reference = json.loads((FIXTURES / "storage-secure.json").read_text())["result"]
         assert page.eval("navigator.storage === navigator.storage") is True
         assert page.eval(
             "navigator.storage.estimate === navigator.storage.estimate"
         ) is True
         assert page.eval(
-            "Object.getPrototypeOf(navigator.storage) === Object.prototype"
+            "Object.getPrototypeOf(navigator.storage) === StorageManager.prototype"
         ) is True
-        assert page.eval("Object.keys(navigator.storage).join(',')") == (
-            "estimate,persisted,persist")
-        assert page.eval(
-            """
-            JSON.stringify(
-                Object.getOwnPropertyDescriptor(navigator.storage, 'estimate'))
-            """
-        ) == '{"writable":false,"enumerable":true,"configurable":false}'
+        assert page.eval("Reflect.ownKeys(navigator.storage)", to_py=True) == reference["storage"]["ownKeys"]
+        assert page.eval("Object.prototype.toString.call(navigator.storage)") == reference["storage"]["tag"]
+        assert page.eval("Reflect.ownKeys(StorageManager.prototype).map(String)", to_py=True) == reference["interfaces"]["StorageManager"]["prototype"]["keys"]
+        for member in ("estimate", "persisted", "persist", "getDirectory"):
+            descriptor = page.eval("""(() => {
+              const d = Object.getOwnPropertyDescriptor(StorageManager.prototype,
+                """ + json.dumps(member) + """);
+              return {kind: 'value' in d ? 'data' : 'accessor', writable: d.writable,
+                enumerable: d.enumerable, configurable: d.configurable};
+            })()""", to_py=True)
+            expected = reference["interfaces"]["StorageManager"]["prototype"]["members"][member]
+            assert descriptor == {key: expected[key] for key in descriptor}
 
-        page.start_access_trace()
-        assert page.eval(
-            """
-            navigator.storage = null;
-            navigator.storage.estimate = 1;
-            [typeof navigator.storage,
-             typeof navigator.storage.estimate].join('|');
-            """
-        ) == "object|function"
-        # Parent reads and the final method reference are observable. Rejected
-        # read-only assignments do not create native set events.
-        assert [(event["object_type"], event["member"], event["operation"])
-                for event in _events(page)] == [
-            ("window", "navigator", "get"),
-            ("window", "navigator", "get"),
-            ("navigator", "storage", "get"),
-            ("window", "navigator", "get"),
-            ("navigator", "storage", "get"),
-            ("window", "navigator", "get"),
-            ("navigator", "storage", "get"),
-            ("storage_manager", "estimate", "get")]
+        for tracing in (False, True):
+            if tracing:
+                page.start_access_trace()
+            assert page.eval("""(() => {
+              const manager = navigator.storage;
+              const original = manager.estimate;
+              manager.estimate = 1;
+              const shadow = manager.estimate === 1 &&
+                Object.hasOwn(manager, 'estimate') && StorageManager.prototype.estimate === original;
+              delete manager.estimate;
+              navigator.storage = null;
+              let strictRejected = false;
+              try { (function () { 'use strict'; navigator.storage = null; })(); }
+              catch (error) { strictRejected = error instanceof TypeError; }
+              return shadow && strictRejected && navigator.storage === manager &&
+                manager.estimate === original && !Object.hasOwn(manager, 'estimate');
+            })()""") is True
 
 
 @on_only
@@ -148,8 +150,8 @@ def test_storage_manager_filter_and_generation():
                   name="probe.js")
         events = _events(page)
         assert [(event["object_type"], event["member"], event["operation"]) for event in events] == [
-            ("storage_manager", "estimate", "get"), ("storage_manager", "estimate", "call"),
-            ("storage_manager", "persisted", "get"), ("storage_manager", "persisted", "call"),
+            ("storage_manager", "estimate", "call"),
+            ("storage_manager", "persisted", "call"),
         ]
         first_id = events[0]["object_id"]
         assert events[0]["generation"] == 2
@@ -162,6 +164,6 @@ def test_storage_manager_filter_and_generation():
             and event["source_kind"] == "eval"
         ]
         assert [(event["generation"], event["operation"]) for event in events] == [
-            (2, "get"), (2, "call"), (2, "get"), (2, "call"), (3, "get"), (3, "call")]
-        assert {event["object_id"] for event in events[:4]} == {first_id}
-        assert events[4]["object_id"] == events[5]["object_id"] != first_id
+            (2, "call"), (2, "call"), (3, "call")]
+        assert {event["object_id"] for event in events[:2]} == {first_id}
+        assert events[2]["object_id"] != first_id

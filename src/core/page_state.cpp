@@ -61,6 +61,7 @@
 #include "browser/internal/trace_hooks.h"
 #include "browser/web/base64_globals.h"
 #include "browser/web/crypto.h"
+#include "browser/web/file_system.h"
 #include "browser/web/encoding.h"
 #include "browser/bom/host_probe.h"
 #include "browser/bom/console.h"
@@ -126,11 +127,9 @@ namespace browser {
 
 
 
-// Step 5e: navigator.storage stays a plain object so its method descriptors,
-// prototype, and cached identity match the M11-43 surface, but its native
-// method callbacks record with this stable native identity. The parent
-// navigator.storage getter is recorded by NavigatorHost's normal property
-// accessor. kStorageManagerTraceToken is defined in browser/internal/common.h.
+// BOM-10: navigator.storage is a native StorageManager whose per-generation
+// wrapper points at the Page-owned, origin-partitioned virtual filesystem.
+// Parent reads and manager calls use the ordinary HostObject trace channel.
 
 
 
@@ -1876,6 +1875,22 @@ std::size_t PageState::ephemeral_host_object_count() {
     return count;
 }
 
+browser::FileSystemStore* PageState::file_system_store() {
+    if (!file_system_store_) {
+        file_system_store_ = std::make_unique<browser::FileSystemStore>();
+    }
+    return file_system_store_.get();
+}
+
+std::string PageState::file_system_origin() const {
+    const auto url = resolve_dom_url(bootstrap_.base_url, std::string());
+    if (!url.valid || url.opaque || url.origin == "null" ||
+        (url.protocol != "http:" && url.protocol != "https:")) {
+        return {};
+    }
+    return url.origin;
+}
+
 v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     v8::Local<v8::Context> context, const std::string& name, v8::Local<v8::Array> arguments) {
     if (name == "DOMError") return construct_dom_error(isolate, context, this, arguments);
@@ -2069,6 +2084,8 @@ void PageState::install_page(const std::string& base_url,
             if (!install_navigator_bom07_interfaces(isolate, context, this,
                     window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
             if (!install_observable_and_abort_interfaces(isolate, context, this)) return;
+            if (!install_file_system_interfaces(isolate, context, this,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
             install_dom_parser_interface(isolate, context, this);
             install_attribute_interfaces(isolate, context);
             set_window_host(isolate, context, window_events_.get());
@@ -2223,27 +2240,10 @@ void PageState::install_page(const std::string& base_url,
                                     &structured_clone_callback);
             if (!install_performance_interfaces(
                     isolate, context, this, performance_store_.get(), base_url)) return;
-            // M11-33 OS-backed Crypto slice: getRandomValues + randomUUID.
-            // crypto.subtle is intentionally absent in this milestone.
-            {
-                v8::Local<v8::Object> crypto = v8::Object::New(isolate);
-                const auto add_crypto_method = [&](const char* name,
-                                                   v8::FunctionCallback callback) {
-                    v8::Local<v8::Function> function;
-                    if (!make_web_method(isolate, context, name,
-                            web_method_length("crypto", name), callback).ToLocal(&function)) return false;
-                    return install_traced_api_data_property(isolate, context, crypto,
-                        name, function, &kCryptoTraceToken, "crypto", "crypto",
-                        static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                           v8::DontDelete));
-                };
-                if (!add_crypto_method("getRandomValues", &crypto_get_random_values_callback) ||
-                    !add_crypto_method("randomUUID", &crypto_random_uuid_callback)) return;
-                if (!install_traced_window_data_property(isolate, context, global,
-                    "crypto", crypto,
-                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete))) return;
-            }
+            // BOM-10 digest slice: native Crypto/SubtleCrypto with browser
+            // secure-context gating, while random APIs keep OS entropy.
+            if (!install_crypto_interfaces(isolate, context, this,
+                    window_metadata_value(isolate, "isSecureContext")->BooleanValue(isolate))) return;
             // M11-1/M11-26 window geometry. window is the intrinsic global object;
             // these are read-only native accessors on it. Values come from the
             // Page-level environment_ and are re-applied on every generation. M11-35 adds window.length,
@@ -2374,7 +2374,7 @@ void PageState::install_page(const std::string& base_url,
                 v8::Local<v8::String> source = v8::String::NewFromUtf8(
                     isolate, kBomExtrasBootstrap,
                     v8::NewStringType::kNormal,
-                    static_cast<int>(sizeof(kBomExtrasBootstrap) - 1))
+                    static_cast<int>(std::strlen(kBomExtrasBootstrap)))
                     .ToLocalChecked();
                 v8::Local<v8::Script> script;
                 if (v8::Script::Compile(context, source).ToLocal(&script)) {
@@ -2718,9 +2718,15 @@ void PageState::install_page(const std::string& base_url,
                 document->set_blob_constructor(isolate, blob_fn);
                 register_runtime_blob_constructor(isolate, context, blob_fn);
                 (void)global->Set(context, v8_string(isolate, "Blob"), blob_fn);
-                (void)global->Set(
-                    context, v8_string(isolate, "File"),
-                    file_tpl->GetFunction(context).ToLocalChecked());
+                v8::Local<v8::Function> file_fn;
+                v8::Local<v8::Value> file_prototype;
+                if (!file_tpl->GetFunction(context).ToLocal(&file_fn) ||
+                    !file_fn->Get(context, v8_string(isolate, "prototype"))
+                         .ToLocal(&file_prototype) ||
+                    !file_prototype->IsObject() ||
+                    !register_runtime_file_prototype(
+                        isolate, context, file_prototype.As<v8::Object>())) return;
+                (void)global->Set(context, v8_string(isolate, "File"), file_fn);
                 v8::Local<v8::FunctionTemplate> reader_tpl =
                     v8::FunctionTemplate::New(
                         isolate, &file_reader_constructor, blob_data);
@@ -3018,7 +3024,10 @@ py::object PageState::eval(const std::string& source, bool to_py,
     return state_->eval(source, to_py, name);
 }
 
-void PageState::dispose() { state_->dispose(); }
+void PageState::dispose() {
+    state_->dispose();
+    if (file_system_store_) file_system_store_->clear();
+}
 
 void PageState::run_timers() { state_->run_timers(); }
 

@@ -1,0 +1,1684 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-27T13:49:33.867860+00:00",
+  "probe_sha256": "26b500e83834490a687813b90c7655113a172878b17dadebf3cd41a2d7af6f6b",
+  "execution": {
+    "os": "Darwin",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile for each origin class",
+    "origin": "http://127.0.0.1:<port>/reference",
+    "network": "local fixture server only; external DNS disabled; no user profile, permission grant or user gesture",
+    "transport": "private local DevTools pipe; Runtime.evaluate awaitPromise, 45s timeout",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--disable-extensions",
+      "--no-pings",
+      "--metrics-recording-only",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ]
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "globals": {
+      "crypto": {
+        "present": true,
+        "owner": {
+          "depth": 0,
+          "descriptor": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get crypto",
+              "length": 0,
+              "source": "function get crypto() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            },
+            "set": null
+          }
+        }
+      },
+      "Crypto": {
+        "present": true,
+        "owner": {
+          "depth": 0,
+          "descriptor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Crypto",
+              "length": 0,
+              "source": "function Crypto() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "inheritsFunctionPrototype": true
+            }
+          }
+        }
+      },
+      "SubtleCrypto": {
+        "present": true,
+        "owner": {
+          "depth": 0,
+          "descriptor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "SubtleCrypto",
+              "length": 0,
+              "source": "function SubtleCrypto() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "inheritsFunctionPrototype": true
+            }
+          }
+        }
+      },
+      "CryptoKey": {
+        "present": true,
+        "owner": {
+          "depth": 0,
+          "descriptor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "CryptoKey",
+              "length": 0,
+              "source": "function CryptoKey() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "inheritsFunctionPrototype": true
+            }
+          }
+        }
+      }
+    },
+    "interfaces": {
+      "Crypto": {
+        "constructor": {
+          "name": "Crypto",
+          "length": 0,
+          "source": "function Crypto() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true,
+          "inheritsFunctionPrototype": true
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "constructorMembers": {
+          "length": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "number",
+              "value": 0
+            }
+          },
+          "name": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "string",
+              "value": "Crypto"
+            }
+          },
+          "prototype": {
+            "enumerable": false,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "object",
+              "tag": "[object Crypto]"
+            }
+          }
+        },
+        "prototypeKeys": [
+          "getRandomValues",
+          "constructor",
+          "subtle",
+          "randomUUID",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "prototypeMembers": {
+          "getRandomValues": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getRandomValues",
+              "length": 1,
+              "source": "function getRandomValues() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Crypto",
+              "length": 0,
+              "source": "function Crypto() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "subtle": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get subtle",
+              "length": 0,
+              "source": "function get subtle() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            },
+            "set": null
+          },
+          "randomUUID": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "randomUUID",
+              "length": 0,
+              "source": "function randomUUID() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "string",
+              "value": "Crypto"
+            }
+          }
+        },
+        "parentIsObjectPrototype": true,
+        "parentTag": "[object Object]"
+      },
+      "SubtleCrypto": {
+        "constructor": {
+          "name": "SubtleCrypto",
+          "length": 0,
+          "source": "function SubtleCrypto() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true,
+          "inheritsFunctionPrototype": true
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "supports"
+        ],
+        "constructorMembers": {
+          "length": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "number",
+              "value": 0
+            }
+          },
+          "name": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "string",
+              "value": "SubtleCrypto"
+            }
+          },
+          "prototype": {
+            "enumerable": false,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "object",
+              "tag": "[object SubtleCrypto]"
+            }
+          },
+          "supports": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "supports",
+              "length": 2,
+              "source": "function supports() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          }
+        },
+        "prototypeKeys": [
+          "decrypt",
+          "deriveBits",
+          "deriveKey",
+          "digest",
+          "encrypt",
+          "exportKey",
+          "generateKey",
+          "importKey",
+          "sign",
+          "unwrapKey",
+          "verify",
+          "wrapKey",
+          "decapsulateBits",
+          "decapsulateKey",
+          "encapsulateBits",
+          "encapsulateKey",
+          "getPublicKey",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "prototypeMembers": {
+          "decrypt": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "decrypt",
+              "length": 3,
+              "source": "function decrypt() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "deriveBits": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "deriveBits",
+              "length": 2,
+              "source": "function deriveBits() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "deriveKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "deriveKey",
+              "length": 5,
+              "source": "function deriveKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "digest": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "digest",
+              "length": 2,
+              "source": "function digest() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "encrypt": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "encrypt",
+              "length": 3,
+              "source": "function encrypt() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "exportKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "exportKey",
+              "length": 2,
+              "source": "function exportKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "generateKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "generateKey",
+              "length": 3,
+              "source": "function generateKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "importKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "importKey",
+              "length": 5,
+              "source": "function importKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "sign": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "sign",
+              "length": 3,
+              "source": "function sign() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "unwrapKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "unwrapKey",
+              "length": 7,
+              "source": "function unwrapKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "verify": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "verify",
+              "length": 4,
+              "source": "function verify() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "wrapKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "wrapKey",
+              "length": 4,
+              "source": "function wrapKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "decapsulateBits": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "decapsulateBits",
+              "length": 3,
+              "source": "function decapsulateBits() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "decapsulateKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "decapsulateKey",
+              "length": 6,
+              "source": "function decapsulateKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "encapsulateBits": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "encapsulateBits",
+              "length": 2,
+              "source": "function encapsulateBits() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "encapsulateKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "encapsulateKey",
+              "length": 5,
+              "source": "function encapsulateKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "getPublicKey": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getPublicKey",
+              "length": 2,
+              "source": "function getPublicKey() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "SubtleCrypto",
+              "length": 0,
+              "source": "function SubtleCrypto() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "string",
+              "value": "SubtleCrypto"
+            }
+          }
+        },
+        "parentIsObjectPrototype": true,
+        "parentTag": "[object Object]"
+      },
+      "CryptoKey": {
+        "constructor": {
+          "name": "CryptoKey",
+          "length": 0,
+          "source": "function CryptoKey() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true,
+          "inheritsFunctionPrototype": true
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "constructorMembers": {
+          "length": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "number",
+              "value": 0
+            }
+          },
+          "name": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "string",
+              "value": "CryptoKey"
+            }
+          },
+          "prototype": {
+            "enumerable": false,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "object",
+              "tag": "[object CryptoKey]"
+            }
+          }
+        },
+        "prototypeKeys": [
+          "type",
+          "extractable",
+          "algorithm",
+          "usages",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "prototypeMembers": {
+          "type": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get type",
+              "length": 0,
+              "source": "function get type() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            },
+            "set": null
+          },
+          "extractable": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get extractable",
+              "length": 0,
+              "source": "function get extractable() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            },
+            "set": null
+          },
+          "algorithm": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get algorithm",
+              "length": 0,
+              "source": "function get algorithm() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            },
+            "set": null
+          },
+          "usages": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get usages",
+              "length": 0,
+              "source": "function get usages() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "CryptoKey",
+              "length": 0,
+              "source": "function CryptoKey() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "string",
+              "value": "CryptoKey"
+            }
+          }
+        },
+        "parentIsObjectPrototype": true,
+        "parentTag": "[object Object]"
+      }
+    },
+    "instances": {
+      "crypto": {
+        "tag": "[object Crypto]",
+        "ownKeys": [],
+        "instanceOfCrypto": true,
+        "prototypeIsCryptoPrototype": true,
+        "sameObject": true,
+        "subtlePresent": true,
+        "subtleOwner": {
+          "depth": 1,
+          "descriptor": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get subtle",
+              "length": 0,
+              "source": "function get subtle() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            },
+            "set": null
+          }
+        },
+        "randomUUIDPresent": true
+      },
+      "subtle": {
+        "tag": "[object SubtleCrypto]",
+        "ownKeys": [],
+        "instanceOfSubtleCrypto": true,
+        "prototypeIsSubtleCryptoPrototype": true,
+        "sameObject": true
+      }
+    },
+    "constructorCalls": {
+      "Crypto": {
+        "call": {
+          "mode": "throw",
+          "outcome": "threw",
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal constructor",
+            "code": null,
+            "tag": "[object Error]",
+            "domException": false
+          }
+        },
+        "construct": {
+          "mode": "throw",
+          "outcome": "threw",
+          "error": {
+            "name": "TypeError",
+            "message": "Failed to construct 'Crypto': Illegal constructor",
+            "code": null,
+            "tag": "[object Error]",
+            "domException": false
+          }
+        }
+      },
+      "SubtleCrypto": {
+        "call": {
+          "mode": "throw",
+          "outcome": "threw",
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal constructor",
+            "code": null,
+            "tag": "[object Error]",
+            "domException": false
+          }
+        },
+        "construct": {
+          "mode": "throw",
+          "outcome": "threw",
+          "error": {
+            "name": "TypeError",
+            "message": "Failed to construct 'SubtleCrypto': Illegal constructor",
+            "code": null,
+            "tag": "[object Error]",
+            "domException": false
+          }
+        }
+      },
+      "CryptoKey": {
+        "call": {
+          "mode": "throw",
+          "outcome": "threw",
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal constructor",
+            "code": null,
+            "tag": "[object Error]",
+            "domException": false
+          }
+        },
+        "construct": {
+          "mode": "throw",
+          "outcome": "threw",
+          "error": {
+            "name": "TypeError",
+            "message": "Failed to construct 'CryptoKey': Illegal constructor",
+            "code": null,
+            "tag": "[object Error]",
+            "domException": false
+          }
+        }
+      }
+    },
+    "receivers": {
+      "Crypto.get subtle": {
+        "mode": "throw",
+        "outcome": "threw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "CryptoKey.get type": {
+        "mode": "throw",
+        "outcome": "threw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "CryptoKey.get extractable": {
+        "mode": "throw",
+        "outcome": "threw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "CryptoKey.get algorithm": {
+        "mode": "throw",
+        "outcome": "threw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "CryptoKey.get usages": {
+        "mode": "throw",
+        "outcome": "threw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.decrypt": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'decrypt' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.deriveBits": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'deriveBits' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.deriveKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'deriveKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.digest": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.encrypt": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'encrypt' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.exportKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'exportKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.generateKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'generateKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.importKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'importKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.sign": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'sign' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.unwrapKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'unwrapKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.verify": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'verify' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.wrapKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'wrapKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.decapsulateBits": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'decapsulateBits' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.decapsulateKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'decapsulateKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.encapsulateBits": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'encapsulateBits' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.encapsulateKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'encapsulateKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "SubtleCrypto.getPublicKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getPublicKey' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      }
+    },
+    "missingArguments": {
+      "decrypt": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'decrypt' on 'SubtleCrypto': 3 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "deriveBits": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'deriveBits' on 'SubtleCrypto': 2 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "deriveKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'deriveKey' on 'SubtleCrypto': 5 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "digest": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': 2 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "encrypt": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'encrypt' on 'SubtleCrypto': 3 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "exportKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'exportKey' on 'SubtleCrypto': 2 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "generateKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'generateKey' on 'SubtleCrypto': 3 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "importKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'importKey' on 'SubtleCrypto': 5 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "sign": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'sign' on 'SubtleCrypto': 3 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "unwrapKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'unwrapKey' on 'SubtleCrypto': 7 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "verify": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'verify' on 'SubtleCrypto': 4 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "wrapKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'wrapKey' on 'SubtleCrypto': 4 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "decapsulateBits": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'decapsulateBits' on 'SubtleCrypto': 3 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "decapsulateKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'decapsulateKey' on 'SubtleCrypto': 6 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "encapsulateBits": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'encapsulateBits' on 'SubtleCrypto': 2 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "encapsulateKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'encapsulateKey' on 'SubtleCrypto': 5 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "getPublicKey": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getPublicKey' on 'SubtleCrypto': 2 arguments required, but only 0 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      }
+    },
+    "digest": {
+      "SHA-1": {
+        "abc": {
+          "mode": "promise",
+          "outcome": "fulfilled",
+          "value": {
+            "type": "ArrayBuffer",
+            "byteLength": 20,
+            "hex": "a9993e364706816aba3e25717850c26c9cd0d89d"
+          }
+        },
+        "empty": {
+          "mode": "promise",
+          "outcome": "fulfilled",
+          "value": {
+            "type": "ArrayBuffer",
+            "byteLength": 20,
+            "hex": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+          }
+        }
+      },
+      "SHA-256": {
+        "abc": {
+          "mode": "promise",
+          "outcome": "fulfilled",
+          "value": {
+            "type": "ArrayBuffer",
+            "byteLength": 32,
+            "hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+          }
+        },
+        "empty": {
+          "mode": "promise",
+          "outcome": "fulfilled",
+          "value": {
+            "type": "ArrayBuffer",
+            "byteLength": 32,
+            "hex": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        }
+      },
+      "SHA-384": {
+        "abc": {
+          "mode": "promise",
+          "outcome": "fulfilled",
+          "value": {
+            "type": "ArrayBuffer",
+            "byteLength": 48,
+            "hex": "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7"
+          }
+        },
+        "empty": {
+          "mode": "promise",
+          "outcome": "fulfilled",
+          "value": {
+            "type": "ArrayBuffer",
+            "byteLength": 48,
+            "hex": "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b"
+          }
+        }
+      },
+      "SHA-512": {
+        "abc": {
+          "mode": "promise",
+          "outcome": "fulfilled",
+          "value": {
+            "type": "ArrayBuffer",
+            "byteLength": 64,
+            "hex": "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"
+          }
+        },
+        "empty": {
+          "mode": "promise",
+          "outcome": "fulfilled",
+          "value": {
+            "type": "ArrayBuffer",
+            "byteLength": 64,
+            "hex": "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
+          }
+        }
+      },
+      "typedArrayOffset": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "type": "ArrayBuffer",
+          "byteLength": 32,
+          "hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        }
+      },
+      "dataViewOffset": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "type": "ArrayBuffer",
+          "byteLength": 32,
+          "hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        }
+      },
+      "arrayBuffer": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "type": "ArrayBuffer",
+          "byteLength": 32,
+          "hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        }
+      },
+      "snapshotBeforeMutation": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "type": "ArrayBuffer",
+          "byteLength": 32,
+          "hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        }
+      },
+      "lowercaseAlgorithm": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "type": "ArrayBuffer",
+          "byteLength": 32,
+          "hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        }
+      },
+      "extraArgument": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "type": "ArrayBuffer",
+          "byteLength": 32,
+          "hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        }
+      },
+      "missingData": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': 2 arguments required, but only 1 present.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "undefinedAlgorithm": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Algorithm: Unrecognized name",
+          "code": 9,
+          "tag": "[object DOMException]",
+          "domException": true
+        }
+      },
+      "nullAlgorithm": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Algorithm: Unrecognized name",
+          "code": 9,
+          "tag": "[object DOMException]",
+          "domException": true
+        }
+      },
+      "emptyAlgorithm": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Algorithm: name: Missing or not a string",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "unknownAlgorithm": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Algorithm: Unrecognized name",
+          "code": 9,
+          "tag": "[object DOMException]",
+          "domException": true
+        }
+      },
+      "algorithmForOtherOperation": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "NotSupportedError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': AES-GCM: Unsupported operation: digest",
+          "code": 9,
+          "tag": "[object DOMException]",
+          "domException": true
+        }
+      },
+      "undefinedData": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "nullData": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "stringData": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "arrayData": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "objectData": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'.",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "symbolAlgorithm": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Cannot convert a Symbol value to a string",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "invalidReceiverWithValidArgs": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "nullReceiverWithValidArgs": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'digest' on 'SubtleCrypto': Illegal invocation",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "throwingAlgorithmGetter": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "RangeError",
+          "message": "bom10 algorithm getter",
+          "code": null,
+          "tag": "[object Error]",
+          "domException": false
+        },
+        "sameError": true
+      },
+      "algorithmConversion": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "type": "ArrayBuffer",
+          "byteLength": 32,
+          "hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        }
+      },
+      "algorithmConversionReads": [
+        "name",
+        "toString"
+      ],
+      "detachedBuffer": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "type": "ArrayBuffer",
+          "byteLength": 32,
+          "hex": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "sharedBuffer": {
+        "available": false
+      }
+    },
+    "keys": {
+      "aesGcm": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "tag": "[object CryptoKey]",
+          "ownKeys": [],
+          "instanceOfCryptoKey": true,
+          "prototypeIsCryptoKeyPrototype": true,
+          "type": "secret",
+          "extractable": true,
+          "algorithm": {
+            "name": "AES-GCM",
+            "length": 128
+          },
+          "usages": [
+            "encrypt",
+            "decrypt"
+          ],
+          "sameAlgorithm": true,
+          "sameUsages": true,
+          "algorithmFrozen": false,
+          "usagesFrozen": false
+        }
+      },
+      "hmac": {
+        "mode": "promise",
+        "outcome": "fulfilled",
+        "value": {
+          "tag": "[object CryptoKey]",
+          "ownKeys": [],
+          "instanceOfCryptoKey": true,
+          "prototypeIsCryptoKeyPrototype": true,
+          "type": "secret",
+          "extractable": false,
+          "algorithm": {
+            "name": "HMAC",
+            "hash": {
+              "name": "SHA-256"
+            },
+            "length": 128
+          },
+          "usages": [
+            "sign",
+            "verify"
+          ],
+          "sameAlgorithm": true,
+          "sameUsages": true,
+          "algorithmFrozen": false,
+          "usagesFrozen": false
+        }
+      },
+      "invalidRawLength": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "DataError",
+          "message": "AES key data must be 128 or 256 bits",
+          "code": 0,
+          "tag": "[object DOMException]",
+          "domException": true
+        }
+      },
+      "invalidUsage": {
+        "mode": "promise",
+        "outcome": "rejected",
+        "error": {
+          "name": "SyntaxError",
+          "message": "Cannot create a key using the specified key usages.",
+          "code": 12,
+          "tag": "[object DOMException]",
+          "domException": true
+        }
+      }
+    }
+  }
+}

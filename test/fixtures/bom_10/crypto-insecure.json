@@ -1,0 +1,232 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-27T13:49:34.380975+00:00",
+  "probe_sha256": "26b500e83834490a687813b90c7655113a172878b17dadebf3cd41a2d7af6f6b",
+  "execution": {
+    "os": "Darwin",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile for each origin class",
+    "origin": "http://bom-fixture.invalid:<port>/reference",
+    "network": "local fixture server only; external DNS disabled; no user profile, permission grant or user gesture",
+    "transport": "private local DevTools pipe; Runtime.evaluate awaitPromise, 45s timeout",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--disable-extensions",
+      "--no-pings",
+      "--metrics-recording-only",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ]
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": false,
+    "globals": {
+      "crypto": {
+        "present": true,
+        "owner": {
+          "depth": 0,
+          "descriptor": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get crypto",
+              "length": 0,
+              "source": "function get crypto() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            },
+            "set": null
+          }
+        }
+      },
+      "Crypto": {
+        "present": true,
+        "owner": {
+          "depth": 0,
+          "descriptor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Crypto",
+              "length": 0,
+              "source": "function Crypto() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "inheritsFunctionPrototype": true
+            }
+          }
+        }
+      },
+      "SubtleCrypto": {
+        "present": false,
+        "owner": null
+      },
+      "CryptoKey": {
+        "present": false,
+        "owner": null
+      }
+    },
+    "interfaces": {
+      "Crypto": {
+        "constructor": {
+          "name": "Crypto",
+          "length": 0,
+          "source": "function Crypto() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true,
+          "inheritsFunctionPrototype": true
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "constructorMembers": {
+          "length": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "number",
+              "value": 0
+            }
+          },
+          "name": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "string",
+              "value": "Crypto"
+            }
+          },
+          "prototype": {
+            "enumerable": false,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "object",
+              "tag": "[object Crypto]"
+            }
+          }
+        },
+        "prototypeKeys": [
+          "getRandomValues",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "prototypeMembers": {
+          "getRandomValues": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getRandomValues",
+              "length": 1,
+              "source": "function getRandomValues() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Crypto",
+              "length": 0,
+              "source": "function Crypto() { [native code] }",
+              "ownPrototype": true,
+              "constructable": true,
+              "inheritsFunctionPrototype": true
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": {
+              "type": "string",
+              "value": "Crypto"
+            }
+          }
+        },
+        "parentIsObjectPrototype": true,
+        "parentTag": "[object Object]"
+      }
+    },
+    "instances": {
+      "crypto": {
+        "tag": "[object Crypto]",
+        "ownKeys": [],
+        "instanceOfCrypto": true,
+        "prototypeIsCryptoPrototype": true,
+        "sameObject": true,
+        "subtlePresent": false,
+        "subtleOwner": null,
+        "randomUUIDPresent": false
+      }
+    },
+    "constructorCalls": {
+      "Crypto": {
+        "call": {
+          "mode": "throw",
+          "outcome": "threw",
+          "error": {
+            "name": "TypeError",
+            "message": "Illegal constructor",
+            "code": null,
+            "tag": "[object Error]",
+            "domException": false
+          }
+        },
+        "construct": {
+          "mode": "throw",
+          "outcome": "threw",
+          "error": {
+            "name": "TypeError",
+            "message": "Failed to construct 'Crypto': Illegal constructor",
+            "code": null,
+            "tag": "[object Error]",
+            "domException": false
+          }
+        }
+      }
+    },
+    "receivers": {},
+    "missingArguments": {},
+    "digest": {},
+    "keys": {}
+  }
+}

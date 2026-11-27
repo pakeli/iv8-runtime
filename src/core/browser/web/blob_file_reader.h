@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 #include "iv8/v8_headers.h"
 
 namespace iv8::browser {
@@ -46,5 +50,21 @@ v8::MaybeLocal<v8::Object> create_runtime_blob(v8::Isolate* isolate,
                                                v8::Local<v8::Context> context,
                                                v8::Local<v8::String> text,
                                                const std::string& type);
+
+// Capture the original generation-local File prototype during bootstrap. The
+// internal factory never consults mutable globals or invokes JS constructors.
+bool register_runtime_file_prototype(v8::Isolate* isolate,
+                                     v8::Local<v8::Context> context,
+                                     v8::Local<v8::Object> prototype);
+
+// Create an independent immutable byte snapshot using the existing native
+// Blob/File brands, readers and monitored fields. Filename code units are kept
+// intact; no UTF-8 round trip or user-defined coercion is performed.
+v8::MaybeLocal<v8::Object> create_runtime_file(v8::Isolate* isolate,
+                                              v8::Local<v8::Context> context,
+                                              const std::vector<std::uint8_t>& bytes,
+                                              const std::u16string& name,
+                                              const std::string& type,
+                                              double last_modified);
 
 }  // namespace iv8::browser

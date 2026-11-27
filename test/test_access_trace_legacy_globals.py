@@ -12,9 +12,9 @@ ROOTS = (
     "history", "location", "navigator", "document", "screen", "console",
     "performance", "crypto", "localStorage", "sessionStorage", "visualViewport", "scheduler",
 )
-DATA_ROOTS = set(ROOTS) - {"history", "location"}
+DATA_ROOTS = set(ROOTS) - {"history", "location", "crypto"}
 READONLY_DATA_ROOTS = {
-    "performance", "crypto", "localStorage", "sessionStorage", "visualViewport", "scheduler",
+    "performance", "localStorage", "sessionStorage", "visualViewport", "scheduler",
 }
 BASE = "https://legacy-roots.test/start?seed=1"
 HTML = "<html><head></head><body></body></html>"
@@ -128,6 +128,11 @@ def test_descriptors_readonly_flags_and_root_identities_are_preserved(page):
             "enumerable": name != "console", "configurable": name not in READONLY_DATA_ROOTS,
         }, name
     assert before["history"]["kind"] == before["location"]["kind"] == "accessor"
+    assert before["crypto"] == {
+        "kind": "accessor", "enumerable": True, "configurable": True,
+        "get": {"name": "get crypto", "length": 0,
+                "source": "function get crypto() { [native code] }", "prototype": False},
+    }
     assert before["history"]["configurable"] is True and "set" not in before["history"]
     assert before["location"]["configurable"] is False
     for kind, length in [("get", 0), ("set", 1)]:
@@ -145,9 +150,9 @@ def test_descriptors_readonly_flags_and_root_identities_are_preserved(page):
     assert page.read_watch_api_hits() == []
 
 
-def test_readonly_data_roots_reject_writes_without_fake_set_events(page):
+def test_readonly_roots_reject_writes_without_fake_set_events(page):
     page.start_access_trace()
-    for name in sorted(READONLY_DATA_ROOTS):
+    for name in sorted(READONLY_DATA_ROOTS | {"crypto"}):
         page.read_access_trace(clear=True)
         assert page.eval("""(() => {
             const name=""" + json.dumps(name) + """, original=window[name];

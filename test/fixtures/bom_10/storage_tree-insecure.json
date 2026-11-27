@@ -1,0 +1,45 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-27T16:13:40.452551+00:00",
+  "probe_sha256": "2efefdb4f6b0795725a046a8537f5b6c77472690cfebd520ff38aa3f1f4ededd",
+  "execution": {
+    "os": "Darwin",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile for each origin class",
+    "origin": "http://bom-fixture.invalid:<port>/reference",
+    "network": "local fixture server only; external DNS disabled; no user profile, permission grant or user gesture",
+    "transport": "private local DevTools pipe; Runtime.evaluate awaitPromise, 45s timeout",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--disable-extensions",
+      "--no-pings",
+      "--metrics-recording-only",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ]
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": false,
+    "present": false
+  }
+}

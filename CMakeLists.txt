@@ -122,6 +122,8 @@ if(IV8_LINK_V8)
       src/core/browser/internal/common.cpp
       src/core/browser/internal/trace_hooks.cpp
       src/core/browser/web/crypto.cpp
+      src/core/browser/web/file_system.cpp
+      src/core/browser/web/digest_backend.cpp
       src/core/browser/web/base64_globals.cpp
       src/core/browser/web/encoding.cpp
       src/binding/context_binding.cpp
@@ -162,6 +164,7 @@ target_compile_definitions(_core PRIVATE
 if(IV8_LINK_V8)
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/v8_link.cmake)
   iv8_link_v8_monolith(_core)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/crypto_digest.cmake)
 
   # Precompile the two heavy header sets every V8-linked TU includes. Order
   # matches the codebase convention: pybind11 (Python.h) first, then V8 through

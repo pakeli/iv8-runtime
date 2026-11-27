@@ -20,7 +20,7 @@ namespace iv8 {
 
 namespace browser {
 
-extern const char kBomExtrasBootstrap[5444];
+extern const char kBomExtrasBootstrap[];
 
 extern const char kWindowPostMessageBootstrap[2163];
 

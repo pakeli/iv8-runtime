@@ -51,6 +51,8 @@ std::string_view parent_interface(std::string_view name) {
         {"Performance", "EventTarget"},
         {"PerformanceMark", "PerformanceEntry"},
         {"PerformanceMeasure", "PerformanceEntry"},
+        {"FileSystemDirectoryHandle", "FileSystemHandle"},
+        {"FileSystemFileHandle", "FileSystemHandle"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"},
         {"XMLHttpRequestUpload", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
@@ -267,6 +269,13 @@ std::string web_member_interface(const std::string& name,
         if ((method && member == "throwIfAborted") ||
             (!method && member_in(member, {"aborted", "reason", "onabort"}))) {
             return "AbortSignal";
+        }
+    }
+    if (web_interface_inherits(name, "FileSystemHandle")) {
+        if ((method && member_in(member,
+                {"isSameEntry", "queryPermission", "remove", "requestPermission"})) ||
+            (!method && member_in(member, {"kind", "name"}))) {
+            return "FileSystemHandle";
         }
     }
     return name;

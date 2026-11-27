@@ -17,6 +17,8 @@
 
 namespace iv8 {
 
+namespace browser { struct FileSystemStore; }
+
 // M11-1/M11-17/M11-24..M11-27 configurable host-environment baseline. These are
 // the values the page's read-only environment surface reports: navigator
 // identity/metadata, screen dimensions and color depth, and window
@@ -151,6 +153,9 @@ public:
         const v8::Global<v8::Object>** out_weak_wrapper = nullptr);
     void collect_garbage_for_testing();
     std::size_t ephemeral_host_object_count();
+    // Virtual OPFS contents survive generations and remain private to this Page.
+    browser::FileSystemStore* file_system_store();
+    std::string file_system_origin() const;
 
     // Step 5g: internal factory used only by the JS matchMedia bootstrap; returns
     // a cached HostObject backing for one query result. Not bound to Python.
@@ -401,6 +406,7 @@ private:
     std::shared_ptr<ContextState> state_;
     // M11-37: performance mark/measure entries for the current generation.
     std::unique_ptr<PerformanceStore> performance_store_;
+    std::unique_ptr<browser::FileSystemStore> file_system_store_;
     // Step 5g: cached matchMedia result backings for the current generation.
     std::unique_ptr<MediaQueryListStore> media_query_lists_;
     // M11-35: window.name survives load() generations of this Page.

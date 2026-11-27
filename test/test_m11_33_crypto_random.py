@@ -1,5 +1,7 @@
-"""M11-33 acceptance tests: OS-backed crypto.getRandomValues / randomUUID."""
+"""Random-value behavior, with BOM-10 browser-native Crypto shape."""
 
+import json
+from pathlib import Path
 import re
 
 import pytest
@@ -12,6 +14,7 @@ on_only = pytest.mark.skipif(not v8_linked, reason="requires a V8-linked build")
 BASE = "https://m11-33.test/"
 UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+FIXTURES = Path(__file__).resolve().parent / "fixtures" / "bom_10"
 
 
 def _load(page):
@@ -21,7 +24,7 @@ def _load(page):
 # --- shape guards ---------------------------------------------------------------
 
 def test_no_new_python_surface():
-    for name in ("crypto", "Crypto", "CryptoKey"):
+    for name in ("crypto", "Crypto", "SubtleCrypto", "CryptoKey"):
         assert not hasattr(iv8, name)
     for name in ("crypto", "getRandomValues", "randomUUID"):
         assert not hasattr(iv8.Page, name)
@@ -35,27 +38,80 @@ def test_surface_shape():
         assert page.eval("typeof crypto.getRandomValues") == "function"
         assert page.eval("typeof crypto.randomUUID") == "function"
         assert page.eval("window.crypto === crypto") is True
-        # This milestone deliberately has no SubtleCrypto surface.
-        assert page.eval("typeof crypto.subtle") == "undefined"
-        assert page.eval("typeof globalThis.Crypto") == "undefined"
+        assert page.eval("crypto instanceof Crypto") is True
+        assert page.eval("crypto.subtle instanceof SubtleCrypto") is True
+        assert page.eval("crypto.subtle === crypto.subtle") is True
+        assert page.eval("Reflect.ownKeys(crypto).length") == 0
+        assert page.eval("Object.getPrototypeOf(crypto) === Crypto.prototype") is True
 
 
 @on_only
-def test_surface_is_read_only():
+def test_native_crypto_methods_are_mutable_and_global_is_read_only():
     with iv8.Page() as page:
         _load(page)
+        reference = json.loads((FIXTURES / "crypto-secure.json").read_text())["result"]
+        for member in ("getRandomValues", "randomUUID"):
+            descriptor = page.eval(
+                """(() => {
+                  const descriptor = Object.getOwnPropertyDescriptor(Crypto.prototype,
+                    """ + json.dumps(member) + """);
+                  return {kind: 'value' in descriptor ? 'data' : 'accessor',
+                    writable: descriptor.writable, enumerable: descriptor.enumerable,
+                    configurable: descriptor.configurable};
+                })()""", to_py=True,
+            )
+            expected = reference["interfaces"]["Crypto"]["prototypeMembers"][member]
+            assert descriptor == {key: expected[key] for key in descriptor}
         assert page.eval(
             """
             (() => {
+              const original = crypto;
+              const randomValues = crypto.getRandomValues;
+              const randomUUID = crypto.randomUUID;
               crypto.getRandomValues = 1;
               crypto.randomUUID = 1;
+              const shadows = crypto.getRandomValues === 1 && crypto.randomUUID === 1 &&
+                Crypto.prototype.getRandomValues === randomValues &&
+                Crypto.prototype.randomUUID === randomUUID;
+              delete crypto.getRandomValues;
+              delete crypto.randomUUID;
               crypto = null;
-              return [typeof crypto.getRandomValues,
-                      typeof crypto.randomUUID,
-                      typeof crypto].join(',');
+              let strictRejected = false;
+              try { (function () { 'use strict'; crypto = null; })(); }
+              catch (error) { strictRejected = error instanceof TypeError; }
+              return shadows && strictRejected && crypto === original &&
+                crypto.getRandomValues === randomValues && crypto.randomUUID === randomUUID;
             })();
             """
-        ) == "function,function,object"
+        ) is True
+
+
+@on_only
+@pytest.mark.parametrize("base_url,fixture_name", [
+    ("http://127.0.0.1:8080/reference", "crypto-secure.json"),
+    ("http://bom-fixture.invalid:8080/reference", "crypto-insecure.json"),
+    ("about:blank", "crypto-opaque.json"),
+])
+def test_crypto_random_uuid_and_subtle_follow_secure_context_reference(base_url, fixture_name):
+    reference = json.loads((FIXTURES / fixture_name).read_text())["result"]
+    with iv8.Page() as page:
+        page.load("<html><body></body></html>", base_url)
+        observed = page.eval("""({
+            subtlePresent: 'subtle' in crypto,
+            randomUUIDPresent: 'randomUUID' in crypto,
+            cryptoPresent: typeof Crypto === 'function',
+            subtleCryptoPresent: typeof SubtleCrypto === 'function',
+            cryptoKeyPresent: typeof CryptoKey === 'function',
+            randomValuesPresent: typeof crypto.getRandomValues === 'function'
+        })""", to_py=True)
+        assert observed == {
+            "subtlePresent": reference["instances"]["crypto"]["subtlePresent"],
+            "randomUUIDPresent": reference["instances"]["crypto"]["randomUUIDPresent"],
+            "cryptoPresent": reference["globals"]["Crypto"]["present"],
+            "subtleCryptoPresent": reference["globals"]["SubtleCrypto"]["present"],
+            "cryptoKeyPresent": reference["globals"]["CryptoKey"]["present"],
+            "randomValuesPresent": True,
+        }
 
 
 # --- getRandomValues ------------------------------------------------------------
@@ -130,7 +186,10 @@ def test_quota_is_65536_bytes():
         ) is True
         with pytest.raises(iv8.JSError) as info:
             page.eval("crypto.getRandomValues(new Uint8Array(65537))")
-        assert info.value.name == "RangeError"
+        reference = json.loads((FIXTURES / "digest_edges-secure.json").read_text())["result"]
+        expected = reference["random"]["quota"]["error"]
+        assert info.value.name == expected["name"] == "QuotaExceededError"
+        assert info.value.message == expected["message"]
 
 
 @on_only
@@ -138,19 +197,19 @@ def test_non_integer_views_are_rejected():
     with iv8.Page() as page:
         _load(page)
         bad = (
-            "new ArrayBuffer(8)",
-            "new DataView(new ArrayBuffer(8))",
-            "new Float32Array(2)",
-            "new Float64Array(1)",
-            "[]",
-            "'text'",
-            "null",
-            "undefined",
+            ("new ArrayBuffer(8)", "TypeError"),
+            ("new DataView(new ArrayBuffer(8))", "TypeMismatchError"),
+            ("new Float32Array(2)", "TypeMismatchError"),
+            ("new Float64Array(1)", "TypeMismatchError"),
+            ("[]", "TypeError"),
+            ("'text'", "TypeError"),
+            ("null", "TypeError"),
+            ("undefined", "TypeError"),
         )
-        for expression in bad:
+        for expression, exception_name in bad:
             with pytest.raises(iv8.JSError) as info:
                 page.eval(f"crypto.getRandomValues({expression})")
-            assert info.value.name == "TypeError", expression
+            assert info.value.name == exception_name, expression
         with pytest.raises(iv8.JSError) as info:
             page.eval("crypto.getRandomValues()")
         assert info.value.name == "TypeError"

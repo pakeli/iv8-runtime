@@ -1,0 +1,933 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-27T13:49:33.911903+00:00",
+  "probe_sha256": "7fb2973ec080971d7c73bdbeebc828efef931a3883073aa1dafee57cd6d6e6f8",
+  "execution": {
+    "os": "Darwin",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile for each origin class",
+    "origin": "http://127.0.0.1:<port>/reference",
+    "network": "local fixture server only; external DNS disabled; no user profile, permission grant or user gesture",
+    "transport": "private local DevTools pipe; Runtime.evaluate awaitPromise, 45s timeout",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--disable-extensions",
+      "--no-pings",
+      "--metrics-recording-only",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ]
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "storagePresent": true,
+    "interfaces": {
+      "StorageManager": {
+        "present": true,
+        "constructor": {
+          "name": "StorageManager",
+          "length": 0,
+          "source": "function StorageManager() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true
+        },
+        "statics": {
+          "keys": [
+            "length",
+            "name",
+            "prototype"
+          ],
+          "members": {
+            "length": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": 0
+            },
+            "name": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "StorageManager"
+            },
+            "prototype": {
+              "enumerable": false,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "value": "object"
+            }
+          }
+        },
+        "prototype": {
+          "keys": [
+            "estimate",
+            "persisted",
+            "constructor",
+            "getDirectory",
+            "persist",
+            "Symbol(Symbol.toStringTag)"
+          ],
+          "members": {
+            "estimate": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "estimate",
+                "length": 0,
+                "source": "function estimate() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "persisted": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "persisted",
+                "length": 0,
+                "source": "function persisted() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "constructor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "StorageManager",
+                "length": 0,
+                "source": "function StorageManager() { [native code] }",
+                "ownPrototype": true,
+                "constructable": true
+              }
+            },
+            "getDirectory": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "getDirectory",
+                "length": 0,
+                "source": "function getDirectory() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "persist": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "persist",
+                "length": 0,
+                "source": "function persist() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "Symbol(Symbol.toStringTag)": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "StorageManager"
+            }
+          }
+        },
+        "parent": "Object"
+      },
+      "FileSystemHandle": {
+        "present": true,
+        "constructor": {
+          "name": "FileSystemHandle",
+          "length": 0,
+          "source": "function FileSystemHandle() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true
+        },
+        "statics": {
+          "keys": [
+            "length",
+            "name",
+            "prototype"
+          ],
+          "members": {
+            "length": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": 0
+            },
+            "name": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "FileSystemHandle"
+            },
+            "prototype": {
+              "enumerable": false,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "value": "object"
+            }
+          }
+        },
+        "prototype": {
+          "keys": [
+            "kind",
+            "name",
+            "isSameEntry",
+            "queryPermission",
+            "remove",
+            "requestPermission",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ],
+          "members": {
+            "kind": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get kind",
+                "length": 0,
+                "source": "function get kind() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              },
+              "set": null
+            },
+            "name": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get name",
+                "length": 0,
+                "source": "function get name() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              },
+              "set": null
+            },
+            "isSameEntry": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "isSameEntry",
+                "length": 1,
+                "source": "function isSameEntry() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "queryPermission": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "queryPermission",
+                "length": 0,
+                "source": "function queryPermission() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "remove": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "remove",
+                "length": 0,
+                "source": "function remove() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "requestPermission": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "requestPermission",
+                "length": 0,
+                "source": "function requestPermission() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "constructor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "FileSystemHandle",
+                "length": 0,
+                "source": "function FileSystemHandle() { [native code] }",
+                "ownPrototype": true,
+                "constructable": true
+              }
+            },
+            "Symbol(Symbol.toStringTag)": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "FileSystemHandle"
+            }
+          }
+        },
+        "parent": "Object"
+      },
+      "FileSystemDirectoryHandle": {
+        "present": true,
+        "constructor": {
+          "name": "FileSystemDirectoryHandle",
+          "length": 0,
+          "source": "function FileSystemDirectoryHandle() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true
+        },
+        "statics": {
+          "keys": [
+            "length",
+            "name",
+            "prototype"
+          ],
+          "members": {
+            "length": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": 0
+            },
+            "name": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "FileSystemDirectoryHandle"
+            },
+            "prototype": {
+              "enumerable": false,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "value": "object"
+            }
+          }
+        },
+        "prototype": {
+          "keys": [
+            "getDirectoryHandle",
+            "getFileHandle",
+            "removeEntry",
+            "resolve",
+            "entries",
+            "keys",
+            "values",
+            "constructor",
+            "Symbol(Symbol.toStringTag)",
+            "Symbol(Symbol.asyncIterator)"
+          ],
+          "members": {
+            "getDirectoryHandle": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "getDirectoryHandle",
+                "length": 1,
+                "source": "function getDirectoryHandle() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "getFileHandle": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "getFileHandle",
+                "length": 1,
+                "source": "function getFileHandle() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "removeEntry": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "removeEntry",
+                "length": 1,
+                "source": "function removeEntry() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "resolve": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "resolve",
+                "length": 1,
+                "source": "function resolve() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "entries": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "entries",
+                "length": 0,
+                "source": "function entries() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "keys": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "keys",
+                "length": 0,
+                "source": "function keys() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "values": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "values",
+                "length": 0,
+                "source": "function values() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "constructor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "FileSystemDirectoryHandle",
+                "length": 0,
+                "source": "function FileSystemDirectoryHandle() { [native code] }",
+                "ownPrototype": true,
+                "constructable": true
+              }
+            },
+            "Symbol(Symbol.toStringTag)": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "FileSystemDirectoryHandle"
+            },
+            "Symbol(Symbol.asyncIterator)": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "entries",
+                "length": 0,
+                "source": "function entries() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            }
+          }
+        },
+        "parent": "FileSystemHandle"
+      },
+      "FileSystemFileHandle": {
+        "present": true,
+        "constructor": {
+          "name": "FileSystemFileHandle",
+          "length": 0,
+          "source": "function FileSystemFileHandle() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true
+        },
+        "statics": {
+          "keys": [
+            "length",
+            "name",
+            "prototype"
+          ],
+          "members": {
+            "length": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": 0
+            },
+            "name": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "FileSystemFileHandle"
+            },
+            "prototype": {
+              "enumerable": false,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "value": "object"
+            }
+          }
+        },
+        "prototype": {
+          "keys": [
+            "createWritable",
+            "getFile",
+            "move",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ],
+          "members": {
+            "createWritable": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "createWritable",
+                "length": 0,
+                "source": "function createWritable() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "getFile": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "getFile",
+                "length": 0,
+                "source": "function getFile() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "move": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "move",
+                "length": 1,
+                "source": "function move() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "constructor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "FileSystemFileHandle",
+                "length": 0,
+                "source": "function FileSystemFileHandle() { [native code] }",
+                "ownPrototype": true,
+                "constructable": true
+              }
+            },
+            "Symbol(Symbol.toStringTag)": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "FileSystemFileHandle"
+            }
+          }
+        },
+        "parent": "FileSystemHandle"
+      },
+      "FileSystemWritableFileStream": {
+        "present": true,
+        "constructor": {
+          "name": "FileSystemWritableFileStream",
+          "length": 0,
+          "source": "function FileSystemWritableFileStream() { [native code] }",
+          "ownPrototype": true,
+          "constructable": true
+        },
+        "statics": {
+          "keys": [
+            "length",
+            "name",
+            "prototype"
+          ],
+          "members": {
+            "length": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": 0
+            },
+            "name": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "FileSystemWritableFileStream"
+            },
+            "prototype": {
+              "enumerable": false,
+              "configurable": false,
+              "kind": "data",
+              "writable": false,
+              "value": "object"
+            }
+          }
+        },
+        "prototype": {
+          "keys": [
+            "seek",
+            "truncate",
+            "write",
+            "mode",
+            "constructor",
+            "Symbol(Symbol.toStringTag)"
+          ],
+          "members": {
+            "seek": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "seek",
+                "length": 1,
+                "source": "function seek() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "truncate": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "truncate",
+                "length": 1,
+                "source": "function truncate() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "write": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "write",
+                "length": 1,
+                "source": "function write() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              }
+            },
+            "mode": {
+              "enumerable": true,
+              "configurable": true,
+              "kind": "accessor",
+              "get": {
+                "name": "get mode",
+                "length": 0,
+                "source": "function get mode() { [native code] }",
+                "ownPrototype": false,
+                "constructable": false
+              },
+              "set": null
+            },
+            "constructor": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": true,
+              "value": {
+                "name": "FileSystemWritableFileStream",
+                "length": 0,
+                "source": "function FileSystemWritableFileStream() { [native code] }",
+                "ownPrototype": true,
+                "constructable": true
+              }
+            },
+            "Symbol(Symbol.toStringTag)": {
+              "enumerable": false,
+              "configurable": true,
+              "kind": "data",
+              "writable": false,
+              "value": "FileSystemWritableFileStream"
+            }
+          }
+        },
+        "parent": "WritableStream"
+      },
+      "FileSystemSyncAccessHandle": {
+        "present": false
+      }
+    },
+    "behavior": {
+      "badReceiver": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getDirectory' on 'StorageManager': Illegal invocation",
+          "code": null,
+          "domException": false
+        }
+      },
+      "root": {
+        "outcome": "fulfilled",
+        "promise": true,
+        "value": {
+          "tag": "[object FileSystemDirectoryHandle]",
+          "kind": "directory",
+          "name": "",
+          "ownKeys": [],
+          "directoryInstance": true,
+          "handleInstance": true
+        }
+      },
+      "rootIdentity": {
+        "sameWrapper": false,
+        "sameEntry": true
+      },
+      "queryPermission": {
+        "outcome": "fulfilled",
+        "promise": true,
+        "value": "granted"
+      },
+      "noName": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getDirectoryHandle' on 'FileSystemDirectoryHandle': 1 argument required, but only 0 present.",
+          "code": null,
+          "domException": false
+        }
+      },
+      "emptyName": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getDirectoryHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "domException": false
+        }
+      },
+      "parentName": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getDirectoryHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "domException": false
+        }
+      },
+      "pathName": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFileHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "domException": false
+        }
+      },
+      "missing": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "NotFoundError",
+          "message": "A requested file or directory could not be found at the time an operation was processed.",
+          "code": 8,
+          "domException": true
+        }
+      },
+      "createdFile": {
+        "kind": "file",
+        "name": "note.txt",
+        "fileInstance": true
+      },
+      "emptyFile": {
+        "outcome": "fulfilled",
+        "promise": true,
+        "value": {
+          "name": "note.txt",
+          "size": 0,
+          "type": "text/plain",
+          "fileInstance": true
+        }
+      },
+      "entries": [
+        [
+          "note.txt",
+          "file"
+        ]
+      ],
+      "resolveFile": [
+        "bom10-reference",
+        "note.txt"
+      ],
+      "resolveSelf": [],
+      "resolveOutside": null,
+      "wrongKind": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "TypeMismatchError",
+          "message": "The path supplied exists, but was not an entry of requested type.",
+          "code": 17,
+          "domException": true
+        }
+      },
+      "badPermission": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryPermission' on 'FileSystemHandle': Failed to read the 'mode' property from 'FileSystemHandlePermissionDescriptor': The provided value 'invalid' is not a valid enum value of type FileSystemPermissionMode.",
+          "code": null,
+          "domException": false
+        }
+      },
+      "badHandleReceiver": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'isSameEntry' on 'FileSystemHandle': Illegal invocation",
+          "code": null,
+          "domException": false
+        }
+      },
+      "writable": {
+        "tag": "[object FileSystemWritableFileStream]",
+        "instance": true,
+        "writableStreamInstance": true
+      },
+      "writtenText": "hello",
+      "removeNonempty": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "InvalidModificationError",
+          "message": "The object can not be modified in this way.",
+          "code": 13,
+          "domException": true
+        }
+      },
+      "afterRemove": {
+        "outcome": "rejected",
+        "promise": true,
+        "error": {
+          "name": "NotFoundError",
+          "message": "A requested file or directory could not be found at the time an operation was processed.",
+          "code": 8,
+          "domException": true
+        }
+      }
+    },
+    "storageDescriptor": {
+      "enumerable": true,
+      "configurable": true,
+      "get": {
+        "name": "get storage",
+        "length": 0,
+        "source": "function get storage() { [native code] }",
+        "ownPrototype": false,
+        "constructable": false
+      },
+      "set": null
+    },
+    "storage": {
+      "tag": "[object StorageManager]",
+      "ownKeys": [],
+      "sameObject": true,
+      "getDirectoryPresent": true
+    }
+  }
+}

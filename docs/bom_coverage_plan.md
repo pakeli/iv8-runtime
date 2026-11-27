@@ -1,5 +1,12 @@
 # BOM-first coverage queue
 
+BOM-10 digest and virtual directory storage (`2026-11-28`) are implemented and
+locally verified (3604 passed, 2 skipped). Secure Crypto has 3/3 entry names;
+StorageManager has 4/4. The recorded non-DOM BOM entry-name gaps are closed,
+while 16 key operations and filesystem writes/streams/move remain unsupported
+execution profiles. Cross-platform release verification is still pending.
+Evidence: `docs/bom_10_storage_report.md` and `docs/bom_10_digest_report.md`.
+
 Direction changed by the user on `2026-11-15`: prioritize Window, Location,
 Navigator and History, then related BOM objects. Further DOM node work and the
 previously suggested Web-data batch move behind this queue. Preserve the locally

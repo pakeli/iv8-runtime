@@ -25,6 +25,7 @@
 #include "navigator_devices_bom.h"
 #include "navigator_remaining_bom.h"
 #include "legacy_quota.h"
+#include "../web/file_system.h"
 
 namespace iv8 {
 
@@ -65,9 +66,10 @@ public:
             "cookieEnabled", "hardwareConcurrency", "appName", "appCodeName",
             "product", "vendor", "vendorSub", "productSub", "maxTouchPoints",
             "pdfViewerEnabled", "doNotTrack", "connection", "scheduling",
-            "storage", "permissions", "plugins", "mimeTypes",
+            "permissions", "plugins", "mimeTypes",
             "webkitTemporaryStorage", "webkitPersistentStorage", "mediaSession"};
         if (secure_context_) {
+            names.insert(std::find(names.begin(), names.end(), "permissions"), "storage");
             names.insert(names.end(), {
                 "cpuPerformance", "bluetooth", "clipboard", "credentials", "keyboard",
                 "managed", "mediaDevices", "serviceWorker", "virtualKeyboard",
@@ -384,14 +386,13 @@ public:
             }
             return window_controls_overlay_object_.Get(isolate);
         }
-        // Step 5e: cache the plain StorageManager object so repeated reads keep
-        // the same identity and the read-only method descriptors unchanged.
-        // The parent `navigator.storage` read itself is traced by the generic
-        // HostObject getter; the method calls are traced by their callbacks.
+        // BOM-10: native secure-context StorageManager is SameObject per
+        // generation; its backing virtual storage survives same-origin reloads.
         if (name == "storage") {
             if (storage_object_.IsEmpty()) {
                 storage_object_.Reset(
-                    isolate, make_storage_manager_object(isolate, context));
+                    isolate, make_native_storage_manager(isolate, context, owner_,
+                        owner_->file_system_origin(), owner_->file_system_store()));
             }
             return storage_object_.Get(isolate);
         }
@@ -497,7 +498,7 @@ private:
     v8::Global<v8::Object> user_activation_object_;
     v8::Global<v8::Object> connection_object_;
     v8::Global<v8::Object> scheduling_object_;
-    // Step 5e/5f: per-generation cached plain navigator.storage and
+    // Per-generation cached native navigator.storage and plain
     // navigator.permissions objects.
     v8::Global<v8::Object> storage_object_;
     v8::Global<v8::Object> permissions_object_;

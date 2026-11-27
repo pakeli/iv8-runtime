@@ -1,0 +1,154 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-27T14:24:40.615528+00:00",
+  "probe_sha256": "d7269f1799d4751d6b004abb1f18473ed8beb2f41f295a1f8a0173d4d0dd191f",
+  "execution": {
+    "os": "Darwin",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile for each origin class",
+    "origin": "http://bom-fixture.invalid:<port>/reference",
+    "network": "local fixture server only; external DNS disabled; no user profile, permission grant or user gesture",
+    "transport": "private local DevTools pipe; Runtime.evaluate awaitPromise, 45s timeout",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--disable-extensions",
+      "--no-pings",
+      "--metrics-recording-only",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ]
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "secure": false,
+    "random": {
+      "missing": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': 1 argument required, but only 0 present.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "buffer": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "float": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeMismatchError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': The provided ArrayBufferView is of type 'Float32', which is not an integer array type.",
+          "code": 17,
+          "dom": true
+        }
+      },
+      "float64": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeMismatchError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': The provided ArrayBufferView is of type 'Float64', which is not an integer array type.",
+          "code": 17,
+          "dom": true
+        }
+      },
+      "dataView": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeMismatchError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': The provided ArrayBufferView is of type 'DataView', which is not an integer array type.",
+          "code": 17,
+          "dom": true
+        }
+      },
+      "array": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "null": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "symbol": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': parameter 1 is not of type 'ArrayBufferView'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "quota": {
+        "mode": "throw",
+        "error": {
+          "name": "QuotaExceededError",
+          "message": "Failed to execute 'getRandomValues' on 'Crypto': The ArrayBufferView's byte length (65537) exceeds the number of bytes of entropy available via this API (65536).",
+          "code": 22,
+          "dom": true
+        }
+      },
+      "badReceiver": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      },
+      "detached": {
+        "mode": "return",
+        "ok": true
+      },
+      "globalReceiver": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      }
+    },
+    "digest": {}
+  }
+}

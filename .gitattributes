@@ -7,3 +7,4 @@ test/fixtures/bom_06/*.js text eol=lf
 test/fixtures/bom_07/*.js text eol=lf
 test/fixtures/bom_08/*.js text eol=lf
 test/fixtures/bom_09/*.js text eol=lf
+test/fixtures/bom_10/*.js text eol=lf

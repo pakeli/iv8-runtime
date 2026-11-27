@@ -27,14 +27,6 @@ struct PermissionNameInfo {
 
 extern v8::Local<v8::Value> resolved_promise(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Value> value);
 
-extern void storage_manager_estimate_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
-
-extern void storage_manager_persisted_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
-
-extern void storage_manager_persist_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
-
-extern v8::Local<v8::Object> make_storage_manager_object(v8::Isolate* isolate, v8::Local<v8::Context> context);
-
 extern const v8::ExternalPointerTypeTag kPermissionStatusTag;
 
 extern const PermissionNameInfo kPermissionNames[];

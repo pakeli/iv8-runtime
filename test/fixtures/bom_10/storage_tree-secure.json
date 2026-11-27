@@ -1,0 +1,511 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-27T16:13:39.829523+00:00",
+  "probe_sha256": "2efefdb4f6b0795725a046a8537f5b6c77472690cfebd520ff38aa3f1f4ededd",
+  "execution": {
+    "os": "Darwin",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile for each origin class",
+    "origin": "http://127.0.0.1:<port>/reference",
+    "network": "local fixture server only; external DNS disabled; no user profile, permission grant or user gesture",
+    "transport": "private local DevTools pipe; Runtime.evaluate awaitPromise, 45s timeout",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--disable-extensions",
+      "--no-pings",
+      "--metrics-recording-only",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ]
+  },
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    },
+    {
+      "method": "GET",
+      "path": "/favicon.ico"
+    }
+  ],
+  "result": {
+    "secure": true,
+    "present": true,
+    "permission": {
+      "read": {
+        "mode": "promise",
+        "value": "granted"
+      },
+      "write": {
+        "mode": "promise",
+        "value": "granted"
+      },
+      "nullOptions": {
+        "mode": "promise",
+        "value": "granted"
+      },
+      "badOptions": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryPermission' on 'FileSystemHandle': The provided value is not of type 'FileSystemHandlePermissionDescriptor'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "badMode": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryPermission' on 'FileSystemHandle': Failed to read the 'mode' property from 'FileSystemHandlePermissionDescriptor': The provided value 'x' is not a valid enum value of type FileSystemPermissionMode.",
+          "code": null,
+          "dom": false
+        }
+      }
+    },
+    "names": {
+      "\"\"": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFileHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "\".\"": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFileHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "\"..\"": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFileHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "\"a/b\"": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFileHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "\"a\\\\b\"": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFileHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "\"a\\u0000b\"": {
+        "mode": "promise",
+        "value": "a\u0000b"
+      },
+      "\"\\u0000x\"": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFileHandle' on 'FileSystemDirectoryHandle': Name is not allowed.",
+          "code": null,
+          "dom": false
+        }
+      }
+    },
+    "dictionary": {
+      "primitive": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFileHandle' on 'FileSystemDirectoryHandle': The provided value is not of type 'FileSystemGetFileOptions'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "null": {
+        "mode": "promise",
+        "error": {
+          "name": "NotFoundError",
+          "message": "A requested file or directory could not be found at the time an operation was processed.",
+          "code": 8,
+          "dom": true
+        }
+      },
+      "createTruthy": {
+        "mode": "promise",
+        "value": "file"
+      }
+    },
+    "file": {
+      "mode": "promise",
+      "value": {
+        "name": "test.txt",
+        "size": 0,
+        "type": "text/plain",
+        "instance": true,
+        "textType": "function",
+        "arrayBufferType": "function"
+      }
+    },
+    "fileUpper": {
+      "mode": "promise",
+      "value": "text/plain"
+    },
+    "fileUnknown": {
+      "mode": "promise",
+      "value": ""
+    },
+    "identity": {
+      "newWrapper": true,
+      "same": true,
+      "different": false
+    },
+    "resolve": {
+      "self": [],
+      "file": [
+        "test.txt"
+      ],
+      "child": [
+        "tree-probe",
+        "child"
+      ],
+      "outside": null
+    },
+    "bad": {
+      "sameMissing": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'isSameEntry' on 'FileSystemHandle': 1 argument required, but only 0 present.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "samePlain": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'isSameEntry' on 'FileSystemHandle': parameter 1 is not of type 'FileSystemHandle'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "resolvePlain": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'resolve' on 'FileSystemDirectoryHandle': parameter 1 is not of type 'FileSystemHandle'.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "removeMissing": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'removeEntry' on 'FileSystemDirectoryHandle': 1 argument required, but only 0 present.",
+          "code": null,
+          "dom": false
+        }
+      },
+      "fileBadReceiver": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'getFile' on 'FileSystemFileHandle': Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      },
+      "entriesBadReceiver": {
+        "mode": "throw",
+        "error": {
+          "name": "TypeError",
+          "message": "Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      },
+      "permissionBadReceiver": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'queryPermission' on 'FileSystemHandle': Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      }
+    },
+    "iterator": {
+      "tag": "[object FileSystemDirectoryHandle AsyncIterator]",
+      "ownKeys": [],
+      "prototype": {
+        "keys": [
+          "next",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "members": {
+          "next": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "next",
+              "length": 0,
+              "source": "function next() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "FileSystemDirectoryHandle AsyncIterator"
+          }
+        }
+      },
+      "parent": {
+        "keys": [
+          "Symbol(Symbol.asyncIterator)",
+          "Symbol(Symbol.asyncDispose)"
+        ],
+        "members": {
+          "Symbol(Symbol.asyncIterator)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "[Symbol.asyncIterator]",
+              "length": 0,
+              "source": "function [Symbol.asyncIterator]() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false
+            }
+          },
+          "Symbol(Symbol.asyncDispose)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "[Symbol.asyncDispose]",
+              "length": 0,
+              "source": "function [Symbol.asyncDispose]() { [native code] }",
+              "ownPrototype": false,
+              "constructable": false
+            }
+          }
+        }
+      },
+      "symbolIdentity": true,
+      "self": true,
+      "badNext": {
+        "mode": "promise",
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'next' on 'AsyncIterator_FileSystemDirectoryHandle': Illegal invocation",
+          "code": null,
+          "dom": false
+        }
+      },
+      "emptyFirst": {
+        "done": true
+      },
+      "emptyAgain": {
+        "done": true
+      }
+    },
+    "entries": [
+      [
+        "UPPER.TXT",
+        "file"
+      ],
+      [
+        "a",
+        "file"
+      ],
+      [
+        "child",
+        "directory"
+      ],
+      [
+        "test.txt",
+        "file"
+      ],
+      [
+        "truthy",
+        "file"
+      ],
+      [
+        "unknown.iv8ext",
+        "file"
+      ]
+    ],
+    "keys": [
+      "UPPER.TXT",
+      "a",
+      "child",
+      "test.txt",
+      "truthy",
+      "unknown.iv8ext"
+    ],
+    "values": [
+      [
+        "UPPER.TXT",
+        "file"
+      ],
+      [
+        "a",
+        "file"
+      ],
+      [
+        "child",
+        "directory"
+      ],
+      [
+        "test.txt",
+        "file"
+      ],
+      [
+        "truthy",
+        "file"
+      ],
+      [
+        "unknown.iv8ext",
+        "file"
+      ]
+    ],
+    "removal": {
+      "nonempty": {
+        "mode": "promise",
+        "error": {
+          "name": "InvalidModificationError",
+          "message": "The object can not be modified in this way.",
+          "code": 13,
+          "dom": true
+        }
+      },
+      "recursive": {
+        "mode": "promise",
+        "value": "undefined"
+      },
+      "again": {
+        "mode": "promise",
+        "error": {
+          "name": "NotFoundError",
+          "message": "A requested file or directory could not be found at the time an operation was processed.",
+          "code": 8,
+          "dom": true
+        }
+      },
+      "staleLookup": {
+        "mode": "promise",
+        "error": {
+          "name": "NotFoundError",
+          "message": "A requested file or directory could not be found at the time an operation was processed.",
+          "code": 8,
+          "dom": true
+        }
+      },
+      "sameRemoved": {
+        "mode": "promise",
+        "value": true
+      },
+      "stalePermission": {
+        "mode": "promise",
+        "value": "granted"
+      },
+      "recreatedIsSame": true,
+      "staleFile": {
+        "mode": "promise",
+        "value": 0
+      },
+      "changedKindSame": false,
+      "changedKindRead": {
+        "mode": "promise",
+        "value": 0
+      }
+    },
+    "mutation": {
+      "beforeFirstNext": [
+        "a",
+        "b"
+      ],
+      "afterFirstNext": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    "nul": {
+      "name": "a\u0000b",
+      "shortName": "a",
+      "same": true,
+      "fileName": "a\u0000b"
+    },
+    "unicode": [
+      {
+        "mode": "promise",
+        "value": "�"
+      },
+      {
+        "mode": "promise",
+        "value": "x�y"
+      },
+      {
+        "mode": "promise",
+        "value": "folder-😀"
+      }
+    ],
+    "coercion": [
+      "name"
+    ],
+    "nameBeforeOptions": {
+      "mode": "promise",
+      "error": {
+        "name": "RangeError",
+        "message": "storage-marker",
+        "code": null,
+        "dom": false
+      }
+    },
+    "errorIdentity": true,
+    "removeRoot": {
+      "mode": "promise",
+      "value": "undefined"
+    },
+    "rootAfterRemove": {
+      "mode": "promise",
+      "value": "after-root-remove"
+    }
+  }
+}
