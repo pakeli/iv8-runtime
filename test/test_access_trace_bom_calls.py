@@ -46,13 +46,10 @@ def test_performance_crypto_storage_calls_are_traced():
                     for event in events]
         assert observed == [
             ("window", "performance", "get"),
-            ("performance", "now", "get"),
             ("performance", "now", "call"),
             ("window", "performance", "get"),
-            ("performance", "mark", "get"),
             ("performance", "mark", "call"),
             ("window", "performance", "get"),
-            ("performance", "measure", "get"),
             ("performance", "measure", "call"),
             ("window", "crypto", "get"),
             ("crypto", "getRandomValues", "get"),
@@ -103,7 +100,7 @@ def test_object_type_filter_applies_to_native_bom_calls():
                   name="probe.js")
         events = _events(page)
         assert [(event["object_type"], event["member"], event["operation"]) for event in events] == [
-            ("performance", "now", "get"), ("performance", "now", "call")]
+            ("performance", "now", "call")]
 
 
 @on_only

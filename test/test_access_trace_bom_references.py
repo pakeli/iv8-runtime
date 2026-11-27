@@ -11,7 +11,7 @@ pytestmark = pytest.mark.skipif(not getattr(iv8, "_v8_linked", False), reason="r
 BASE = "https://bom-references.test/"
 HTML = "<html><head></head><body></body></html>"
 REFERENCES = [
-    ("performanceOwner", "performance", "performance", name, "performance." + name, False)
+    ("performancePrototype", "host_object", "Performance.prototype", name, "Performance." + name, True)
     for name in ("now", "mark", "measure", "getEntries", "getEntriesByName", "getEntriesByType", "clearMarks", "clearMeasures")
 ] + [
     ("cryptoOwner", "crypto", "crypto", name, "crypto." + name, False)
@@ -32,7 +32,8 @@ REFERENCES = [
 def page():
     with iv8.Page() as value:
         value.load(HTML, BASE)
-        value.eval("""globalThis.performanceOwner=performance;globalThis.cryptoOwner=crypto;
+        value.eval("""globalThis.performanceOwner=performance;globalThis.performancePrototype=Object.getPrototypeOf(performance);
+            globalThis.cryptoOwner=crypto;
             globalThis.localOwner=localStorage;globalThis.storagePrototype=Object.getPrototypeOf(localStorage);
             globalThis.managerOwner=navigator.storage;globalThis.permissionsOwner=navigator.permissions;
             permissionsOwner.query({name:'geolocation'}).then(value=>{globalThis.statusOwner=value;});
@@ -120,13 +121,16 @@ def test_status_and_media_query_onchange_keep_per_wrapper_data_and_log_reads_wri
 
 def test_performance_entry_fields_have_separate_stable_identity_and_stay_readonly(page):
     page.eval("""performanceOwner.mark('sample');
+        performanceOwner.mark('other');
         globalThis.firstEntry=performanceOwner.getEntries()[0];
-        globalThis.secondEntry=performanceOwner.getEntries()[0];""")
+        globalThis.secondEntry=performanceOwner.getEntries()[1];
+        globalThis.sameFirstEntry=performanceOwner.getEntries()[0];""")
+    assert page.eval("firstEntry === sameFirstEntry && firstEntry instanceof PerformanceMark")
     page.start_access_trace(object_types=["host_object"])
     assert json.loads(page.eval("""JSON.stringify([
         [firstEntry.name,firstEntry.entryType,firstEntry.startTime,firstEntry.duration],
         [secondEntry.name,secondEntry.entryType,secondEntry.startTime,secondEntry.duration]])""")) == [
-            ["sample", "mark", 0, 0], ["sample", "mark", 0, 0],
+            ["sample", "mark", 0, 0], ["other", "mark", 0, 0],
         ]
     reads = events(page, label="PerformanceEntry", operation="get")
     assert [event["member"] for event in reads] == ["name", "entryType", "startTime", "duration"] * 2
@@ -134,10 +138,11 @@ def test_performance_entry_fields_have_separate_stable_identity_and_stay_readonl
     assert len({event["object_id"] for event in reads[:4]}) == len({event["object_id"] for event in reads[4:]}) == 1
     assert reads[0]["object_id"] != reads[4]["object_id"]
     assert page.eval("""(()=>{
-        const descriptor=Object.getOwnPropertyDescriptor(firstEntry,'name');let rejected=false;
+        const descriptor=Object.getOwnPropertyDescriptor(PerformanceEntry.prototype,'name');let rejected=false;
         try{(function(){'use strict';firstEntry.name='changed';})()}catch(error){rejected=error instanceof TypeError;}
-        return 'value'in descriptor && !descriptor.writable && descriptor.enumerable &&
-            !descriptor.configurable && rejected && firstEntry.name==='sample';
+        return !Object.hasOwn(firstEntry,'name') && typeof descriptor.get==='function' &&
+            descriptor.set===undefined && descriptor.enumerable &&
+            descriptor.configurable && rejected && firstEntry.name==='sample';
     })()""")
     assert not events(page, label="PerformanceEntry", operation="set")
 

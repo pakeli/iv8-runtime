@@ -330,15 +330,17 @@ void abort_signal_any_static(const v8::FunctionCallbackInfo<v8::Value>& info) {
             }
             return;
         }
-        v8::Local<v8::Value> item;
         v8::Local<v8::Value> done;
-        if (!user_get(isolate, context, step.As<v8::Object>(), v8_string(isolate, "value"))
-                .ToLocal(&item) ||
-            !user_get(isolate, context, step.As<v8::Object>(), v8_string(isolate, "done"))
+        if (!user_get(isolate, context, step.As<v8::Object>(), v8_string(isolate, "done"))
                 .ToLocal(&done)) {
             return;
         }
         if (done->BooleanValue(isolate)) break;
+        v8::Local<v8::Value> item;
+        if (!user_get(isolate, context, step.As<v8::Object>(), v8_string(isolate, "value"))
+                .ToLocal(&item)) {
+            return;
+        }
         auto* sig = as_abort_signal(item);
         if (sig == nullptr) {
             throw_type_error(isolate, prefix,
@@ -810,7 +812,8 @@ void when_listener_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
 
 AbortSignalHost* as_abort_signal(v8::Local<v8::Value> value) noexcept {
     auto* backing = host_object_backing(value);
-    if (backing == nullptr || backing->prototype_key() != "AbortSignal") {
+    if (backing == nullptr ||
+        !web_interface_inherits(backing->prototype_key(), "AbortSignal")) {
         return nullptr;
     }
     return static_cast<AbortSignalHost*>(backing);
@@ -834,18 +837,28 @@ void AbortSignalHost::abort_with_reason(v8::Isolate* isolate,
     initialize_aborted(isolate, context, reason);
     auto pending = std::move(algorithms_);
     algorithms_.clear();
-    for (auto& alg : pending) {
-        if (alg) alg(isolate, context);
+    for (auto& entry : pending) {
+        if (entry.run) entry.run(isolate, context);
     }
     if (!wrapper_.IsEmpty()) {
         dispatch_native(isolate, context, "abort", wrapper_.Get(isolate));
     }
 }
 
-void AbortSignalHost::add_abort_algorithm(
+std::uint64_t AbortSignalHost::add_abort_algorithm(
     std::function<void(v8::Isolate*, v8::Local<v8::Context>)> algorithm) {
-    if (aborted_) return;
-    algorithms_.push_back(std::move(algorithm));
+    if (aborted_) return 0;
+    const std::uint64_t id = next_algorithm_id_++;
+    algorithms_.push_back({id, std::move(algorithm)});
+    return id;
+}
+
+void AbortSignalHost::remove_abort_algorithm(std::uint64_t id) {
+    if (id == 0) return;
+    algorithms_.erase(
+        std::remove_if(algorithms_.begin(), algorithms_.end(),
+            [id](const AbortAlgorithmEntry& entry) { return entry.id == id; }),
+        algorithms_.end());
 }
 
 v8::Local<v8::Value> AbortSignalHost::get_property(v8::Isolate* isolate,
@@ -883,10 +896,14 @@ v8::Local<v8::Value> AbortSignalHost::call_method(v8::Isolate* isolate,
     return v8::Undefined(isolate);
 }
 
+std::unique_ptr<AbortSignalHost> AbortControllerHost::create_signal_host() {
+    return std::make_unique<AbortSignalHost>(owner_);
+}
+
 v8::Local<v8::Object> AbortControllerHost::ensure_signal(v8::Isolate* isolate,
     v8::Local<v8::Context> context) {
     if (signal_object_.IsEmpty()) {
-        auto sig_uptr = std::make_unique<AbortSignalHost>(owner_);
+        auto sig_uptr = create_signal_host();
         signal_host_ = sig_uptr.get();
         auto obj = owner_->adopt_host_object(isolate, context, std::move(sig_uptr));
         signal_host_->bind_wrapper(isolate, obj);

@@ -42,15 +42,23 @@ def test_performance_and_time_origin_are_read_only():
         assert page.eval(
             """
             (() => {
-              performance.now = 1;
+              const desc = Object.getOwnPropertyDescriptor(Performance.prototype, 'now');
               performance.timeOrigin = 99;
+              let strictTimeOriginRejected = false;
+              try {
+                (function () { 'use strict'; performance.timeOrigin = 99; })();
+              } catch (e) {
+                strictTimeOriginRejected = e instanceof TypeError;
+              }
               performance = null;
               return [typeof performance.now,
+                      desc.writable && desc.configurable,
                       performance.timeOrigin,
+                      strictTimeOriginRejected,
                       typeof performance].join(',');
             })();
             """
-        ) == "function,0,object"
+        ) == "function,true,0,true,object"
 
 
 # --- clock progression ----------------------------------------------------------
@@ -194,7 +202,9 @@ def test_performance_timeline_surface_and_real_timing_gaps():
         for name in ("mark", "measure", "getEntries", "getEntriesByName",
                      "getEntriesByType", "clearMarks", "clearMeasures"):
             assert page.eval(f"typeof performance.{name}") == "function", name
-        for name in ("timing", "navigation"):
-            assert page.eval(f"typeof performance.{name}") == "undefined", name
+        assert page.eval("performance.timing instanceof PerformanceTiming") is True
+        assert page.eval("performance.navigation instanceof PerformanceNavigation") is True
+        assert page.eval("performance.timing.navigationStart") == 1700000000000
+        assert page.eval("typeof PerformanceObserver") == "undefined"
         # Date is still V8's real clock, not the virtual facade clock.
         assert page.eval("typeof Date.now()") == "number"

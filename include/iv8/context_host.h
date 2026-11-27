@@ -84,9 +84,17 @@ public:
     // run during eval), so these take no guard themselves.
     std::int64_t register_timer(v8::Local<v8::Function> callback,
                                 std::int32_t delay, bool repeating,
-                                bool user_cancelable = true);
+                                bool user_cancelable = true,
+                                int priority_rank = 3);
     // Cancel a timer by id (clearTimeout / clearInterval); also guard-free.
     void clear_timer(std::int64_t id);
+    // Cancel an internal runtime timer (e.g., an aborted scheduler.postTask
+    // delay) regardless of user_cancelable; also guard-free.
+    void clear_internal_timer(std::int64_t id);
+    // Update a queued internal task's priority rank (0=user-blocking continuation,
+    // 1=user-blocking, 2=user-visible continuation, 3=user-visible/default,
+    // 4=background continuation, 5=background).
+    void update_internal_timer_priority(std::int64_t id, int priority_rank);
     // Manual pump: fire every currently-scheduled timer once, ordered by
     // (delay, registration seq). One-shots are removed; intervals remain for the
     // next pump; timers scheduled during the pump fire on the NEXT pump. Runs
@@ -246,6 +254,7 @@ private:
         // BOM-02 uses the existing task queue for related-app result delivery.
         // Its internal entry is not a user timer and cannot be cleared by JS.
         bool user_cancelable = true;
+        int priority_rank = 3;
         std::uint64_t seq = 0;
         // M11-29: virtual due time; unused by the legacy run_timers() path.
         std::int64_t due_ms = 0;
@@ -264,6 +273,9 @@ private:
     // M11-29/M11-30 helpers. `bounded` selects timers with due_ms <= limit; the
     // unbounded form returns the globally earliest timer. Returns -1 when none.
     std::int64_t next_timer_due(std::int64_t limit, bool bounded) const;
+    // Select the highest-priority currently runnable timer (due_ms <= virtual_now_ms_),
+    // ordered by (priority_rank, due_ms, seq). Returns -1 when none are due.
+    std::int64_t next_runnable_timer() const;
     // Effective next frame boundary, or -1 when no frame callbacks are queued.
     std::int64_t next_frame_due() const;
     // Fire one timer under the already-held operation guard/scopes; repeating

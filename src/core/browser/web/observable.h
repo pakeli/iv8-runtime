@@ -42,6 +42,10 @@ public:
     void bind_wrapper(v8::Isolate* isolate, v8::Local<v8::Object> wrapper) {
         wrapper_.Reset(isolate, wrapper);
     }
+    v8::Local<v8::Object> wrapper_object(v8::Isolate* isolate) const {
+        if (wrapper_.IsEmpty()) return {};
+        return wrapper_.Get(isolate);
+    }
     bool aborted() const noexcept { return aborted_; }
     v8::Local<v8::Value> reason_value(v8::Isolate* isolate) const {
         if (!aborted_ || reason_.IsEmpty()) return v8::Undefined(isolate);
@@ -51,8 +55,9 @@ public:
         v8::Local<v8::Value> reason);
     void abort_with_reason(v8::Isolate* isolate, v8::Local<v8::Context> context,
         v8::Local<v8::Value> reason);
-    void add_abort_algorithm(
+    std::uint64_t add_abort_algorithm(
         std::function<void(v8::Isolate*, v8::Local<v8::Context>)> algorithm);
+    void remove_abort_algorithm(std::uint64_t id);
 
     v8::Local<v8::Value> get_property(v8::Isolate* isolate,
         v8::Local<v8::Context> context, const std::string& name) override;
@@ -62,12 +67,19 @@ public:
         v8::Local<v8::Context> context, const std::string& name,
         const v8::FunctionCallbackInfo<v8::Value>& arguments) override;
 
-private:
+protected:
     PageState* owner_;
+
+private:
+    struct AbortAlgorithmEntry {
+        std::uint64_t id = 0;
+        std::function<void(v8::Isolate*, v8::Local<v8::Context>)> run;
+    };
     bool aborted_ = false;
     v8::Global<v8::Object> wrapper_;
     v8::Global<v8::Value> reason_;
-    std::vector<std::function<void(v8::Isolate*, v8::Local<v8::Context>)>> algorithms_;
+    std::uint64_t next_algorithm_id_ = 1;
+    std::vector<AbortAlgorithmEntry> algorithms_;
 };
 
 class AbortControllerHost : public HostObject {
@@ -91,7 +103,9 @@ public:
         v8::Local<v8::Context> context, const std::string& name,
         const v8::FunctionCallbackInfo<v8::Value>& arguments) override;
 
-private:
+protected:
+    virtual std::unique_ptr<AbortSignalHost> create_signal_host();
+
     PageState* owner_;
     AbortSignalHost* signal_host_ = nullptr;
     v8::Global<v8::Object> signal_object_;

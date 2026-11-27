@@ -5,30 +5,75 @@
 namespace iv8 {
 
 int web_method_length(std::string_view receiver, std::string_view name) {
-    if (receiver == "xml_http_request") {
+    if (receiver == "console") {
+        return name == "context" ? 1 : 0;
+    }
+    if (receiver == "Subscriber" || receiver == "subscriber") {
+        return (name == "addTeardown" || name == "error" || name == "next") ? 1 : 0;
+    }
+    if (receiver == "Observable" || receiver == "observable") {
+        if (name == "catch" || name == "drop" || name == "every" ||
+            name == "filter" || name == "finally" || name == "find" ||
+            name == "flatMap" || name == "forEach" || name == "map" ||
+            name == "reduce" || name == "some" || name == "switchMap" ||
+            name == "take" || name == "takeUntil") {
+            return 1;
+        }
+        return 0;
+    }
+    if (receiver == "EventCounts") {
+        return (name == "forEach" || name == "get" || name == "has") ? 1 : 0;
+    }
+    if (receiver == "Performance" || receiver == "performance") {
+        if (name == "mark" || name == "measure" ||
+            name == "getEntriesByName" || name == "getEntriesByType" ||
+            name == "setResourceTimingBufferSize") {
+            return 1;
+        }
+        return 0;
+    }
+    if (receiver == "Scheduler" || receiver == "scheduler") {
+        return name == "postTask" ? 1 : 0;
+    }
+    if (receiver == "TaskController") {
+        return name == "setPriority" ? 1 : 0;
+    }
+    if (receiver == "XMLHttpRequest" || receiver == "xml_http_request") {
         if (name == "open" || name == "setRequestHeader") return 2;
         if (name == "getResponseHeader" || name == "overrideMimeType" ||
             name == "setAttributionReporting" || name == "setPrivateToken") return 1;
+        return 0;
     }
-    if (receiver == "history" && (name == "pushState" || name == "replaceState")) return 2;
-    if (receiver == "orientation" && name == "lock") return 1;
-    if (receiver == "navigator" && name == "vibrate") return 1;
-    if (receiver == "media_key_status_map" &&
+    if ((receiver == "History" || receiver == "history") &&
+        (name == "pushState" || name == "replaceState")) return 2;
+    if ((receiver == "ScreenOrientation" || receiver == "orientation") &&
+        name == "lock") return 1;
+    if ((receiver == "Navigator" || receiver == "navigator") &&
+        name == "vibrate") return 1;
+    if ((receiver == "MediaKeyStatusMap" || receiver == "media_key_status_map") &&
         (name == "get" || name == "has" || name == "forEach")) return 1;
-    if (receiver == "keyboard_layout_map" &&
+    if ((receiver == "KeyboardLayoutMap" || receiver == "keyboard_layout_map") &&
         (name == "get" || name == "has" || name == "forEach")) return 1;
-    if (receiver == "wgsl_language_features" &&
+    if ((receiver == "WGSLLanguageFeatures" || receiver == "wgsl_language_features") &&
         (name == "has" || name == "forEach")) return 1;
-    if ((receiver == "hid" || receiver == "usb") && name == "requestDevice") return 1;
-    if (receiver == "media_devices" && name == "getUserMedia") return 0;
-    if (receiver == "service_worker_registration" && name == "update") return 0;
-    if (receiver == "storage_buckets" && (name == "open" || name == "delete")) return 1;
-    if (receiver == "locks" && name == "request") return 2;
-    if (receiver == "locks" && name == "query") return 0;
-    if (receiver == "credentials" && name == "get") return 0;
+    if ((receiver == "HID" || receiver == "hid" ||
+         receiver == "USB" || receiver == "usb") &&
+        name == "requestDevice") return 1;
+    if ((receiver == "MediaDevices" || receiver == "media_devices") &&
+        name == "getUserMedia") return 0;
+    if ((receiver == "ServiceWorkerRegistration" || receiver == "service_worker_registration") &&
+        name == "update") return 0;
+    if ((receiver == "StorageBucketManager" || receiver == "storage_buckets") &&
+        (name == "open" || name == "delete")) return 1;
+    if ((receiver == "LockManager" || receiver == "locks") &&
+        name == "request") return 2;
+    if ((receiver == "LockManager" || receiver == "locks") &&
+        name == "query") return 0;
+    if ((receiver == "CredentialsContainer" || receiver == "credentials") &&
+        name == "get") return 0;
     if (name == "queryUsageAndQuota" || name == "requestQuota") return 1;
     if (name == "add" && receiver == "host_probe") return 2;
-    if (name == "replace" && receiver == "location") return 1;
+    if (name == "replace" && (receiver == "Location" || receiver == "location")) return 1;
     static const std::unordered_map<std::string_view, int> lengths = {
         {"fetch", 1}, {"echo", 1}, {"getElementById", 1}, {"querySelector", 1},
         {"querySelectorAll", 1}, {"getElementsByTagName", 1},
@@ -60,8 +105,7 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"getNamedItem", 1}, {"getNamedItemNS", 2}, {"setNamedItem", 1},
         {"setNamedItemNS", 1}, {"removeNamedItem", 1}, {"removeNamedItemNS", 2},
         {"compareDocumentPosition", 1}, {"importNode", 1}, {"adoptNode", 1},
-        {"mark", 1}, {"measure", 1}, {"getEntriesByName", 1},
-        {"getEntriesByType", 1}, {"moveTo", 2}, {"moveBy", 2},
+        {"moveTo", 2}, {"moveBy", 2},
         {"resizeTo", 2}, {"resizeBy", 2},
         {"registerProtocolHandler", 2}, {"unregisterProtocolHandler", 2},
         {"getUserMedia", 3}, {"webkitGetUserMedia", 3},
@@ -75,11 +119,7 @@ int web_method_length(std::string_view receiver, std::string_view name) {
         {"register", 1}, {"showNotification", 1}, {"setExpires", 1},
         {"setStatus", 1}, {"getManagedConfiguration", 1},
         {"updateInkTrailStartPoint", 2},
-        {"when", 1}, {"addTeardown", 1}, {"error", 1}, {"next", 1},
-        {"catch", 1}, {"drop", 1}, {"every", 1}, {"filter", 1},
-        {"finally", 1}, {"find", 1}, {"flatMap", 1}, {"forEach", 1},
-        {"map", 1}, {"reduce", 1}, {"some", 1}, {"switchMap", 1},
-        {"take", 1}, {"takeUntil", 1},
+        {"when", 1}, {"forEach", 1},
     };
     const auto found = lengths.find(name);
     return found == lengths.end() ? 0 : found->second;

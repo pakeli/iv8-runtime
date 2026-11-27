@@ -79,6 +79,7 @@
 #include "browser/window/to_string_monitoring.h"
 #include "browser/web/event_constructors.h"
 #include "browser/web/observable.h"
+#include "browser/web/scheduler.h"
 #include "browser/web/url.h"
 #include "browser/bootstrap/bootstrap_scripts.h"
 #include "browser/internal/event_support.h"
@@ -1845,6 +1846,15 @@ v8::Local<v8::Value> PageState::create_web_interface(v8::Isolate* isolate,
     if (name == "Observable") {
         return construct_observable(isolate, context, this, arguments);
     }
+    if (name == "PerformanceMark") {
+        return construct_performance_mark(isolate, context, this, arguments);
+    }
+    if (name == "TaskController") {
+        return construct_task_controller(isolate, context, this, arguments);
+    }
+    if (name == "TaskPriorityChangeEvent") {
+        return construct_task_priority_change_event(isolate, context, this, arguments);
+    }
     if (name == "XMLHttpRequest") {
         auto upload = std::make_unique<XMLHttpRequestUploadHost>();
         auto upload_object = make_host_object(isolate, context, upload.get());
@@ -1929,6 +1939,9 @@ void PageState::install_page(const std::string& base_url,
         }
         for (const std::unique_ptr<HostObject>& host : host_objects_) {
             host->release_v8_handles();
+        }
+        if (performance_store_) {
+            performance_store_->release_v8_handles();
         }
         // Step 5i: drop replaced parent/frames/opener values while the isolate is
         // still alive.
@@ -2016,6 +2029,9 @@ void PageState::install_page(const std::string& base_url,
                         attributes = existing.FromMaybe(v8::None);
                     }
                     auto object = make_host_object(isolate, context, host.get());
+                    if (host_name == "console" &&
+                        !install_console_extras(isolate, context, object,
+                            static_cast<ConsoleHost*>(host.get()))) return;
                     if (!install_traced_window_data_property(isolate, context, global,
                             host_name, object, attributes)) return;
                 } else {
@@ -2142,53 +2158,8 @@ void PageState::install_page(const std::string& base_url,
             // M11-38 bounded structured clone.
             install_global_function(isolate, context, global, "structuredClone",
                                     &structured_clone_callback);
-            // M11-31/M11-37 virtual performance clock and entry timeline:
-            // performance.now() reads the facade clock; timeOrigin is the virtual
-            // epoch (0); mark/measure/getEntries*/clear* use virtual timestamps.
-            // There is no PerformanceObserver, resource/navigation timing, or
-            // real clock.
-            {
-                v8::Local<v8::Object> performance = v8::Object::New(isolate);
-                const auto define_performance_readonly =
-                    [&](const char* name, v8::Local<v8::Value> value) {
-                        return install_traced_api_data_property(isolate, context, performance,
-                            name, value, &kPerformanceTraceToken, "performance", "performance",
-                            static_cast<v8::PropertyAttribute>(
-                                v8::ReadOnly | v8::DontDelete));
-                    };
-                v8::Local<v8::Function> now_fn;
-                if (!make_web_method(isolate, context, "now", 0, &performance_now_callback)
-                         .ToLocal(&now_fn) || !define_performance_readonly("now", now_fn)) return;
-                (void)performance->SetNativeDataProperty(
-                    context,
-                    v8::String::NewFromUtf8Literal(isolate, "timeOrigin"),
-                    &performance_time_origin_getter, nullptr,
-                    v8::Local<v8::Value>(),
-                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete));
-                v8::Local<v8::External> performance_data =
-                    v8::External::New(isolate, performance_store_.get(),
-                                      kPerformanceTag);
-                const auto add_performance_method =
-                    [&](const char* name, v8::FunctionCallback callback) {
-                        v8::Local<v8::Function> function;
-                        if (!make_web_method(isolate, context, name,
-                                web_method_length("performance", name), callback,
-                                performance_data).ToLocal(&function)) return false;
-                        return define_performance_readonly(name, function);
-                    };
-                if (!add_performance_method("mark", &performance_mark_callback) ||
-                    !add_performance_method("measure", &performance_measure_callback) ||
-                    !add_performance_method("getEntries", &performance_get_entries_callback) ||
-                    !add_performance_method("getEntriesByName", &performance_get_entries_by_name_callback) ||
-                    !add_performance_method("getEntriesByType", &performance_get_entries_by_type_callback) ||
-                    !add_performance_method("clearMarks", &performance_clear_marks_callback) ||
-                    !add_performance_method("clearMeasures", &performance_clear_measures_callback)) return;
-                if (!install_traced_window_data_property(isolate, context, global,
-                    "performance", performance,
-                    static_cast<v8::PropertyAttribute>(v8::ReadOnly |
-                                                       v8::DontDelete))) return;
-            }
+            if (!install_performance_interfaces(
+                    isolate, context, this, performance_store_.get(), base_url)) return;
             // M11-33 OS-backed Crypto slice: getRandomValues + randomUUID.
             // crypto.subtle is intentionally absent in this milestone.
             {
@@ -2313,34 +2284,6 @@ void PageState::install_page(const std::string& base_url,
                         "clientInformation", navigator_value,
                         static_cast<v8::PropertyAttribute>(v8::ReadOnly |
                                                            v8::DontDelete))) return;
-                }
-            }
-            // M11-40 scheduler.postTask bootstrap. Compiled after setTimeout and
-            // Promise are available; scheduler tasks therefore use the existing
-            // timer queue and explicit pumps.
-            {
-                if (!install_script_call_trace_hooks(isolate, context)) return;
-                v8::TryCatch try_catch(isolate);
-                v8::Local<v8::String> source = v8::String::NewFromUtf8(
-                    isolate, kSchedulerBootstrap,
-                    v8::NewStringType::kNormal,
-                    static_cast<int>(sizeof(kSchedulerBootstrap) - 1))
-                    .ToLocalChecked();
-                v8::Local<v8::Script> script;
-                if (v8::Script::Compile(context, source).ToLocal(&script)) {
-                    access_trace_.register_runtime_script(script->GetUnboundScript()->ScriptId());
-                    v8::Local<v8::Value> scheduler;
-                    if (script->Run(context).ToLocal(&scheduler)) {
-                        if (!scheduler->IsObject() ||
-                            !install_scheduler_post_task_tracing(isolate, context, scheduler.As<v8::Object>()) ||
-                            !install_traced_window_data_property(isolate, context, global,
-                                "scheduler", scheduler,
-                                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete))) return;
-                    }
-                }
-                if (!clear_script_call_trace_hooks(isolate, context)) return;
-                if (try_catch.HasCaught()) {
-                    try_catch.Reset();  // fixed bootstrap; never poison install
                 }
             }
             // Step 5g: temporary native factory the bootstrap captures in a
@@ -2535,7 +2478,8 @@ void PageState::install_page(const std::string& base_url,
                 !install_event_subclass("MouseEvent", mouse_event_template) ||
                 !install_event_subclass("KeyboardEvent", keyboard_event_template) ||
                 !install_event_subclass("FocusEvent", focus_event_template) ||
-                !install_event_subclass("MessageEvent", message_event_template)) return;
+                !install_event_subclass("MessageEvent", message_event_template) ||
+                !install_scheduler_interfaces(isolate, context, this)) return;
             // Window uses the shared EventTarget methods. Event handlers and
             // postMessage delivery still carry the native listener backing.
             v8::Local<v8::External> window_data = v8::External::New(

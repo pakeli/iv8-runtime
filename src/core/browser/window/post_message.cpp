@@ -26,11 +26,6 @@ namespace iv8::browser {
 
 namespace {
 
-v8::Local<v8::Private> scheduler_object_key(v8::Isolate* isolate) {
-    return v8::Private::ForApi(isolate,
-        v8::String::NewFromUtf8Literal(isolate, "iv8.trace.scheduler-object"));
-}
-
 std::string safe_text(v8::Isolate* isolate, v8::Local<v8::Value> value,
                        std::size_t maximum = 4096) {
     if (value.IsEmpty() || !value->IsString()) return {};
@@ -131,17 +126,6 @@ void script_call_begin(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 const auto member = path.substr(7);
                 watch_record(isolate, "window", member);
                 sequence = window_trace_record(isolate, member.c_str(), AccessOperation::kCall);
-            } else if (path == "scheduler.postTask") {
-                watch_record(isolate, "scheduler", "postTask");
-                auto* trace = access_trace_from_isolate(isolate);
-                if (trace != nullptr && trace->enabled()) {
-                    v8::Local<v8::Value> scheduler;
-                    if (context->Global()->GetPrivate(context, scheduler_object_key(isolate)).ToLocal(&scheduler) &&
-                        scheduler->IsObject()) {
-                        const auto* identity = native_api_identity(isolate, scheduler.As<v8::Object>());
-                        sequence = trace->record(identity, "window_shell", "scheduler", "postTask", AccessOperation::kCall);
-                    }
-                }
             } else if (path.empty() && info.Length() >= 7 && info[2]->IsString() &&
                        info[3]->IsObject() && !info[3]->IsProxy() && info[4]->IsString() &&
                        info[5]->IsString() && (info[6]->IsString() || info[6]->IsSymbol())) {
@@ -391,23 +375,6 @@ bool clear_script_call_trace_hooks(v8::Isolate* isolate,
             v8::String::NewFromUtf8Literal(isolate, "__iv8HostCallEnd")).FromMaybe(false) &&
         context->Global()->Delete(context,
             v8::String::NewFromUtf8Literal(isolate, "__iv8HostUserOperation")).FromMaybe(false);
-}
-
-bool install_scheduler_post_task_tracing(v8::Isolate* isolate,
-    v8::Local<v8::Context> context, v8::Local<v8::Object> scheduler) {
-    v8::Local<v8::Value> method;
-    if (!scheduler->Get(context, v8::String::NewFromUtf8Literal(isolate, "postTask")).ToLocal(&method) ||
-        !method->IsFunction() ||
-        !context->Global()->SetPrivate(context, scheduler_object_key(isolate), scheduler).FromMaybe(false)) return false;
-    const auto* identity = native_api_identity(isolate, scheduler);
-    if (identity == nullptr) {
-        return scheduler->DefineOwnProperty(context,
-            v8::String::NewFromUtf8Literal(isolate, "postTask"), method,
-            static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete)).FromMaybe(false);
-    }
-    return install_traced_api_data_property(isolate, context, scheduler, "postTask", method,
-        identity, "window_shell", "scheduler",
-        static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
 }
 
 }  // namespace iv8::browser

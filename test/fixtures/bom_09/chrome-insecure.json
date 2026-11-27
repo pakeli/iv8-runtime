@@ -1,0 +1,2435 @@
+{
+  "browser": "Google Chrome 158.0.8127.88",
+  "captured_at_utc": "2026-11-27T08:56:58.933Z",
+  "execution": {
+    "os": "darwin 27.2.0",
+    "machine": "arm64",
+    "profile": "fresh temporary headless profile",
+    "profile_path": "<temporary-profile>",
+    "origin": "http://bom-fixture.invalid:<port>/reference",
+    "network": "Only local or opaque fixture document; external DNS disabled; no device, permission grant, user gesture or user profile",
+    "arguments": [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "--headless=new",
+      "--disable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-domain-reliability",
+      "--disable-sync",
+      "--metrics-recording-only",
+      "--no-pings",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-extensions",
+      "--disable-crash-reporter",
+      "--safebrowsing-disable-auto-update",
+      "--disable-features=MediaRouter,OptimizationHints",
+      "--host-resolver-rules=MAP bom-fixture.invalid 127.0.0.1, MAP * ~NOTFOUND",
+      "--no-proxy-server",
+      "--lang=en-US",
+      "--user-data-dir=<temporary-profile>",
+      "--remote-debugging-pipe"
+    ],
+    "browser_isolation": "fresh headless profile through local DevTools pipe; no user profile",
+    "result_wait": "Runtime.evaluate awaitPromise with 240-second bounded local result polling; no virtual-time budget"
+  },
+  "probe_sha256": "c85462a8d6c3e06e9378b24529d42d2c01b1d0e41120f48dcd38e4c313b094a9",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/reference"
+    }
+  ],
+  "result": {
+    "secure": false,
+    "memoryInfoGlobalPresent": false,
+    "globals": {
+      "Performance": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Performance",
+            "length": 0,
+            "source": "function Performance() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "PerformanceEntry": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "PerformanceEntry",
+            "length": 0,
+            "source": "function PerformanceEntry() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "PerformanceMark": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "PerformanceMark",
+            "length": 1,
+            "source": "function PerformanceMark() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "PerformanceMeasure": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "PerformanceMeasure",
+            "length": 0,
+            "source": "function PerformanceMeasure() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "PerformanceNavigation": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "PerformanceNavigation",
+            "length": 0,
+            "source": "function PerformanceNavigation() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "PerformanceTiming": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "PerformanceTiming",
+            "length": 0,
+            "source": "function PerformanceTiming() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "EventCounts": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "EventCounts",
+            "length": 0,
+            "source": "function EventCounts() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "Scheduler": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "Scheduler",
+            "length": 0,
+            "source": "function Scheduler() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "TaskController": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "TaskController",
+            "length": 0,
+            "source": "function TaskController() { [native code] }",
+            "prototype": true,
+            "construct": "constructed"
+          }
+        }
+      },
+      "TaskSignal": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "TaskSignal",
+            "length": 0,
+            "source": "function TaskSignal() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      },
+      "TaskPriorityChangeEvent": {
+        "present": true,
+        "descriptor": {
+          "enumerable": false,
+          "configurable": true,
+          "kind": "data",
+          "writable": true,
+          "value": {
+            "name": "TaskPriorityChangeEvent",
+            "length": 2,
+            "source": "function TaskPriorityChangeEvent() { [native code] }",
+            "prototype": true,
+            "construct": "TypeError"
+          }
+        }
+      }
+    },
+    "interfaces": {
+      "Performance": {
+        "constructor": {
+          "name": "Performance",
+          "length": 0,
+          "source": "function Performance() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "timeOrigin",
+          "onresourcetimingbufferfull",
+          "clearMarks",
+          "clearMeasures",
+          "clearResourceTimings",
+          "getEntries",
+          "getEntriesByName",
+          "getEntriesByType",
+          "mark",
+          "measure",
+          "setResourceTimingBufferSize",
+          "toJSON",
+          "now",
+          "constructor",
+          "timing",
+          "navigation",
+          "memory",
+          "eventCounts",
+          "interactionCount",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "EventTarget.prototype",
+        "members": {
+          "timeOrigin": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get timeOrigin",
+              "length": 0,
+              "source": "function get timeOrigin() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "onresourcetimingbufferfull": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onresourcetimingbufferfull",
+              "length": 0,
+              "source": "function get onresourcetimingbufferfull() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onresourcetimingbufferfull",
+              "length": 1,
+              "source": "function set onresourcetimingbufferfull() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "clearMarks": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "clearMarks",
+              "length": 0,
+              "source": "function clearMarks() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "clearMeasures": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "clearMeasures",
+              "length": 0,
+              "source": "function clearMeasures() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "clearResourceTimings": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "clearResourceTimings",
+              "length": 0,
+              "source": "function clearResourceTimings() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "getEntries": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getEntries",
+              "length": 0,
+              "source": "function getEntries() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "getEntriesByName": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getEntriesByName",
+              "length": 1,
+              "source": "function getEntriesByName() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "getEntriesByType": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "getEntriesByType",
+              "length": 1,
+              "source": "function getEntriesByType() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "mark": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "mark",
+              "length": 1,
+              "source": "function mark() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "measure": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "measure",
+              "length": 1,
+              "source": "function measure() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "setResourceTimingBufferSize": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setResourceTimingBufferSize",
+              "length": 1,
+              "source": "function setResourceTimingBufferSize() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "toJSON": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "toJSON",
+              "length": 0,
+              "source": "function toJSON() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "now": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "now",
+              "length": 0,
+              "source": "function now() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Performance",
+              "length": 0,
+              "source": "function Performance() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "timing": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get timing",
+              "length": 0,
+              "source": "function get timing() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "navigation": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get navigation",
+              "length": 0,
+              "source": "function get navigation() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "memory": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get memory",
+              "length": 0,
+              "source": "function get memory() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "eventCounts": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get eventCounts",
+              "length": 0,
+              "source": "function get eventCounts() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "interactionCount": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get interactionCount",
+              "length": 0,
+              "source": "function get interactionCount() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Performance"
+          }
+        }
+      },
+      "PerformanceEntry": {
+        "constructor": {
+          "name": "PerformanceEntry",
+          "length": 0,
+          "source": "function PerformanceEntry() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "name",
+          "entryType",
+          "startTime",
+          "duration",
+          "navigationId",
+          "toJSON",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "name": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get name",
+              "length": 0,
+              "source": "function get name() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "entryType": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get entryType",
+              "length": 0,
+              "source": "function get entryType() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "startTime": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get startTime",
+              "length": 0,
+              "source": "function get startTime() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "duration": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get duration",
+              "length": 0,
+              "source": "function get duration() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "navigationId": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get navigationId",
+              "length": 0,
+              "source": "function get navigationId() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "toJSON": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "toJSON",
+              "length": 0,
+              "source": "function toJSON() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "PerformanceEntry",
+              "length": 0,
+              "source": "function PerformanceEntry() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "PerformanceEntry"
+          }
+        }
+      },
+      "PerformanceMark": {
+        "constructor": {
+          "name": "PerformanceMark",
+          "length": 1,
+          "source": "function PerformanceMark() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "detail",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "PerformanceEntry",
+        "members": {
+          "detail": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get detail",
+              "length": 0,
+              "source": "function get detail() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "PerformanceMark",
+              "length": 1,
+              "source": "function PerformanceMark() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "PerformanceMark"
+          }
+        }
+      },
+      "PerformanceMeasure": {
+        "constructor": {
+          "name": "PerformanceMeasure",
+          "length": 0,
+          "source": "function PerformanceMeasure() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "detail",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "PerformanceEntry",
+        "members": {
+          "detail": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get detail",
+              "length": 0,
+              "source": "function get detail() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "PerformanceMeasure",
+              "length": 0,
+              "source": "function PerformanceMeasure() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "PerformanceMeasure"
+          }
+        }
+      },
+      "PerformanceNavigation": {
+        "constructor": {
+          "name": "PerformanceNavigation",
+          "length": 0,
+          "source": "function PerformanceNavigation() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "TYPE_NAVIGATE",
+          "TYPE_RELOAD",
+          "TYPE_BACK_FORWARD",
+          "TYPE_RESERVED"
+        ],
+        "staticMembers": {
+          "TYPE_NAVIGATE": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 0
+          },
+          "TYPE_RELOAD": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 1
+          },
+          "TYPE_BACK_FORWARD": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 2
+          },
+          "TYPE_RESERVED": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 255
+          }
+        },
+        "prototypeKeys": [
+          "type",
+          "redirectCount",
+          "TYPE_NAVIGATE",
+          "TYPE_RELOAD",
+          "TYPE_BACK_FORWARD",
+          "TYPE_RESERVED",
+          "toJSON",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "type": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get type",
+              "length": 0,
+              "source": "function get type() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "redirectCount": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get redirectCount",
+              "length": 0,
+              "source": "function get redirectCount() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "TYPE_NAVIGATE": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 0
+          },
+          "TYPE_RELOAD": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 1
+          },
+          "TYPE_BACK_FORWARD": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 2
+          },
+          "TYPE_RESERVED": {
+            "enumerable": true,
+            "configurable": false,
+            "kind": "data",
+            "writable": false,
+            "value": 255
+          },
+          "toJSON": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "toJSON",
+              "length": 0,
+              "source": "function toJSON() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "PerformanceNavigation",
+              "length": 0,
+              "source": "function PerformanceNavigation() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "PerformanceNavigation"
+          }
+        }
+      },
+      "PerformanceTiming": {
+        "constructor": {
+          "name": "PerformanceTiming",
+          "length": 0,
+          "source": "function PerformanceTiming() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "navigationStart",
+          "unloadEventStart",
+          "unloadEventEnd",
+          "redirectStart",
+          "redirectEnd",
+          "fetchStart",
+          "domainLookupStart",
+          "domainLookupEnd",
+          "connectStart",
+          "connectEnd",
+          "secureConnectionStart",
+          "requestStart",
+          "responseStart",
+          "responseEnd",
+          "domLoading",
+          "domInteractive",
+          "domContentLoadedEventStart",
+          "domContentLoadedEventEnd",
+          "domComplete",
+          "loadEventStart",
+          "loadEventEnd",
+          "toJSON",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "navigationStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get navigationStart",
+              "length": 0,
+              "source": "function get navigationStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "unloadEventStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get unloadEventStart",
+              "length": 0,
+              "source": "function get unloadEventStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "unloadEventEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get unloadEventEnd",
+              "length": 0,
+              "source": "function get unloadEventEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "redirectStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get redirectStart",
+              "length": 0,
+              "source": "function get redirectStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "redirectEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get redirectEnd",
+              "length": 0,
+              "source": "function get redirectEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "fetchStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get fetchStart",
+              "length": 0,
+              "source": "function get fetchStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "domainLookupStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get domainLookupStart",
+              "length": 0,
+              "source": "function get domainLookupStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "domainLookupEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get domainLookupEnd",
+              "length": 0,
+              "source": "function get domainLookupEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "connectStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get connectStart",
+              "length": 0,
+              "source": "function get connectStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "connectEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get connectEnd",
+              "length": 0,
+              "source": "function get connectEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "secureConnectionStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get secureConnectionStart",
+              "length": 0,
+              "source": "function get secureConnectionStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "requestStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get requestStart",
+              "length": 0,
+              "source": "function get requestStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "responseStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get responseStart",
+              "length": 0,
+              "source": "function get responseStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "responseEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get responseEnd",
+              "length": 0,
+              "source": "function get responseEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "domLoading": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get domLoading",
+              "length": 0,
+              "source": "function get domLoading() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "domInteractive": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get domInteractive",
+              "length": 0,
+              "source": "function get domInteractive() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "domContentLoadedEventStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get domContentLoadedEventStart",
+              "length": 0,
+              "source": "function get domContentLoadedEventStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "domContentLoadedEventEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get domContentLoadedEventEnd",
+              "length": 0,
+              "source": "function get domContentLoadedEventEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "domComplete": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get domComplete",
+              "length": 0,
+              "source": "function get domComplete() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "loadEventStart": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get loadEventStart",
+              "length": 0,
+              "source": "function get loadEventStart() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "loadEventEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get loadEventEnd",
+              "length": 0,
+              "source": "function get loadEventEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "toJSON": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "toJSON",
+              "length": 0,
+              "source": "function toJSON() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "PerformanceTiming",
+              "length": 0,
+              "source": "function PerformanceTiming() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "PerformanceTiming"
+          }
+        }
+      },
+      "EventCounts": {
+        "constructor": {
+          "name": "EventCounts",
+          "length": 0,
+          "source": "function EventCounts() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "size",
+          "entries",
+          "forEach",
+          "get",
+          "has",
+          "keys",
+          "values",
+          "constructor",
+          "Symbol(Symbol.toStringTag)",
+          "Symbol(Symbol.iterator)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "size": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get size",
+              "length": 0,
+              "source": "function get size() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "entries": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "entries",
+              "length": 0,
+              "source": "function entries() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "forEach": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "forEach",
+              "length": 1,
+              "source": "function forEach() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "get": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "get",
+              "length": 1,
+              "source": "function get() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "has": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "has",
+              "length": 1,
+              "source": "function has() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "keys": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "keys",
+              "length": 0,
+              "source": "function keys() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "values": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "values",
+              "length": 0,
+              "source": "function values() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "EventCounts",
+              "length": 0,
+              "source": "function EventCounts() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "EventCounts"
+          },
+          "Symbol(Symbol.iterator)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "entries",
+              "length": 0,
+              "source": "function entries() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          }
+        }
+      },
+      "Scheduler": {
+        "constructor": {
+          "name": "Scheduler",
+          "length": 0,
+          "source": "function Scheduler() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "postTask",
+          "yield",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Object.prototype",
+        "members": {
+          "postTask": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "postTask",
+              "length": 1,
+              "source": "function postTask() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "yield": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "yield",
+              "length": 0,
+              "source": "function yield() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "Scheduler",
+              "length": 0,
+              "source": "function Scheduler() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "Scheduler"
+          }
+        }
+      },
+      "TaskController": {
+        "constructor": {
+          "name": "TaskController",
+          "length": 0,
+          "source": "function TaskController() { [native code] }",
+          "prototype": true,
+          "construct": "constructed"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "setPriority",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "AbortController",
+        "members": {
+          "setPriority": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "setPriority",
+              "length": 1,
+              "source": "function setPriority() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "TaskController",
+              "length": 0,
+              "source": "function TaskController() { [native code] }",
+              "prototype": true,
+              "construct": "constructed"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "TaskController"
+          }
+        }
+      },
+      "TaskSignal": {
+        "constructor": {
+          "name": "TaskSignal",
+          "length": 0,
+          "source": "function TaskSignal() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype",
+          "any"
+        ],
+        "staticMembers": {
+          "any": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "any",
+              "length": 1,
+              "source": "function any() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          }
+        },
+        "prototypeKeys": [
+          "priority",
+          "onprioritychange",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "AbortSignal",
+        "members": {
+          "priority": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get priority",
+              "length": 0,
+              "source": "function get priority() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "onprioritychange": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get onprioritychange",
+              "length": 0,
+              "source": "function get onprioritychange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "set onprioritychange",
+              "length": 1,
+              "source": "function set onprioritychange() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "TaskSignal",
+              "length": 0,
+              "source": "function TaskSignal() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "TaskSignal"
+          }
+        }
+      },
+      "TaskPriorityChangeEvent": {
+        "constructor": {
+          "name": "TaskPriorityChangeEvent",
+          "length": 2,
+          "source": "function TaskPriorityChangeEvent() { [native code] }",
+          "prototype": true,
+          "construct": "TypeError"
+        },
+        "constructorKeys": [
+          "length",
+          "name",
+          "prototype"
+        ],
+        "staticMembers": {},
+        "prototypeKeys": [
+          "previousPriority",
+          "constructor",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "parent": "Event",
+        "members": {
+          "previousPriority": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get previousPriority",
+              "length": 0,
+              "source": "function get previousPriority() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "constructor": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "TaskPriorityChangeEvent",
+              "length": 2,
+              "source": "function TaskPriorityChangeEvent() { [native code] }",
+              "prototype": true,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "TaskPriorityChangeEvent"
+          }
+        }
+      }
+    },
+    "subobjects": {
+      "memoryInfo": {
+        "instanceOwnKeys": [],
+        "instanceTag": "[object MemoryInfo]",
+        "protoParent": "Object.prototype",
+        "protoKeys": [
+          "totalJSHeapSize",
+          "usedJSHeapSize",
+          "jsHeapSizeLimit",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "protoMembers": {
+          "totalJSHeapSize": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get totalJSHeapSize",
+              "length": 0,
+              "source": "function get totalJSHeapSize() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "usedJSHeapSize": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get usedJSHeapSize",
+              "length": 0,
+              "source": "function get usedJSHeapSize() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "jsHeapSizeLimit": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "get jsHeapSizeLimit",
+              "length": 0,
+              "source": "function get jsHeapSizeLimit() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": null
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "MemoryInfo"
+          }
+        },
+        "sameAsSecondRead": false,
+        "consoleSameProto": true,
+        "consoleSameAsSecondRead": false
+      },
+      "performance": {
+        "tag": "[object Performance]",
+        "instancePerf": true,
+        "instanceET": true,
+        "ownKeys": [],
+        "timingSame": true,
+        "navigationSame": true,
+        "eventCountsSame": true,
+        "eventCountsKeys": [
+          "pointerdown",
+          "touchend",
+          "input",
+          "keydown",
+          "mouseleave",
+          "mouseenter",
+          "drop",
+          "beforeinput",
+          "pointerenter",
+          "dragend",
+          "pointercancel",
+          "compositionupdate",
+          "mousedown",
+          "dragleave",
+          "dragover",
+          "mouseup",
+          "pointerover",
+          "lostpointercapture",
+          "mouseover",
+          "gotpointercapture",
+          "dblclick",
+          "keyup",
+          "keypress",
+          "pointerup",
+          "compositionstart",
+          "auxclick",
+          "dragstart",
+          "touchstart",
+          "compositionend",
+          "pointerout",
+          "dragenter",
+          "touchcancel",
+          "click",
+          "contextmenu",
+          "mouseout",
+          "pointerleave"
+        ],
+        "interactionCount": 0,
+        "toJSONKeys": [
+          "timeOrigin",
+          "timing",
+          "navigation"
+        ],
+        "timingToJSONKeys": [
+          "connectStart",
+          "secureConnectionStart",
+          "unloadEventEnd",
+          "domainLookupStart",
+          "domainLookupEnd",
+          "responseStart",
+          "connectEnd",
+          "responseEnd",
+          "requestStart",
+          "domLoading",
+          "redirectStart",
+          "loadEventEnd",
+          "domComplete",
+          "navigationStart",
+          "loadEventStart",
+          "domContentLoadedEventEnd",
+          "unloadEventStart",
+          "redirectEnd",
+          "domInteractive",
+          "fetchStart",
+          "domContentLoadedEventStart"
+        ],
+        "navigationToJSON": {
+          "type": 0,
+          "redirectCount": 0
+        }
+      },
+      "console": {
+        "tag": "[object console]",
+        "protoIsObject": false,
+        "ownKeys": [
+          "debug",
+          "error",
+          "info",
+          "log",
+          "warn",
+          "dir",
+          "dirxml",
+          "table",
+          "trace",
+          "group",
+          "groupCollapsed",
+          "groupEnd",
+          "clear",
+          "count",
+          "countReset",
+          "assert",
+          "profile",
+          "profileEnd",
+          "time",
+          "timeLog",
+          "timeEnd",
+          "timeStamp",
+          "context",
+          "createTask",
+          "memory",
+          "Symbol(Symbol.toStringTag)"
+        ],
+        "members": {
+          "debug": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "debug",
+              "length": 0,
+              "source": "function debug() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "error": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "error",
+              "length": 0,
+              "source": "function error() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "info": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "info",
+              "length": 0,
+              "source": "function info() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "log": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "log",
+              "length": 0,
+              "source": "function log() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "warn": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "warn",
+              "length": 0,
+              "source": "function warn() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "dir": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "dir",
+              "length": 0,
+              "source": "function dir() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "dirxml": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "dirxml",
+              "length": 0,
+              "source": "function dirxml() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "table": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "table",
+              "length": 0,
+              "source": "function table() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "trace": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "trace",
+              "length": 0,
+              "source": "function trace() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "group": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "group",
+              "length": 0,
+              "source": "function group() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "groupCollapsed": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "groupCollapsed",
+              "length": 0,
+              "source": "function groupCollapsed() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "groupEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "groupEnd",
+              "length": 0,
+              "source": "function groupEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "clear": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "clear",
+              "length": 0,
+              "source": "function clear() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "count": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "count",
+              "length": 0,
+              "source": "function count() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "countReset": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "countReset",
+              "length": 0,
+              "source": "function countReset() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "assert": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "assert",
+              "length": 0,
+              "source": "function assert() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "profile": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "profile",
+              "length": 0,
+              "source": "function profile() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "profileEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "profileEnd",
+              "length": 0,
+              "source": "function profileEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "time": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "time",
+              "length": 0,
+              "source": "function time() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "timeLog": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "timeLog",
+              "length": 0,
+              "source": "function timeLog() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "timeEnd": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "timeEnd",
+              "length": 0,
+              "source": "function timeEnd() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "timeStamp": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "timeStamp",
+              "length": 0,
+              "source": "function timeStamp() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "context": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "context",
+              "length": 1,
+              "source": "function context() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "createTask": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "data",
+            "writable": true,
+            "value": {
+              "name": "createTask",
+              "length": 0,
+              "source": "function createTask() { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "memory": {
+            "enumerable": true,
+            "configurable": true,
+            "kind": "accessor",
+            "get": {
+              "name": "",
+              "length": 0,
+              "source": "function () { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            },
+            "set": {
+              "name": "",
+              "length": 1,
+              "source": "function () { [native code] }",
+              "prototype": false,
+              "construct": "TypeError"
+            }
+          },
+          "Symbol(Symbol.toStringTag)": {
+            "enumerable": false,
+            "configurable": true,
+            "kind": "data",
+            "writable": false,
+            "value": "console"
+          }
+        }
+      },
+      "scheduler": {
+        "tag": "[object Scheduler]",
+        "instanceSched": true,
+        "ownKeys": []
+      }
+    },
+    "behavior": {
+      "perfEvents": [
+        "when:resourcetimingbufferfull",
+        "handler:resourcetimingbufferfull"
+      ],
+      "constructedMark": {
+        "instanceMark": true,
+        "instanceEntry": true,
+        "name": "ctor-mark",
+        "entryType": "mark",
+        "startTime": 12,
+        "duration": 0,
+        "navIdType": "number",
+        "detail": {
+          "nested": 42
+        },
+        "toJSONKeys": [
+          "name",
+          "entryType",
+          "startTime",
+          "duration",
+          "navigationId"
+        ],
+        "inTimeline": 0
+      },
+      "markNegStart": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'PerformanceMark': 'neg' cannot have a negative start time.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "entryConstruct": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'PerformanceEntry': Illegal constructor",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "measureConstruct": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'PerformanceMeasure': Illegal constructor",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "timelineEntries": {
+        "markInTimeline": 1,
+        "markStart": 5,
+        "markDetail": "payload",
+        "measInstance": true,
+        "measStart": 2,
+        "measDuration": 7,
+        "measDetail": {
+          "ok": true
+        }
+      },
+      "measureAllThree": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'measure' on 'Performance': If a non-empty PerformanceMeasureOptions object was passed, it must not have all of its 'start', 'duration', and 'end' properties defined",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "measureMissingMark": {
+        "ok": false,
+        "error": {
+          "name": "SyntaxError",
+          "message": "Failed to execute 'measure' on 'Performance': The mark 'does-not-exist' does not exist.",
+          "code": 12,
+          "tag": "[object DOMException]",
+          "domException": true
+        }
+      },
+      "consoleMemAfterAssign": "[object MemoryInfo]",
+      "consoleTaskNoArg": {
+        "ok": false,
+        "error": {
+          "name": "Error",
+          "message": "First argument must be a non-empty string.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "consoleTaskEmpty": {
+        "ok": false,
+        "error": {
+          "name": "Error",
+          "message": "First argument must be a non-empty string.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "consoleTaskRun": 42,
+      "consoleTaskExtraArgs": [
+        "undefined",
+        "undefined"
+      ],
+      "consoleTaskBadFn": {
+        "ok": false,
+        "error": {
+          "name": "Error",
+          "message": "First argument must be a function.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "consoleContextKeys": [
+        "dir",
+        "dirxml",
+        "table",
+        "groupEnd",
+        "clear",
+        "count",
+        "countReset",
+        "profile",
+        "profileEnd",
+        "debug",
+        "error",
+        "info",
+        "log",
+        "warn",
+        "trace",
+        "group",
+        "groupCollapsed",
+        "time",
+        "timeLog",
+        "timeEnd",
+        "timeStamp",
+        "assert"
+      ],
+      "postTaskOk": {
+        "ok": true,
+        "value": "done"
+      },
+      "postTaskMissing": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'postTask' on 'Scheduler': 1 argument required, but only 0 present.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "postTaskBadCb": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'postTask' on 'Scheduler': parameter 1 is not of type 'Function'.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "postTaskNegDelay": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'postTask' on 'Scheduler': Failed to read the 'delay' property from 'SchedulerPostTaskOptions': Value is outside the 'unsigned long long' value range.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "postTaskBadPrio": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to execute 'postTask' on 'Scheduler': Failed to read the 'priority' property from 'SchedulerPostTaskOptions': The provided value 'invalid' is not a valid enum value of type TaskPriority.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "postTaskPreAborted": {
+        "ok": false,
+        "error": {
+          "thrown": "string",
+          "value": "stopped"
+        }
+      },
+      "yieldOk": {
+        "ok": true,
+        "value": "undefined"
+      },
+      "taskControl": {
+        "tcIsAbortController": true,
+        "sigIsAbortSignal": true,
+        "prioChanges": [
+          {
+            "isTPCE": true,
+            "prev": "background",
+            "curr": "user-blocking"
+          }
+        ],
+        "derivedBefore": "background",
+        "derivedAfter": "user-blocking",
+        "derivedAborted": true,
+        "derivedReason": "tc-stop"
+      },
+      "tpceMissing": {
+        "ok": false,
+        "error": {
+          "name": "TypeError",
+          "message": "Failed to construct 'TaskPriorityChangeEvent': 2 arguments required, but only 1 present.",
+          "tag": "[object Error]",
+          "domException": false
+        }
+      },
+      "tpceConstruct": {
+        "ok": true,
+        "value": {
+          "type": "prioritychange",
+          "prev": "user-visible",
+          "bubbles": false
+        }
+      }
+    }
+  }
+}

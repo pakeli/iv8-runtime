@@ -239,18 +239,18 @@ def test_native_callbacks_have_summaries_and_probes_do_not():
     with iv8.Page() as page:
         _load(page)
         page.start_access_trace()
-        page.eval("performance.now(); navigator.notThere;", name="probe.js")
+        page.eval("performance.now; performance.now(); navigator.notThere;", name="probe.js")
         events = _events(page)
         assert [(event["object_type"], event["member"], event["operation"])
                 for event in events] == [
             ("window", "performance", "get"),
-            ("performance", "now", "get"),
+            ("performance", "now", "get_method"),
+            ("window", "performance", "get"),
             ("performance", "now", "call"),
             ("window", "navigator", "get"),
             ("navigator", "notThere", "get_probe"),
         ]
-        method_reference, performance, probe = events[1], events[2], events[4]
-        assert method_reference["value_summary"] == "function"
+        method_reference, performance, probe = events[1], events[3], events[5]
         assert method_reference["object_id"] == performance["object_id"]
         assert performance["outcome"] == "returned"
         assert performance["argument_count"] == 0

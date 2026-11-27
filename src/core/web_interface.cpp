@@ -46,11 +46,16 @@ std::string_view parent_interface(std::string_view name) {
         {"ServiceWorker", "EventTarget"}, {"ServiceWorkerRegistration", "EventTarget"},
         {"NavigatorManagedData", "EventTarget"}, {"DevicePosture", "EventTarget"},
         {"VirtualKeyboard", "EventTarget"}, {"WindowControlsOverlay", "EventTarget"},
-        {"AbortSignal", "EventTarget"},
+        {"AbortSignal", "EventTarget"}, {"TaskSignal", "AbortSignal"},
+        {"TaskController", "AbortController"},
+        {"Performance", "EventTarget"},
+        {"PerformanceMark", "PerformanceEntry"},
+        {"PerformanceMeasure", "PerformanceEntry"},
         {"XMLHttpRequestEventTarget", "EventTarget"},
         {"XMLHttpRequest", "XMLHttpRequestEventTarget"},
         {"XMLHttpRequestUpload", "XMLHttpRequestEventTarget"}, {"Worker", "EventTarget"},
         {"UIEvent", "Event"}, {"CustomEvent", "Event"}, {"MessageEvent", "Event"},
+        {"TaskPriorityChangeEvent", "Event"},
         {"MouseEvent", "UIEvent"}, {"KeyboardEvent", "UIEvent"}, {"FocusEvent", "UIEvent"},
     };
     const auto found = parents.find(name);
@@ -79,7 +84,8 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
         name == "ClipboardItem" || name == "MediaMetadata" ||
         name == "PresentationRequest" || name == "DOMRect" ||
         name == "DOMRectReadOnly" || name == "Observable" ||
-        name == "AbortController";
+        name == "AbortController" || name == "PerformanceMark" ||
+        name == "TaskController" || name == "TaskPriorityChangeEvent";
     if (!info.IsConstructCall()) {
         const auto message = constructible
             ? "Failed to construct '" + name + "': Please use the 'new' operator, this DOM object constructor cannot be called as a function."
@@ -108,7 +114,8 @@ void interface_constructor(const v8::FunctionCallbackInfo<v8::Value>& info) {
         name == "ClipboardItem" || name == "MediaMetadata" ||
         name == "PresentationRequest" || name == "DOMRect" ||
         name == "DOMRectReadOnly" || name == "Observable" ||
-        name == "AbortController") {
+        name == "AbortController" || name == "PerformanceMark" ||
+        name == "TaskController" || name == "TaskPriorityChangeEvent") {
         // V8 has already obtained NewTarget.prototype when allocating This.
         // Reuse it without executing a Proxy's prototype getter a second time.
         if (result->IsObject() && !result.As<v8::Object>()->SetPrototype(
@@ -245,6 +252,23 @@ std::string web_member_interface(const std::string& name,
             return "MediaDeviceInfo";
         }
     }
+    if (web_interface_inherits(name, "PerformanceEntry")) {
+        if ((method && member == "toJSON") ||
+            (!method && member_in(member, {"name", "entryType", "startTime", "duration", "navigationId"}))) {
+            return "PerformanceEntry";
+        }
+    }
+    if (web_interface_inherits(name, "AbortController")) {
+        if ((method && member == "abort") || (!method && member == "signal")) {
+            return "AbortController";
+        }
+    }
+    if (web_interface_inherits(name, "AbortSignal")) {
+        if ((method && member == "throwIfAborted") ||
+            (!method && member_in(member, {"aborted", "reason", "onabort"}))) {
+            return "AbortSignal";
+        }
+    }
     return name;
 }
 
@@ -270,9 +294,10 @@ v8::Local<v8::Object> web_interface_prototype(
     if (name == "WindowProperties" || name == "StyleMedia" ||
         name == "DeprecatedStorageQuota") return prototype;
     v8::Local<v8::Function> constructor;
-    const int length = name == "Worker" || name == "DOMError" ||
-        name == "ClipboardItem" || name == "PresentationRequest" ||
-        name == "Observable" ? 1 : 0;
+    const int length = name == "TaskPriorityChangeEvent" ? 2 :
+        (name == "Worker" || name == "DOMError" ||
+         name == "ClipboardItem" || name == "PresentationRequest" ||
+         name == "Observable" || name == "PerformanceMark" ? 1 : 0);
     if (!v8::Function::New(context, &interface_constructor, string(isolate, name), length)
             .ToLocal(&constructor)) return {};
     constructor->SetName(string(isolate, name));

@@ -119,7 +119,15 @@ def test_performance_methods_are_read_only_and_watchable():
     with iv8.Page() as page:
         _load(page)
         assert page.eval(
-            "performance.mark = 1; typeof performance.mark") == "function"
+            """
+            (() => {
+              const desc = Object.getOwnPropertyDescriptor(Performance.prototype, 'mark');
+              return !Object.hasOwn(performance, 'mark') &&
+                     typeof desc.value === 'function' &&
+                     desc.writable && desc.enumerable && desc.configurable;
+            })()
+            """
+        ) is True
         page.watch_apis(["performance.mark", "performance.measure"])
         page.eval("performance.mark('x'); performance.measure('y');")
         hits = page.read_watch_api_hits()
@@ -332,10 +340,15 @@ def test_scheduler_delay_and_rejection():
 def test_scheduler_rejects_invalid_arguments():
     with iv8.Page() as page:
         _load(page)
-        with pytest.raises(iv8.JSError) as info:
-            page.eval("scheduler.postTask(1)")
-        assert info.value.name == "TypeError"
-        with pytest.raises(iv8.JSError) as info:
-            page.eval("scheduler.postTask(() => 1, {delay: -1})")
-        assert info.value.name == "TypeError"
+        page.eval(
+            """
+            globalThis.badCbErr = null;
+            globalThis.badDelayErr = null;
+            scheduler.postTask(1).catch(e => { badCbErr = e.name; });
+            scheduler.postTask(() => 1, {delay: -1}).catch(e => { badDelayErr = e.name; });
+            """
+        )
+        page.run_jobs()
+        assert page.eval("badCbErr") == "TypeError"
+        assert page.eval("badDelayErr") == "TypeError"
         assert page.eval("typeof scheduler.postTask") == "function"

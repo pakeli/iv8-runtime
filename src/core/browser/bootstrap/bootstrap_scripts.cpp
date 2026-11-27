@@ -9,60 +9,6 @@
 
 namespace iv8::browser {
 
-// --- M11-40 scheduler.postTask ------------------------------------------------
-//
-// A small Promise-based wrapper over the existing timer queue. There is no
-// priority queue, AbortSignal, or automatic loop: the task runs on the next
-// run_timers()/facade turn, and the Promise settles through the normal
-// microtask checkpoint.
-constexpr char kSchedulerBootstrap[] = R"JS(
-(function () {
-  'use strict';
-  var beginCall = globalThis.__iv8HostCallBegin;
-  var endCall = globalThis.__iv8HostCallEnd;
-  var withUser = globalThis.__iv8HostUserOperation;
-  delete globalThis.__iv8HostCallBegin;
-  delete globalThis.__iv8HostCallEnd;
-  delete globalThis.__iv8HostUserOperation;
-  function postTask(callback, options) {
-    var callToken = beginCall('scheduler.postTask', arguments);
-    var callResult, callError, callThrew = false;
-    try {
-    if (typeof callback !== 'function') {
-      throw new TypeError('scheduler.postTask: callback must be a function');
-    }
-    options = options || {};
-    var delay = 0;
-    if (withUser(() => options.delay) !== undefined) {
-      delay = withUser(() => Number(options.delay));
-      if (!isFinite(delay) || delay < 0) {
-        throw new TypeError(
-          'scheduler.postTask: delay must be a non-negative finite number');
-      }
-    }
-    return callResult = new Promise(function (resolve, reject) {
-      setTimeout(function () {
-        try {
-          resolve(withUser(() => callback()));
-        } catch (error) {
-          reject(error);
-        }
-      }, delay);
-    });
-    } catch (error) {
-      callThrew = true; callError = error; throw error;
-    } finally {
-      endCall(callToken, callThrew ? callError : callResult, callThrew);
-    }
-  }
-  var scheduler = Object.create(null);
-  Object.defineProperty(scheduler, 'postTask', {
-    value: postTask, writable: false, enumerable: true, configurable: true
-  });
-  return scheduler;
-})();
-)JS";
-
 // --- M11-41..M11-45 BOM metadata / device stubs ------------------------------
 //
 // The remaining deterministic BOM surfaces that need no layout, network, OS

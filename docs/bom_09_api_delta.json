@@ -1,0 +1,58 @@
+{
+  "milestone": "BOM-09",
+  "date": "2026-11-27",
+  "reference_browser": "Google Chrome 158.0.8127.88",
+  "objects_completed": {
+    "performance": {
+      "before": 9,
+      "after": 22,
+      "reference": 22,
+      "added": [
+        "addEventListener",
+        "clearResourceTimings",
+        "dispatchEvent",
+        "eventCounts",
+        "interactionCount",
+        "memory",
+        "navigation",
+        "onresourcetimingbufferfull",
+        "removeEventListener",
+        "setResourceTimingBufferSize",
+        "timing",
+        "toJSON",
+        "when"
+      ]
+    },
+    "console": {
+      "before": 22,
+      "after": 25,
+      "reference": 25,
+      "added": [
+        "context",
+        "createTask",
+        "memory"
+      ]
+    },
+    "scheduler": {
+      "before": 1,
+      "after": 2,
+      "reference": 2,
+      "added": [
+        "yield"
+      ]
+    }
+  },
+  "global_interfaces_added": [
+    "Performance",
+    "PerformanceEntry",
+    "PerformanceMark",
+    "PerformanceMeasure",
+    "PerformanceNavigation",
+    "PerformanceTiming",
+    "EventCounts",
+    "Scheduler",
+    "TaskController",
+    "TaskSignal",
+    "TaskPriorityChangeEvent"
+  ]
+}

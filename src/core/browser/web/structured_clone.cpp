@@ -21,7 +21,8 @@ namespace iv8::browser {
 // DOMException DataCloneError). Transfer lists are not supported.
 v8::MaybeLocal<v8::Value> structured_clone_value(
     v8::Isolate* isolate, v8::Local<v8::Context> context,
-    v8::Local<v8::Value> value, v8::Local<v8::Map> seen, int depth) {
+    v8::Local<v8::Value> value, v8::Local<v8::Map> seen, int depth,
+    bool* out_data_clone_error) {
     if (depth > 512) {
         isolate->ThrowException(v8::Exception::RangeError(
             v8::String::NewFromUtf8Literal(
@@ -32,6 +33,7 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
         value->IsFunction() || value->IsPromise() || value->IsWeakMap() ||
         value->IsWeakSet() || value->IsRegExp() || value->IsNativeError() ||
         value->IsSharedArrayBuffer() || value->IsProxy()) {
+        if (out_data_clone_error != nullptr) *out_data_clone_error = true;
         isolate->ThrowException(v8::Exception::TypeError(
             v8::String::NewFromUtf8Literal(
                 isolate, "structuredClone: value cannot be cloned")));
@@ -41,12 +43,14 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
         return value;  // primitives (including BigInt) are returned as-is
     }
     if (value->SameValue(context->Global())) {
+        if (out_data_clone_error != nullptr) *out_data_clone_error = true;
         isolate->ThrowException(v8::Exception::TypeError(
             v8::String::NewFromUtf8Literal(
                 isolate, "structuredClone: the global object cannot be cloned")));
         return {};
     }
     if (host_object_backing(value) != nullptr) {
+        if (out_data_clone_error != nullptr) *out_data_clone_error = true;
         isolate->ThrowException(v8::Exception::TypeError(
             v8::String::NewFromUtf8Literal(
                 isolate, "structuredClone: host objects cannot be cloned")));
@@ -115,6 +119,7 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
     if (value->IsArrayBuffer()) {
         v8::Local<v8::ArrayBuffer> source = value.As<v8::ArrayBuffer>();
         if (source->WasDetached()) {
+            if (out_data_clone_error != nullptr) *out_data_clone_error = true;
             isolate->ThrowException(v8::Exception::TypeError(
                 v8::String::NewFromUtf8Literal(
                     isolate, "structuredClone: detached buffer")));
@@ -137,7 +142,7 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
         // the original byte offset/length of the view.
         v8::Local<v8::Value> buffer_value;
         if (!structured_clone_value(isolate, context, view->Buffer(), seen,
-                                    depth + 1)
+                                    depth + 1, out_data_clone_error)
                  .ToLocal(&buffer_value)) {
             return {};
         }
@@ -175,6 +180,7 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
             } else if (value->IsBigUint64Array()) {
                 clone = v8::BigUint64Array::New(buffer, byte_offset, count);
             } else {
+                if (out_data_clone_error != nullptr) *out_data_clone_error = true;
                 isolate->ThrowException(v8::Exception::TypeError(
                     v8::String::NewFromUtf8Literal(
                         isolate, "structuredClone: unsupported typed array")));
@@ -202,9 +208,11 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
             }
             v8::Local<v8::Value> key_clone;
             v8::Local<v8::Value> item_clone;
-            if (!structured_clone_value(isolate, context, key, seen, depth + 1)
+            if (!structured_clone_value(isolate, context, key, seen, depth + 1,
+                                        out_data_clone_error)
                      .ToLocal(&key_clone) ||
-                !structured_clone_value(isolate, context, item, seen, depth + 1)
+                !structured_clone_value(isolate, context, item, seen, depth + 1,
+                                        out_data_clone_error)
                      .ToLocal(&item_clone)) {
                 return {};
             }
@@ -227,7 +235,8 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
                 return {};
             }
             v8::Local<v8::Value> item_clone;
-            if (!structured_clone_value(isolate, context, item, seen, depth + 1)
+            if (!structured_clone_value(isolate, context, item, seen, depth + 1,
+                                        out_data_clone_error)
                      .ToLocal(&item_clone)) {
                 return {};
             }
@@ -265,7 +274,8 @@ v8::MaybeLocal<v8::Value> structured_clone_value(
             return {};
         }
         v8::Local<v8::Value> item_clone;
-        if (!structured_clone_value(isolate, context, item, seen, depth + 1)
+        if (!structured_clone_value(isolate, context, item, seen, depth + 1,
+                                    out_data_clone_error)
                  .ToLocal(&item_clone)) {
             return {};
         }

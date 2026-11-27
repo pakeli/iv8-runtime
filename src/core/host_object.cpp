@@ -736,9 +736,13 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 (key == "every" || key == "find" || key == "first" ||
                  key == "forEach" || key == "last" || key == "reduce" ||
                  key == "some" || key == "toArray");
+            const bool bom09_promise =
+                interface_name == "Scheduler" &&
+                (key == "postTask" || key == "yield");
             if ((interface_name == "ScreenOrientation" && key == "lock") ||
                 navigator_promise || eme_promise || bom05_promise ||
-                bom06_promise || bom07_promise || bom08_promise) {
+                bom06_promise || bom07_promise || bom08_promise ||
+                bom09_promise) {
                 std::string watch_owner = interface_name;
                 if (navigator_promise) watch_owner = "navigator";
                 else if (interface_name == "ScreenOrientation") watch_owner = "screen.orientation";
@@ -760,6 +764,7 @@ void method_callback(const v8::FunctionCallbackInfo<v8::Value>& info) {
                 else if (interface_name == "NavigatorLogin") watch_owner = "navigator.login";
                 else if (interface_name == "NavigatorManagedData") watch_owner = "navigator.managed";
                 else if (interface_name == "Ink") watch_owner = "navigator.ink";
+                else if (interface_name == "Scheduler") watch_owner = "scheduler";
                 browser::watch_record(isolate, watch_owner, key);
                 v8::Local<v8::Promise::Resolver> resolver;
                 if (!v8::Promise::Resolver::New(context).ToLocal(&resolver) ||
@@ -1013,7 +1018,8 @@ void install_host_interface(v8::Isolate* isolate, v8::Local<v8::Context> context
         auto data = member_data(isolate, context, member, interface, owner);
         v8::Local<v8::Function> function;
         if (data.IsEmpty() || !make_web_method(isolate, context, member,
-                web_method_length(host->trace_object_type(), member), &method_callback, data)
+                web_method_length(!interface.empty() ? interface : host->trace_object_type(), member),
+                &method_callback, data)
                 .ToLocal(&function)) return;
         (void)prototype->SetPrivate(context, registered, function);
         if (name != "Location") {
@@ -1058,27 +1064,31 @@ v8::Local<v8::Object> make_host_object(v8::Isolate* isolate,
         return std::find(writable.begin(), writable.end(), name) != writable.end();
     };
     const bool idl = !host->prototype_key().empty();
-    for (const std::string& property : host->property_names()) {
-        if (idl) continue;
-        if (is_writable(property)) {
+    if (!idl) {
+        // V8 ObjectTemplate::SetNativeDataProperty prepends template properties,
+        // so reverse registration yields forward own-key order on NewInstance.
+        const std::vector<std::string> methods = host->method_names();
+        for (auto it = methods.rbegin(); it != methods.rend(); ++it) {
+            v8::Local<v8::String> mname = v8str(isolate, *it);
+            v8::Local<v8::Private> slot = v8::Private::New(isolate, mname);
             tmpl->SetNativeDataProperty(
-                v8str(isolate, property), &property_getter, &property_setter,
-                v8::Local<v8::Value>(), v8::DontDelete);
-        } else {
-            tmpl->SetNativeDataProperty(
-                v8str(isolate, property), &property_getter, nullptr,
-                v8::Local<v8::Value>(),
-                static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+                mname, &method_getter, &method_setter,
+                v8::Local<v8::Value>::Cast(slot),
+                v8::PropertyAttribute::None);
         }
-    }
-    for (const std::string& method : host->method_names()) {
-        if (idl) continue;
-        v8::Local<v8::String> mname = v8str(isolate, method);
-        v8::Local<v8::Private> slot = v8::Private::New(isolate, mname);
-        tmpl->SetNativeDataProperty(
-            mname, &method_getter, &method_setter,
-            v8::Local<v8::Value>::Cast(slot),
-            v8::PropertyAttribute::None);
+        const std::vector<std::string> properties = host->property_names();
+        for (auto it = properties.rbegin(); it != properties.rend(); ++it) {
+            if (is_writable(*it)) {
+                tmpl->SetNativeDataProperty(
+                    v8str(isolate, *it), &property_getter, &property_setter,
+                    v8::Local<v8::Value>(), v8::DontDelete);
+            } else {
+                tmpl->SetNativeDataProperty(
+                    v8str(isolate, *it), &property_getter, nullptr,
+                    v8::Local<v8::Value>(),
+                    static_cast<v8::PropertyAttribute>(v8::ReadOnly | v8::DontDelete));
+            }
+        }
     }
 
     v8::Local<v8::Object> object = tmpl->NewInstance(context).ToLocalChecked();

@@ -20,7 +20,10 @@ namespace iv8 {
 
 namespace browser {
 
-extern v8::MaybeLocal<v8::Value> structured_clone_value(v8::Isolate* isolate, v8::Local<v8::Context> context, v8::Local<v8::Value> value, v8::Local<v8::Map> seen, int depth);
+extern v8::MaybeLocal<v8::Value> structured_clone_value(
+    v8::Isolate* isolate, v8::Local<v8::Context> context,
+    v8::Local<v8::Value> value, v8::Local<v8::Map> seen, int depth,
+    bool* out_data_clone_error = nullptr);
 
 extern void structured_clone_callback(const v8::FunctionCallbackInfo<v8::Value>& info);
 

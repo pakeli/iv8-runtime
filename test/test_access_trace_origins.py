@@ -310,19 +310,18 @@ def test_bound_native_inherited_field_setter_remains_visible(page, constructor, 
 
 
 def test_bound_native_scheduler_option_getter_preserves_original_read_count(page):
-    page.eval("""globalThis.originCall=scheduler.postTask;globalThis.originOptions={};
+    page.eval("""globalThis.originCall=scheduler.postTask.bind(scheduler);globalThis.originOptions={};
         Object.defineProperty(originOptions,'delay',{get:performance.now.bind(performance)});""")
-    page.start_access_trace(max_events=3)
+    page.start_access_trace(max_events=2)
     page.eval("originCall(()=>7,originOptions)")
-    assert event_keys(retained_events(page, 3)) == [
-        ("scheduler", "postTask", "call"), ("performance", "now", "call"),
-        ("performance", "now", "call")]
+    assert event_keys(retained_events(page, 2)) == [
+        ("scheduler", "postTask", "call"), ("performance", "now", "call")]
 
 
 def test_filtered_script_bridge_restores_user_origin_after_throw(page):
-    page.eval("globalThis.originCall=scheduler.postTask;globalThis.originNavigator=navigator")
+    page.eval("globalThis.originCall=postMessage;globalThis.originNavigator=navigator")
     page.start_access_trace(max_events=1, object_types=["navigator"])
-    assert page.eval("try{originCall(1)}catch(error){} originNavigator.hardwareConcurrency") == 8
+    assert page.eval("try{originCall()}catch(error){} originNavigator.hardwareConcurrency") == 8
     events = retained_events(page, 1)
     assert event_keys(events) == [("navigator", "hardwareConcurrency", "get")]
     assert events[0]["outcome"] == "returned"

@@ -16,7 +16,7 @@ HTML = '<html><head></head><body><div id="d" style="color: red; width: 20px !imp
 def page():
     with iv8.Page() as value:
         value.load(HTML, BASE)
-        value.eval("globalThis.postAlias=postMessage;globalThis.taskAlias=scheduler.postTask;globalThis.mediaAlias=matchMedia")
+        value.eval("globalThis.postAlias=postMessage;globalThis.taskAlias=scheduler.postTask.bind(scheduler);globalThis.mediaAlias=matchMedia")
         yield value
 
 
@@ -103,21 +103,26 @@ def test_scheduler_sync_errors_keep_undefined_and_error_identity(page, kind):
     begin(page, "scheduler.postTask")
     if kind in {"callback", "delay"}:
         expression = "taskAlias(1)" if kind == "callback" else "taskAlias(()=>7,{delay:-1})"
-        with pytest.raises(iv8.JSError) as error:
-            page.eval(expression, name="script-api.js")
-        assert error.value.name == "TypeError"
+        assert page.eval("""(() => {
+            const p = """ + expression + """;
+            p.catch(e => { globalThis.schedRejectedName = e && e.name; });
+            return p instanceof Promise;
+        })()""", name="script-api.js")
+        page.run_jobs()
+        assert page.eval("schedRejectedName") == "TypeError"
     else:
         thrown = "undefined" if kind == "undefined" else "Error('original scheduler error')"
         assert page.eval("""(() => {
-            const original=""" + thrown + """;let reads=0,caught=false;
-            try{taskAlias(()=>7,{get delay(){reads++;throw original;}});}
-            catch(error){caught=error===original;}
-            return caught && reads===1;
+            const original=""" + thrown + """;let reads=0;
+            globalThis.schedSameIdentity = false;
+            const p = taskAlias(()=>7,{get delay(){reads++;throw original;}});
+            p.catch(error=>{globalThis.schedSameIdentity = (error===original);});
+            return p instanceof Promise && reads===1;
         })()""", name="script-api.js")
+        page.run_jobs()
+        assert page.eval("schedSameIdentity") is True
     record, = records(page, "scheduler", "postTask")
-    assert record["outcome"] == "threw" and "return_summary" not in record
-    if kind == "undefined":
-        assert record["value_summary"] == "undefined"
+    assert record["outcome"] == "returned" and record["return_summary"] == "object"
     assert watch_paths(page) == ["scheduler.postTask"]
 
 
@@ -245,7 +250,7 @@ def test_style_constructor_and_defining_prototype_method_references_are_visible(
 @pytest.mark.parametrize("kind", ["object", "proxy", "error_getters", "prepare_stack"])
 def test_thrown_value_metadata_does_not_inspect_application_values(page, kind):
     for tracing in [False, True]:
-        page.watch_apis(["scheduler.postTask"])
+        page.watch_apis(["window.matchMedia", "scheduler.postTask"])
         if tracing:
             page.start_access_trace()
         else:
@@ -266,15 +271,25 @@ def test_thrown_value_metadata_does_not_inspect_application_values(page, kind):
                 else Error.prepareStackTrace=()=>{touched++;return 'unsafe';};
             }
             let caught=false;
-            try{taskAlias(()=>{}, {get delay(){throw original;}});}catch(error){caught=error===original;}
-            finally{Error.prepareStackTrace=saved;}
+            globalThis.rejectedSame=false;
+            try{
+                mediaAlias({toString(){throw original;}});
+            }catch(error){caught=error===original;}
+            finally{
+                taskAlias(()=>{}, {get delay(){throw original;}}).catch(err=>{globalThis.rejectedSame=(err===original);});
+                Error.prepareStackTrace=saved;
+            }
             return caught && touched===0;
         })()""", name="script-api.js")
-        assert watch_paths(page) == ["scheduler.postTask"]
+        page.run_jobs()
+        assert page.eval("rejectedSame") is True
+        assert watch_paths(page) == ["window.matchMedia", "scheduler.postTask"]
         if tracing:
-            record, = records(page, "scheduler", "postTask")
+            record, = records(page, "window", "matchMedia")
             assert record["outcome"] == "threw" and record["value_summary"] == "object"
             assert "return_summary" not in record
+            task_record, = records(page, "scheduler", "postTask")
+            assert task_record["outcome"] == "returned" and task_record["return_summary"] == "object"
 
 
 def test_script_api_shapes_identities_and_conversion_behavior_do_not_change_on_toggle(page):
@@ -285,11 +300,11 @@ def test_script_api_shapes_identities_and_conversion_behavior_do_not_change_on_t
         const functions=[postMessage,scheduler.postTask,matchMedia,navigator.sendBeacon,navigator.getBattery,style.setProperty];
         const shapes=functions.map(fn=>({name:fn.name,length:fn.length,source:Function.prototype.toString.call(fn),
             ownPrototype:Object.hasOwn(fn,'prototype'),prototype:Object.getPrototypeOf(fn)===Function.prototype}));
-        const task=Object.getOwnPropertyDescriptor(scheduler,'postTask');
+        const task=Object.getOwnPropertyDescriptor(Scheduler.prototype,'postTask');
         return {shapes,task:{data:'value'in task,writable:task.writable,enumerable:task.enumerable,configurable:task.configurable}};
     })())"""
     before = json.loads(page.eval(snapshot))
-    assert before["task"] == {"data": True, "writable": False, "enumerable": True, "configurable": False}
+    assert before["task"] == {"data": True, "writable": True, "enumerable": True, "configurable": True}
     begin(page, "window.postMessage", "scheduler.postTask", "window.matchMedia", "navigator.sendBeacon")
     assert json.loads(page.eval(snapshot)) == before
     assert page.eval("""[postMessage,scheduler.postTask,matchMedia,navigator.sendBeacon,navigator.getBattery]

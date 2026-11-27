@@ -147,13 +147,15 @@ void ContextState::with_scope(
 
 std::int64_t ContextState::register_timer(v8::Local<v8::Function> callback,
                                           std::int32_t delay, bool repeating,
-                                          bool user_cancelable) {
+                                          bool user_cancelable,
+                                          int priority_rank) {
     const std::int64_t id = next_timer_id_++;
     TimerEntry entry;
     entry.callback.Reset(isolate_host_->isolate(), callback);
     entry.delay = delay < 0 ? 0 : delay;
     entry.repeating = repeating;
     entry.user_cancelable = user_cancelable;
+    entry.priority_rank = priority_rank;
     entry.seq = next_timer_seq_++;
     // M11-29: due time for the deterministic event-loop facade. The legacy
     // run_timers() path keeps ignoring this field.
@@ -171,6 +173,22 @@ void ContextState::clear_timer(std::int64_t id) {
     }
 }
 
+void ContextState::clear_internal_timer(std::int64_t id) {
+    auto it = timers_.find(id);
+    if (it != timers_.end()) {
+        it->second.callback.Reset();
+        timers_.erase(it);
+    }
+}
+
+void ContextState::update_internal_timer_priority(std::int64_t id,
+                                                  int priority_rank) {
+    auto it = timers_.find(id);
+    if (it != timers_.end()) {
+        it->second.priority_rank = priority_rank;
+    }
+}
+
 void ContextState::run_timers() {
     OperationScope guard(*this);
     v8::Isolate* isolate = isolate_host_->isolate();
@@ -180,8 +198,8 @@ void ContextState::run_timers() {
     v8::Local<v8::Context> context = context_.Get(isolate);
     v8::Context::Scope context_scope(context);
 
-    // Snapshot the currently-scheduled timers, ordered by (delay, seq). Timers
-    // scheduled by a callback during this pump are NOT in the snapshot, so they
+    // Snapshot the currently-scheduled timers, ordered by (delay, priority_rank, seq).
+    // Timers scheduled by a callback during this pump are NOT in the snapshot, so they
     // fire on the next pump (bounded, loop-safe).
     std::vector<std::int64_t> order;
     order.reserve(timers_.size());
@@ -194,6 +212,9 @@ void ContextState::run_timers() {
                   const TimerEntry& tb = timers_.at(b);
                   if (ta.delay != tb.delay) {
                       return ta.delay < tb.delay;
+                  }
+                  if (ta.priority_rank != tb.priority_rank) {
+                      return ta.priority_rank < tb.priority_rank;
                   }
                   return ta.seq < tb.seq;
               });
@@ -226,6 +247,7 @@ std::int64_t ContextState::next_timer_due(std::int64_t limit,
                                           bool bounded) const {
     std::int64_t best_id = -1;
     std::int64_t best_due = 0;
+    int best_prio = 0;
     std::uint64_t best_seq = 0;
     for (const auto& entry : timers_) {
         if (bounded && entry.second.due_ms > limit) {
@@ -233,8 +255,34 @@ std::int64_t ContextState::next_timer_due(std::int64_t limit,
         }
         if (best_id < 0 || entry.second.due_ms < best_due ||
             (entry.second.due_ms == best_due &&
-             entry.second.seq < best_seq)) {
+             (entry.second.priority_rank < best_prio ||
+              (entry.second.priority_rank == best_prio &&
+               entry.second.seq < best_seq)))) {
             best_id = entry.first;
+            best_due = entry.second.due_ms;
+            best_prio = entry.second.priority_rank;
+            best_seq = entry.second.seq;
+        }
+    }
+    return best_id;
+}
+
+std::int64_t ContextState::next_runnable_timer() const {
+    std::int64_t best_id = -1;
+    int best_prio = 0;
+    std::int64_t best_due = 0;
+    std::uint64_t best_seq = 0;
+    for (const auto& entry : timers_) {
+        if (entry.second.due_ms > virtual_now_ms_) {
+            continue;
+        }
+        if (best_id < 0 || entry.second.priority_rank < best_prio ||
+            (entry.second.priority_rank == best_prio &&
+             (entry.second.due_ms < best_due ||
+              (entry.second.due_ms == best_due &&
+               entry.second.seq < best_seq)))) {
+            best_id = entry.first;
+            best_prio = entry.second.priority_rank;
             best_due = entry.second.due_ms;
             best_seq = entry.second.seq;
         }
@@ -289,7 +337,7 @@ bool ContextState::tick() {
     v8::Context::Scope context_scope(context);
 
     drain_microtasks_locked(isolate);
-    const std::int64_t timer = next_timer_due(virtual_now_ms_, true);
+    const std::int64_t timer = next_runnable_timer();
     const std::int64_t frame = next_frame_due();
     const bool frame_due = frame >= 0 && frame <= virtual_now_ms_;
     if (timer >= 0 || frame_due) {
@@ -327,7 +375,7 @@ bool ContextState::advance(std::int64_t ms, std::uint32_t max_steps) {
 
     std::uint32_t steps = 0;
     while (steps < max_steps) {
-        const std::int64_t timer = next_timer_due(virtual_now_ms_, true);
+        const std::int64_t timer = next_runnable_timer();
         const std::int64_t frame = next_frame_due();
         const bool frame_due = frame >= 0 && frame <= virtual_now_ms_;
         if (timer >= 0 || frame_due) {
@@ -395,7 +443,7 @@ bool ContextState::run_until_idle(std::uint32_t max_steps) {
     drain_microtasks_locked(isolate);
     std::uint32_t steps = 0;
     while (steps < max_steps) {
-        const std::int64_t timer = next_timer_due(virtual_now_ms_, true);
+        const std::int64_t timer = next_runnable_timer();
         const std::int64_t frame = next_frame_due();
         const bool frame_due = frame >= 0 && frame <= virtual_now_ms_;
         if (timer >= 0 || frame_due) {
