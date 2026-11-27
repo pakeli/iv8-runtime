@@ -1,11 +1,11 @@
 # BOM-first coverage queue
 
-BOM-10 digest and virtual directory storage (`2026-11-28`) are implemented and
-locally verified (3604 passed, 2 skipped). Secure Crypto has 3/3 entry names;
-StorageManager has 4/4. The recorded non-DOM BOM entry-name gaps are closed,
-while 16 key operations and filesystem writes/streams/move remain unsupported
-execution profiles. Cross-platform release verification is still pending.
-Evidence: `docs/bom_10_storage_report.md` and `docs/bom_10_digest_report.md`.
+BOM-09/BOM-10 source d475309 is release-verified across all 12 selected lanes
+on `2026-11-28` (1375 gate tests per lane; full Mac/Linux 3604/2, Windows
+3602/4). Secure Crypto has 3/3 entry names and StorageManager 4/4; 16 key
+operations and filesystem writes/streams/move still explicitly reject.
+All 12 wheels and five hosted ZIPs are audited. Ordinary hosted macOS V8-free
+CI runner issues remain separate. Evidence: `docs/bom_10_release_report.md`.
 
 Direction changed by the user on `2026-11-15`: prioritize Window, Location,
 Navigator and History, then related BOM objects. Further DOM node work and the

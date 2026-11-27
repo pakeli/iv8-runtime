@@ -7,6 +7,25 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Complete fixed-source BOM-09/BOM-10 release validation (`2026-11-28`)
+
+The user explicitly requests committing, pushing and release validation.
+Commit 0e5c52a contains the bounded digest and virtual filesystem implementation;
+d475309 adds explicit UTF-8 fixture reads for Windows. Final source d475309 /
+564aafddd7d8bb2f33042f209b0564ae6fa403af passes local macOS arm64 Python
+3.11–3.14 first, then hosted Linux/Windows: 12 selected lanes, each 1375 gate
+passed; full Mac/Linux 3604 passed/2 skipped, Windows 3602 passed/4 skipped.
+Runs Linux 46039694818, Windows 46039702056 and V8 CI 46037969479 are green.
+
+Five hosted archives and all 12 wheels pass hash/CRC/RECORD/ABI/native/source/
+license audit. Windows source comparison validates the exact delvewheel 1.13.3
+bootstrap and bundled DLL, rejecting other facade differences; staged V8
+license inventory is checked per platform against pinned source/build scripts.
+Normal V8-free hosted macOS CI remains separately unverified: runner config
+macos-14-arm64-us-default is unsupported and macos-13 had no runner at capture.
+No workflow/protection change masks those states. No SDK replacement, PR merge
+or version-tag publication. Evidence: `docs/bom_10_release_report.md`.
+
 ### Implement origin-partitioned Page memory storage (`2026-11-28`)
 
 The user directs continuing after digest. Implement native StorageManager and

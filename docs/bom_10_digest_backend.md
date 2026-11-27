@@ -1,5 +1,9 @@
 # BOM-10 digest backend decision and build contract
 
+Later combined release verification (`2026-11-28`) passes all 12 selected lanes
+at fixed source d475309. See `docs/bom_10_release_report.md`; local-only results
+and original pending notes below describe the earlier development snapshot.
+
 Date: `2026-11-27`
 
 ## Selected source and interface

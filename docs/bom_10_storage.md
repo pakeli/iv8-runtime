@@ -3,10 +3,10 @@
 Date: `2026-11-28`
 
 Status: **Implemented and locally verified on macOS arm64 / Python 3.13;
-cross-platform release verification pending.** The user requests
+included in the 12-lane release-verified d475309 candidate.** The user requests
 continuing after digest with native StorageManager and the bounded memory
-filesystem from `bom_10_crypto_storage.md`. Writable streams, key operations and
-the cross-platform release matrix remain separate work.
+filesystem from `bom_10_crypto_storage.md`. Writable streams and key operations
+remain separate work.
 
 ## Execution boundary
 
@@ -94,3 +94,7 @@ verification pending until all selected lanes execute successfully.
 Local acceptance: **96 focused passed**, full **3604 passed, 2 skipped**.
 Source/build receipts, known profile differences and review evidence are in
 `docs/bom_10_storage_report.md`.
+
+Combined release verification completed on `2026-11-28`: see
+`docs/bom_10_release_report.md` for fixed source/tree, 12-lane results, artifacts
+and the separate ordinary hosted macOS CI limitation.

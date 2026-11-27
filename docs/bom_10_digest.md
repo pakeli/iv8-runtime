@@ -3,7 +3,7 @@
 Date: `2026-11-27`
 
 Status: **Implemented and locally verified on macOS arm64 / Python 3.13;
-cross-platform release verification pending.** The user requested the
+included in the 12-lane release-verified d475309 candidate.** The user requested the
 next execution step after reference preparation: select a native backend and
 implement digest. Storage/getDirectory and key/stream operations remain separate.
 
@@ -62,3 +62,7 @@ and cross-platform release-pending status explicit in the handoff set.
 
 Local verification: **144 focused passed**; full **3577 passed, 2 skipped**.
 Evidence and implementation limits: `docs/bom_10_digest_report.md`.
+
+Combined release verification completed on `2026-11-28`: see
+`docs/bom_10_release_report.md` for fixed source/tree, 12-lane results, artifacts
+and the separate ordinary hosted macOS CI limitation.

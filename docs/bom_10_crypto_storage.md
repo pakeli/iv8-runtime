@@ -1,11 +1,12 @@
-# BOM-10 boundary draft: WebCrypto and origin-private storage
+# BOM-10 boundary: WebCrypto and origin-private storage
 
 Date: `2026-11-27`
 
-Status: **Digest and native virtual directory/handle storage slices are locally
-implemented and verified. Key operations, writable streams, file movement and
-cross-platform release verification remain pending.** See
-`bom_10_digest_report.md` and `bom_10_storage_report.md` for the successive
+Status: **Digest and native virtual directory/handle storage slices are verified
+on all 12 selected release lanes at d475309 (`2026-11-28`). Key operations,
+writable streams and file movement remain pending.** See
+`bom_10_release_report.md` for source/artifact evidence and ordinary hosted CI
+runner limitations; `bom_10_digest_report.md` and `bom_10_storage_report.md` record the successive
 working-tree candidates, source hashes, actual tests and profile differences.
 Secure crypto has 3/3 entry names and StorageManager 4/4; membership is separate
 from complete operation support.
