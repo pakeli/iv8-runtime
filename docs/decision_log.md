@@ -7,6 +7,21 @@ between machines or chat sessions.
 
 ## Confirmed Decisions
 
+### Restore ordinary hosted macOS CI without weakening platform gates (`2026-11-28`)
+
+The user directs continuing the next queued step after release validation.
+Replace macos-14/macOS13 labels with supported macos-15 arm64 and macos-15-intel;
+retain required arm64 and supplementary/non-blocking Intel roles and Python
+3.11–3.14. Select and assert actual interpreter architecture, and explicitly
+build the V8-free mode. Quote the config-settings argument for PowerShell after
+the first Windows attempt exposed argument splitting.
+
+Final source c143dee / tree016b92d passes all 16 ordinary CI jobs (46104162652)
+and V8 CI (46104162581, 83 audit/1375 gate/3604 passed,2 skipped). Before/after
+master protection and rulesets match exactly; the required Linux V8 check is
+unchanged. Runtime, tests and release workflows match d475309; no version tag,
+PR merge or SDK deployment occurs. Details: `docs/ci_macos_runner_repair.md`.
+
 ### Complete fixed-source BOM-09/BOM-10 release validation (`2026-11-28`)
 
 The user explicitly requests committing, pushing and release validation.

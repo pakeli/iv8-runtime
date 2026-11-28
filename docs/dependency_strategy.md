@@ -620,7 +620,7 @@ The `macos-14`/`macos-13` runner images referenced in the 2026-07 evidence are b
 retired; the release lane uses the current `macos-15` arm64 image. Intel/x64 and
 universal2 remain unbuilt.
 
-**Update 2026-11-28 — ordinary CI runner maintenance (verification pending):**
+**Update 2026-11-28 — ordinary CI runner maintenance (verified):**
 The V8-free matrix now selects `macos-15` for required arm64 jobs and
 `macos-15-intel` for supplementary x64 jobs. Both cover Python 3.11–3.14;
 only Intel remains `continue-on-error`. Python architecture is selected and
@@ -629,8 +629,11 @@ checked explicitly, and wheel builds force `IV8_LINK_V8=OFF`. The historical
 [runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 lists both replacements; its
 [retirement announcement](https://github.blog/changelog/2025-07-11-upcoming-changes-to-macos-hosted-runners-macos-latest-migration-and-xcode-support-policy-updates/)
-records the macOS 13 retirement. Actual job execution is required before this
-maintenance change is considered verified. See `docs/ci_macos_runner_repair.md`.
+records the macOS 13 retirement. Fixed source c143dee passes all 16 actual
+ordinary CI jobs in run 46104162652, including both Mac architectures, plus
+V8 CI 46104162581. Required status checks and branch protection are unchanged.
+Source/tree, first-attempt failure and actual test counts are in
+`docs/ci_macos_runner_repair.md`.
 
 ### Gate
 

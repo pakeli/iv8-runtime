@@ -5,8 +5,9 @@ Date: `2026-11-28`.
 Status: **All 12 selected release lanes and all 12 wheel artifacts verified.**
 Local macOS arm64 Python 3.11–3.14 passed first; hosted Linux x64 and Windows
 x64 then passed the same four Python versions on the fixed source below.
-Fixed-source V8 CI also passed. Ordinary hosted macOS V8-free CI has separate
-runner configuration/queue issues, explicitly recorded below.
+Fixed-source V8 CI also passed. Ordinary hosted macOS V8-free CI had separate
+runner configuration/queue issues at release capture; their subsequent repair
+is recorded in the handoff section below.
 
 ## Fixed source and scope
 
@@ -125,9 +126,13 @@ also contains the exact TF-PSA-Crypto LICENSE and crypto_pin.cmake.
 
 ## Handoff and remaining work
 
+Subsequent maintenance on `2026-11-28` resolves the ordinary hosted macOS CI
+issue at source c143dee: all 16 ordinary CI jobs and V8 CI pass. See
+`ci_macos_runner_repair.md`. The historical failed/queued states above remain
+accurate snapshots of the release-source run, not the repaired workflow.
+
 This is the latest selected cross-platform release-verified bounded runtime
 candidate. Distinguish it from the shared BIND-01 SDK and from the unavailable
 hosted macOS V8-free checks. Version-tag publication, PR merge and shared SDK
-replacement were not performed by this validation task. Future work is the
-ordinary CI runner configuration, then separately scoped write/stream/move and
+replacement were not performed by this validation task. Future work is separately scoped write/stream/move and
 key-operation execution; complete name coverage does not expand runtime scope.
