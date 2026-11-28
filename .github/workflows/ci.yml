@@ -61,7 +61,7 @@ jobs:
         run: Add-Content -Path $env:GITHUB_PATH -Value "C:\Program Files\LLVM\bin"
 
       - name: Build wheel (PEP 517)
-        run: python -m pip wheel . --no-deps -w dist -Ccmake.define.IV8_LINK_V8=OFF
+        run: python -m pip wheel . --no-deps -w dist --config-settings "cmake.define.IV8_LINK_V8=OFF"
 
       - name: Install wheel and test outside the source tree
         shell: bash
