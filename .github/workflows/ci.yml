@@ -16,16 +16,13 @@ jobs:
   build-test:
     name: ${{ matrix.os }} - py${{ matrix.python }}
     runs-on: ${{ matrix.os }}
-    # macos-13 (Intel) runners are scarce/being retired and can queue for a long
-    # time. It is kept only for redundant Intel-mac coverage and is NON-BLOCKING:
-    # macOS is gated by macos-14 (arm64). See docs/dependency_strategy.md §11 EC-3.
-    continue-on-error: ${{ matrix.os == 'macos-13' }}
+    # Keep the EC-3 platform-family gate: arm64 macOS is required, while Intel
+    # macOS is supplementary. Use supported explicit labels for both families.
+    continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
     strategy:
       fail-fast: false
       matrix:
-        # x86-64 everywhere + macOS arm64 (macos-14, required gate) and macOS x64
-        # (macos-13, non-blocking redundant coverage).
-        os: [ubuntu-latest, windows-latest, macos-14, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-15, macos-15-intel]
         python: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +31,27 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+          architecture: ${{ matrix.os == 'macos-15' && 'arm64' || 'x64' }}
+
+      - name: Verify interpreter architecture
+        shell: bash
+        env:
+          EXPECTED_PYTHON_MACHINE: ${{ matrix.os == 'macos-15' && 'arm64' || 'x86_64' }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import platform
+          import sys
+
+          machine = platform.machine().lower()
+          actual = {"amd64": "x86_64", "aarch64": "arm64"}.get(machine, machine)
+          expected = os.environ["EXPECTED_PYTHON_MACHINE"]
+          print(json.dumps({"platform": platform.platform(), "machine": actual,
+                            "expected": expected, "python": sys.version,
+                            "runner_arch": os.environ.get("RUNNER_ARCH")}))
+          assert actual == expected, (actual, expected)
+          PY
 
       # Windows must build with clang-cl to match the future v8_monolith ABI
       # (§5.4 / EC-1). LLVM is preinstalled on the windows-latest image.
@@ -43,7 +61,7 @@ jobs:
         run: Add-Content -Path $env:GITHUB_PATH -Value "C:\Program Files\LLVM\bin"
 
       - name: Build wheel (PEP 517)
-        run: python -m pip wheel . --no-deps -w dist
+        run: python -m pip wheel . --no-deps -w dist -Ccmake.define.IV8_LINK_V8=OFF
 
       - name: Install wheel and test outside the source tree
         shell: bash
